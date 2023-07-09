@@ -6,7 +6,6 @@
 #define JCC_REPORTING_H
 
 #include <string>
-#include <iostream>
 
 class Span;
 

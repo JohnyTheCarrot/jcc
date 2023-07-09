@@ -4,6 +4,7 @@
 
 #include "reporting.h"
 #include "Span.h"
+#include <iostream>
 
 void Path(const std::string &filePath, const Span &span) {
     std::cout << filePath << "(" << span.GetLineNumber() << ':' << span.GetColumn() << "): ";

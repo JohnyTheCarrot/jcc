@@ -18,8 +18,9 @@ int main(int argCount, char *args[]) {
         exit(1);
     }
 
-    std::vector<Token> tokens;
-    Tokenize(filePath, inputFileStream, tokens);
+    TokenList tokens;
+    Tokenizer tokenizer{filePath, inputFileStream, tokens};
+    tokenizer.Tokenize();
 
     return 0;
 }

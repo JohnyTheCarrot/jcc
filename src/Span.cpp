@@ -11,13 +11,13 @@ std::string Span::ToString(std::istream &inputStream) const {
     std::string buffer{};
 
     std::streamoff inputStreamPos{inputStream.tellg()};
-    inputStream.seekg(this->lineStartIndex, std::istream::beg);
+    inputStream.seekg(this->lineStartIndex + 1, std::istream::beg);
     getline(inputStream, buffer);
     inputStream.seekg(inputStreamPos, std::istream::beg);
 
-    size_t column{this->startCharacterIndex - this->lineStartIndex};
+    size_t column{this->GetColumn()};
 
-    return std::format("{}\n{:>{}}{:->{}}\n{:>{}} ({}:{})\n", std::string{buffer}, '-', column - 1, ' ',
-                       this->length, '^', (column - 1) + this->length / 2,
+    return std::format("{}\n{:>{}}{:->{}}\n{:>{}} ({}:{})\n", std::string{buffer}, '-', column, ' ',
+                       this->length, '^', column + this->length / 2,
                        this->lineNumber, column);
 }

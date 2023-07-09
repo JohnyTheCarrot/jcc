@@ -6,12 +6,12 @@
 #define JCC_TOKENIZER_H
 
 
-#include <istream>
 #include <vector>
-#include <frozen/unordered_map.h>
-#include <frozen/string.h>
+#include "frozen/unordered_map.h"
+#include "frozen/string.h"
 #include <optional>
 #include <variant>
+#include "Span.h"
 
 enum class TokenType {
     Increment,
@@ -113,7 +113,9 @@ enum class TokenType {
     Identifier
 };
 
-constexpr size_t MAX_TOKEN_LENGTH = 16;
+constexpr frozen::string LINE_COMMENT{"//"};
+
+constexpr size_t MAX_TOKEN_LENGTH{16};
 
 constexpr frozen::unordered_map<frozen::string, TokenType, 98> TOKEN_DEFINITIONS = {
         {"+",              TokenType::Plus},
@@ -218,16 +220,62 @@ constexpr frozen::unordered_map<frozen::string, TokenType, 98> TOKEN_DEFINITIONS
         {"_Thread_local",  TokenType::KeywordThreadLocal},
 };
 
-struct Token {
+class Token {
+public:
+    Token(TokenType type, Span span, std::variant<int64_t, double, std::string> &&value) :
+            type{type}, span{span}, value{std::move(value)} {}
+
+    Token(TokenType type, Span span) :
+            type{type}, span{span}, value{} {}
+
+private:
     TokenType type;
-    size_t line;
-    size_t column;
-    size_t length;
+    Span span;
 
     std::variant<int64_t, double, std::string> value;
 };
 
-void Tokenize(const std::string &filePath, std::istream &inputStream, std::vector<Token> &tokensOut);
+typedef std::unique_ptr<Token> TokenPtr;
+typedef std::vector<TokenPtr> TokenList;
+
+class Tokenizer final {
+public:
+    Tokenizer(const std::string &filePath, std::istream &inputStream, TokenList &tokensOut)
+        : filePath{filePath}, inputStream{inputStream}, tokensOut{tokensOut} {};
+
+    void Tokenize();
+private:
+    size_t TokenizeNormalToken();
+
+    void TokenizeIdentifier();
+
+    void TokenizeString();
+
+    void TokenizeInteger();
+
+    bool TokenizeConstant();
+
+    bool GetNextChar();
+
+    bool PeekNextChar(char &out);
+
+    [[nodiscard]]
+    size_t GetCharIndex() const;
+
+    [[nodiscard]]
+    size_t GetColumnIndex() const;
+
+    [[nodiscard]]
+    Span SpanFromCurrent(size_t length = 1) const;
+
+    std::string filePath;
+    std::istream &inputStream;
+    char currentChar{};
+    size_t line{};
+    size_t lineStartIndex{};
+    std::optional<TokenType> currentToken{};
+    TokenList &tokensOut;
+};
 
 
 #endif //JCC_TOKENIZER_H

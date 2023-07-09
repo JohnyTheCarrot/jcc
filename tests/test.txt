@@ -1,3 +1,5 @@
 int main() {
+    // "hi
     printf("Hello, \p World!");
+    return 123;
 }
