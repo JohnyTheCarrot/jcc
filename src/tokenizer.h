@@ -220,9 +220,23 @@ constexpr frozen::unordered_map<frozen::string, TokenType, 98> TOKEN_DEFINITIONS
         {"_Thread_local",  TokenType::KeywordThreadLocal},
 };
 
+enum class IntegerLiteralType {
+    Int,
+    Long,
+    LongLong,
+};
+
+struct IntegerLiteralTokenValue {
+    int64_t value;
+    bool isUnsigned;
+    IntegerLiteralType type;
+};
+
+typedef std::variant<IntegerLiteralTokenValue, double, std::string> TokenValue;
+
 class Token {
 public:
-    Token(TokenType type, Span span, std::variant<int64_t, double, std::string> &&value) :
+    Token(TokenType type, Span span, TokenValue &&value) :
             type{type}, span{span}, value{std::move(value)} {}
 
     Token(TokenType type, Span span) :
@@ -232,11 +246,27 @@ private:
     TokenType type;
     Span span;
 
-    std::variant<int64_t, double, std::string> value;
+    TokenValue value;
 };
 
 typedef std::unique_ptr<Token> TokenPtr;
 typedef std::vector<TokenPtr> TokenList;
+
+enum class BaseConvertResult {
+    Success,
+    DigitNotInBase,
+    InvalidDigit,
+    UnexpectedEndOfInput,
+};
+
+enum class IntLiteralSuffix {
+    None,
+    Unsigned,
+    Long,
+    LongLong,
+};
+
+BaseConvertResult ConvertToBase(int base, char digit, int &digitOut);
 
 class Tokenizer final {
 public:
@@ -251,6 +281,11 @@ private:
 
     void TokenizeString();
 
+    BaseConvertResult GetDigit(int base, int &digitOut);
+
+    IntLiteralSuffix
+    GetIntLiteralSuffix(IntLiteralSuffix previousSuffix, bool &isSigned_Out, IntegerLiteralType &typeOut);
+
     void TokenizeInteger();
 
     bool TokenizeConstant();
@@ -258,6 +293,8 @@ private:
     bool GetNextChar();
 
     bool PeekNextChar(char &out);
+
+    bool ConsumeIfNextChar(char c, bool toLower = true);
 
     [[nodiscard]]
     size_t GetCharIndex() const;
@@ -271,7 +308,7 @@ private:
     std::string filePath;
     std::istream &inputStream;
     char currentChar{};
-    size_t line{};
+    size_t line{1};
     size_t lineStartIndex{};
     std::optional<TokenType> currentToken{};
     TokenList &tokensOut;

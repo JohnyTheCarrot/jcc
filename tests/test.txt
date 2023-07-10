@@ -1,5 +1,9 @@
 int main() {
-    // "hi
+    // comments
     printf("Hello, \p World!");
+
+    int a = 0 + 8;
+    int c = 0xfull;
+
     return 123;
 }
