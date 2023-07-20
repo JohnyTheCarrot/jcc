@@ -3,12 +3,13 @@
 //
 
 #include <istream>
-#include <format>
+#include <fmt/format.h>
 #include "tokenizer.h"
 #include "../libs/magic_enum/magic_enum.hpp"
 #include "reporting.h"
 #include "Span.h"
 #include <cassert>
+#include <memory>
 
 size_t Tokenizer::TokenizeNormalToken() {
     std::streamoff inputStreamPos{this->inputStream.tellg()};
@@ -98,7 +99,7 @@ void Tokenizer::TokenizeString() {
                 default:
                     Warn(this->filePath, this->inputStream,
                          Span(this->line, this->lineStartIndex, GetCharIndex() - 1, 2),
-                         std::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
+                         fmt::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
                     stringLiteralBuffer += this->currentChar;
                     break;
             }
@@ -247,7 +248,7 @@ void Tokenizer::TokenizeInteger() {
     if (convertResult == BaseConvertResult::DigitNotInBase) {
         Error(this->filePath, this->inputStream,
               Span(this->line, this->lineStartIndex, GetCharIndex() + 1, 1),
-              std::format("Invalid digit for base {}.", base));
+              fmt::format("Invalid digit for base {}.", base));
     }
 
     int64_t integerLiteralValue{0};
@@ -317,7 +318,7 @@ void Tokenizer::Tokenize() {
             continue;
         }
 
-        std::string errorMessage{std::format("Unrecognized token: '{}'", this->currentChar)};
+        std::string errorMessage{fmt::format("Unrecognized token: '{}'", this->currentChar)};
         Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
     }
 

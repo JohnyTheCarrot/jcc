@@ -11,6 +11,7 @@
 #include "frozen/string.h"
 #include <optional>
 #include <variant>
+#include <memory>
 #include "Span.h"
 
 enum class TokenType {

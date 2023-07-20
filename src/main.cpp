@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstring>
 #include "tokenizer.h"
 #include "../libs/magic_enum/magic_enum.hpp"
 

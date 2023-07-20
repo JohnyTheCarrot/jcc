@@ -1,6 +1,6 @@
 #include "Span.h"
 #include <istream>
-#include <format>
+#include "fmt/format.h"
 
 Span::Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length)
         : lineNumber{line}, lineStartIndex{lineStartIndex}, startCharacterIndex{characterIndex}, length{length} {
@@ -17,7 +17,7 @@ std::string Span::ToString(std::istream &inputStream) const {
 
     size_t column{this->GetColumn()};
 
-    return std::format("{}\n{:>{}}{:->{}}\n{:>{}} ({}:{})\n", std::string{buffer}, '-', column, ' ',
+    return fmt::format("{}\n{:>{}}{:->{}}\n{:>{}} ({}:{})\n", std::string{buffer}, '-', column, ' ',
                        this->length, '^', column + this->length / 2,
                        this->lineNumber, column);
 }

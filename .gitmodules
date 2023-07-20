@@ -1,3 +1,6 @@
 [submodule "frozen"]
 	path = libs/frozen
 	url = https://github.com/serge-sans-paille/frozen.git
+[submodule "fmt"]
+	path = libs/fmt
+	url = https://github.com/fmtlib/fmt
