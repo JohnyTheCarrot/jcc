@@ -14,14 +14,14 @@ void Warn(const std::string &filePath, std::istream &inputStream, const Span &sp
     Path(filePath, span);
     std::cout << "Warning: "
               << message << std::endl
-              << span.ToString(inputStream);
+              << span.GetTextVersion();
 }
 
 void Error(const std::string &filePath, std::istream &inputStream, const Span &span, const std::string &message) {
     Path(filePath, span);
     std::cout << "Error: "
               << message << std::endl
-              << span.ToString(inputStream);
+              << span.GetTextVersion();
 
     exit(1);
 }

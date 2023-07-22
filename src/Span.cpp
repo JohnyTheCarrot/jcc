@@ -2,9 +2,9 @@
 #include <istream>
 #include "fmt/format.h"
 
-Span::Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length)
+Span::Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length, std::istream &inputStream)
         : lineNumber{line}, lineStartIndex{lineStartIndex}, startCharacterIndex{characterIndex}, length{length} {
-
+    this->textVersion = this->ToString(inputStream);
 }
 
 std::string Span::ToString(std::istream &inputStream) const {

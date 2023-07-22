@@ -16,10 +16,10 @@ size_t Tokenizer::TokenizeNormalToken() {
     char tokenBuffer[MAX_TOKEN_LENGTH + 1]{this->currentChar};
     this->inputStream.readsome(tokenBuffer + 1, MAX_TOKEN_LENGTH);
     tokenBuffer[MAX_TOKEN_LENGTH] = '\0';
-    this->inputStream.seekg(inputStreamPos - 1);
+    this->inputStream.seekg(inputStreamPos - 1, std::istream::beg);
     this->currentToken = std::nullopt;
 
-    std::optional<size_t> optionalFoundTokenLength{std::nullopt};
+    std::optional<long> optionalFoundTokenLength{std::nullopt};
     for (size_t index{0}; index < MAX_TOKEN_LENGTH; ++index) {
         if (tokenBuffer[index] == '\0')
             break;
@@ -38,8 +38,11 @@ size_t Tokenizer::TokenizeNormalToken() {
     return optionalFoundTokenLength.value_or(0);
 }
 
-void Tokenizer::TokenizeIdentifier() {
+void Tokenizer::TokenizeIdentifier(TokenList &tokensOut) {
     std::string identifierBuffer{this->currentChar};
+    size_t currentLine{this->line};
+    size_t currentLineStartIndex{this->lineStartIndex - 1};
+    size_t currentCharIndex{GetCharIndex()};
 
     while (GetNextChar()) {
         if (isalnum(this->currentChar) || this->currentChar == '_') {
@@ -54,8 +57,9 @@ void Tokenizer::TokenizeIdentifier() {
 
     if (identifierBuffer.length() > 0) {
         TokenPtr token{std::make_unique<Token>(TokenType::Identifier,
-                                               SpanFromCurrent(identifierBuffer.length()), identifierBuffer)};
-        this->tokensOut.push_back(std::move(token));
+                                               Span(currentLine, currentLineStartIndex, currentCharIndex,
+                                                    identifierBuffer.length(), this->inputStream), identifierBuffer)};
+        tokensOut.push_back(std::move(token));
 
         return;
     }
@@ -63,7 +67,7 @@ void Tokenizer::TokenizeIdentifier() {
     this->inputStream.putback(this->currentChar);
 }
 
-void Tokenizer::TokenizeString() {
+void Tokenizer::TokenizeString(TokenList &tokensOut) {
     std::string stringLiteralBuffer;
     bool isEscaped{false};
     bool wasTerminated{false};
@@ -98,7 +102,7 @@ void Tokenizer::TokenizeString() {
                     break;
                 default:
                     Warn(this->filePath, this->inputStream,
-                         Span(this->line, this->lineStartIndex, GetCharIndex() - 1, 2),
+                         Span(this->line, this->lineStartIndex, GetCharIndex() - 1, 2, this->inputStream),
                          fmt::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
                     stringLiteralBuffer += this->currentChar;
                     break;
@@ -109,7 +113,7 @@ void Tokenizer::TokenizeString() {
 
         if (this->currentChar == '\n') {
             Error(this->filePath, this->inputStream,
-                  Span(this->line, this->lineStartIndex, GetCharIndex(), 1),
+                  Span(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream),
                   "Unexpected newline.");
         }
 
@@ -123,13 +127,13 @@ void Tokenizer::TokenizeString() {
 
     if (!wasTerminated) {
         Error(this->filePath, this->inputStream,
-              Span(this->line, this->lineStartIndex, GetCharIndex(), 1),
+              Span(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream),
               "Unexpected end of input.");
     }
 
     TokenPtr token{std::make_unique<Token>(TokenType::StringLiteral,
                                            SpanFromCurrent(stringLiteralBuffer.length()), stringLiteralBuffer)};
-    this->tokensOut.push_back(std::move(token));
+    tokensOut.push_back(std::move(token));
 }
 
 BaseConvertResult ConvertToBase(int base, char digit, int &digitOut) {
@@ -212,7 +216,8 @@ Tokenizer::GetIntLiteralSuffix(IntLiteralSuffix previousSuffix, bool &isSigned_O
     return IntLiteralSuffix::None;
 }
 
-void Tokenizer::TokenizeInteger() {
+// todo: handle literal > type_max
+void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
     int base{10};
 
     if (this->currentChar == '0') {
@@ -247,7 +252,7 @@ void Tokenizer::TokenizeInteger() {
     size_t amountOfDigits{integerLiteralDigits.size()};
     if (convertResult == BaseConvertResult::DigitNotInBase) {
         Error(this->filePath, this->inputStream,
-              Span(this->line, this->lineStartIndex, GetCharIndex() + 1, 1),
+              Span(this->line, this->lineStartIndex, GetCharIndex() + 1, 1, this->inputStream),
               fmt::format("Invalid digit for base {}.", base));
     }
 
@@ -260,18 +265,18 @@ void Tokenizer::TokenizeInteger() {
     IntegerLiteralTokenValue value{integerLiteralValue, isUnsigned, type};
     TokenPtr token{std::make_unique<Token>(TokenType::IntegerLiteral,
                                            SpanFromCurrent(amountOfDigits), value)};
-    this->tokensOut.push_back(std::move(token));
+    tokensOut.push_back(std::move(token));
 }
 
-bool Tokenizer::TokenizeConstant() {
+bool Tokenizer::TokenizeConstant(TokenList &tokensOut) {
     if (isdigit(this->currentChar)) {
-        TokenizeInteger();
+        TokenizeInteger(tokensOut);
 
         return true;
     }
 
     if (this->currentChar == '"') {
-        TokenizeString();
+        TokenizeString(tokensOut);
 
         return true;
     }
@@ -279,7 +284,7 @@ bool Tokenizer::TokenizeConstant() {
     return false;
 }
 
-void Tokenizer::Tokenize() {
+void Tokenizer::Tokenize(TokenList &tokensOut) {
     while (GetNextChar()) {
         if (isspace(this->currentChar)) {
             continue;
@@ -300,20 +305,20 @@ void Tokenizer::Tokenize() {
         if (this->currentToken.has_value()) {
             TokenPtr token{std::make_unique<Token>(this->currentToken.value(),
                                                    SpanFromCurrent(foundTokenLength))};
-            this->tokensOut.push_back(std::move(token));
+            tokensOut.push_back(std::move(token));
 
             continue;
         }
 
         // Identifiers
         if (isalpha(this->currentChar) || this->currentChar == '_') {
-            TokenizeIdentifier();
+            TokenizeIdentifier(tokensOut);
 
             continue;
         }
 
         // String literals
-        bool didMatch{TokenizeConstant()};
+        bool didMatch{TokenizeConstant(tokensOut)};
         if (didMatch) {
             continue;
         }
@@ -321,8 +326,6 @@ void Tokenizer::Tokenize() {
         std::string errorMessage{fmt::format("Unrecognized token: '{}'", this->currentChar)};
         Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
     }
-
-    tokensOut = std::move(this->tokensOut);
 }
 
 bool Tokenizer::GetNextChar() {
@@ -379,5 +382,5 @@ size_t Tokenizer::GetColumnIndex() const {
 }
 
 Span Tokenizer::SpanFromCurrent(size_t length) const {
-    return {this->line, this->lineStartIndex, GetCharIndex(), length};
+    return {this->line, this->lineStartIndex, GetCharIndex(), length, this->inputStream};
 }
