@@ -235,16 +235,15 @@ struct IntegerLiteralTokenValue {
 
 typedef std::variant<IntegerLiteralTokenValue, double, std::string> TokenValue;
 
-class Token {
-public:
+struct Token {
     Token(TokenType type, Span span, TokenValue &&value) :
             type{type}, span{span}, value{std::move(value)} {}
 
     Token(TokenType type, Span span) :
             type{type}, span{span}, value{} {}
 
-private:
     TokenType type;
+
     Span span;
 
     TokenValue value;
@@ -271,25 +270,25 @@ BaseConvertResult ConvertToBase(int base, char digit, int &digitOut);
 
 class Tokenizer final {
 public:
-    Tokenizer(const std::string &filePath, std::istream &inputStream, TokenList &tokensOut)
-        : filePath{filePath}, inputStream{inputStream}, tokensOut{tokensOut} {};
+    Tokenizer(const std::string &filePath, std::istream &inputStream)
+        : filePath{filePath}, inputStream{inputStream} {};
 
-    void Tokenize();
+    void Tokenize(TokenList &tokensOut);
 private:
     size_t TokenizeNormalToken();
 
-    void TokenizeIdentifier();
+    void TokenizeIdentifier(TokenList &tokensOut);
 
-    void TokenizeString();
+    void TokenizeString(TokenList &tokensOut);
 
     BaseConvertResult GetDigit(int base, int &digitOut);
 
     IntLiteralSuffix
     GetIntLiteralSuffix(IntLiteralSuffix previousSuffix, bool &isSigned_Out, IntegerLiteralType &typeOut);
 
-    void TokenizeInteger();
+    void TokenizeInteger(TokenList &tokensOut);
 
-    bool TokenizeConstant();
+    bool TokenizeConstant(TokenList &tokensOut);
 
     bool GetNextChar();
 
@@ -312,7 +311,6 @@ private:
     size_t line{1};
     size_t lineStartIndex{};
     std::optional<TokenType> currentToken{};
-    TokenList &tokensOut;
 };
 
 

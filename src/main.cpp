@@ -3,6 +3,7 @@
 #include <cstring>
 #include "tokenizer.h"
 #include "../libs/magic_enum/magic_enum.hpp"
+#include "parsing/Parser.h"
 
 int main(int argCount, char *args[]) {
     if (argCount < 2) {
@@ -20,8 +21,11 @@ int main(int argCount, char *args[]) {
     }
 
     TokenList tokens;
-    Tokenizer tokenizer{filePath, inputFileStream, tokens};
-    tokenizer.Tokenize();
+    Tokenizer tokenizer{filePath, inputFileStream};
+    tokenizer.Tokenize(tokens);
+
+    Parser parser{ std::move(tokens), filePath, inputFileStream };
+    parser.Parse();
 
     return 0;
 }

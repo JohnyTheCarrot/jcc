@@ -10,10 +10,12 @@
 
 class Span final {
 public:
-    Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length);
+    Span() : lineNumber{}, lineStartIndex{}, startCharacterIndex{}, length{1} {};
+
+    Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length, std::istream &inputStream);
 
     [[nodiscard]]
-    std::string ToString(std::istream &inputStream) const;
+    const std::string &GetTextVersion() const { return this->textVersion; };
 
     [[nodiscard]]
     size_t GetLineNumber() const { return this->lineNumber; }
@@ -34,10 +36,14 @@ public:
     size_t GetEndCharacterIndex() const { return this->startCharacterIndex + this->length; }
 
 private:
+    [[nodiscard]]
+    std::string ToString(std::istream &inputStream) const;
+
     size_t lineNumber;
     size_t lineStartIndex;
     size_t startCharacterIndex;
     size_t length;
+    std::string textVersion;
 };
 
 
