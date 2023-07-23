@@ -41,7 +41,7 @@ size_t Tokenizer::TokenizeNormalToken() {
 void Tokenizer::TokenizeIdentifier(TokenList &tokensOut) {
     std::string identifierBuffer{this->currentChar};
     size_t currentLine{this->line};
-    size_t currentLineStartIndex{this->lineStartIndex - 1};
+    size_t currentLineStartIndex{this->lineStartIndex};
     size_t currentCharIndex{GetCharIndex()};
 
     while (GetNextChar()) {
@@ -323,7 +323,7 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
             continue;
         }
 
-        std::string errorMessage{fmt::format("Unrecognized token: '{}'", this->currentChar)};
+        std::string errorMessage{fmt::format("Unrecognized value: '{}'", this->currentChar)};
         Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
     }
 }

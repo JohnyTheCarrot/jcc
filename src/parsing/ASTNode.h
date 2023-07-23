@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include "../Span.h"
 
 class Parser;
 
@@ -25,8 +26,28 @@ using ASTChildren = std::vector<ASTChild<Child>>;
 template<typename... Variants>
 using ChildVariant = std::variant<ASTChild<Variants>...>;
 
+struct ParseResultError {
+    Span span;
+    std::string message;
+
+    ParseResultError(const Span &span, std::string &&message) : span{span}, message{std::move(message)} {};
+};
+
+using ParseResult = std::optional<ParseResultError>;
+
 struct ASTNode {
-    virtual bool Parse(Parser &parser) = 0;
+    virtual ParseResult Parse(Parser &parser) = 0;
+
+    virtual ~ASTNode() = default;
+
+    [[nodiscard]]
+    std::unique_ptr<ASTNode> Clone() const;
+};
+
+struct ASTIdentifier : public ASTNode {
+    std::string identifier;
+
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTFunctionSpecifier : public ASTNode {
@@ -35,7 +56,7 @@ struct ASTFunctionSpecifier : public ASTNode {
         NoReturn,
     } specifier{};
 
-    bool Parse(Parser &parser) override;
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTTypeQualifier : public ASTNode {
@@ -46,23 +67,37 @@ struct ASTTypeQualifier : public ASTNode {
         Atomic,
     } qualifier{};
 
-    bool Parse(Parser &parser) override;
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTTypeSpecifier : public ASTNode {
-    bool Parse(Parser &parser) override;
+    enum class TypeSpecifier {
+        Void,
+        Char,
+        Short,
+        Int,
+        Long,
+        Float,
+        Double,
+        Signed,
+        Unsigned,
+        Bool,
+        Complex,
+    } specifier{};
+
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTStorageClassSpecifier : public ASTNode {
-    bool Parse(Parser &parser) override;
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTDeclarationSpecifiers : public ASTNode {
-    bool Parse(Parser &parser) override;
+    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTDeclaration : public ASTNode {
-    bool Parse(Parser &parser) override;
+    ParseResult Parse(Parser &parser) override;
 };
 
 

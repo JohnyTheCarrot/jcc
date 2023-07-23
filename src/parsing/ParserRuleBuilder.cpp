@@ -6,9 +6,10 @@
 #include "../reporting.h"
 #include "fmt/format.h"
 #include "Parser.h"
+#include "../../libs/magic_enum/magic_enum.hpp"
 
 void ParserRuleKnownResult::Match(Parser &parser) {
-    this->match = this->knownResult;
+    this->match = std::move(this->knownResult);
 }
 
 void ParserRuleExact::Match(Parser &parser) {
@@ -16,41 +17,41 @@ void ParserRuleExact::Match(Parser &parser) {
 
     if (!token.has_value())
     {
-        this->match = std::nullopt;
+        Span span{};
 
+        std::optional<Token> lastToken{parser.GetLastToken()};
+        if (lastToken.has_value())
+            span = lastToken->span;
+
+        this->match = ParseResultError(span, fmt::format("Expected token of type {}", magic_enum::enum_name(this->tokenType)));
         return;
     }
+
+    this->foundSpan = token->span;
 
     if (token->type == this->tokenType)
     {
         parser.AdvanceCursor();
-        this->match = token;
+        this->match = token.value();
+        return;
     }
 
-    if (!this->foundSpan.has_value())
-        this->foundSpan = token->span;
-}
-
-template<class Node>
-void ParserRuleNodeTest<Node>::Match(Parser &parser) {
-    std::unique_ptr<ASTNode> astNode{ std::make_unique<Node>() };
-
-    astNode->Parse(parser);
+    this->match = ParseResultError(token->span, fmt::format("Expected token of type {}", magic_enum::enum_name(this->tokenType)));;
 }
 
 void ParserRuleFollowedBy::Match(Parser &parser) {
     this->left->Match(parser);
 
-    // left node didn't match, so the FollowedBy check fails by definition
-    if (!this->left->match.has_value()) {
-        this->match = std::nullopt;
-        this->foundSpan = this->left->foundSpan;
+    // left node didn't value, so the FollowedBy check fails by definition
+    if (!this->left->match) {
+        this->match.value = ParseResultError(this->left->foundSpan, "FollowedBy failed");
 
+        this->foundSpan = this->left->foundSpan;
         return;
     }
 
     this->right->Match(parser);
-    this->match = this->right->match;
+    this->match = std::move(this->right->match);
     this->foundSpan = this->right->foundSpan;
 }
 
@@ -59,13 +60,13 @@ void ParserRuleOr::Match(Parser &parser) {
 
     this->foundSpan = this->left->foundSpan;
 
-    if (this->left->match.has_value()){
-        this->match = this->left->match;
+    if (this->left->match) {
+        this->match = std::move(this->left->match);
         return;
     }
 
     this->right->Match(parser);
-    this->match = this->right->match;
+    this->match = std::move(this->right->match);
     this->foundSpan = this->right->foundSpan;
 }
 
@@ -87,13 +88,6 @@ ParserRuleBuilder &ParserRuleBuilder::Or(TokenType expected) {
 
 ParserRuleBuilder &ParserRuleBuilder::Or(ParserRuleBuilder &&rule) {
     std::unique_ptr<ParserRule> &&otherRule{ GetRule(std::move(rule)) };
-
-    return this->Or(std::move(otherRule));
-}
-
-template<class Node>
-ParserRuleBuilder &ParserRuleBuilder::Or() {
-    std::unique_ptr<ParserRule> &&otherRule{ std::make_unique<ParserRuleNodeTest<Node>>() };
 
     return this->Or(std::move(otherRule));
 }
@@ -120,13 +114,6 @@ ParserRuleBuilder &ParserRuleBuilder::FollowedBy(ParserRuleBuilder &&rule) {
     return this->FollowedBy(std::move(otherRule));
 }
 
-template<class Node>
-ParserRuleBuilder &ParserRuleBuilder::FollowedBy() {
-    std::unique_ptr<ParserRule> &&otherRule{ std::make_unique<ParserRuleNodeTest<Node>>() };
-
-    return this->FollowedBy(std::move(otherRule));
-}
-
 std::unique_ptr<ParserRule> &&ParserRuleBuilder::GetRule(ParserRuleBuilder &&builder) {
     return std::move(builder.rootRule);
 }
@@ -134,9 +121,11 @@ std::unique_ptr<ParserRule> &&ParserRuleBuilder::GetRule(ParserRuleBuilder &&bui
 ParserRuleBuilder &ParserRuleBuilder::Match(bool &didMatch, Span &foundSpan) {
     this->rootRule->Match(this->parser);
 
-    didMatch = this->rootRule->match.has_value();
-    if (this->rootRule->foundSpan.has_value())
-        foundSpan = this->rootRule->foundSpan.value();
+    didMatch = this->rootRule->match;
+    if (!this->rootRule->match)
+        foundSpan = std::get<ParseResultError>(this->rootRule->match.value).span;
+    else
+        foundSpan = this->rootRule->foundSpan;
 
     return *this;
 }
@@ -144,11 +133,29 @@ ParserRuleBuilder &ParserRuleBuilder::Match(bool &didMatch, Span &foundSpan) {
 ParserRuleBuilder &ParserRuleBuilder::Match(TokenMatch &matchedToken, Span &foundSpan) {
     this->rootRule->Match(this->parser);
 
-    matchedToken = this->rootRule->match;
-    if (this->rootRule->foundSpan.has_value())
-        foundSpan = this->rootRule->foundSpan.value();
+    matchedToken = std::move(this->rootRule->match.Clone());
+    if (!this->rootRule->match)
+        foundSpan = std::get<ParseResultError>(this->rootRule->match.value).span;
+    else
+        foundSpan = this->rootRule->foundSpan;
 
-    this->rootRule = std::make_unique<ParserRuleKnownResult>(matchedToken, foundSpan);
+    this->rootRule = std::move(std::make_unique<ParserRuleKnownResult>(std::move(matchedToken), foundSpan));
+
+    return *this;
+}
+
+TokenMatch &TokenMatch::operator=(MatchInner &&optMatch) {
+    if (std::holds_alternative<Token>(optMatch)) {
+        this->valueType = ValueType::Token;
+    } else if (std::holds_alternative<std::unique_ptr<ASTNode>>(optMatch)) {
+        this->valueType = ValueType::Node;
+    } else if (std::holds_alternative<ParseResultError>(optMatch)) {
+        this->valueType = ValueType::Error;
+    } else {
+        assert(false);
+    }
+
+    this->value = std::move(optMatch);
 
     return *this;
 }

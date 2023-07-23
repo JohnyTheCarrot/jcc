@@ -11,10 +11,6 @@ Parser::Parser(TokenList &&tokenList, const std::string &fileName, std::istream 
     inputStream.seekg(0, std::istream::beg);
 }
 
-//ASTTranslationUnit Parser::Parse() {
-//    return ASTTranslationUnit();
-//}
-
 std::optional<Token> Parser::PeekNextToken() {
     if (this->cursor + 1 >= this->tokens.size())
         return std::nullopt;
@@ -42,10 +38,14 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    ASTTypeQualifier typeQualifier{};
-    bool didMatch{ typeQualifier.Parse(*this) };
+    ASTDeclaration node{};
+    ParseResult parseError{node.Parse(*this) };
 
-    std::cout << "Parse knownResult was: " << didMatch << std::endl;
+    if (parseError.has_value()) {
+        this->Error(parseError->span, parseError->message);
+    }
+
+    std::cout << "Parse success!" << std::endl;
 }
 
 ParserRuleBuilder Parser::Expect(TokenType tokenType) {
