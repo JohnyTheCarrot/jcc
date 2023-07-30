@@ -44,6 +44,18 @@ struct ASTNode {
     std::unique_ptr<ASTNode> Clone() const;
 };
 
+struct ASTPrimaryExpression : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
+struct ASTPostfixExpression : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
+struct ASTExpression : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
 struct ASTIdentifier : public ASTNode {
     std::string identifier;
 
@@ -99,6 +111,5 @@ struct ASTDeclarationSpecifiers : public ASTNode {
 struct ASTDeclaration : public ASTNode {
     ParseResult Parse(Parser &parser) override;
 };
-
 
 #endif //JCC_ASTNODE_H
