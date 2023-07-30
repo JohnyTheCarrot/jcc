@@ -38,7 +38,7 @@ struct TokenMatch {
         return !std::holds_alternative<ParseResultError>(this->value);
     }
 
-    TokenMatch(TokenMatch &&other)  noexcept : valueType{other.valueType}, value{std::move(other.value)} {};
+    TokenMatch(TokenMatch &&other) noexcept: valueType{other.valueType}, value{std::move(other.value)} {};
 
     TokenMatch &operator=(TokenMatch &&other) noexcept {
         this->valueType = other.valueType;
@@ -78,7 +78,8 @@ struct ParserRule {
 };
 
 struct ParserRuleKnownResult : public ParserRule {
-    ParserRuleKnownResult(TokenMatch &&result, const Span &foundSpan) : knownResult{std::move(result)}, foundSpan{foundSpan} {};
+    ParserRuleKnownResult(TokenMatch &&result, const Span &foundSpan) : knownResult{std::move(result)},
+                                                                        foundSpan{foundSpan} {};
 
     void Match(Parser &parser) override;
 
@@ -94,23 +95,22 @@ struct ParserRuleExact : public ParserRule {
     TokenType tokenType;
 };
 
-template <class Node>
+template<class Node>
 struct ParserRuleNodeTest : public ParserRule {
     ParserRuleNodeTest() {
         static_assert(std::is_base_of<ASTNode, Node>::value, "Node must be derived from ASTNode.");
     }
 
     void Match(Parser &parser) override {
-        std::unique_ptr<ASTNode> astNode{ std::make_unique<Node>() };
+        std::unique_ptr<ASTNode> astNode{std::make_unique<Node>()};
 
         ParseResult parseResult{astNode->Parse(parser)};
 
         if (parseResult.has_value()) {
             this->foundSpan = parseResult.value().span;
             this->match = std::move(parseResult.value());
-        }
-        else {
-            // todo: figure the span
+        } else {
+            // todo: figure out the span
             this->match = std::move(astNode);
         }
     }
@@ -118,7 +118,7 @@ struct ParserRuleNodeTest : public ParserRule {
 
 struct ParserRuleFollowedBy : public ParserRule {
     ParserRuleFollowedBy(std::unique_ptr<ParserRule> &&left, std::unique_ptr<ParserRule> &&right)
-    : left{std::move(left)}, right{std::move(right)} {}
+            : left{std::move(left)}, right{std::move(right)} {}
 
     void Match(Parser &parser) override;
 
@@ -140,13 +140,12 @@ struct ParserRuleOr : public ParserRule {
 
 class ParserRuleBuilder {
 public:
-    ParserRuleBuilder(Parser &parser, std::unique_ptr<ParserRule> &&rule) : parser{parser} {
-        this->rootRule = std::move(rule);
-    };
+    ParserRuleBuilder(Parser &parser, std::unique_ptr<ParserRule> &&rule);
 
-    ParserRuleBuilder(Parser &parser, TokenType expectedTokenType) : parser{parser} {
-        this->rootRule = std::make_unique<ParserRuleExact>(expectedTokenType);
-    };
+    ParserRuleBuilder(Parser &parser, TokenType expectedTokenType);
+
+    ParserRuleBuilder(ParserRuleBuilder &&rvalueOther) noexcept: parser{rvalueOther.parser},
+                                                                 rootRule{std::move(rvalueOther.rootRule)} {};
 
     ParserRuleBuilder &Or(std::unique_ptr<ParserRule> &&rule);
 
@@ -156,7 +155,7 @@ public:
 
     template<class Node>
     ParserRuleBuilder &Or() {
-        std::unique_ptr<ParserRule> &&otherRule{ std::make_unique<ParserRuleNodeTest<Node>>() };
+        std::unique_ptr<ParserRule> &&otherRule{std::make_unique<ParserRuleNodeTest<Node>>()};
 
         return this->Or(std::move(otherRule));
     }
@@ -169,17 +168,22 @@ public:
 
     template<class Node>
     ParserRuleBuilder &FollowedBy() {
-        std::unique_ptr<ParserRule> &&otherRule{ std::make_unique<ParserRuleNodeTest<Node>>() };
+        std::unique_ptr<ParserRule> &&otherRule{std::make_unique<ParserRuleNodeTest<Node>>()};
 
         return this->FollowedBy(std::move(otherRule));
     }
 
     static std::unique_ptr<ParserRule> &&GetRule(ParserRuleBuilder &&builder);
 
+    ParserRuleBuilder &Match();
+
     ParserRuleBuilder &Match(bool &didMatch, Span &foundSpan);
 
     ParserRuleBuilder &Match(TokenMatch &matchedToken, Span &foundSpan);
+
 private:
+    int startCursor{-1};
+
     Parser &parser;
 
     std::unique_ptr<ParserRule> rootRule;

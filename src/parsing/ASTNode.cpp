@@ -215,3 +215,45 @@ std::unique_ptr<ASTNode> ASTNode::Clone() const {
 
     assert(false);
 }
+
+ParseResult ASTPrimaryExpression::Parse(Parser &parser) {
+    Span primaryExpressionSpan;
+    TokenMatch primaryExpressionMatch;
+
+    parser.Expect<ASTIdentifier>()
+            .Or(TokenType::IntegerLiteral)
+            .Or(TokenType::StringLiteral)
+            // todo: parenthesized expression, generic selection
+            .Match(primaryExpressionMatch, primaryExpressionSpan);
+
+    if (!primaryExpressionMatch)
+        return ParseResultError(primaryExpressionSpan, "Invalid primary expression");
+
+    return std::nullopt;
+}
+
+ParseResult ASTPostfixExpression::Parse(Parser &parser) {
+    Span postfixExpressionSpan;
+    TokenMatch postfixExpressionMatch;
+
+    ParserRuleBuilder indexExpression = std::move(
+        parser.Expect<ASTPostfixExpression>()
+            .FollowedBy(TokenType::LeftBracket)
+            .FollowedBy<ASTPrimaryExpression>()
+            .FollowedBy(TokenType::RightBracket)
+            .Match()
+    );
+
+    parser.Expect<ASTPrimaryExpression>()
+            .Or(std::move(indexExpression))
+            .Match(postfixExpressionMatch, postfixExpressionSpan);
+
+    if (!postfixExpressionMatch)
+        return ParseResultError(postfixExpressionSpan, "Invalid postfix expression");
+
+    return std::nullopt;
+}
+
+ParseResult ASTExpression::Parse(Parser &parser) {
+    return ParseResult();
+}

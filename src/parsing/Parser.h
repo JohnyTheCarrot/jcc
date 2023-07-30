@@ -24,6 +24,8 @@ public:
         return ParserRuleBuilder{*this, std::move(rule)};
     }
 
+    ParserRuleBuilder Expect(ParserRuleBuilder &&ruleBuilder);
+
     ParserRuleBuilder Expect(TokenType tokenType);
 
     std::optional<Token> PeekNextToken();
@@ -45,6 +47,17 @@ public:
     };
 
     void AdvanceCursor();
+
+    [[nodiscard]]
+    int GetCursor() const {
+        return this->cursor;
+    }
+
+    void SetCursor(int newCursor) {
+        this->cursor = newCursor;
+    }
+
+    [[nodiscard]]
 
     std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
 

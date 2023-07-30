@@ -36,7 +36,7 @@ void ParserRuleExact::Match(Parser &parser) {
         return;
     }
 
-    this->match = ParseResultError(token->span, fmt::format("Expected token of type {}", magic_enum::enum_name(this->tokenType)));;
+    this->match = ParseResultError(token->span, fmt::format("Expected token of type {}", magic_enum::enum_name(this->tokenType)));
 }
 
 void ParserRuleFollowedBy::Match(Parser &parser) {
@@ -118,24 +118,14 @@ std::unique_ptr<ParserRule> &&ParserRuleBuilder::GetRule(ParserRuleBuilder &&bui
     return std::move(builder.rootRule);
 }
 
-ParserRuleBuilder &ParserRuleBuilder::Match(bool &didMatch, Span &foundSpan) {
-    this->rootRule->Match(this->parser);
-
-    didMatch = this->rootRule->match;
-    if (!this->rootRule->match)
-        foundSpan = std::get<ParseResultError>(this->rootRule->match.value).span;
-    else
-        foundSpan = this->rootRule->foundSpan;
-
-    return *this;
-}
-
 ParserRuleBuilder &ParserRuleBuilder::Match(TokenMatch &matchedToken, Span &foundSpan) {
     this->rootRule->Match(this->parser);
 
     matchedToken = std::move(this->rootRule->match.Clone());
-    if (!this->rootRule->match)
+    if (!this->rootRule->match) {
         foundSpan = std::get<ParseResultError>(this->rootRule->match.value).span;
+        this->parser.SetCursor(this->startCursor);
+    }
     else
         foundSpan = this->rootRule->foundSpan;
 
@@ -143,6 +133,33 @@ ParserRuleBuilder &ParserRuleBuilder::Match(TokenMatch &matchedToken, Span &foun
 
     return *this;
 }
+
+ParserRuleBuilder &ParserRuleBuilder::Match() {
+    Span foundSpan;
+    TokenMatch matchedToken;
+
+    this->Match(matchedToken, foundSpan);
+
+    return *this;
+}
+
+ParserRuleBuilder &ParserRuleBuilder::Match(bool &didMatch, Span &foundSpan) {
+    TokenMatch matchedToken;
+
+    this->Match(matchedToken, foundSpan);
+
+    didMatch = matchedToken;
+
+    return *this;
+}
+
+ParserRuleBuilder::ParserRuleBuilder(Parser &parser, std::unique_ptr<ParserRule> &&rule) : startCursor{parser.GetCursor()}, parser{parser} {
+    this->rootRule = std::move(rule);
+}
+
+ParserRuleBuilder::ParserRuleBuilder(Parser &parser, TokenType expectedTokenType) : parser{parser} {
+    this->rootRule = std::make_unique<ParserRuleExact>(expectedTokenType);
+};
 
 TokenMatch &TokenMatch::operator=(MatchInner &&optMatch) {
     if (std::holds_alternative<Token>(optMatch)) {

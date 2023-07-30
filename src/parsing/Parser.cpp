@@ -38,7 +38,7 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    ASTDeclaration node{};
+    ASTPostfixExpression node{};
     ParseResult parseError{node.Parse(*this) };
 
     if (parseError.has_value()) {
@@ -48,8 +48,12 @@ void Parser::Parse() {
     std::cout << "Parse success!" << std::endl;
 }
 
+ParserRuleBuilder Parser::Expect(ParserRuleBuilder &&ruleBuilder) {
+    return {*this, ParserRuleBuilder::GetRule(std::move(ruleBuilder))};
+}
+
 ParserRuleBuilder Parser::Expect(TokenType tokenType) {
-    return ParserRuleBuilder{*this, tokenType};
+    return {*this, tokenType};
 }
 
 void Parser::Error(const Span &span, const std::string &message) {
