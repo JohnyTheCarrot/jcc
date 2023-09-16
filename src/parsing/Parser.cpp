@@ -38,7 +38,7 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    ASTPostfixExpression node{};
+    ASTDeclaration node{};
     ParseResult parseError{node.Parse(*this) };
 
     if (parseError.has_value()) {

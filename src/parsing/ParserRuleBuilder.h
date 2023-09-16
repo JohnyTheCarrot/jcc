@@ -182,8 +182,6 @@ public:
     ParserRuleBuilder &Match(TokenMatch &matchedToken, Span &foundSpan);
 
 private:
-    int startCursor{-1};
-
     Parser &parser;
 
     std::unique_ptr<ParserRule> rootRule;

@@ -1,9 +1,2 @@
-int main() {
-    // comments
-    printf("Hello, \p World!");
-
-    int a = 0 + 8;
-    int c = 0xfull;
-
-    return 123;
-}
+int a = b.c->array[index],
+    d = e->f[=]->g++;
