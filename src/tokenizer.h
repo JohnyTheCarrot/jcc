@@ -37,6 +37,8 @@ enum class TokenType {
     ExclusiveOr,
     ExclusiveOrAssign,
     Dot,
+    Arrow,
+    Comma,
     Hash,
     LessThan,
     LessThanOrEqual,
@@ -118,7 +120,7 @@ constexpr frozen::string LINE_COMMENT{"//"};
 
 constexpr size_t MAX_TOKEN_LENGTH{16};
 
-constexpr frozen::unordered_map<frozen::string, TokenType, 98> TOKEN_DEFINITIONS = {
+constexpr frozen::unordered_map<frozen::string, TokenType, 100> TOKEN_DEFINITIONS = {
         {"+",              TokenType::Plus},
         {"+=",             TokenType::AddAssign},
         {"++",             TokenType::Increment},
@@ -151,6 +153,8 @@ constexpr frozen::unordered_map<frozen::string, TokenType, 98> TOKEN_DEFINITIONS
         {"^",              TokenType::ExclusiveOr},
         {"^=",             TokenType::ExclusiveOrAssign},
         {".",              TokenType::Dot},
+        {"->",             TokenType::Arrow},
+        {",",              TokenType::Comma},
         {"<",              TokenType::LessThan},
         {"<=",             TokenType::LessThanOrEqual},
         {"<<",             TokenType::ShiftLeft},

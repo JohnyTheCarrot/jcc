@@ -58,10 +58,10 @@ public:
     }
 
     [[nodiscard]]
-
     std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
 
-    _Noreturn void Error(const Span &span, const std::string &message);
+    [[noreturn]]
+    void Error(const Span &span, const std::string &message);
 
 private:
     std::string fileName;

@@ -62,6 +62,18 @@ struct ASTIdentifier : public ASTNode {
     ParseResult Parse(Parser &parser) override;
 };
 
+struct ASTDeclarator : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
+struct ASTInitDeclarator : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
+struct ASTDeclaratorList : public ASTNode {
+    ParseResult Parse(Parser &parser) override;
+};
+
 struct ASTFunctionSpecifier : public ASTNode {
     enum class Specifier {
         Inline,

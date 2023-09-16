@@ -93,9 +93,7 @@ ParserRuleBuilder &ParserRuleBuilder::Or(ParserRuleBuilder &&rule) {
 }
 
 ParserRuleBuilder &ParserRuleBuilder::FollowedBy(std::unique_ptr<ParserRule> &&rule) {
-    std::unique_ptr<ParserRule> &&currentRule{ std::move(this->rootRule) };
-
-    std::unique_ptr<ParserRuleFollowedBy> ruleFollowedBy{ std::make_unique<ParserRuleFollowedBy>(std::move(currentRule), std::move(rule)) };
+    std::unique_ptr<ParserRuleFollowedBy> ruleFollowedBy{ std::make_unique<ParserRuleFollowedBy>(std::move(this->rootRule), std::move(rule)) };
 
     this->rootRule = std::move(ruleFollowedBy);
 
@@ -119,17 +117,18 @@ std::unique_ptr<ParserRule> &&ParserRuleBuilder::GetRule(ParserRuleBuilder &&bui
 }
 
 ParserRuleBuilder &ParserRuleBuilder::Match(TokenMatch &matchedToken, Span &foundSpan) {
+    int startCursor = parser.GetCursor();
     this->rootRule->Match(this->parser);
 
     matchedToken = std::move(this->rootRule->match.Clone());
     if (!this->rootRule->match) {
         foundSpan = std::get<ParseResultError>(this->rootRule->match.value).span;
-        this->parser.SetCursor(this->startCursor);
+        this->parser.SetCursor(startCursor);
     }
     else
         foundSpan = this->rootRule->foundSpan;
 
-    this->rootRule = std::move(std::make_unique<ParserRuleKnownResult>(std::move(matchedToken), foundSpan));
+    this->rootRule = std::move(std::make_unique<ParserRuleKnownResult>(matchedToken.Clone(), foundSpan));
 
     return *this;
 }
@@ -153,13 +152,13 @@ ParserRuleBuilder &ParserRuleBuilder::Match(bool &didMatch, Span &foundSpan) {
     return *this;
 }
 
-ParserRuleBuilder::ParserRuleBuilder(Parser &parser, std::unique_ptr<ParserRule> &&rule) : startCursor{parser.GetCursor()}, parser{parser} {
+ParserRuleBuilder::ParserRuleBuilder(Parser &parser, std::unique_ptr<ParserRule> &&rule) : parser{parser} {
     this->rootRule = std::move(rule);
 }
 
 ParserRuleBuilder::ParserRuleBuilder(Parser &parser, TokenType expectedTokenType) : parser{parser} {
     this->rootRule = std::make_unique<ParserRuleExact>(expectedTokenType);
-};
+}
 
 TokenMatch &TokenMatch::operator=(MatchInner &&optMatch) {
     if (std::holds_alternative<Token>(optMatch)) {

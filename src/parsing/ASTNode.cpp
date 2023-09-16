@@ -15,7 +15,7 @@ ParseResult ASTIdentifier::Parse(Parser &parser) {
             .Match(identifierMatch, identifierSpan);
 
     if (!identifierMatch)
-        return ParseResultError(identifierSpan, "Exected identifier");
+        return ParseResultError(identifierSpan, "Expected identifier");
 
     Token token{std::get<Token>(identifierMatch.value)};
     this->identifier = std::get<std::string>(token.value);
@@ -161,12 +161,60 @@ ParseResult ASTDeclarationSpecifiers::Parse(Parser &parser) {
     return std::nullopt;
 }
 
-ParseResult ASTDeclaration::Parse(Parser &parser) {
-    Span typeSpecifierTokenSpan;
-    TokenMatch typeSpecifierMatch;
-
-    Span identifierTokenSpan;
+ParseResult ASTDeclarator::Parse(Parser &parser) {
+    Span identifierSpan;
     TokenMatch identifierMatch;
+
+    parser.Expect<ASTIdentifier>()
+            .Match(identifierMatch, identifierSpan);
+
+    if (!identifierMatch) {
+        return ParseResultError(identifierSpan, "Invalid declarator");
+    }
+
+    return std::nullopt;
+}
+
+ParseResult ASTInitDeclarator::Parse(Parser &parser) {
+    Span declaratorSpan, postfixExpressionSpan;
+    TokenMatch declaratorMatch, postfixExpressionMatch;
+
+    parser.Expect<ASTDeclarator>()
+            .Match(declaratorMatch, declaratorSpan)
+            .FollowedBy(TokenType::Assign)
+            .FollowedBy<ASTPostfixExpression>()
+            .Match(postfixExpressionMatch, postfixExpressionSpan);
+
+    if (!declaratorMatch) {
+        return ParseResultError(declaratorSpan, "Invalid declarator");
+    }
+
+    return std::nullopt;
+}
+
+ParseResult ASTDeclaratorList::Parse(Parser &parser) {
+    Span declaratorSpan;
+    TokenMatch declaratorMatch;
+
+    parser.Expect<ASTInitDeclarator>()
+            .Match(declaratorMatch, declaratorSpan);
+
+    if (!declaratorMatch) {
+        return ParseResultError(declaratorSpan, "Invalid declarator");
+    }
+
+    do {
+        parser.Expect(TokenType::Comma)
+            .FollowedBy<ASTInitDeclarator>()
+            .Match(declaratorMatch, declaratorSpan);
+    } while(declaratorMatch);
+
+    return std::nullopt;
+}
+
+ParseResult ASTDeclaration::Parse(Parser &parser) {
+    Span declListSpan;
+    TokenMatch declListMatch;
 
     Span specifierTokenSpan;
     TokenMatch specifierMatch;
@@ -176,10 +224,8 @@ ParseResult ASTDeclaration::Parse(Parser &parser) {
 
     parser.Expect<ASTDeclarationSpecifiers>()
             .Match(specifierMatch, specifierTokenSpan)
-            .FollowedBy<ASTTypeSpecifier>()
-            .Match(typeSpecifierMatch, typeSpecifierTokenSpan)
-            .FollowedBy<ASTIdentifier>()
-            .Match(identifierMatch, identifierTokenSpan)
+            .FollowedBy<ASTDeclaratorList>()
+            .Match(declListMatch, declListSpan)
             .FollowedBy(TokenType::Semicolon)
             .Match(hasSemi, semiTokenSpan);
 
@@ -213,6 +259,21 @@ std::unique_ptr<ASTNode> ASTNode::Clone() const {
     if (const ASTDeclarationSpecifiers *astDeclarationSpecifiers {dynamic_cast<const ASTDeclarationSpecifiers *>(this)})
         return std::make_unique<ASTDeclarationSpecifiers>(*astDeclarationSpecifiers);
 
+    if (const ASTPrimaryExpression *astPrimaryExpression {dynamic_cast<const ASTPrimaryExpression *>(this)})
+        return std::make_unique<ASTPrimaryExpression>(*astPrimaryExpression);
+
+    if (const ASTDeclarator *astDeclarator {dynamic_cast<const ASTDeclarator *>(this)})
+        return std::make_unique<ASTDeclarator>(*astDeclarator);
+
+    if (const ASTInitDeclarator *astInitDeclarator {dynamic_cast<const ASTInitDeclarator *>(this)})
+        return std::make_unique<ASTInitDeclarator>(*astInitDeclarator);
+
+    if (const ASTDeclaratorList *astDeclaratorList {dynamic_cast<const ASTDeclaratorList *>(this)})
+        return std::make_unique<ASTDeclaratorList>(*astDeclaratorList);
+
+    if (const ASTPostfixExpression *astPostfixExpression {dynamic_cast<const ASTPostfixExpression *>(this)})
+        return std::make_unique<ASTPostfixExpression>(*astPostfixExpression);
+
     assert(false);
 }
 
@@ -233,23 +294,31 @@ ParseResult ASTPrimaryExpression::Parse(Parser &parser) {
 }
 
 ParseResult ASTPostfixExpression::Parse(Parser &parser) {
-    Span postfixExpressionSpan;
-    TokenMatch postfixExpressionMatch;
-
-    ParserRuleBuilder indexExpression = std::move(
-        parser.Expect<ASTPostfixExpression>()
-            .FollowedBy(TokenType::LeftBracket)
-            .FollowedBy<ASTPrimaryExpression>()
-            .FollowedBy(TokenType::RightBracket)
-            .Match()
-    );
+    Span primaryExpressionSpan, postfixExpressionSpan;
+    TokenMatch primaryExpressionMatch, postfixExpressionMatch;
 
     parser.Expect<ASTPrimaryExpression>()
-            .Or(std::move(indexExpression))
-            .Match(postfixExpressionMatch, postfixExpressionSpan);
+            .Match(primaryExpressionMatch, primaryExpressionSpan);
 
-    if (!postfixExpressionMatch)
-        return ParseResultError(postfixExpressionSpan, "Invalid postfix expression");
+    if (!primaryExpressionMatch)
+        return ParseResultError(primaryExpressionSpan, "Invalid postfix expression, expected it to start with a primary expression");
+
+    do {
+        parser.Expect(std::move(
+            parser.Expect(TokenType::LeftBracket)
+                    .FollowedBy<ASTPrimaryExpression>()
+                    .FollowedBy(TokenType::RightBracket)
+        ))
+            .Or(std::move(
+                    parser.Expect(TokenType::Arrow).FollowedBy<ASTIdentifier>()
+            ))
+            .Or(std::move(
+                    parser.Expect(TokenType::Dot).FollowedBy<ASTIdentifier>()
+            ))
+            .Or(TokenType::Increment)
+            .Or(TokenType::Decrement)
+            .Match(postfixExpressionMatch, postfixExpressionSpan);
+    } while (postfixExpressionMatch);
 
     return std::nullopt;
 }
