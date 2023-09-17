@@ -1,2 +1,2 @@
 int a = b.c->array[index],
-    d = e->f[=]->g++;
+    d = e->f[10]->g++;
