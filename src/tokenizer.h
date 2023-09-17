@@ -240,10 +240,10 @@ struct IntegerLiteralTokenValue {
 typedef std::variant<IntegerLiteralTokenValue, double, std::string> TokenValue;
 
 struct Token {
-    Token(TokenType type, Span span, TokenValue &&value) :
+    Token(TokenType type, Span &&span, TokenValue &&value) :
             type{type}, span{span}, value{std::move(value)} {}
 
-    Token(TokenType type, Span span) :
+    Token(TokenType type, Span &&span) :
             type{type}, span{span}, value{} {}
 
     TokenType type;
