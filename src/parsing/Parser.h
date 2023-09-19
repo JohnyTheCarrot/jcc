@@ -24,6 +24,21 @@ public:
         return ParserRuleBuilder{*this, std::move(rule)};
     }
 
+    template<class TNodeBuilder, class TOutNode, class ...TRest>
+    static ParserRuleNewBuilder<TNodeBuilder, TOutNode, TRest...> ExpectNew(const TNodeBuilder &nodeBuilder) {
+        return ParserRuleNewBuilder<TNodeBuilder, TOutNode, TRest...>{nodeBuilder};
+    }
+
+    [[nodiscard]]
+    static ParserRuleNewToken ExpectNew(TokenType expected) {
+        return ParserRuleNewToken{expected};
+    }
+
+    template<class TNodeOut>
+    static ParserRuleNewNode<TNodeOut> ExpectNew(std::optional<TNodeOut> &out) {
+        return ParserRuleNewNode<TNodeOut>{out};
+    }
+
     ParserRuleBuilder Expect(ParserRuleBuilder &&ruleBuilder);
 
     ParserRuleBuilder Expect(TokenType tokenType);

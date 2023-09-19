@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include "../Span.h"
+#include "../tokenizer.h"
 
 class Parser;
 
@@ -58,6 +59,8 @@ struct ASTExpression : public ASTNode {
 
 struct ASTIdentifier : public ASTNode {
     std::string identifier;
+
+    explicit ASTIdentifier(const std::string &identifier) : identifier{identifier} {};
 
     ParseResult Parse(Parser &parser) override;
 };
@@ -109,6 +112,37 @@ struct ASTTypeSpecifier : public ASTNode {
         Complex,
     } specifier{};
 
+    explicit ASTTypeSpecifier(TypeSpecifier specifier) : specifier{specifier} {};
+    
+    static TypeSpecifier FromTokenType(TokenType tokenType) {
+        switch (tokenType) {
+            case TokenType::KeywordVoid:
+                return ASTTypeSpecifier::TypeSpecifier::Void;
+            case TokenType::KeywordChar:
+                return ASTTypeSpecifier::TypeSpecifier::Char;
+            case TokenType::KeywordShort:
+                return ASTTypeSpecifier::TypeSpecifier::Short;
+            case TokenType::KeywordInt:
+                return ASTTypeSpecifier::TypeSpecifier::Int;
+            case TokenType::KeywordLong:
+                return ASTTypeSpecifier::TypeSpecifier::Long;
+            case TokenType::KeywordFloat:
+                return ASTTypeSpecifier::TypeSpecifier::Float;
+            case TokenType::KeywordDouble:
+                return ASTTypeSpecifier::TypeSpecifier::Double;
+            case TokenType::KeywordSigned:
+                return ASTTypeSpecifier::TypeSpecifier::Signed;
+            case TokenType::KeywordUnsigned:
+                return ASTTypeSpecifier::TypeSpecifier::Unsigned;
+            case TokenType::KeywordBool:
+                return ASTTypeSpecifier::TypeSpecifier::Bool;
+            case TokenType::KeywordComplex:
+                return ASTTypeSpecifier::TypeSpecifier::Complex;
+            default:
+                assert(false);
+        }
+    }
+
     ParseResult Parse(Parser &parser) override;
 };
 
@@ -122,6 +156,11 @@ struct ASTDeclarationSpecifiers : public ASTNode {
 
 struct ASTDeclaration : public ASTNode {
     ParseResult Parse(Parser &parser) override;
+
+    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const std::string &identifier) : identifier{identifier}, specifier{specifier} {};
+
+    ASTTypeSpecifier specifier;
+    std::string identifier;
 };
 
 #endif //JCC_ASTNODE_H

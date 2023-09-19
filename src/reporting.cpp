@@ -17,6 +17,7 @@ void Warn(const std::string &filePath, std::istream &inputStream, const Span &sp
               << span.GetTextVersion();
 }
 
+[[noreturn]]
 void Error(const std::string &filePath, std::istream &inputStream, const Span &span, const std::string &message) {
     Path(filePath, span);
     std::cout << "Error: "

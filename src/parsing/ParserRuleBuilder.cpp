@@ -175,3 +175,37 @@ TokenMatch &TokenMatch::operator=(MatchInner &&optMatch) {
 
     return *this;
 }
+
+ParserRuleNewToken &ParserRuleNewToken::Or(TokenType tokenType) {
+    this->alternatives.push_back(tokenType);
+
+    return *this;
+}
+
+void Error(Parser &parser, const std::string &message) {
+    parser.Error(parser.GetLastToken()->span, message);
+}
+
+std::optional<ParserRuleNewToken::NodeOut> ParserRuleNewToken::Match(Parser &parser) const {
+    std::optional<Token> potentialToken{parser.PeekNextToken()};
+
+    if (!potentialToken.has_value()) {
+        return std::nullopt;
+    }
+
+    Token &token = potentialToken.value();
+
+    if (token.type == this->toMatch) {
+        parser.AdvanceCursor();
+        return token;
+    }
+
+    for(TokenType alternative : this->alternatives) {
+        if (token.type == alternative) {
+            parser.AdvanceCursor();
+            return token;
+        }
+    }
+
+    return std::nullopt;
+}
