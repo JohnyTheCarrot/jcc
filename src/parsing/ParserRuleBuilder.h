@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 #include "../tokenizer.h"
 #include "ASTNode.h"
 
@@ -187,5 +188,155 @@ private:
     std::unique_ptr<ParserRule> rootRule;
 };
 
+// new
+
+[[noreturn]]
+void Error(Parser &parser, const std::string &message);
+
+template<class TRule, class TNodeOut, class ...TRest>
+struct NodeBuilder {
+    using ParseFunction = std::function<std::optional<typename TRule::NodeOut>(Parser &)>;
+    using BuilderFunction = std::function<TNodeOut(typename TRule::NodeOut)>;
+    using NodeOut = TNodeOut;
+
+    NodeBuilder(
+            TRule &&rule,
+            BuilderFunction builder
+    ) : rule{std::move(rule)}
+      , builder{builder} {}
+
+    TNodeOut Match(Parser &parser) const {
+        std::optional<typename TRule::NodeOut> parseResult{this->rule.Match(parser)};
+
+        if (!parseResult.has_value()) {
+            Error(parser, "Expected something else.");
+        }
+
+        return this->builder(std::move(parseResult.value()));
+    }
+
+    TRule rule;
+    BuilderFunction builder;
+};
+
+class ParserRuleNewToken {
+public:
+    using NodeOut = Token;
+
+    explicit ParserRuleNewToken(TokenType tokenType) : toMatch{tokenType} {}
+
+    ParserRuleNewToken &Or(TokenType tokenType);
+
+    template<class TNodeOut>
+    NodeBuilder<ParserRuleNewToken, TNodeOut, Token> Builder(const std::function<TNodeOut(NodeOut)> &builder) {
+        return NodeBuilder<ParserRuleNewToken, TNodeOut, Token>{
+                std::move(*this),
+                builder
+        };
+    }
+
+    std::optional<NodeOut> Match(Parser &parser) const;
+
+private:
+    TokenType toMatch;
+    std::vector<TokenType> alternatives{};
+};
+
+template<class TRule, class TFollowedBy>
+class ParserRuleNewFollowedBy {
+public:
+    using NodeOut = std::tuple<typename TRule::NodeOut, typename TFollowedBy::NodeOut>;
+
+    ParserRuleNewFollowedBy(const TRule &rule, const TFollowedBy &followedBy) : rule{rule}, followedBy{followedBy} {}
+
+    template<class TNodeOut>
+    NodeBuilder<ParserRuleNewFollowedBy, TNodeOut, typename TRule::NodeOut, typename TFollowedBy::NodeOut> Builder(
+            const std::function<TNodeOut(std::tuple<typename TRule::NodeOut, typename TFollowedBy::NodeOut>)> &builder) {
+        return NodeBuilder<ParserRuleNewFollowedBy, TNodeOut, typename TRule::NodeOut, typename TFollowedBy::NodeOut>{
+            std::move(*this),
+            builder
+        };
+    }
+
+    // FollowedBy
+    template<class TRuleOut>
+    ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, TRuleOut> FollowedBy(const TRuleOut &followedBy) {
+        return ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, TRuleOut>{*this, followedBy};
+    }
+
+    ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, ParserRuleNewToken> FollowedBy(TokenType tokenType) {
+        return this->FollowedBy(ParserRuleNewToken{tokenType});
+    }
+
+    std::optional<NodeOut> Match(Parser &parser) const {
+        std::optional<typename TRule::NodeOut> ruleResult{ this->rule.Match(parser) };
+
+        if (!ruleResult.has_value()) {
+            return std::nullopt;
+        }
+
+        std::optional<typename TFollowedBy::NodeOut> followedByResult{ this->followedBy.Match(parser) };
+
+        if (!followedByResult.has_value()) {
+            return std::nullopt;
+        }
+
+        return std::make_tuple(ruleResult.value(), followedByResult.value());
+    }
+private:
+    TRule rule;
+    TFollowedBy followedBy;
+};
+
+template <class TBuilder, class TOutNode, class ...TRest>
+class ParserRuleNewBuilder {
+public:
+    explicit ParserRuleNewBuilder(const TBuilder &nodeBuilder) : nodeBuilder{nodeBuilder} {}
+
+    template<class TFollowedBy>
+    ParserRuleNewFollowedBy<TBuilder, TFollowedBy> FollowedBy(const TFollowedBy &followedBy) {
+        return ParserRuleNewFollowedBy<TBuilder, TFollowedBy>{this->nodeBuilder, followedBy};
+    }
+
+    ParserRuleNewFollowedBy<TBuilder, ParserRuleNewToken> FollowedBy(TokenType tokenType) {
+        return this->FollowedBy(ParserRuleNewToken{tokenType});
+    }
+
+    NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...> Builder(const std::function<TOutNode(std::tuple<TRest...>)> &builder) {
+        return NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...>{
+                std::move(*this),
+                builder
+        };
+    }
+
+    std::optional<typename TBuilder::NodeOut> Match(Parser &parser) const {
+        return this->nodeBuilder.Match(parser);
+    }
+
+private:
+    const TBuilder &nodeBuilder;
+};
+
+template<class TNode>
+class ParserRuleNewSurroundedBy {
+public:
+    ParserRuleNewSurroundedBy(ParserRuleNewToken left, ParserRuleNewToken right, std::optional<TNode> &out) : out{out} {}
+
+private:
+    ParserRuleNewToken left, right;
+    std::optional<TNode> &out;
+};
+
+template<class TNode>
+class ParserRuleNewNode {
+public:
+    ParserRuleNewNode(std::optional<TNode> &out) : out{out} {}
+
+    ParserRuleNewSurroundedBy<TNode> SurroundedBy(TokenType left, TokenType right) {
+        return ParserRuleNewSurroundedBy<TNode>{left, right, this->out};
+    }
+private:
+    std::optional<TNode> &out;
+};
 
 #endif //JCC_PARSERRULEBUILDER_H

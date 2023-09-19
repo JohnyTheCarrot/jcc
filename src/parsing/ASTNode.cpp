@@ -6,19 +6,20 @@
 #include "Parser.h"
 #include "ParserRuleBuilder.h"
 #include <variant>
+#include <iostream>
 
-ParseResult ASTIdentifier::Parse(Parser &parser) {
-    Span identifierSpan;
-    TokenMatch identifierMatch;
-
-    parser.Expect(TokenType::Identifier)
-            .Match(identifierMatch, identifierSpan);
-
-    if (!identifierMatch)
-        return ParseResultError(identifierSpan, "Expected identifier");
-
-    Token token{std::get<Token>(identifierMatch.value)};
-    this->identifier = std::get<std::string>(token.value);
+ParseResult ASTIdentifier::Parse(Parser &parseFunction) {
+//    Span identifierSpan;
+//    TokenMatch identifierMatch;
+//
+//    parseFunction.Expect(TokenType::Identifier)
+//            .Match(identifierMatch, identifierSpan);
+//
+//    if (!identifierMatch)
+//        return ParseResultError(identifierSpan, "Expected identifier");
+//
+//    Token token{std::get<Token>(identifierMatch.value)};
+//    this->identifier = std::get<std::string>(token.value);
 
     return std::nullopt;
 }
@@ -146,31 +147,34 @@ ParseResult ASTStorageClassSpecifier::Parse(Parser &parser) {
 }
 
 ParseResult ASTDeclarationSpecifiers::Parse(Parser &parser) {
-    Span specifierTokenSpan;
-    TokenMatch specifierMatch;
-
-    parser.Expect<ASTTypeSpecifier>()
-            .Or<ASTTypeQualifier>()
-            .Or<ASTFunctionSpecifier>()
-            .Match(specifierMatch, specifierTokenSpan);
-
-    if (!specifierMatch) {
-        return ParseResultError(specifierTokenSpan, "Invalid declaration specifier");
-    }
+//    Span specifierTokenSpan;
+//    TokenMatch specifierMatch;
+//
+//    std::optional<ASTTypeQualifier> typeQualifier{};
+//    std::optional<ASTFunctionSpecifier> functionSpecifier{};
+//
+//    parser.Expect<ASTTypeSpecifier>()
+//            .Or<ASTTypeQualifier>(typeQualifier)
+//            .Or<ASTFunctionSpecifier>(functionSpecifier)
+//            .Match(specifierMatch, specifierTokenSpan);
+//
+//    if (!specifierMatch) {
+//        return ParseResultError(specifierTokenSpan, "Invalid declaration specifier");
+//    }
 
     return std::nullopt;
 }
 
 ParseResult ASTDeclarator::Parse(Parser &parser) {
-    Span identifierSpan;
-    TokenMatch identifierMatch;
-
-    parser.Expect<ASTIdentifier>()
-            .Match(identifierMatch, identifierSpan);
-
-    if (!identifierMatch) {
-        return ParseResultError(identifierSpan, "Invalid declarator");
-    }
+//    Span identifierSpan;
+//    TokenMatch identifierMatch;
+//
+//    parser.Expect<ASTIdentifier>()
+//            .Match(identifierMatch, identifierSpan);
+//
+//    if (!identifierMatch) {
+//        return ParseResultError(identifierSpan, "Invalid declarator");
+//    }
 
     return std::nullopt;
 }
@@ -278,50 +282,62 @@ std::unique_ptr<ASTNode> ASTNode::Clone() const {
 }
 
 ParseResult ASTPrimaryExpression::Parse(Parser &parser) {
-    Span primaryExpressionSpan;
-    TokenMatch primaryExpressionMatch;
-
-    parser.Expect<ASTIdentifier>()
-            .Or(TokenType::IntegerLiteral)
-            .Or(TokenType::StringLiteral)
-            // todo: parenthesized expression, generic selection
-            .Match(primaryExpressionMatch, primaryExpressionSpan);
-
-    if (!primaryExpressionMatch)
-        return ParseResultError(primaryExpressionSpan, "Invalid primary expression");
+//    Span primaryExpressionSpan;
+//    TokenMatch primaryExpressionMatch;
+//
+//    parser.Expect<ASTIdentifier>()
+//            .Or(TokenType::IntegerLiteral)
+//            .Or(TokenType::StringLiteral)
+//            // todo: parenthesized expression, generic selection
+//            .Match(primaryExpressionMatch, primaryExpressionSpan);
+//
+//    if (!primaryExpressionMatch)
+//        return ParseResultError(primaryExpressionSpan, "Invalid primary expression");
 
     return std::nullopt;
 }
 
 ParseResult ASTPostfixExpression::Parse(Parser &parser) {
-    Span primaryExpressionSpan, postfixExpressionSpan;
-    TokenMatch primaryExpressionMatch, postfixExpressionMatch;
-
-    parser.Expect<ASTPrimaryExpression>()
-            .Match(primaryExpressionMatch, primaryExpressionSpan);
-
-    if (!primaryExpressionMatch)
-        return ParseResultError(primaryExpressionSpan, "Invalid postfix expression, expected it to start with a primary expression");
-
-    do {
-        parser.Expect(std::move(
-            parser.Expect(TokenType::LeftBracket)
-                    .FollowedBy<ASTPrimaryExpression>()
-                    .FollowedBy(TokenType::RightBracket)
-        ))
-            .Or(std::move(
-                    parser.Expect(TokenType::Arrow).FollowedBy<ASTIdentifier>()
-            ))
-            .Or(std::move(
-                    parser.Expect(TokenType::Dot).FollowedBy<ASTIdentifier>()
-            ))
-            .Or(TokenType::Increment)
-            .Or(TokenType::Decrement)
-            .Match(postfixExpressionMatch, postfixExpressionSpan);
-    } while (postfixExpressionMatch);
+//    bool wasOverallMatch =
+//        Parser::ExpectNew(TokenType::LeftBracket)
+//            .Or(TokenType::KeywordAtomic)
+//            .Or(TokenType::Increment)
+//            .Match(parseFunction);
+//
+//    std::cout << "wasOverallMatch: " << wasOverallMatch << std::endl;
 
     return std::nullopt;
 }
+
+//ParseResult ASTPostfixExpression::Parse(Parser &parseFunction) {
+//    Span primaryExpressionSpan, postfixExpressionSpan;
+//    TokenMatch primaryExpressionMatch, postfixExpressionMatch;
+//
+//    parseFunction.Expect<ASTPrimaryExpression>()
+//            .Build(primaryExpressionMatch, primaryExpressionSpan);
+//
+//    if (!primaryExpressionMatch)
+//        return ParseResultError(primaryExpressionSpan, "Invalid postfix expression, expected it to start with a primary expression");
+//
+//    do {
+//        parseFunction.Expect(std::move(
+//            parseFunction.Expect(TokenType::LeftBracket)
+//                    .FollowedBy<ASTPrimaryExpression>()
+//                    .FollowedBy(TokenType::RightBracket)
+//        ))
+//            .Or(std::move(
+//                    parseFunction.Expect(TokenType::Arrow).FollowedBy<ASTIdentifier>()
+//            ))
+//            .Or(std::move(
+//                    parseFunction.Expect(TokenType::Dot).FollowedBy<ASTIdentifier>()
+//            ))
+//            .Or(TokenType::Increment)
+//            .Or(TokenType::Decrement)
+//            .Build(postfixExpressionMatch, postfixExpressionSpan);
+//    } while (postfixExpressionMatch);
+//
+//    return std::nullopt;
+//}
 
 ParseResult ASTExpression::Parse(Parser &parser) {
     return ParseResult();

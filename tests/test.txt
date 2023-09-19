@@ -1,2 +1,3 @@
-int a = b.c->array[index],
-    d = e->f[10]->g++;
+// int a = b.c->array[index],
+//    d = e->f[10]->g++;
+int testIdentifier =
