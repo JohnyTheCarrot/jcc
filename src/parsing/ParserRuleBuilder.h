@@ -9,8 +9,10 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include "../tokenizer.h"
 #include "ASTNode.h"
+#include "../../libs/magic_enum/magic_enum.hpp"
 
 class Parser;
 
@@ -193,11 +195,10 @@ private:
 [[noreturn]]
 void Error(Parser &parser, const std::string &message);
 
-template<class TRule, class TNodeOut, class ...TRest>
+template<class TRule, class TOutNode, class ...TRuleOutNode>
 struct NodeBuilder {
-    using ParseFunction = std::function<std::optional<typename TRule::NodeOut>(Parser &)>;
-    using BuilderFunction = std::function<TNodeOut(typename TRule::NodeOut)>;
-    using NodeOut = TNodeOut;
+    using BuilderFunction = std::function<TOutNode(TRuleOutNode...)>;
+    using OutNode = TOutNode;
 
     NodeBuilder(
             TRule &&rule,
@@ -205,14 +206,23 @@ struct NodeBuilder {
     ) : rule{std::move(rule)}
       , builder{builder} {}
 
-    TNodeOut Match(Parser &parser) const {
-        std::optional<typename TRule::NodeOut> parseResult{this->rule.Match(parser)};
+    TOutNode Match(Parser &parser) const {
+        std::optional<typename TRule::OutNode> parseResult{this->rule.Match(parser)};
 
         if (!parseResult.has_value()) {
-            Error(parser, "Expected something else.");
+            std::stringstream errorMessage;
+            errorMessage << "Expected\n" << this->rule << ".";
+
+            Error(parser, errorMessage.str());
         }
 
-        return this->builder(std::move(parseResult.value()));
+        return std::apply(this->builder, std::tuple(std::move(parseResult.value())));
+    }
+
+    friend std::ostream &operator<<(std::ostream &stream, const NodeBuilder &ruleToOutput) {
+        stream << ruleToOutput.rule;
+
+        return stream;
     }
 
     TRule rule;
@@ -221,61 +231,83 @@ struct NodeBuilder {
 
 class ParserRuleNewToken {
 public:
-    using NodeOut = Token;
+    using OutNode = Token;
 
     explicit ParserRuleNewToken(TokenType tokenType) : toMatch{tokenType} {}
 
     ParserRuleNewToken &Or(TokenType tokenType);
 
-    template<class TNodeOut>
-    NodeBuilder<ParserRuleNewToken, TNodeOut, Token> Builder(const std::function<TNodeOut(NodeOut)> &builder) {
-        return NodeBuilder<ParserRuleNewToken, TNodeOut, Token>{
+    template<class TOutNode>
+    NodeBuilder<ParserRuleNewToken, TOutNode, Token> Builder(const std::function<TOutNode(Token)> &builder) {
+        return {
                 std::move(*this),
                 builder
         };
     }
 
-    std::optional<NodeOut> Match(Parser &parser) const;
+    friend std::ostream &operator<<(std::ostream &stream, const ParserRuleNewToken &ruleToOutput) {
+        if (!ruleToOutput.alternatives.empty())
+            stream << "(\n\t  ";
+
+        stream << magic_enum::enum_name(ruleToOutput.toMatch);
+
+        for (const TokenType &item: ruleToOutput.alternatives) {
+            stream << "\n\t| " << magic_enum::enum_name(item);
+        }
+
+        if (!ruleToOutput.alternatives.empty())
+            stream << "\n)";
+
+        return stream;
+    }
+
+    std::optional<OutNode> Match(Parser &parser) const;
 
 private:
     TokenType toMatch;
     std::vector<TokenType> alternatives{};
 };
 
+template<class TRule, class ...TBuilderParams>
+class ParserRuleNewFollowedByIgnore;
+
 template<class TRule, class TFollowedBy>
 class ParserRuleNewFollowedBy {
 public:
-    using NodeOut = std::tuple<typename TRule::NodeOut, typename TFollowedBy::NodeOut>;
+    using OutNode = std::tuple<typename TRule::OutNode, typename TFollowedBy::OutNode>;
 
     ParserRuleNewFollowedBy(const TRule &rule, const TFollowedBy &followedBy) : rule{rule}, followedBy{followedBy} {}
 
-    template<class TNodeOut>
-    NodeBuilder<ParserRuleNewFollowedBy, TNodeOut, typename TRule::NodeOut, typename TFollowedBy::NodeOut> Builder(
-            const std::function<TNodeOut(std::tuple<typename TRule::NodeOut, typename TFollowedBy::NodeOut>)> &builder) {
-        return NodeBuilder<ParserRuleNewFollowedBy, TNodeOut, typename TRule::NodeOut, typename TFollowedBy::NodeOut>{
+    template<class TOutNode>
+    NodeBuilder<ParserRuleNewFollowedBy, TOutNode, typename TRule::OutNode, typename TFollowedBy::OutNode> Builder(
+            const std::function<TOutNode(typename TRule::OutNode, typename TFollowedBy::OutNode)> &builder) {
+        return {
             std::move(*this),
             builder
         };
     }
 
-    // FollowedBy
     template<class TRuleOut>
-    ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, TRuleOut> FollowedBy(const TRuleOut &followedBy) {
-        return ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, TRuleOut>{*this, followedBy};
+    ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, TRuleOut> FollowedBy(const TRuleOut &newFollowedBy) {
+        return {*this, newFollowedBy};
     }
 
     ParserRuleNewFollowedBy<ParserRuleNewFollowedBy<TRule, TFollowedBy>, ParserRuleNewToken> FollowedBy(TokenType tokenType) {
         return this->FollowedBy(ParserRuleNewToken{tokenType});
     }
 
-    std::optional<NodeOut> Match(Parser &parser) const {
-        std::optional<typename TRule::NodeOut> ruleResult{ this->rule.Match(parser) };
+    ParserRuleNewFollowedByIgnore<ParserRuleNewFollowedBy<TRule, TFollowedBy>, typename TRule::OutNode, typename TFollowedBy::OutNode> FollowedByIgnore(TokenType newToMatch) {
+        return {std::move(*this), newToMatch};
+    }
+
+    std::optional<OutNode> Match(Parser &parser) const {
+        std::optional<typename TRule::OutNode> ruleResult{ this->rule.Match(parser) };
 
         if (!ruleResult.has_value()) {
             return std::nullopt;
         }
 
-        std::optional<typename TFollowedBy::NodeOut> followedByResult{ this->followedBy.Match(parser) };
+        std::optional<typename TFollowedBy::OutNode> followedByResult{ this->followedBy.Match(parser) };
 
         if (!followedByResult.has_value()) {
             return std::nullopt;
@@ -283,10 +315,67 @@ public:
 
         return std::make_tuple(ruleResult.value(), followedByResult.value());
     }
+
+    friend std::ostream &operator<<(std::ostream &stream, const ParserRuleNewFollowedBy &ruleToOutput) {
+        stream << ruleToOutput.rule << " followed by " << ruleToOutput.followedBy;
+    }
+
 private:
     TRule rule;
     TFollowedBy followedBy;
 };
+
+bool IsNextTokenMatch(Parser &parser, TokenType type);
+
+template<class TRule, class ...TBuilderParams>
+class ParserRuleNewFollowedByIgnore {
+public:
+    using OutNode = typename TRule::OutNode;
+
+    ParserRuleNewFollowedByIgnore(const TRule &rule, TokenType toMatch) : rule{rule}, toMatch{toMatch} {}
+
+    template<class TOutNode>
+    NodeBuilder<ParserRuleNewFollowedByIgnore<TRule, TBuilderParams...>, TOutNode, TBuilderParams...> Builder(
+            const std::function<TOutNode(TBuilderParams...)> &builder) {
+        return {
+                std::move(*this),
+                builder
+        };
+    }
+
+    template<class TRuleOut>
+    ParserRuleNewFollowedBy<ParserRuleNewFollowedByIgnore<TRule, TBuilderParams...>, TRuleOut> FollowedBy(const TRuleOut &followedBy) {
+        return {std::move(*this), followedBy};
+    }
+
+    ParserRuleNewFollowedByIgnore<ParserRuleNewFollowedByIgnore<TRule, TBuilderParams...>, TBuilderParams...> FollowedByIgnore(TokenType newToMatch) {
+        return {std::move(*this), newToMatch};
+    }
+
+    ParserRuleNewFollowedBy<ParserRuleNewFollowedByIgnore<TRule, TBuilderParams...>, ParserRuleNewToken> FollowedBy(TokenType tokenType) {
+        return this->FollowedBy(ParserRuleNewToken{tokenType});
+    }
+
+    std::optional<OutNode> Match(Parser &parser) const {
+        std::optional<typename TRule::OutNode> ruleResult{ this->rule.Match(parser) };
+        bool isMatch{ IsNextTokenMatch(parser, this->toMatch) };
+
+        if (!ruleResult.has_value() || !isMatch) {
+            return std::nullopt;
+        }
+
+        return ruleResult.value();
+    }
+
+    friend std::ostream &operator<<(std::ostream &stream, const ParserRuleNewFollowedByIgnore &ruleToOutput) {
+        stream << ruleToOutput.rule << " followed by " << magic_enum::enum_name(ruleToOutput.toMatch);
+    }
+
+private:
+    TRule rule;
+    TokenType toMatch;
+};
+
 
 template <class TBuilder, class TOutNode, class ...TRest>
 class ParserRuleNewBuilder {
@@ -302,14 +391,14 @@ public:
         return this->FollowedBy(ParserRuleNewToken{tokenType});
     }
 
-    NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...> Builder(const std::function<TOutNode(std::tuple<TRest...>)> &builder) {
-        return NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...>{
+    NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...> Builder(const std::function<TOutNode(TRest...)> &builder) {
+        return NodeBuilder<ParserRuleNewBuilder<TBuilder, TOutNode, TRest...>, TOutNode>{
                 std::move(*this),
                 builder
         };
     }
 
-    std::optional<typename TBuilder::NodeOut> Match(Parser &parser) const {
+    std::optional<typename TBuilder::OutNode> Match(Parser &parser) const {
         return this->nodeBuilder.Match(parser);
     }
 

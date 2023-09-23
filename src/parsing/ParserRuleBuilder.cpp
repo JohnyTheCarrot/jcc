@@ -186,7 +186,13 @@ void Error(Parser &parser, const std::string &message) {
     parser.Error(parser.GetLastToken()->span, message);
 }
 
-std::optional<ParserRuleNewToken::NodeOut> ParserRuleNewToken::Match(Parser &parser) const {
+bool IsNextTokenMatch(Parser &parser, TokenType type) {
+    std::optional<Token> token{ parser.ConsumeIfTokenIs(type) };
+
+    return token.has_value();
+}
+
+std::optional<ParserRuleNewToken::OutNode> ParserRuleNewToken::Match(Parser &parser) const {
     std::optional<Token> potentialToken{parser.PeekNextToken()};
 
     if (!potentialToken.has_value()) {
