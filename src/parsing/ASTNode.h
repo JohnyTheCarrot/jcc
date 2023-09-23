@@ -154,13 +154,21 @@ struct ASTDeclarationSpecifiers : public ASTNode {
     ParseResult Parse(Parser &parser) override;
 };
 
+struct ASTConstant {
+    explicit ASTConstant(const Token &token) : constantToken{ token } {}
+
+    Token constantToken;
+};
+
 struct ASTDeclaration : public ASTNode {
     ParseResult Parse(Parser &parser) override;
 
-    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const std::string &identifier) : identifier{identifier}, specifier{specifier} {};
-
+    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const std::string &identifier, const ASTConstant &constant) : identifier{identifier}, specifier{specifier},
+                                                                                                                             constantValue{ constant } {};
+    
     ASTTypeSpecifier specifier;
     std::string identifier;
+    ASTConstant constantValue;
 };
 
 #endif //JCC_ASTNODE_H

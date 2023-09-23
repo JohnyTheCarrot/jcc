@@ -1,3 +1,1 @@
-// int a = b.c->array[index],
-//    d = e->f[10]->g++;
-int testIdentifier =
+int testIdentifier = "look at me I am a string";

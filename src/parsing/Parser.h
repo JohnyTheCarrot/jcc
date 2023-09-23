@@ -34,9 +34,9 @@ public:
         return ParserRuleNewToken{expected};
     }
 
-    template<class TNodeOut>
-    static ParserRuleNewNode<TNodeOut> ExpectNew(std::optional<TNodeOut> &out) {
-        return ParserRuleNewNode<TNodeOut>{out};
+    template<class TOutNode>
+    static ParserRuleNewNode<TOutNode> ExpectNew(std::optional<TOutNode> &out) {
+        return ParserRuleNewNode<TOutNode>{out};
     }
 
     ParserRuleBuilder Expect(ParserRuleBuilder &&ruleBuilder);

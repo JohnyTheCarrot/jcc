@@ -58,25 +58,54 @@ void Parser::Parse() {
 
     auto identifiers = Parser::ExpectNew(TokenType::Identifier)
         .Builder<ASTIdentifier>([](Token token) {
-            assert(token.type == TokenType::Identifier);
-
             return ASTIdentifier{ std::get<std::string>(token.value) };
         });
 
+    auto constant = Parser::ExpectNew(TokenType::StringLiteral)
+            .Or(TokenType::IntegerLiteral)
+            .Or(TokenType::FloatLiteral)
+            .Or(TokenType::DoubleLiteral)
+            .Builder<ASTConstant>([](const Token& token) {
+                return ASTConstant{ token };
+            });
+
     auto declarations{
         Parser::ExpectNew<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
-        .FollowedBy(identifiers)
-        .Builder<ASTDeclaration>([](std::tuple<ASTTypeSpecifier, ASTIdentifier> values) {
-            ASTTypeSpecifier typeSpecifierNode = std::get<0>(values);
-            ASTIdentifier identifierNode = std::get<1>(values);
+            .FollowedBy(identifiers)
+            .FollowedByIgnore(TokenType::Assign)
+            .FollowedBy(constant)
+            .FollowedByIgnore(TokenType::Semicolon)
+            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTConstant &value) {
+                ASTTypeSpecifier typeSpecifier{ std::get<0>(declInfo) };
+                ASTIdentifier identifier{ std::get<1>(declInfo) };
 
-            return ASTDeclaration{typeSpecifierNode, identifierNode.identifier};
-        })
+                return ASTDeclaration{ typeSpecifier, identifier.identifier, value };
+            })
     };
 
     ASTDeclaration decl{ declarations.Match(*this) };
 
-    std::cout << "Parse success: Specifier(" << magic_enum::enum_name(decl.specifier.specifier) << ") Identifier(" << decl.identifier << ")" << std::endl;
+    std::cout << "Parse success: Specifier("
+        << magic_enum::enum_name(decl.specifier.specifier)
+        << ") Identifier(" << decl.identifier << ") "
+        << "Constant(";
+
+    switch (decl.constantValue.constantToken.type) {
+        case TokenType::StringLiteral:
+            std::cout << '"' << std::get<std::string>(decl.constantValue.constantToken.value) << '"';
+            break;
+        case TokenType::IntegerLiteral:
+            std::cout << std::to_string(std::get<IntegerLiteralTokenValue>(decl.constantValue.constantToken.value).value);
+            break;
+        case TokenType::DoubleLiteral:
+            std::cout << std::to_string(std::get<double>(decl.constantValue.constantToken.value));
+            break;
+        default:
+            assert(false);
+    }
+
+    std::cout << ")"
+        << std::endl;
 }
 
 ParserRuleBuilder Parser::Expect(ParserRuleBuilder &&ruleBuilder) {
