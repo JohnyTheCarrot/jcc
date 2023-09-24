@@ -10,51 +10,24 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include "../Span.h"
 #include "../tokenizer.h"
+#include "../../libs/magic_enum/magic_enum.hpp"
 
 class Parser;
 
-template<typename Child>
-using ASTChild = std::unique_ptr<Child>;
-
-template<typename Child>
-using ASTOptionalChild = std::optional<ASTChild<Child>>;
-
-template<typename Child>
-using ASTChildren = std::vector<ASTChild<Child>>;
-
-template<typename... Variants>
-using ChildVariant = std::variant<ASTChild<Variants>...>;
-
-struct ParseResultError {
-    Span span;
-    std::string message;
-
-    ParseResultError(const Span &span, std::string &&message) : span{span}, message{std::move(message)} {};
-};
-
-using ParseResult = std::optional<ParseResultError>;
-
 struct ASTNode {
-    virtual ParseResult Parse(Parser &parser) = 0;
 
     virtual ~ASTNode() = default;
 
+//    [[nodiscard]]
+//    std::unique_ptr<ASTNode> Clone() const;
+
     [[nodiscard]]
-    std::unique_ptr<ASTNode> Clone() const;
-};
+    virtual std::string ToString(int depth) const = 0;
 
-struct ASTPrimaryExpression : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
-};
-
-struct ASTPostfixExpression : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
-};
-
-struct ASTExpression : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
+    static constexpr char PRETTY_PRINT_CHAR = '\t';
 };
 
 struct ASTIdentifier : public ASTNode {
@@ -62,19 +35,102 @@ struct ASTIdentifier : public ASTNode {
 
     explicit ASTIdentifier(const std::string &identifier) : identifier{identifier} {};
 
-    ParseResult Parse(Parser &parser) override;
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream << "ASTIdentifier(\"" << this->identifier << "\")";
+
+        return resultStream.str();
+    }
+};
+
+struct ASTConstant final : public ASTNode {
+    explicit ASTConstant(const Token &token) : constantToken{ token } {}
+
+    Token constantToken;
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream << "ASTConstant(";
+
+        IntegerLiteralTokenValue tokenValue;
+
+        switch (this->constantToken.type) {
+            case TokenType::StringLiteral:
+                resultStream << '"' << std::get<std::string>(this->constantToken.value) << '"';
+                break;
+            case TokenType::IntegerLiteral:
+                tokenValue = std::get<IntegerLiteralTokenValue>(this->constantToken.value);
+                resultStream << std::to_string(tokenValue.value);
+                if (tokenValue.isUnsigned)
+                    resultStream << 'u';
+
+                switch (tokenValue.type) {
+                    case IntegerLiteralType::Int:
+                        break;
+                    case IntegerLiteralType::Long:
+                        resultStream << 'l';
+                        break;
+                    case IntegerLiteralType::LongLong:
+                        resultStream << "ll";
+                        break;
+                }
+                break;
+            case TokenType::DoubleLiteral:
+                resultStream << std::to_string(std::get<double>(this->constantToken.value));
+                break;
+            default:
+                assert(false);
+        }
+
+        resultStream << ')';
+
+        return resultStream.str();
+    }
+};
+
+struct ASTPrimaryExpression : public ASTNode {
+    using Inner = std::variant<ASTIdentifier, ASTConstant>;
+
+    explicit ASTPrimaryExpression(const Inner &identifier) : inner{identifier} {};
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+        std::string tabs(depth + 1, PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTPrimaryExpression( ";
+
+        if (std::holds_alternative<ASTIdentifier>(this->inner)) {
+            resultStream << std::get<ASTIdentifier>(this->inner).ToString(depth + 1);
+        } else {
+            resultStream << std::get<ASTConstant>(this->inner).ToString(depth + 1);
+        }
+
+        resultStream << " )";
+
+        return resultStream.str();
+    }
+
+    std::variant<ASTIdentifier, ASTConstant> inner;
+};
+
+struct ASTPostfixExpression : public ASTNode {
+};
+
+struct ASTExpression : public ASTNode {
 };
 
 struct ASTDeclarator : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTInitDeclarator : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTDeclaratorList : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTFunctionSpecifier : public ASTNode {
@@ -83,7 +139,6 @@ struct ASTFunctionSpecifier : public ASTNode {
         NoReturn,
     } specifier{};
 
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTTypeQualifier : public ASTNode {
@@ -94,7 +149,6 @@ struct ASTTypeQualifier : public ASTNode {
         Atomic,
     } qualifier{};
 
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTTypeSpecifier : public ASTNode {
@@ -113,7 +167,7 @@ struct ASTTypeSpecifier : public ASTNode {
     } specifier{};
 
     explicit ASTTypeSpecifier(TypeSpecifier specifier) : specifier{specifier} {};
-    
+
     static TypeSpecifier FromTokenType(TokenType tokenType) {
         switch (tokenType) {
             case TokenType::KeywordVoid:
@@ -143,32 +197,43 @@ struct ASTTypeSpecifier : public ASTNode {
         }
     }
 
-    ParseResult Parse(Parser &parser) override;
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        resultStream << "ASTTypeSpecifier(" << magic_enum::enum_name(this->specifier) << ')';
+
+        return resultStream.str();
+    }
 };
 
 struct ASTStorageClassSpecifier : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
 };
 
 struct ASTDeclarationSpecifiers : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
-};
-
-struct ASTConstant {
-    explicit ASTConstant(const Token &token) : constantToken{ token } {}
-
-    Token constantToken;
 };
 
 struct ASTDeclaration : public ASTNode {
-    ParseResult Parse(Parser &parser) override;
 
-    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const std::string &identifier, const ASTConstant &constant) : identifier{identifier}, specifier{specifier},
-                                                                                                                             constantValue{ constant } {};
+    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const ASTIdentifier &identifier, const ASTPrimaryExpression &constant) : identifier{identifier}, specifier{specifier},
+                                                                                                                                        primaryExpression{constant } {};
     
     ASTTypeSpecifier specifier;
-    std::string identifier;
-    ASTConstant constantValue;
+    ASTIdentifier identifier;
+    ASTPrimaryExpression primaryExpression;
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream <<         std::string(depth,     PRETTY_PRINT_CHAR)   << "ASTDeclaration {\n";
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "specifier         = " << this->specifier.ToString(depth + 1) << ",\n";
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "identifier        = " << this->identifier.ToString(depth + 1) << ",\n";
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "primaryExpression = " << this->primaryExpression.ToString(depth + 1);
+        resultStream << '\n' << std::string(depth,     PRETTY_PRINT_CHAR)   << '}';
+
+        return resultStream.str();
+    }
 };
 
 #endif //JCC_ASTNODE_H

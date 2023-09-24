@@ -15,33 +15,20 @@ public:
 
     void Parse();
 
-    template<class Node>
-    ParserRuleBuilder Expect() {
-        static_assert(std::is_base_of<ASTNode, Node>::value, "Node must be derived from ASTNode.");
-
-        std::unique_ptr<ParserRule> rule{std::make_unique<ParserRuleNodeTest<Node>>()};
-
-        return ParserRuleBuilder{*this, std::move(rule)};
-    }
-
     template<class TNodeBuilder, class TOutNode, class ...TRest>
-    static ParserRuleNewBuilder<TNodeBuilder, TOutNode, TRest...> ExpectNew(const TNodeBuilder &nodeBuilder) {
-        return ParserRuleNewBuilder<TNodeBuilder, TOutNode, TRest...>{nodeBuilder};
+    static ParserRuleBuilder<TNodeBuilder, TOutNode, TRest...> Expect(const TNodeBuilder &nodeBuilder) {
+        return ParserRuleBuilder<TNodeBuilder, TOutNode, TRest...>{nodeBuilder};
     }
 
     [[nodiscard]]
-    static ParserRuleNewToken ExpectNew(TokenType expected) {
-        return ParserRuleNewToken{expected};
+    static ParserRuleToken Expect(TokenType expected) {
+        return ParserRuleToken{expected};
     }
 
     template<class TOutNode>
-    static ParserRuleNewNode<TOutNode> ExpectNew(std::optional<TOutNode> &out) {
-        return ParserRuleNewNode<TOutNode>{out};
+    static ParserRuleNode<TOutNode> Expect(std::optional<TOutNode> &out) {
+        return ParserRuleNode<TOutNode>{out};
     }
-
-    ParserRuleBuilder Expect(ParserRuleBuilder &&ruleBuilder);
-
-    ParserRuleBuilder Expect(TokenType tokenType);
 
     std::optional<Token> PeekNextToken();
 
