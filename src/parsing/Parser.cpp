@@ -39,7 +39,26 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    auto typeSpecifier = Parser::ExpectNew(TokenType::KeywordVoid)
+    auto identifiers = Parser::Expect(TokenType::Identifier)
+            .Builder<ASTIdentifier>([](Token token) {
+                return ASTIdentifier{ std::get<std::string>(token.value) };
+            });
+
+    auto constant = Parser::Expect(TokenType::StringLiteral)
+            .Or(TokenType::IntegerLiteral)
+            .Or(TokenType::FloatLiteral)
+            .Or(TokenType::DoubleLiteral)
+            .Builder<ASTConstant>([](const Token& token) {
+                return ASTConstant{ token };
+            });
+
+    auto primaryExpression = Parser::Expect<typeof identifiers, ASTPrimaryExpression, ASTIdentifier>(identifiers)
+            .Or(constant)
+            .Builder<ASTPrimaryExpression>([](const std::variant<ASTIdentifier, ASTConstant> &variant) {
+                return ASTPrimaryExpression{ variant };
+            });
+
+    auto typeSpecifier = Parser::Expect(TokenType::KeywordVoid)
             .Or(TokenType::KeywordChar)
             .Or(TokenType::KeywordShort)
             .Or(TokenType::KeywordInt)
@@ -56,64 +75,23 @@ void Parser::Parse() {
                 return ASTTypeSpecifier{typeSpecifier};
             });
 
-    auto identifiers = Parser::ExpectNew(TokenType::Identifier)
-        .Builder<ASTIdentifier>([](Token token) {
-            return ASTIdentifier{ std::get<std::string>(token.value) };
-        });
-
-    auto constant = Parser::ExpectNew(TokenType::StringLiteral)
-            .Or(TokenType::IntegerLiteral)
-            .Or(TokenType::FloatLiteral)
-            .Or(TokenType::DoubleLiteral)
-            .Builder<ASTConstant>([](const Token& token) {
-                return ASTConstant{ token };
-            });
-
     auto declarations{
-        Parser::ExpectNew<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
+        Parser::Expect<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
             .FollowedBy(identifiers)
             .FollowedByIgnore(TokenType::Assign)
-            .FollowedBy(constant)
+            .FollowedBy(primaryExpression)
             .FollowedByIgnore(TokenType::Semicolon)
-            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTConstant &value) {
+            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTPrimaryExpression &value) {
                 ASTTypeSpecifier typeSpecifier{ std::get<0>(declInfo) };
                 ASTIdentifier identifier{ std::get<1>(declInfo) };
 
-                return ASTDeclaration{ typeSpecifier, identifier.identifier, value };
+                return ASTDeclaration{ typeSpecifier, identifier, value };
             })
     };
 
     ASTDeclaration decl{ declarations.Match(*this) };
 
-    std::cout << "Parse success: Specifier("
-        << magic_enum::enum_name(decl.specifier.specifier)
-        << ") Identifier(" << decl.identifier << ") "
-        << "Constant(";
-
-    switch (decl.constantValue.constantToken.type) {
-        case TokenType::StringLiteral:
-            std::cout << '"' << std::get<std::string>(decl.constantValue.constantToken.value) << '"';
-            break;
-        case TokenType::IntegerLiteral:
-            std::cout << std::to_string(std::get<IntegerLiteralTokenValue>(decl.constantValue.constantToken.value).value);
-            break;
-        case TokenType::DoubleLiteral:
-            std::cout << std::to_string(std::get<double>(decl.constantValue.constantToken.value));
-            break;
-        default:
-            assert(false);
-    }
-
-    std::cout << ")"
-        << std::endl;
-}
-
-ParserRuleBuilder Parser::Expect(ParserRuleBuilder &&ruleBuilder) {
-    return {*this, ParserRuleBuilder::GetRule(std::move(ruleBuilder))};
-}
-
-ParserRuleBuilder Parser::Expect(TokenType tokenType) {
-    return {*this, tokenType};
+    std::cout << decl.ToString(0) << std::endl;
 }
 
 void Parser::Error(const Span &span, const std::string &message) {
