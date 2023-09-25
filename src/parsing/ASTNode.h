@@ -15,6 +15,8 @@
 #include "../tokenizer.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
 
+// todo: we should use moves for the ast node constructors
+
 class Parser;
 
 struct ASTNode {
@@ -118,7 +120,128 @@ struct ASTPrimaryExpression : public ASTNode {
     std::variant<ASTIdentifier, ASTConstant> inner;
 };
 
-struct ASTPostfixExpression : public ASTNode {
+struct ASTPostfixIncrement final : public ASTNode {
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        return "ASTPostfixIncrement";
+    }
+};
+
+struct ASTPostfixDecrement final : public ASTNode {
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        return "ASTPostfixDecrement";
+    }
+};
+
+struct ASTPostfixArrow final : public ASTNode {
+    explicit ASTPostfixArrow(const ASTIdentifier &identifier) : identifier{identifier} {};
+
+    ASTIdentifier identifier;
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream << "ASTPostfixArrow( " << this->identifier.ToString(depth + 1) << " )";
+
+        return resultStream.str();
+    }
+};
+
+struct ASTPostfixDot final : public ASTNode {
+    explicit ASTPostfixDot(const ASTIdentifier &identifier) : identifier{identifier} {};
+
+    ASTIdentifier identifier;
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream << "ASTPostfixDot( " << this->identifier.ToString(depth + 1) << " )";
+
+        return resultStream.str();
+    }
+};
+
+struct ASTPostfixExpression final : public ASTNode {
+    using Operation = std::variant<ASTPostfixIncrement, ASTPostfixDecrement, ASTPostfixArrow, ASTPostfixDot>;
+    using OptionalOperation = std::optional<Operation>;
+
+    ASTPostfixExpression(ASTPostfixExpression &&other, const OptionalOperation &operation)
+        : inner{
+            std::make_unique<ASTPostfixExpression>(std::move(other))
+        }
+        , operation{operation} {};
+
+    ASTPostfixExpression(const ASTPrimaryExpression &primaryExpression, const OptionalOperation &operation)
+        : inner{
+            primaryExpression
+        }
+        , operation{operation} {};
+
+    ASTPostfixExpression(const ASTPostfixExpression &expression) {
+        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
+            this->inner = std::make_unique<ASTPostfixExpression>(*std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
+        } else {
+            this->inner = std::get<ASTPrimaryExpression>(expression.inner);
+        }
+
+        this->operation = expression.operation;
+    }
+
+    ASTPostfixExpression(ASTPostfixExpression &&expression) noexcept {
+        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
+            this->inner = std::move(std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
+        } else {
+            this->inner = std::move(std::get<ASTPrimaryExpression>(expression.inner));
+        }
+
+        this->operation = std::move(expression.operation);
+    }
+
+    // move assignment operator
+    ASTPostfixExpression &operator=(ASTPostfixExpression &&expression) noexcept {
+        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
+            this->inner = std::move(std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
+        } else {
+            this->inner = std::move(std::get<ASTPrimaryExpression>(expression.inner));
+        }
+
+        this->operation = std::move(expression.operation);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(depth + 1, PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTPostfixExpression {\n";
+        resultStream << tabs << "inner = ";
+
+        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(inner)) {
+            resultStream << std::get<std::unique_ptr<ASTPostfixExpression>>(inner)->ToString(depth + 1);
+        } else {
+            resultStream << std::get<ASTPrimaryExpression>(inner).ToString(depth + 1);
+        }
+
+        if (operation.has_value()) {
+            resultStream << ",\n" << tabs << "operation = ";
+
+            resultStream << std::visit([](const auto &op) {
+                return op.ToString(0);
+            }, operation.value());
+        }
+        resultStream << '\n' << std::string(depth, PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+    std::variant<std::unique_ptr<ASTPostfixExpression>, ASTPrimaryExpression> inner;
+    OptionalOperation operation;
 };
 
 struct ASTExpression : public ASTNode {
@@ -151,7 +274,7 @@ struct ASTTypeQualifier : public ASTNode {
 
 };
 
-struct ASTTypeSpecifier : public ASTNode {
+struct ASTTypeSpecifier final : public ASTNode {
     enum class TypeSpecifier {
         Void,
         Char,
@@ -207,20 +330,14 @@ struct ASTTypeSpecifier : public ASTNode {
     }
 };
 
-struct ASTStorageClassSpecifier : public ASTNode {
-};
+struct ASTDeclaration final : public ASTNode {
 
-struct ASTDeclarationSpecifiers : public ASTNode {
-};
-
-struct ASTDeclaration : public ASTNode {
-
-    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const ASTIdentifier &identifier, const ASTPrimaryExpression &constant) : identifier{identifier}, specifier{specifier},
-                                                                                                                                        primaryExpression{constant } {};
+    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const ASTIdentifier &identifier, const ASTPostfixExpression &postfixExpression) : identifier{identifier}, specifier{specifier},
+                                                                                                                                                 postfixExpression{postfixExpression } {};
     
     ASTTypeSpecifier specifier;
     ASTIdentifier identifier;
-    ASTPrimaryExpression primaryExpression;
+    ASTPostfixExpression postfixExpression;
 
     [[nodiscard]]
     std::string ToString(int depth) const override {
@@ -229,7 +346,7 @@ struct ASTDeclaration : public ASTNode {
         resultStream <<         std::string(depth,     PRETTY_PRINT_CHAR)   << "ASTDeclaration {\n";
         resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "specifier         = " << this->specifier.ToString(depth + 1) << ",\n";
         resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "identifier        = " << this->identifier.ToString(depth + 1) << ",\n";
-        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "primaryExpression = " << this->primaryExpression.ToString(depth + 1);
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "postfixExpression = " << this->postfixExpression.ToString(depth + 1);
         resultStream << '\n' << std::string(depth,     PRETTY_PRINT_CHAR)   << '}';
 
         return resultStream.str();
