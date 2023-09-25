@@ -24,6 +24,15 @@ int main(int argCount, char *args[]) {
     Tokenizer tokenizer{filePath, inputFileStream};
     tokenizer.Tokenize(tokens);
 
+    std::cout << "Tokens: [";
+    for (const std::unique_ptr<Token> &token : tokens) {
+        std::cout << magic_enum::enum_name(token->type) << ", ";
+    }
+
+    std::cout << ']' << std::endl << std::endl;
+
+    std::cout << "Parse result:" << std::endl;
+
     Parser parser{ std::move(tokens), filePath, inputFileStream };
     parser.Parse();
 

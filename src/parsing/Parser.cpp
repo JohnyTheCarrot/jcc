@@ -58,6 +58,57 @@ void Parser::Parse() {
                 return ASTPrimaryExpression{ variant };
             });
 
+    auto postfixIncrementExpression{
+            Parser::Expect(TokenType::Increment)
+                    .Builder<ASTPostfixIncrement>([](const Token &token) {
+                        return ASTPostfixIncrement{};
+                    })
+    };
+
+    auto postfixDecrementExpression{
+            Parser::Expect(TokenType::Decrement)
+                    .Builder<ASTPostfixDecrement>([](const Token &token) {
+                        return ASTPostfixDecrement{};
+                    })
+    };
+
+    auto postfixArrowExpression{
+            Parser::Expect(TokenType::Arrow)
+                    .FollowedBy(identifiers)
+                    .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &identifier) {
+                        return ASTPostfixArrow{ identifier };
+                    })
+    };
+
+    auto postfixDotExpression{
+            Parser::Expect(TokenType::Dot)
+                    .FollowedBy(identifiers)
+                    .Builder<ASTPostfixDot>([](const Token &, const ASTIdentifier &identifier) {
+                        return ASTPostfixDot{ identifier };
+                    })
+    };
+
+    auto postfixExpression = Parser::Expect<typeof primaryExpression, ASTPostfixExpression, ASTPrimaryExpression>(primaryExpression)
+            .FollowedBy(
+                    Parser::Expect<typeof postfixIncrementExpression, ASTPostfixIncrement, Token>(postfixIncrementExpression)
+                            .Or(postfixDecrementExpression)
+                            .Or(postfixArrowExpression)
+                            .Or(postfixDotExpression)
+                            .ZeroOrMore()
+            ).Builder<ASTPostfixExpression>(
+                    [](
+                            const ASTPrimaryExpression &primaryExpressionNode,
+                            const std::vector<typename ASTPostfixExpression::Operation> &postfixExpressions
+                    ) {
+                ASTPostfixExpression output{primaryExpressionNode, std::nullopt};
+
+                for (const typename ASTPostfixExpression::Operation &item: postfixExpressions) {
+                    output = ASTPostfixExpression{std::move(output), item};
+                }
+
+                return output;
+            });
+
     auto typeSpecifier = Parser::Expect(TokenType::KeywordVoid)
             .Or(TokenType::KeywordChar)
             .Or(TokenType::KeywordShort)
@@ -79,9 +130,9 @@ void Parser::Parse() {
         Parser::Expect<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
             .FollowedBy(identifiers)
             .FollowedByIgnore(TokenType::Assign)
-            .FollowedBy(primaryExpression)
+            .FollowedBy(postfixExpression)
             .FollowedByIgnore(TokenType::Semicolon)
-            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTPrimaryExpression &value) {
+            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTPostfixExpression &value) {
                 ASTTypeSpecifier typeSpecifier{ std::get<0>(declInfo) };
                 ASTIdentifier identifier{ std::get<1>(declInfo) };
 
@@ -89,9 +140,9 @@ void Parser::Parse() {
             })
     };
 
-    ASTDeclaration decl{ declarations.Match(*this) };
+    std::optional<ASTDeclaration> decl{ declarations.Match(*this, true) };
 
-    std::cout << decl.ToString(0) << std::endl;
+    std::cout << decl->ToString(0) << std::endl;
 }
 
 void Parser::Error(const Span &span, const std::string &message) {

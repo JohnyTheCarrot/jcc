@@ -1,1 +1,1 @@
-int testIdentifier = "look at me I am a string";
+int testIdentifier = variable->member.anotherMember++;
