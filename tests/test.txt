@@ -1,1 +1,1 @@
-int testIdentifier = variable->member.anotherMember++;
+int testIdentifier = -variable->member.anotherMember++;
