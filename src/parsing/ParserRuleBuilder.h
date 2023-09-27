@@ -75,6 +75,9 @@ struct NodeBuilder {
     BuilderFunction builder;
 };
 
+template<class TRule, class TFollowedBy>
+class ParserRuleFollowedBy;
+
 template <class TRule>
 class ParserRuleZeroOrMore final {
 public:
@@ -88,6 +91,12 @@ public:
                 std::move(*this),
                 builder
         };
+    }
+
+    // FollowedBy
+    template<class TFollowedBy>
+    ParserRuleFollowedBy<ParserRuleZeroOrMore<TRule>, TFollowedBy> FollowedBy(const TFollowedBy &followedBy) {
+        return {std::move(*this), followedBy};
     }
 
     std::optional<OutNode> Match(Parser &parser) const {
@@ -203,6 +212,11 @@ public:
         return ParserRuleZeroOrMore<ParserRuleOr<TFirstOption, TSecondOption>>{*this};
     }
 
+    template<class TFollowedBy>
+    ParserRuleFollowedBy<ParserRuleOr<TFirstOption, TSecondOption>, TFollowedBy> FollowedBy(const TFollowedBy &followedBy) {
+        return {std::move(*this), followedBy};
+    }
+
     std::optional<OutNode> Match(Parser &parser) const {
         std::optional<typename TFirstOption::OutNode> firstOptionResult{ this->firstOption.Match(parser) };
 
@@ -229,9 +243,6 @@ private:
     TFirstOption firstOption;
     TSecondOption secondOption;
 };
-
-template<class TRule, class TFollowedBy>
-class ParserRuleFollowedBy;
 
 class ParserRuleToken {
 public:
@@ -410,6 +421,10 @@ public:
     template<class TAlternative>
     ParserRuleOr<Self, TAlternative> Or(const TAlternative &alternative) {
         return {*this, alternative};
+    }
+
+    ParserRuleZeroOrMore<Self> ZeroOrMore() const {
+        return ParserRuleZeroOrMore<Self>{*this};
     }
 
     NodeBuilder<ParserRuleBuilder<TBuilder, TOutNode, TRest...>, TOutNode, TRest...> Builder(const std::function<TOutNode(TRest...)> &builder) {

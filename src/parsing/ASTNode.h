@@ -200,7 +200,6 @@ struct ASTPostfixExpression final : public ASTNode {
         this->operation = std::move(expression.operation);
     }
 
-    // move assignment operator
     ASTPostfixExpression &operator=(ASTPostfixExpression &&expression) noexcept {
         if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
             this->inner = std::move(std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
@@ -242,6 +241,138 @@ struct ASTPostfixExpression final : public ASTNode {
 
     std::variant<std::unique_ptr<ASTPostfixExpression>, ASTPrimaryExpression> inner;
     OptionalOperation operation;
+};
+
+struct ASTUnaryOperator final : public ASTNode {
+public:
+    explicit ASTUnaryOperator(TokenType tokenType) {
+        switch (tokenType) {
+            case TokenType::Ampersand:
+                this->unaryOperator = UnaryOperator::Reference;
+                break;
+            case TokenType::Asterisk:
+                this->unaryOperator = UnaryOperator::Dereference;
+                break;
+            case TokenType::Plus:
+                this->unaryOperator = UnaryOperator::Positive;
+                break;
+            case TokenType::Minus:
+                this->unaryOperator = UnaryOperator::Negative;
+                break;
+            case TokenType::BitwiseNot:
+                this->unaryOperator = UnaryOperator::BitwiseNot;
+                break;
+            case TokenType::LogicalNot:
+                this->unaryOperator = UnaryOperator::Not;
+                break;
+            default:
+                assert(false);
+        }
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream;
+
+        resultStream << "ASTUnaryOperator(" << magic_enum::enum_name(this->unaryOperator) << ")";
+
+        return resultStream.str();
+    }
+private:
+    enum class UnaryOperator {
+        Reference,
+        Dereference,
+        Positive,
+        Negative,
+        BitwiseNot,
+        Not
+    } unaryOperator;
+};
+
+struct ASTUnaryIncrement final : public ASTNode {
+public:
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        return "ASTUnaryIncrement";
+    }
+};
+
+struct ASTUnaryDecrement final : public ASTNode {
+public:
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        return "ASTUnaryDecrement";
+    }
+};
+
+struct ASTUnaryExpression final : public ASTNode {
+public:
+    using Operator = std::variant<ASTUnaryOperator, ASTUnaryIncrement, ASTUnaryDecrement>;
+
+    ASTUnaryExpression(ASTUnaryExpression &&other, const Operator &operation)
+        : inner{
+            std::make_unique<ASTUnaryExpression>(std::move(other))
+        }
+        , operation{operation} {};
+
+
+    ASTUnaryExpression(const ASTUnaryExpression &other)
+        : operation{other.operation} {
+        if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(other.inner)) {
+            this->inner = std::make_unique<ASTUnaryExpression>(*std::get<std::unique_ptr<ASTUnaryExpression>>(other.inner));
+        } else {
+            this->inner = std::get<ASTPostfixExpression>(other.inner);
+        }
+    };
+
+    ASTUnaryExpression(const ASTPostfixExpression &astPostfixExpression, const std::optional<Operator> &operation)
+        : inner{
+            astPostfixExpression
+        }
+        , operation{operation} {};
+
+    ASTUnaryExpression &operator=(ASTUnaryExpression &&other) noexcept {
+        if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(other.inner)) {
+            this->inner = std::move(std::get<std::unique_ptr<ASTUnaryExpression>>(other.inner));
+        } else {
+            this->inner = std::move(std::get<ASTPostfixExpression>(other.inner));
+        }
+
+        this->operation = std::move(other.operation);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(depth + 1, PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTUnaryExpression {\n";
+        resultStream << tabs << "inner = ";
+
+        if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(inner)) {
+            resultStream << std::get<std::unique_ptr<ASTUnaryExpression>>(inner)->ToString(depth + 1);
+        } else {
+            resultStream << std::get<ASTPostfixExpression>(inner).ToString(depth + 1);
+        }
+
+        if (operation.has_value()) {
+            resultStream << ",\n" << tabs << "operation = ";
+
+            resultStream << std::visit([](const auto &op) {
+                return op.ToString(0);
+            }, operation.value());
+        }
+        resultStream << '\n' << std::string(depth, PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+private:
+    std::variant<std::unique_ptr<ASTUnaryExpression>, ASTPostfixExpression> inner;
+    std::optional<Operator> operation;
 };
 
 struct ASTExpression : public ASTNode {
@@ -332,21 +463,21 @@ struct ASTTypeSpecifier final : public ASTNode {
 
 struct ASTDeclaration final : public ASTNode {
 
-    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const ASTIdentifier &identifier, const ASTPostfixExpression &postfixExpression) : identifier{identifier}, specifier{specifier},
-                                                                                                                                                 postfixExpression{postfixExpression } {};
+    explicit ASTDeclaration(const ASTTypeSpecifier &specifier, const ASTIdentifier &identifier, const ASTUnaryExpression &expression) : identifier{identifier}, specifier{specifier},
+                                                                                                                                      expression{expression} {};
     
     ASTTypeSpecifier specifier;
     ASTIdentifier identifier;
-    ASTPostfixExpression postfixExpression;
+    ASTUnaryExpression expression;
 
     [[nodiscard]]
     std::string ToString(int depth) const override {
         std::stringstream resultStream;
 
         resultStream <<         std::string(depth,     PRETTY_PRINT_CHAR)   << "ASTDeclaration {\n";
-        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "specifier         = " << this->specifier.ToString(depth + 1) << ",\n";
-        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "identifier        = " << this->identifier.ToString(depth + 1) << ",\n";
-        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "postfixExpression = " << this->postfixExpression.ToString(depth + 1);
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "specifier  = " << this->specifier.ToString(depth + 1) << ",\n";
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "identifier = " << this->identifier.ToString(depth + 1) << ",\n";
+        resultStream <<         std::string(depth + 1, PRETTY_PRINT_CHAR)   << "expression = " << this->expression.ToString(depth + 1);
         resultStream << '\n' << std::string(depth,     PRETTY_PRINT_CHAR)   << '}';
 
         return resultStream.str();
