@@ -4,73 +4,171 @@
 
 #include "ASTNode.h"
 #include "Parser.h"
-#include "ParserRuleBuilder.h"
 #include <variant>
 
-//std::unique_ptr<ASTNode> ASTNode::Clone() const {
-//    if (const ASTIdentifier *astIdentifier {dynamic_cast<const ASTIdentifier *>(this)})
-//        return std::make_unique<ASTIdentifier>(*astIdentifier);
-//
-//    if (const ASTFunctionSpecifier *astFunctionSpecifier {dynamic_cast<const ASTFunctionSpecifier *>(this)})
-//        return std::make_unique<ASTFunctionSpecifier>(*astFunctionSpecifier);
-//
-//    if (const ASTTypeQualifier *astTypeQualifier {dynamic_cast<const ASTTypeQualifier *>(this)})
-//        return std::make_unique<ASTTypeQualifier>(*astTypeQualifier);
-//
-//    if (const ASTTypeSpecifier *astTypeSpecifier {dynamic_cast<const ASTTypeSpecifier *>(this)})
-//        return std::make_unique<ASTTypeSpecifier>(*astTypeSpecifier);
-//
-//    if (const ASTStorageClassSpecifier *astStorageClassSpecifier {dynamic_cast<const ASTStorageClassSpecifier *>(this)})
-//        return std::make_unique<ASTStorageClassSpecifier>(*astStorageClassSpecifier);
-//
-//    if (const ASTDeclarationSpecifiers *astDeclarationSpecifiers {dynamic_cast<const ASTDeclarationSpecifiers *>(this)})
-//        return std::make_unique<ASTDeclarationSpecifiers>(*astDeclarationSpecifiers);
-//
-//    if (const ASTPrimaryExpression *astPrimaryExpression {dynamic_cast<const ASTPrimaryExpression *>(this)})
-//        return std::make_unique<ASTPrimaryExpression>(*astPrimaryExpression);
-//
-//    if (const ASTDeclarator *astDeclarator {dynamic_cast<const ASTDeclarator *>(this)})
-//        return std::make_unique<ASTDeclarator>(*astDeclarator);
-//
-//    if (const ASTInitDeclarator *astInitDeclarator {dynamic_cast<const ASTInitDeclarator *>(this)})
-//        return std::make_unique<ASTInitDeclarator>(*astInitDeclarator);
-//
-//    if (const ASTDeclaratorList *astDeclaratorList {dynamic_cast<const ASTDeclaratorList *>(this)})
-//        return std::make_unique<ASTDeclaratorList>(*astDeclaratorList);
-//
-//    if (const ASTPostfixExpression *astPostfixExpression {dynamic_cast<const ASTPostfixExpression *>(this)})
-//        return std::make_unique<ASTPostfixExpression>(*astPostfixExpression);
-//
-//    assert(false);
-//}
+std::optional<ASTIdentifier> ASTIdentifier::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Identifier)
+            .Builder<ASTIdentifier>([](Token token) {
+                return ASTIdentifier{ std::get<std::string>(token.value) };
+            })
+            .Match(parser);
+}
 
-//ParseResult ASTPostfixExpression::Parse(Parser &parseFunction) {
-//    Span primaryExpressionSpan, postfixExpressionSpan;
-//    TokenMatch primaryExpressionMatch, postfixExpressionMatch;
-//
-//    parseFunction.Expect<ASTPrimaryExpression>()
-//            .Build(primaryExpressionMatch, primaryExpressionSpan);
-//
-//    if (!primaryExpressionMatch)
-//        return ParseResultError(primaryExpressionSpan, "Invalid postfix expression, expected it to start with a primary expression");
-//
-//    do {
-//        parseFunction.Expect(std::move(
-//            parseFunction.Expect(TokenType::LeftBracket)
-//                    .FollowedBy<ASTPrimaryExpression>()
-//                    .FollowedBy(TokenType::RightBracket)
-//        ))
-//            .Or(std::move(
-//                    parseFunction.Expect(TokenType::Arrow).FollowedBy<ASTIdentifier>()
-//            ))
-//            .Or(std::move(
-//                    parseFunction.Expect(TokenType::Dot).FollowedBy<ASTIdentifier>()
-//            ))
-//            .Or(TokenType::Increment)
-//            .Or(TokenType::Decrement)
-//            .Build(postfixExpressionMatch, postfixExpressionSpan);
-//    } while (postfixExpressionMatch);
-//
-//    return std::nullopt;
-//}
+std::optional<ASTConstant> ASTConstant::Match(Parser &parser) {
+    return Parser::Expect(TokenType::StringLiteral)
+            .Or(TokenType::IntegerLiteral)
+            .Or(TokenType::FloatLiteral)
+            .Or(TokenType::DoubleLiteral)
+            .Builder<ASTConstant>([](const Token& token) {
+                return ASTConstant{ token };
+            })
+            .Match(parser);
+}
 
+std::optional<ASTPrimaryExpression> ASTPrimaryExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTIdentifier>()
+            .Or<ASTConstant>()
+            .Builder<ASTPrimaryExpression>([](const std::variant<ASTIdentifier, ASTConstant> &variant) {
+                return ASTPrimaryExpression{ variant };
+            })
+            .Match(parser);
+}
+
+std::optional<ASTUnaryOperator> ASTUnaryOperator::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Plus)
+            .Or(TokenType::Minus)
+            .Or(TokenType::Ampersand)
+            .Or(TokenType::Asterisk)
+            .Or(TokenType::BitwiseNot)
+            .Or(TokenType::LogicalNot)
+            .Builder<ASTUnaryOperator>([](const Token &token) {
+                return ASTUnaryOperator{ token.type };
+            })
+            .Match(parser);
+}
+
+std::optional<ASTUnaryIncrement> ASTUnaryIncrement::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Increment)
+            .Builder<ASTUnaryIncrement>([](const Token &token) {
+                return ASTUnaryIncrement{};
+            })
+            .Match(parser);
+}
+
+std::optional<ASTUnaryDecrement> ASTUnaryDecrement::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Decrement)
+            .Builder<ASTUnaryDecrement>([](const Token &token) {
+                return ASTUnaryDecrement{};
+            })
+            .Match(parser);
+}
+
+std::optional<ASTUnaryExpression> ASTUnaryExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTUnaryOperator>()
+            .Or<ASTUnaryIncrement>()
+            .Or<ASTUnaryDecrement>()
+            .ZeroOrMore()
+            .FollowedBy<ASTPostfixExpression>()
+            .Builder<ASTUnaryExpression>([](std::vector<typename ASTUnaryExpression::Operator>&& operators, ASTPostfixExpression &&postfixExpressionNode) {
+                ASTUnaryExpression output{std::move(postfixExpressionNode), std::nullopt};
+
+                for (const typename ASTUnaryExpression::Operator &item : operators) {
+                    output = ASTUnaryExpression{std::move(output), item};
+                }
+
+                return output;
+            })
+            .Match(parser);
+}
+
+std::optional<ASTPostfixIndex> ASTPostfixIndex::Match(Parser &parser) {
+    return Parser::Expect(TokenType::LeftBracket)
+            .FollowedBy<ASTExpression>()
+            .FollowedByIgnore(TokenType::RightBracket)
+            .Builder<ASTPostfixIndex>([](Token &&, ASTExpression &&expression) {
+                return ASTPostfixIndex{ std::make_unique<ASTExpression>(std::move(expression)) };
+            })
+            .Match(parser);
+}
+
+std::string ASTPostfixIndex::ToString(int depth) const  {
+    std::stringstream resultStream;
+
+    resultStream << "ASTPostfixIndex {\n";
+
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR) << "inner = " << this->inner->ToString(depth + 1) << '\n';
+
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+std::optional<ASTPostfixDot> ASTPostfixDot::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Dot)
+            .FollowedBy<ASTIdentifier>()
+            .Builder<ASTPostfixDot>([](const Token &, const ASTIdentifier &astIdentifier) {
+                return ASTPostfixDot{ astIdentifier };
+            })
+            .Match(parser);
+}
+
+std::optional<ASTPostfixArrow> ASTPostfixArrow::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Arrow)
+            .FollowedBy<ASTIdentifier>()
+            .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &identifier) {
+                return ASTPostfixArrow{ identifier };
+            })
+            .Match(parser);
+}
+
+std::optional<ASTPostfixDecrement> ASTPostfixDecrement::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Decrement)
+            .Builder<ASTPostfixDecrement>([](const Token &token) {
+                return ASTPostfixDecrement{};
+            })
+            .Match(parser);
+}
+
+std::optional<ASTPostfixIncrement> ASTPostfixIncrement::Match(Parser &parser) {
+    return Parser::Expect(TokenType::Increment)
+            .Builder<ASTPostfixIncrement>([](const Token &token) {
+                return ASTPostfixIncrement{};
+            })
+            .Match(parser);
+}
+
+std::optional<ASTPostfixExpression> ASTPostfixExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTPrimaryExpression>()
+            .FollowedBy(
+                    Parser::Expect<ASTPostfixIncrement>()
+                    .Or<ASTPostfixDecrement>()
+                    .Or<ASTPostfixArrow>()
+                    .Or<ASTPostfixDot>()
+                    .Or<ASTPostfixIndex>()
+                    .ZeroOrMore()
+            ).Builder<ASTPostfixExpression>(
+            [](
+                    ASTPrimaryExpression &&primaryExpressionNode,
+                    std::vector<typename ASTPostfixExpression::Operation> &&postfixExpressions
+            ) {
+                ASTPostfixExpression output{std::move(primaryExpressionNode), std::nullopt};
+
+                for (typename ASTPostfixExpression::Operation &item: postfixExpressions) {
+                    output = ASTPostfixExpression{std::move(output), std::move(item)};
+                }
+
+                return output;
+            }
+    ).Match(parser);
+}
+
+std::optional<ASTExpression> ASTExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTUnaryExpression>()
+            .FollowedBy(
+            Parser::Expect<ASTUnaryExpression>()
+                        .ZeroOrMore()
+            ).Builder<ASTExpression>([](ASTUnaryExpression &&unaryExpression, std::vector<ASTUnaryExpression> &&unaryExpressions) {
+                return ASTExpression{ std::move(unaryExpression), std::move(unaryExpressions) };
+           })
+            .Match(parser);
+}

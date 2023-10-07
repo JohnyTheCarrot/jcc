@@ -20,6 +20,11 @@ public:
         return ParserRuleBuilder<TNodeBuilder, TOutNode, TRest...>{nodeBuilder};
     }
 
+    template<class TOut>
+    static ParserRuleFunction<TOut> Expect() {
+        return ParserRuleFunction<TOut>{};
+    }
+
     [[nodiscard]]
     static ParserRuleToken Expect(TokenType expected) {
         return ParserRuleToken{expected};
