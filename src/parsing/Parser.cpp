@@ -39,31 +39,14 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    auto typeSpecifier = Parser::Expect(TokenType::KeywordVoid)
-            .Or(TokenType::KeywordChar)
-            .Or(TokenType::KeywordShort)
-            .Or(TokenType::KeywordInt)
-            .Or(TokenType::KeywordLong)
-            .Or(TokenType::KeywordFloat)
-            .Or(TokenType::KeywordDouble)
-            .Or(TokenType::KeywordSigned)
-            .Or(TokenType::KeywordUnsigned)
-            .Or(TokenType::KeywordBool)
-            .Or(TokenType::KeywordComplex)
-            .Builder<ASTTypeSpecifier>([](const Token& token) {
-                ASTTypeSpecifier::TypeSpecifier typeSpecifier{ ASTTypeSpecifier::FromTokenType(token.type) };
-
-                return ASTTypeSpecifier{typeSpecifier};
-            });
-
     auto declarations{
-        Parser::Expect<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
+        Parser::Expect<ASTSpecifierQualifierList>()
             .FollowedBy<ASTIdentifier>()
             .FollowedByIgnore(TokenType::Assign)
             .FollowedBy<ASTExpression>()
             .FollowedByIgnore(TokenType::Semicolon)
-            .Builder<ASTDeclaration>([](std::tuple<ASTTypeSpecifier, ASTIdentifier>&& declInfo, ASTExpression &&value) {
-                ASTTypeSpecifier typeSpecifier{ std::get<0>(declInfo) };
+            .Builder<ASTDeclaration>([](std::tuple<ASTSpecifierQualifierList, ASTIdentifier>&& declInfo, ASTExpression &&value) {
+                ASTSpecifierQualifierList typeSpecifier{ std::get<0>(declInfo) };
                 ASTIdentifier identifier{ std::get<1>(declInfo) };
 
                 return ASTDeclaration{ std::move(typeSpecifier), std::move(identifier), std::move(value) };

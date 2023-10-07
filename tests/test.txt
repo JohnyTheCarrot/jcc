@@ -1,1 +1,2 @@
-int testIdentifier = -variable->member[++someStruct->member]++;
+unsigned short testIdentifier =
+    (unsigned short) some->array[(unsigned int) ++someValue.member];

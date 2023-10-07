@@ -20,6 +20,11 @@ public:
         return ParserRuleBuilder<TNodeBuilder, TOutNode, TRest...>{nodeBuilder};
     }
 
+    template<class TRule>
+    static TRule Expect(const TRule &rule) {
+        return rule;
+    }
+
     template<class TOut>
     static ParserRuleFunction<TOut> Expect() {
         return ParserRuleFunction<TOut>{};

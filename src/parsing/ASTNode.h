@@ -319,27 +319,35 @@ public:
     static std::optional<ASTUnaryDecrement> Match(Parser &parser);
 };
 
+struct ASTCastExpression;
+
 struct ASTUnaryExpression final : public ASTNode {
 public:
     using Operator = std::variant<ASTUnaryOperator, ASTUnaryIncrement, ASTUnaryDecrement>;
 
-    ASTUnaryExpression(ASTUnaryExpression &&other, const Operator &operation)
+    ASTUnaryExpression(ASTUnaryExpression &&other, Operator &&operation)
         : inner{
             std::make_unique<ASTUnaryExpression>(std::move(other))
         }
-        , operation{operation} {};
+        , operation{std::move(operation)} {}
 
 
-    ASTUnaryExpression(ASTUnaryExpression &&other)
-        : operation{other.operation}
+    ASTUnaryExpression(ASTUnaryExpression &&other) noexcept
+        : operation{std::move(other.operation)}
         , inner{std::move(other.inner)} {
-    };
+    }
 
-    ASTUnaryExpression(ASTPostfixExpression &&astPostfixExpression, const std::optional<Operator> &operation)
+    ASTUnaryExpression(ASTPostfixExpression &&astPostfixExpression, std::optional<Operator> &&operation)
         : inner{
             std::move(astPostfixExpression)
         }
-        , operation{operation} {};
+        , operation{std::move(operation)} {}
+
+    ASTUnaryExpression(std::unique_ptr<ASTCastExpression> &&castExpression, std::optional<Operator> &&operation)
+        : inner{
+            std::move(castExpression)
+        }
+        , operation{std::move(operation)} {}
 
     ASTUnaryExpression &operator=(ASTUnaryExpression &&other) noexcept {
         if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(other.inner)) {
@@ -354,92 +362,13 @@ public:
     }
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream{};
-
-        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
-
-        resultStream << "ASTUnaryExpression {\n";
-        resultStream << tabs << "inner = ";
-
-        if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(inner)) {
-            resultStream << std::get<std::unique_ptr<ASTUnaryExpression>>(inner)->ToString(depth + 1);
-        } else {
-            resultStream << std::get<ASTPostfixExpression>(inner).ToString(depth + 1);
-        }
-
-        if (operation.has_value()) {
-            resultStream << ",\n" << tabs << "operation = ";
-
-            resultStream << std::visit([](const auto &op) {
-                return op.ToString(0);
-            }, operation.value());
-        }
-        resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
-
-        return resultStream.str();
-    }
+    std::string ToString(int depth) const override;
 
     static std::optional<ASTUnaryExpression> Match(Parser &parser);
 
 private:
-    std::variant<std::unique_ptr<ASTUnaryExpression>, ASTPostfixExpression> inner;
+    std::variant<std::unique_ptr<ASTUnaryExpression>, ASTPostfixExpression, std::unique_ptr<ASTCastExpression>> inner;
     std::optional<Operator> operation;
-};
-
-struct ASTExpression final : public ASTNode {
-    ASTExpression(ASTUnaryExpression &&first, std::vector<ASTUnaryExpression> &&other)
-        : first{std::move(first)}
-        , expressions{std::move(other)} {};
-
-    [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream{};
-
-        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
-
-        resultStream << "ASTExpression {\n";
-        resultStream << tabs << "first = " << this->first.ToString(depth + 1) << ",\n";
-        resultStream << tabs << "expressions = [";
-
-        if (!this->expressions.empty()) {
-            resultStream << '\n';
-        }
-
-        for (const ASTUnaryExpression &expression : this->expressions) {
-            resultStream << tabs << expression.ToString(depth + 1) << ",\n";
-        }
-
-        if (!this->expressions.empty()) {
-            resultStream << tabs;
-        }
-
-        resultStream << "]\n" << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
-
-        return resultStream.str();
-    }
-
-    static std::optional<ASTExpression> Match(Parser &parser);
-
-    ASTUnaryExpression first;
-    std::vector<ASTUnaryExpression> expressions;
-};
-
-struct ASTDeclarator : public ASTNode {
-};
-
-struct ASTInitDeclarator : public ASTNode {
-};
-
-struct ASTDeclaratorList : public ASTNode {
-};
-
-struct ASTFunctionSpecifier : public ASTNode {
-    enum class Specifier {
-        Inline,
-        NoReturn,
-    } specifier{};
-
 };
 
 struct ASTTypeQualifier : public ASTNode {
@@ -450,6 +379,33 @@ struct ASTTypeQualifier : public ASTNode {
         Atomic,
     } qualifier{};
 
+    explicit ASTTypeQualifier(TypeQualifier qualifier) : qualifier{qualifier} {};
+
+    static TypeQualifier FromTokenType(TokenType tokenType) {
+        switch (tokenType) {
+            case TokenType::KeywordConst:
+                return ASTTypeQualifier::TypeQualifier::Const;
+            case TokenType::KeywordRestrict:
+                return ASTTypeQualifier::TypeQualifier::Restrict;
+            case TokenType::KeywordVolatile:
+                return ASTTypeQualifier::TypeQualifier::Volatile;
+            case TokenType::KeywordAtomic:
+                return ASTTypeQualifier::TypeQualifier::Atomic;
+            default:
+                assert(false);
+        }
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        resultStream << "ASTTypeQualifier(" << magic_enum::enum_name(this->qualifier) << ')';
+
+        return resultStream.str();
+    }
+
+    static std::optional<ASTTypeQualifier> Match(Parser &parser);
 };
 
 struct ASTTypeSpecifier final : public ASTNode {
@@ -506,20 +462,175 @@ struct ASTTypeSpecifier final : public ASTNode {
 
         return resultStream.str();
     }
+
+    static std::optional<ASTTypeSpecifier> Match(Parser &parser);
+};
+
+struct ASTSpecifierQualifierList final : public ASTNode {
+    explicit ASTSpecifierQualifierList(std::vector<std::variant<ASTTypeSpecifier, ASTTypeQualifier>> &&list)
+            : list{std::move(list)} {};
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+        std::string tabs2(PRETTY_PRINT_DEPTH(1), PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTSpecifierQualifierList {\n";
+        resultStream << tabs << "list = [";
+
+        if (!this->list.empty()) {
+            resultStream << '\n';
+        }
+
+        for (const std::variant<ASTTypeSpecifier, ASTTypeQualifier> &item : this->list) {
+            resultStream << tabs << std::visit([&tabs2](const auto &item) {
+                return tabs2 + item.ToString(0);
+            }, item) << ",\n";
+        }
+
+        if (!this->list.empty()) {
+            resultStream << tabs;
+        }
+
+        resultStream << "]\n" << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+    static std::optional<ASTSpecifierQualifierList> Match(Parser &parser);
+
+    std::vector<std::variant<ASTTypeSpecifier, ASTTypeQualifier>> list;
+};
+
+struct ASTTypeName final : public ASTNode {
+    explicit ASTTypeName(ASTSpecifierQualifierList &&specifierQualifierList)
+            : specifierQualifierList{std::move(specifierQualifierList)} {};
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTTypeName {\n";
+        resultStream << tabs << "specifierQualifierList = " << this->specifierQualifierList.ToString(depth + 1) << '\n';
+        resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+    static std::optional<ASTTypeName> Match(Parser &list);
+
+    ASTSpecifierQualifierList specifierQualifierList;
+};
+
+struct ASTCastExpression final : public ASTNode {
+    ASTCastExpression(ASTUnaryExpression &&unaryExpression, std::optional<ASTTypeName> &&typeName)
+            : inner{std::move(unaryExpression)}
+            , typeName{std::move(typeName)} {};
+
+    ASTCastExpression(std::unique_ptr<ASTCastExpression> &&castExpressionPtr, std::optional<ASTTypeName> &&typeName)
+            : inner{std::move(castExpressionPtr)}
+            , typeName{std::move(typeName)} {};
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTCastExpression {\n";
+        resultStream << tabs << "inner = ";
+
+        if (std::holds_alternative<ASTUnaryExpression>(inner)) {
+            resultStream << std::get<ASTUnaryExpression>(inner).ToString(depth + 1);
+        } else {
+            resultStream << std::get<std::unique_ptr<ASTCastExpression>>(inner)->ToString(depth + 1);
+        }
+
+        if (typeName.has_value()) {
+            resultStream << ",\n" << tabs << "typeName = " << typeName.value().ToString(depth + 1);
+        }
+        resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+    static std::optional<ASTCastExpression> Match(Parser &parser);
+
+    std::variant<ASTUnaryExpression, std::unique_ptr<ASTCastExpression>> inner;
+    std::optional<ASTTypeName> typeName;
+};
+
+struct ASTExpression final : public ASTNode {
+    ASTExpression(ASTCastExpression &&first, std::vector<ASTCastExpression> &&other)
+        : first{std::move(first)}
+        , expressions{std::move(other)} {};
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override {
+        std::stringstream resultStream{};
+
+        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+        resultStream << "ASTExpression {\n";
+        resultStream << tabs << "first = " << this->first.ToString(depth + 1) << ",\n";
+        resultStream << tabs << "expressions = [";
+
+        if (!this->expressions.empty()) {
+            resultStream << '\n';
+        }
+
+        for (const auto &expression : this->expressions) {
+            resultStream << tabs << expression.ToString(depth + 1) << ",\n";
+        }
+
+        if (!this->expressions.empty()) {
+            resultStream << tabs;
+        }
+
+        resultStream << "]\n" << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+        return resultStream.str();
+    }
+
+    static std::optional<ASTExpression> Match(Parser &parser);
+
+    ASTCastExpression first;
+    std::vector<ASTCastExpression> expressions;
+};
+
+struct ASTDeclarator : public ASTNode {
+};
+
+struct ASTInitDeclarator : public ASTNode {
+};
+
+struct ASTDeclaratorList : public ASTNode {
+};
+
+struct ASTFunctionSpecifier : public ASTNode {
+    enum class Specifier {
+        Inline,
+        NoReturn,
+    } specifier{};
+
 };
 
 struct ASTDeclaration final : public ASTNode {
 
     explicit ASTDeclaration(
-            ASTTypeSpecifier &&specifier,
+            ASTSpecifierQualifierList &&list,
             ASTIdentifier    &&identifier,
             ASTExpression    &&expression
     )
     : identifier{std::move(identifier)}
-    , specifier {std::move(specifier)}
+    , specifier {std::move(list)}
     , expression{std::move(expression)} {};
-    
-    ASTTypeSpecifier specifier;
+
+    ASTSpecifierQualifierList specifier;
     ASTIdentifier identifier;
     ASTExpression expression;
 
