@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Parser.h"
 #include "../reporting.h"
+#include "ParserRuleBuilder.h"
 
 Parser::Parser(TokenList &&tokenList, const std::string &fileName, std::istream &inputStream)
         : tokens{std::move(tokenList)}, fileName{fileName}, inputStream{ inputStream } {
@@ -38,117 +39,6 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    auto identifiers = Parser::Expect(TokenType::Identifier)
-            .Builder<ASTIdentifier>([](Token token) {
-                return ASTIdentifier{ std::get<std::string>(token.value) };
-            });
-
-    auto constant = Parser::Expect(TokenType::StringLiteral)
-            .Or(TokenType::IntegerLiteral)
-            .Or(TokenType::FloatLiteral)
-            .Or(TokenType::DoubleLiteral)
-            .Builder<ASTConstant>([](const Token& token) {
-                return ASTConstant{ token };
-            });
-
-    auto primaryExpression = Parser::Expect<typeof identifiers, ASTPrimaryExpression, ASTIdentifier>(identifiers)
-            .Or(constant)
-            .Builder<ASTPrimaryExpression>([](const std::variant<ASTIdentifier, ASTConstant> &variant) {
-                return ASTPrimaryExpression{ variant };
-            });
-
-#pragma region postfix expressions
-
-    auto postfixIncrementExpression{
-            Parser::Expect(TokenType::Increment)
-                    .Builder<ASTPostfixIncrement>([](const Token &token) {
-                        return ASTPostfixIncrement{};
-                    })
-    };
-
-    auto postfixDecrementExpression{
-            Parser::Expect(TokenType::Decrement)
-                    .Builder<ASTPostfixDecrement>([](const Token &token) {
-                        return ASTPostfixDecrement{};
-                    })
-    };
-
-    auto postfixArrowExpression{
-            Parser::Expect(TokenType::Arrow)
-                    .FollowedBy(identifiers)
-                    .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &identifier) {
-                        return ASTPostfixArrow{ identifier };
-                    })
-    };
-
-    auto postfixDotExpression{
-            Parser::Expect(TokenType::Dot)
-                    .FollowedBy(identifiers)
-                    .Builder<ASTPostfixDot>([](const Token &, const ASTIdentifier &identifier) {
-                        return ASTPostfixDot{ identifier };
-                    })
-    };
-
-    auto postfixExpression = Parser::Expect<typeof primaryExpression, ASTPostfixExpression, ASTPrimaryExpression>(primaryExpression)
-            .FollowedBy(
-                    Parser::Expect<typeof postfixIncrementExpression, ASTPostfixIncrement, Token>(postfixIncrementExpression)
-                            .Or(postfixDecrementExpression)
-                            .Or(postfixArrowExpression)
-                            .Or(postfixDotExpression)
-                            .ZeroOrMore()
-            ).Builder<ASTPostfixExpression>(
-                    [](
-                            const ASTPrimaryExpression &primaryExpressionNode,
-                            const std::vector<typename ASTPostfixExpression::Operation> &postfixExpressions
-                    ) {
-                ASTPostfixExpression output{primaryExpressionNode, std::nullopt};
-
-                for (const typename ASTPostfixExpression::Operation &item: postfixExpressions) {
-                    output = ASTPostfixExpression{std::move(output), item};
-                }
-
-                return output;
-            });
-
-#pragma endregion
-
-#pragma region unary expressions
-    auto unaryIncrement = Parser::Expect(TokenType::Increment)
-            .Builder<ASTUnaryIncrement>([](const Token &token) {
-        return ASTUnaryIncrement{};
-    });
-
-    auto unaryDecrement = Parser::Expect(TokenType::Decrement)
-            .Builder<ASTUnaryDecrement>([](const Token &token) {
-        return ASTUnaryDecrement{};
-    });
-
-    auto unaryOperator = Parser::Expect(TokenType::Plus)
-            .Or(TokenType::Minus)
-            .Or(TokenType::Ampersand)
-            .Or(TokenType::Asterisk)
-            .Or(TokenType::BitwiseNot)
-            .Or(TokenType::LogicalNot)
-            .Builder<ASTUnaryOperator>([](const Token &token) {
-                return ASTUnaryOperator{ token.type };
-            });
-
-    auto unaryExpression = Parser::Expect<typeof unaryOperator, ASTUnaryOperator, Token>(unaryOperator)
-            .Or(unaryIncrement)
-            .Or(unaryDecrement)
-            .ZeroOrMore()
-            .FollowedBy(postfixExpression)
-            .Builder<ASTUnaryExpression>([](const std::vector<typename ASTUnaryExpression::Operator>& operators, const ASTPostfixExpression &postfixExpressionNode) {
-                ASTUnaryExpression output{postfixExpressionNode, std::nullopt};
-
-                for (const typename ASTUnaryExpression::Operator &item : operators) {
-                    output = ASTUnaryExpression{std::move(output), item};
-                }
-
-                return output;
-            });
-#pragma endregion
-
     auto typeSpecifier = Parser::Expect(TokenType::KeywordVoid)
             .Or(TokenType::KeywordChar)
             .Or(TokenType::KeywordShort)
@@ -168,15 +58,15 @@ void Parser::Parse() {
 
     auto declarations{
         Parser::Expect<typeof typeSpecifier, ASTDeclaration, ASTTypeSpecifier>(typeSpecifier)
-            .FollowedBy(identifiers)
+            .FollowedBy<ASTIdentifier>()
             .FollowedByIgnore(TokenType::Assign)
-            .FollowedBy(unaryExpression)
+            .FollowedBy<ASTExpression>()
             .FollowedByIgnore(TokenType::Semicolon)
-            .Builder<ASTDeclaration>([](const std::tuple<ASTTypeSpecifier, ASTIdentifier>& declInfo, const ASTUnaryExpression &value) {
+            .Builder<ASTDeclaration>([](std::tuple<ASTTypeSpecifier, ASTIdentifier>&& declInfo, ASTExpression &&value) {
                 ASTTypeSpecifier typeSpecifier{ std::get<0>(declInfo) };
                 ASTIdentifier identifier{ std::get<1>(declInfo) };
 
-                return ASTDeclaration{ typeSpecifier, identifier, value };
+                return ASTDeclaration{ std::move(typeSpecifier), std::move(identifier), std::move(value) };
             })
     };
 

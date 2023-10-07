@@ -16,6 +16,14 @@ void Error(Parser &parser, const std::string &message) {
     parser.Error(parser.GetLastToken()->span, message);
 }
 
+int GetParserCursor(Parser &parser) {
+    return parser.GetCursor();
+}
+
+void SetParserCursor(Parser &parser, int cursor) {
+    parser.SetCursor(cursor);
+}
+
 bool IsNextTokenMatch(Parser &parser, TokenType type) {
     std::optional<Token> token{ parser.ConsumeIfTokenIs(type) };
 
