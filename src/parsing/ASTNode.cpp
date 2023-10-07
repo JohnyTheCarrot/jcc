@@ -28,10 +28,39 @@ std::optional<ASTConstant> ASTConstant::Match(Parser &parser) {
 std::optional<ASTPrimaryExpression> ASTPrimaryExpression::Match(Parser &parser) {
     return Parser::Expect<ASTIdentifier>()
             .Or<ASTConstant>()
-            .Builder<ASTPrimaryExpression>([](const std::variant<ASTIdentifier, ASTConstant> &variant) {
-                return ASTPrimaryExpression{ variant };
+            .Or(
+                Parser::Expect<ASTExpression>()
+                        .SurroundedBy(TokenType::LeftParenthesis, TokenType::RightParenthesis)
+            )
+            .Builder<ASTPrimaryExpression>([](std::variant<ASTIdentifier, ASTConstant, ASTExpression> &&variant) {
+                if (std::holds_alternative<ASTExpression>(variant)) {
+                    return ASTPrimaryExpression{ std::make_unique<ASTExpression>(std::move(std::get<ASTExpression>(variant))) };
+                } else if (std::holds_alternative<ASTIdentifier>(variant)) {
+                    return ASTPrimaryExpression{ std::get<ASTIdentifier>(variant) };
+                } else if (std::holds_alternative<ASTConstant>(variant)) {
+                    return ASTPrimaryExpression{ std::get<ASTConstant>(variant) };
+                }
             })
             .Match(parser);
+}
+
+std::string ASTPrimaryExpression::ToString(int depth) const {
+    std::stringstream resultStream;
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTPrimaryExpression {\n" << tabs;
+
+    if (std::holds_alternative<ASTIdentifier>(this->inner)) {
+        resultStream << std::get<ASTIdentifier>(this->inner).ToString(depth + 1);
+    } else if (std::holds_alternative<ASTConstant>(this->inner)) {
+        resultStream << std::get<ASTConstant>(this->inner).ToString(depth + 1);
+    } else {
+        resultStream << std::get<std::unique_ptr<ASTExpression>>(this->inner)->ToString(depth + 1);
+    }
+
+    resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
 }
 
 std::optional<ASTUnaryOperator> ASTUnaryOperator::Match(Parser &parser) {
@@ -82,16 +111,15 @@ std::optional<ASTUnaryExpression> ASTUnaryExpression::Match(Parser &parser) {
 }
 
 std::optional<ASTPostfixIndex> ASTPostfixIndex::Match(Parser &parser) {
-    return Parser::Expect(TokenType::LeftBracket)
-            .FollowedBy<ASTExpression>()
-            .FollowedByIgnore(TokenType::RightBracket)
-            .Builder<ASTPostfixIndex>([](Token &&, ASTExpression &&expression) {
+    return Parser::Expect<ASTExpression>()
+            .SurroundedBy(TokenType::LeftBracket, TokenType::RightBracket)
+            .Builder<ASTPostfixIndex>([](ASTExpression &&expression) {
                 return ASTPostfixIndex{ std::make_unique<ASTExpression>(std::move(expression)) };
             })
             .Match(parser);
 }
 
-std::string ASTPostfixIndex::ToString(int depth) const  {
+std::string ASTPostfixIndex::ToString(int depth) const {
     std::stringstream resultStream;
 
     resultStream << "ASTPostfixIndex {\n";
@@ -115,8 +143,8 @@ std::optional<ASTPostfixDot> ASTPostfixDot::Match(Parser &parser) {
 std::optional<ASTPostfixArrow> ASTPostfixArrow::Match(Parser &parser) {
     return Parser::Expect(TokenType::Arrow)
             .FollowedBy<ASTIdentifier>()
-            .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &identifier) {
-                return ASTPostfixArrow{ identifier };
+            .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &astIdentifier) {
+                return ASTPostfixArrow{ astIdentifier };
             })
             .Match(parser);
 }

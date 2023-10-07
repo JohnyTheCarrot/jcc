@@ -30,11 +30,6 @@ public:
         return ParserRuleToken{expected};
     }
 
-    template<class TOutNode>
-    static ParserRuleNode<TOutNode> Expect(std::optional<TOutNode> &out) {
-        return ParserRuleNode<TOutNode>{out};
-    }
-
     std::optional<Token> PeekNextToken();
 
     [[nodiscard]]
