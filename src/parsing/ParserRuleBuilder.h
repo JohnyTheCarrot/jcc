@@ -84,6 +84,11 @@ class ParserRuleOr;
 template <class TRule>
 class ParserRuleZeroOrMore;
 
+template<class TRule>
+class ParserRuleSurroundedBy;
+
+struct ParserRuleToken;
+
 template<class TOut>
 class ParserRuleFunction final {
 public:
@@ -107,6 +112,10 @@ public:
     template<class TAlternative>
     ParserRuleOr<Self, ParserRuleFunction<TAlternative>> Or() {
         return {*this, ParserRuleFunction<TAlternative>{}};
+    }
+
+    ParserRuleSurroundedBy<Self> SurroundedBy(TokenType left, TokenType right) {
+        return {left, right, std::move(*this)};
     }
 
     template<class TFollowedBy>
@@ -192,7 +201,7 @@ public:
         , right{right} {}
 
     template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(const OutNode &)> &&builder) {
+    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(OutNode &&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -544,26 +553,60 @@ private:
     TBuilder nodeBuilder;
 };
 
-template<class TNode>
+template<class TRule>
 class ParserRuleSurroundedBy {
 public:
-    ParserRuleSurroundedBy(ParserRuleToken left, ParserRuleToken right, std::optional<TNode> &out) : out{out} {}
+    using Self = ParserRuleSurroundedBy<TRule>;
+    using OutNode = typename TRule::OutNode;
 
-private:
-    ParserRuleToken left, right;
-    std::optional<TNode> &out;
-};
+    ParserRuleSurroundedBy(TokenType left, TokenType &right, TRule &&out)
+        : left{left}
+        , right{right}
+        , out{out} {}
 
-template<class TNode>
-class ParserRuleNode {
-public:
-    ParserRuleNode(std::optional<TNode> &out) : out{out} {}
-
-    ParserRuleSurroundedBy<TNode> SurroundedBy(TokenType left, TokenType right) {
-        return ParserRuleSurroundedBy<TNode>{left, right, this->out};
+    template<class TOutNode>
+    NodeBuilder<Self, TOutNode, typename TRule::OutNode> Builder(std::function<TOutNode(typename TRule::OutNode&&)> &&builder) {
+        return {
+                std::move(*this),
+                std::move(builder)
+        };
     }
+
+    std::optional<OutNode> Match(Parser &parser) const {
+        int cursor{ GetParserCursor(parser) };
+        bool leftIsMatch{ IsNextTokenMatch(parser, this->left) };
+
+        if (!leftIsMatch) {
+            SetParserCursor(parser, cursor);
+            return std::nullopt;
+        }
+
+        std::optional<typename TRule::OutNode> outResult{ this->out.Match(parser) };
+
+        if (!outResult.has_value()) {
+            SetParserCursor(parser, cursor);
+            return std::nullopt;
+        }
+
+        bool rightIsMatch{ IsNextTokenMatch(parser, this->right) };
+
+        if (!rightIsMatch) {
+            SetParserCursor(parser, cursor);
+            return std::nullopt;
+        }
+
+        return std::move(outResult.value());
+    }
+
+    friend std::ostream &operator<<(std::ostream &stream, const ParserRuleSurroundedBy &ruleToOutput) {
+        stream << magic_enum::enum_name(ruleToOutput.left) << " " << ruleToOutput.out << " " << magic_enum::enum_name(ruleToOutput.right);
+
+        return stream;
+    }
+
 private:
-    std::optional<TNode> &out;
+    TokenType left, right;
+    TRule &out;
 };
 
 #endif //JCC_PARSERRULEBUILDER_H

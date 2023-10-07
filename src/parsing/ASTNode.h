@@ -100,32 +100,19 @@ struct ASTConstant final : public ASTNode {
     static std::optional<ASTConstant> Match(Parser &parser);
 };
 
-struct ASTPrimaryExpression : public ASTNode {
-    using Inner = std::variant<ASTIdentifier, ASTConstant>;
+struct ASTExpression;
 
-    explicit ASTPrimaryExpression(const Inner &identifier) : inner{identifier} {};
+struct ASTPrimaryExpression : public ASTNode {
+    using Inner = std::variant<ASTIdentifier, ASTConstant, std::unique_ptr<ASTExpression>>;
+
+    explicit ASTPrimaryExpression(Inner &&identifier) : inner{std::move(identifier)} {};
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream;
-        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
-
-        resultStream << "ASTPrimaryExpression( ";
-
-        if (std::holds_alternative<ASTIdentifier>(this->inner)) {
-            resultStream << std::get<ASTIdentifier>(this->inner).ToString(depth + 1);
-        } else {
-            resultStream << std::get<ASTConstant>(this->inner).ToString(depth + 1);
-        }
-
-        resultStream << " )";
-
-        return resultStream.str();
-    }
+    std::string ToString(int depth) const override;
 
     static std::optional<ASTPrimaryExpression> Match(Parser &parser);
 
-    std::variant<ASTIdentifier, ASTConstant> inner;
+    Inner inner;
 };
 
 struct ASTPostfixIncrement final : public ASTNode {
