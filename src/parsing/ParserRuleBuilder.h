@@ -481,7 +481,7 @@ public:
 
     template<class TOutNode>
     NodeBuilder<Self, TOutNode, typename TRule::OutNode, typename TFollowedBy::OutNode> Builder(
-            std::function<TOutNode(typename TRule::OutNode, typename TFollowedBy::OutNode)> &&builder) {
+            std::function<TOutNode(typename TRule::OutNode &&, typename TFollowedBy::OutNode &&)> &&builder) {
         return {
             std::move(*this),
             std::move(builder)
@@ -504,6 +504,11 @@ public:
     template<class TAlternative>
     ParserRuleOr<Self, TAlternative> Or(const TAlternative &alternative) {
         return {*this, alternative};
+    }
+
+    template<class TAlternative>
+    ParserRuleOr<Self, ParserRuleFunction<TAlternative>> Or() {
+        return {*this, ParserRuleFunction<TAlternative>{}};
     }
 
     ParserRuleFollowedByIgnore<Self, typename TRule::OutNode, typename TFollowedBy::OutNode> FollowedByIgnore(TokenType newToMatch) {

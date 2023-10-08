@@ -40,6 +40,8 @@ std::optional<ASTPrimaryExpression> ASTPrimaryExpression::Match(Parser &parser) 
                 } else if (std::holds_alternative<ASTConstant>(variant)) {
                     return ASTPrimaryExpression{ std::get<ASTConstant>(variant) };
                 }
+
+                assert(false);
             })
             .Match(parser);
 }
@@ -242,21 +244,47 @@ std::optional<ASTPostfixExpression> ASTPostfixExpression::Match(Parser &parser) 
 }
 
 std::optional<ASTExpression> ASTExpression::Match(Parser &parser) {
-    return Parser::Expect<ASTCastExpression>()
+    return Parser::Expect<ASTAdditiveExpression>()
             .FollowedBy(
             Parser::Expect(TokenType::Comma)
-                        .FollowedBy<ASTCastExpression>()
+                        .FollowedBy<ASTAdditiveExpression>()
                         .ZeroOrMore()
-            ).Builder<ASTExpression>([](ASTCastExpression &&unaryExpression, std::vector<std::tuple<Token, ASTCastExpression>> &&unaryExpressions) {
-                std::vector<ASTCastExpression> justTheUnaries{ };
+            ).Builder<ASTExpression>([](ASTAdditiveExpression &&expr, std::vector<std::tuple<Token, ASTAdditiveExpression>> &&capturedExpressions) {
+                std::vector<ASTAdditiveExpression> justTheExpressions{ };
 
-                for (auto &item: unaryExpressions) {
-                    justTheUnaries.push_back(std::move(std::get<1>(item)));
+                for (auto &item: capturedExpressions) {
+                    justTheExpressions.push_back(std::move(std::get<1>(item)));
                 }
 
-                return ASTExpression{ std::move(unaryExpression), std::move(justTheUnaries) };
+                return ASTExpression{std::move(expr), std::move(justTheExpressions) };
            })
             .Match(parser);
+}
+
+std::string ASTExpression::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTExpression {\n";
+    resultStream << tabs << "first = " << this->first.ToString(depth + 1) << ",\n";
+    resultStream << tabs << "expressions = [";
+
+    if (!this->expressions.empty()) {
+        resultStream << '\n';
+    }
+
+    for (const auto &expression : this->expressions) {
+        resultStream << tabs << expression.ToString(depth + 1) << ",\n";
+    }
+
+    if (!this->expressions.empty()) {
+        resultStream << tabs;
+    }
+
+    resultStream << "]\n" << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
 }
 
 std::optional<ASTTypeQualifier> ASTTypeQualifier::Match(Parser &parser) {
@@ -300,12 +328,52 @@ std::optional<ASTSpecifierQualifierList> ASTSpecifierQualifierList::Match(Parser
             .Match(parser);
 }
 
+std::string ASTSpecifierQualifierList::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+    std::string tabs2(PRETTY_PRINT_DEPTH(1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTSpecifierQualifierList {\n";
+    resultStream << tabs << "list = [";
+
+    if (!this->list.empty()) {
+        resultStream << '\n';
+    }
+
+    for (const std::variant<ASTTypeSpecifier, ASTTypeQualifier> &item : this->list) {
+        resultStream << tabs << std::visit([&tabs2](const auto &item) {
+            return tabs2 + item.ToString(0);
+        }, item) << ",\n";
+    }
+
+    if (!this->list.empty()) {
+        resultStream << tabs;
+    }
+
+    resultStream << "]\n" << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
 std::optional<ASTTypeName> ASTTypeName::Match(Parser &parser) {
     return Parser::Expect<ASTSpecifierQualifierList>()
             .Builder<ASTTypeName>([](ASTSpecifierQualifierList &&list) {
                 return ASTTypeName{ std::move(list) };
             })
             .Match(parser);
+}
+
+std::string ASTTypeName::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTTypeName {\n";
+    resultStream << tabs << "specifierQualifierList = " << this->specifierQualifierList.ToString(depth + 1) << '\n';
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
 }
 
 std::optional<ASTCastExpression> ASTCastExpression::Match(Parser &parser) {
@@ -323,4 +391,190 @@ std::optional<ASTCastExpression> ASTCastExpression::Match(Parser &parser) {
                 return output;
             })
             .Match(parser);
+}
+
+std::string ASTCastExpression::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTCastExpression {\n";
+    resultStream << tabs << "inner = ";
+
+    if (std::holds_alternative<ASTUnaryExpression>(inner)) {
+        resultStream << std::get<ASTUnaryExpression>(inner).ToString(depth + 1);
+    } else {
+        resultStream << std::get<std::unique_ptr<ASTCastExpression>>(inner)->ToString(depth + 1);
+    }
+
+    if (typeName.has_value()) {
+        resultStream << ",\n" << tabs << "typeName = " << typeName.value().ToString(depth + 1);
+    }
+    resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+std::string ASTMultiplicativeExpression::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTMultiplicativeExpression {\n";
+
+    resultStream << tabs << "lhs = ";
+
+    if (this->lhs.has_value())
+        resultStream << this->lhs->get()->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "rhs = ";
+
+    if (this->rhs.has_value())
+        resultStream << this->rhs->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "operator = " << magic_enum::enum_name(this->operatorType) << '\n';
+
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+std::optional<ASTMultiplicativeExpression> ASTMultiplicativeExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTCastExpression>()
+            .FollowedBy(
+                Parser::Expect(TokenType::Asterisk)
+                    .Or(TokenType::Divide)
+                    .Or(TokenType::Modulo)
+            )
+            .ZeroOrMore()
+            .FollowedBy<ASTCastExpression>()
+            .Builder<ASTMultiplicativeExpression>([](std::vector<std::tuple<ASTCastExpression, Token>> &&multiplicatives, ASTCastExpression &&rhs) {
+                std::optional<std::unique_ptr<ASTMultiplicativeExpression>> output{ std::nullopt };
+
+                for (auto &multiplicative : multiplicatives) {
+                    ASTCastExpression &multLhs{std::get<0>(multiplicative) };
+                    Token &opToken{ std::get<1>(multiplicative) };
+                    MultiplicativeOperator op{ ASTMultiplicativeExpression::OperatorFromTokenType(opToken.type) };
+
+                    output = std::make_unique<ASTMultiplicativeExpression>( std::move(output), op, std::move(multLhs) );
+                }
+
+                if (output.has_value()) {
+                    ASTMultiplicativeExpression::MultiplicativeOperator opType{output.value()->operatorType};
+                    std::unique_ptr<ASTMultiplicativeExpression> outputPtr{ std::move(output.value()) };
+
+                    return ASTMultiplicativeExpression{ std::move(outputPtr), opType, std::move(rhs) };
+                }
+
+                return ASTMultiplicativeExpression{ std::nullopt, MultiplicativeOperator::None, std::move(rhs) };
+            })
+            .Match(parser);
+}
+
+ASTMultiplicativeExpression::MultiplicativeOperator
+ASTMultiplicativeExpression::OperatorFromTokenType(TokenType tokenType) {
+    {
+        switch (tokenType) {
+            case TokenType::Asterisk:
+                return MultiplicativeOperator::Multiply;
+            case TokenType::Divide:
+                return MultiplicativeOperator::Divide;
+            case TokenType::Modulo:
+                return MultiplicativeOperator::Modulo;
+            default:
+                assert(false && "invalid token type");
+                return MultiplicativeOperator::None;
+        }
+    }
+}
+
+std::string ASTAdditiveExpression::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTAdditiveExpression {\n";
+
+    resultStream << tabs << "lhs = ";
+
+    if (this->lhs.has_value())
+        resultStream << this->lhs->get()->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "rhs = ";
+
+    if (this->rhs.has_value())
+        resultStream << this->rhs->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "operator = " << magic_enum::enum_name(this->operatorType) << '\n';
+
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+ASTAdditiveExpression::AdditiveOperator
+ASTAdditiveExpression::OperatorFromTokenType(TokenType tokenType) {
+    {
+        switch (tokenType) {
+            case TokenType::Plus:
+                return AdditiveOperator::Add;
+            case TokenType::Minus:
+                return AdditiveOperator::Subtract;
+            default:
+                assert(false && "invalid token type");
+                return AdditiveOperator::None;
+        }
+    }
+}
+
+// todo: same as multiplicative expression, refactor
+std::optional<ASTAdditiveExpression> ASTAdditiveExpression::Match(Parser &parser) {
+    return Parser::Expect<ASTMultiplicativeExpression>()
+            .FollowedBy(
+                    Parser::Expect(TokenType::Plus)
+                            .Or(TokenType::Minus)
+            )
+            .ZeroOrMore()
+            .FollowedBy<ASTMultiplicativeExpression>()
+            .Builder<ASTAdditiveExpression>([](std::vector<std::tuple<ASTMultiplicativeExpression, Token>> &&multiplicatives, ASTMultiplicativeExpression &&rhs) {
+                std::optional<std::unique_ptr<ASTAdditiveExpression>> output{ std::nullopt };
+
+                for (auto &multiplicative : multiplicatives) {
+                    ASTMultiplicativeExpression &multLhs{std::get<0>(multiplicative) };
+                    Token &opToken{ std::get<1>(multiplicative) };
+                    AdditiveOperator op{ ASTAdditiveExpression::OperatorFromTokenType(opToken.type) };
+
+                    output = std::make_unique<ASTAdditiveExpression>( std::move(output), op, std::move(multLhs) );
+                }
+
+                if (output.has_value()) {
+                    AdditiveOperator opType{output.value()->operatorType};
+                    std::unique_ptr<ASTAdditiveExpression> outputPtr{ std::move(output.value()) };
+
+                    return ASTAdditiveExpression{ std::move(outputPtr), opType, std::move(rhs) };
+                }
+
+                return ASTAdditiveExpression{ std::nullopt, AdditiveOperator::None, std::move(rhs) };
+            })
+            .Match(parser);
+}
+
+std::string ASTDeclaration::ToString(int depth) const {
+    std::stringstream resultStream;
+
+    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth),     PRETTY_PRINT_CHAR)   << "ASTDeclaration {\n";
+    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "specifier  = " << this->specifier.ToString(depth + 1) << ",\n";
+    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "identifier = " << this->identifier.ToString(depth + 1) << ",\n";
+    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "expression = " << this->expression.ToString(depth + 1);
+    resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth),     PRETTY_PRINT_CHAR)   << '}';
+
+    return resultStream.str();
 }
