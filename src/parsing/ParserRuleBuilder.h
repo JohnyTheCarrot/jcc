@@ -35,6 +35,22 @@ auto variant_cast(const std::variant<Args...>& v) -> variant_cast_proxy<Args...>
 }
 // end of snippet from stackoverflow
 
+template<class T>
+auto variant_cast(T &&v) -> T {
+    return std::forward<T>(v);
+}
+
+
+// https://stackoverflow.com/a/67106430/5119970
+template<typename T, typename... Types>
+constexpr bool are_types_unique_v = (!std::is_same_v<T, Types> && ...) && are_types_unique_v<Types...>;
+template<typename T>
+constexpr bool are_types_unique_v<T> = true;
+// end of snippet from stackoverflow
+
+template<typename T, typename... Types>
+using MaybeVariant = std::conditional<are_types_unique_v<Types...> && sizeof...(Types) != 1, std::variant<Types...>, T>::type;
+
 bool IsNextTokenMatch(Parser &parser, TokenType type);
 
 int GetParserCursor(Parser &parser);
@@ -44,10 +60,9 @@ void SetParserCursor(Parser &parser, int cursor);
 [[noreturn]]
 void Error(Parser &parser, const std::string &message);
 
-template<class TRule, class TOutNode, class ...TRuleOutNode>
+template<class TRule, class ...TRuleOutNode>
 struct NodeBuilder {
-    using BuilderFunction = std::function<TOutNode(TRuleOutNode...)>;
-    using OutNode = TOutNode;
+    using BuilderFunction = std::function<Node(TRuleOutNode...)>;
 
     NodeBuilder(
             TRule &&rule,
@@ -55,7 +70,7 @@ struct NodeBuilder {
     ) : rule{std::move(rule)}
       , builder{std::move(builder)} {}
 
-    std::optional<TOutNode> Match(Parser &parser, bool shouldError = false) const {
+    std::optional<Node> Match(Parser &parser, bool shouldError = false) const {
         int cursor{ GetParserCursor(parser) };
         std::optional<typename TRule::OutNode> parseResult{this->rule.Match(parser)};
 
@@ -104,12 +119,11 @@ struct ParserRuleToken;
 template<class TOut>
 class ParserRuleFunction final {
 public:
-    using OutNode = TOut;
+    using OutNode = Node;
     using OptionalOutNode = std::optional<OutNode>;
     using Self = ParserRuleFunction<TOut>;
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(OutNode &&)> &&builder) {
+    NodeBuilder<Self, OutNode> Builder(std::function<Node(OutNode &&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -167,8 +181,7 @@ public:
 
     explicit ParserRuleOneOrMore(const TRule &rule) : rule{rule} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(OutNode &&)> &&builder) {
+    NodeBuilder<Self, OutNode> Builder(std::function<Node(OutNode &&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -225,7 +238,7 @@ public:
     explicit ParserRuleZeroOrMore(const TRule &rule) : rule{rule} {}
 
     template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(const OutNode &)> &&builder) {
+    NodeBuilder<Self, OutNode> Builder(std::function<TOutNode(const OutNode &)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -270,18 +283,17 @@ private:
     TRule rule;
 };
 
-template<class TLeft, class TRight, class ...TLeftOptions>
+template<class TLeft, class TRight, class TLeftFirst, class ...TLeftOptions>
 class ParserRuleOrChain final {
 public:
-    using OutNode = std::variant<TLeftOptions..., typename TRight::OutNode>;
-    using Self = ParserRuleOrChain<TLeft, TRight, TLeftOptions...>;
+    using OutNode = MaybeVariant<typename TRight::OutNode, TLeftFirst, TLeftOptions...>;
+    using Self = ParserRuleOrChain<TLeft, TRight, TLeftFirst, TLeftOptions...>;
 
     ParserRuleOrChain(const TLeft &left, const TRight &right)
         : left{left}
         , right{right} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(OutNode &&)> &&builder) {
+    NodeBuilder<Self, OutNode> Builder(std::function<Node(OutNode &&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -289,12 +301,12 @@ public:
     }
 
     template<class TAlternative>
-    ParserRuleOrChain<Self, TAlternative, TLeftOptions..., typename TRight::OutNode> Or(const TAlternative &alternative) {
+    ParserRuleOrChain<Self, TAlternative, TLeftFirst, TLeftOptions..., typename TRight::OutNode> Or(const TAlternative &alternative) {
         return {*this, alternative};
     }
 
     template<class TAlternative>
-    ParserRuleOrChain<Self, ParserRuleFunction<TAlternative>, TLeftOptions..., typename TRight::OutNode> Or() {
+    ParserRuleOrChain<Self, ParserRuleFunction<TAlternative>, TLeftFirst, TLeftOptions..., typename TRight::OutNode> Or() {
         return {*this, ParserRuleFunction<TAlternative>{}};
     }
 
@@ -305,11 +317,11 @@ public:
 
     std::optional<OutNode> Match(Parser &parser) const {
         int cursor{ GetParserCursor(parser) };
-        std::optional<std::variant<TLeftOptions...>> leftResult{ this->left.Match(parser) };
+        std::optional<MaybeVariant<TLeftFirst, TLeftOptions...>> leftResult{ this->left.Match(parser) };
 
         if (leftResult.has_value()) {
             // leftResult is a subset of OutNode, convert to OutNode
-            return variant_cast(leftResult.value());
+            return std::move(variant_cast(leftResult.value()));
         }
 
         std::optional<typename TRight::OutNode> rightResult{ this->right.Match(parser) };
@@ -345,7 +357,11 @@ template <class TFirstOption, class TSecondOption>
 class ParserRuleOr final {
 public:
     using Self = ParserRuleOr<TFirstOption, TSecondOption>;
-    using OutNode = std::variant<typename TFirstOption::OutNode, typename TSecondOption::OutNode>;
+    using OutNode = std::conditional<
+            are_types_unique_v<typename TFirstOption::OutNode, typename TSecondOption::OutNode>,
+            std::variant<typename TFirstOption::OutNode, typename TSecondOption::OutNode>,
+            typename TFirstOption::OutNode
+    >::type;
     using FirstOption = TFirstOption;
     using SecondOption = TSecondOption;
 
@@ -353,8 +369,7 @@ public:
         : firstOption{firstOption}
         , secondOption{secondOption} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, OutNode> Builder(std::function<TOutNode(OutNode &&)> &&builder) {
+    NodeBuilder<Self, OutNode> Builder(std::function<Node(OutNode &&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -437,11 +452,10 @@ public:
         return {std::move(*this), ParserRuleFunction<TFollowedBy>{}};
     };
 
-    template<class TOutNode>
-    NodeBuilder<ParserRuleToken, TOutNode, Token> Builder(std::function<TOutNode(Token)> &&builder) {
+    NodeBuilder<ParserRuleToken, Token> Builder(std::function<Node(Token &&)> &&builder) {
         return {
                 std::move(*this),
-                std::forward<std::function<TOutNode(Token)>>(builder)
+                std::forward<std::function<Node(Token)>>(builder)
         };
     }
 
@@ -479,9 +493,8 @@ public:
 
     ParserRuleFollowedBy(const TRule &rule, const TFollowedBy &followedBy) : rule{rule}, followedBy{followedBy} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, typename TRule::OutNode, typename TFollowedBy::OutNode> Builder(
-            std::function<TOutNode(typename TRule::OutNode &&, typename TFollowedBy::OutNode &&)> &&builder) {
+    NodeBuilder<Self, typename TRule::OutNode, typename TFollowedBy::OutNode> Builder(
+            std::function<Node(typename TRule::OutNode &&, typename TFollowedBy::OutNode &&)> &&builder) {
         return {
             std::move(*this),
             std::move(builder)
@@ -553,9 +566,8 @@ public:
 
     ParserRuleFollowedByIgnore(TRule &&rule, TokenType toMatch) : rule{std::move(rule)}, toMatch{toMatch} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, TBuilderParams...> Builder(
-            std::function<TOutNode(TBuilderParams...)> &&builder) {
+    NodeBuilder<Self, TBuilderParams...> Builder(
+            std::function<Node(TBuilderParams...)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -640,7 +652,7 @@ public:
         return ParserRuleZeroOrMore<Self>{*this};
     }
 
-    NodeBuilder<Self, TOutNode, TRest...> Builder(std::function<TOutNode(TRest...)> &&builder) {
+    NodeBuilder<Self, TRest...> Builder(std::function<TOutNode(TRest...)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
@@ -672,8 +684,7 @@ public:
         , right{right}
         , out{out} {}
 
-    template<class TOutNode>
-    NodeBuilder<Self, TOutNode, typename TRule::OutNode> Builder(std::function<TOutNode(typename TRule::OutNode&&)> &&builder) {
+    NodeBuilder<Self, typename TRule::OutNode> Builder(std::function<Node(typename TRule::OutNode&&)> &&builder) {
         return {
                 std::move(*this),
                 std::move(builder)
