@@ -39,21 +39,7 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    auto declarations{
-        Parser::Expect<ASTSpecifierQualifierList>()
-            .FollowedBy<ASTIdentifier>()
-            .FollowedByIgnore(TokenType::Assign)
-            .FollowedBy<ASTExpression>()
-            .FollowedByIgnore(TokenType::Semicolon)
-            .Builder<ASTDeclaration>([](std::tuple<ASTSpecifierQualifierList, ASTIdentifier>&& declInfo, ASTExpression &&value) {
-                ASTSpecifierQualifierList typeSpecifier{ std::get<0>(declInfo) };
-                ASTIdentifier identifier{ std::get<1>(declInfo) };
-
-                return ASTDeclaration{ std::move(typeSpecifier), std::move(identifier), std::move(value) };
-            })
-    };
-
-    std::optional<ASTDeclaration> decl{ declarations.Match(*this, true) };
+    std::optional<Node> decl{ ASTDeclaration::Match(*this) };
 
     std::cout << decl->ToString(0) << std::endl;
 }

@@ -6,43 +6,89 @@
 #include "Parser.h"
 #include <variant>
 
-std::optional<ASTIdentifier> ASTIdentifier::Match(Parser &parser) {
+std::optional<Node> ASTIdentifier::Match(Parser &parser) {
     return Parser::Expect(TokenType::Identifier)
-            .Builder<ASTIdentifier>([](Token token) {
-                return ASTIdentifier{ std::get<std::string>(token.value) };
+            .Builder([](Token &&token) -> Node {
+                return ASTIdentifier{ std::get<std::string>(token.value) }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTConstant> ASTConstant::Match(Parser &parser) {
+Node ASTIdentifier::ToNode() {
+    return Node {
+        Node::Type::Identifier,
+        std::make_unique<ASTIdentifier>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTConstant::Match(Parser &parser) {
     return Parser::Expect(TokenType::StringLiteral)
             .Or(TokenType::IntegerLiteral)
             .Or(TokenType::FloatLiteral)
             .Or(TokenType::DoubleLiteral)
-            .Builder<ASTConstant>([](const Token& token) {
-                return ASTConstant{ token };
+            .Builder([](const Token &token) -> Node {
+                return ASTConstant{ token }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTPrimaryExpression> ASTPrimaryExpression::Match(Parser &parser) {
+std::string ASTConstant::ToString(int depth) const {
+    std::stringstream resultStream;
+
+    resultStream << "ASTConstant(";
+
+    IntegerLiteralTokenValue tokenValue;
+
+    switch (this->constantToken.type) {
+        case TokenType::StringLiteral:
+            resultStream << '"' << std::get<std::string>(this->constantToken.value) << '"';
+            break;
+        case TokenType::IntegerLiteral:
+            tokenValue = std::get<IntegerLiteralTokenValue>(this->constantToken.value);
+            resultStream << std::to_string(tokenValue.value);
+            if (tokenValue.isUnsigned)
+                resultStream << 'u';
+
+            switch (tokenValue.type) {
+                case IntegerLiteralType::Int:
+                    break;
+                case IntegerLiteralType::Long:
+                    resultStream << 'l';
+                    break;
+                case IntegerLiteralType::LongLong:
+                    resultStream << "ll";
+                    break;
+            }
+            break;
+        case TokenType::DoubleLiteral:
+            resultStream << std::to_string(std::get<double>(this->constantToken.value));
+            break;
+        default:
+            assert(false);
+    }
+
+    resultStream << ')';
+
+    return resultStream.str();
+}
+
+Node ASTConstant::ToNode() {
+    return Node {
+        Node::Type::Constant,
+        std::make_unique<ASTConstant>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPrimaryExpression::Match(Parser &parser) {
     return Parser::Expect<ASTIdentifier>()
             .Or<ASTConstant>()
             .Or(
                 Parser::Expect<ASTExpression>()
                         .SurroundedBy(TokenType::LeftParenthesis, TokenType::RightParenthesis)
             )
-            .Builder<ASTPrimaryExpression>([](std::variant<ASTIdentifier, ASTConstant, ASTExpression> &&variant) {
-                if (std::holds_alternative<ASTExpression>(variant)) {
-                    return ASTPrimaryExpression{ std::make_unique<ASTExpression>(std::move(std::get<ASTExpression>(variant))) };
-                } else if (std::holds_alternative<ASTIdentifier>(variant)) {
-                    return ASTPrimaryExpression{ std::get<ASTIdentifier>(variant) };
-                } else if (std::holds_alternative<ASTConstant>(variant)) {
-                    return ASTPrimaryExpression{ std::get<ASTConstant>(variant) };
-                }
-
-                assert(false);
-            })
+            .Builder(std::function([](Node &&variant) -> Node {
+                return std::move(variant);
+            }))
             .Match(parser);
 }
 
@@ -65,38 +111,99 @@ std::string ASTPrimaryExpression::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<ASTUnaryOperator> ASTUnaryOperator::Match(Parser &parser) {
+Node ASTPrimaryExpression::ToNode() {
+    return Node {
+        Node::Type::PrimaryExpression,
+        std::make_unique<ASTPrimaryExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTUnaryOperator::Match(Parser &parser) {
     return Parser::Expect(TokenType::Plus)
             .Or(TokenType::Minus)
             .Or(TokenType::Ampersand)
             .Or(TokenType::Asterisk)
             .Or(TokenType::BitwiseNot)
             .Or(TokenType::LogicalNot)
-            .Builder<ASTUnaryOperator>([](const Token &token) {
-                return ASTUnaryOperator{ token.type };
+            .Builder([](const Token &token) -> Node {
+                return ASTUnaryOperator{ token.type }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTUnaryIncrement> ASTUnaryIncrement::Match(Parser &parser) {
+ASTUnaryOperator::ASTUnaryOperator(TokenType tokenType) {
+    switch (tokenType) {
+        case TokenType::Ampersand:
+            this->unaryOperator = UnaryOperator::Reference;
+            break;
+        case TokenType::Asterisk:
+            this->unaryOperator = UnaryOperator::Dereference;
+            break;
+        case TokenType::Plus:
+            this->unaryOperator = UnaryOperator::Positive;
+            break;
+        case TokenType::Minus:
+            this->unaryOperator = UnaryOperator::Negative;
+            break;
+        case TokenType::BitwiseNot:
+            this->unaryOperator = UnaryOperator::BitwiseNot;
+            break;
+        case TokenType::LogicalNot:
+            this->unaryOperator = UnaryOperator::Not;
+            break;
+        default:
+            assert(false);
+    }
+}
+
+std::string ASTUnaryOperator::ToString(int depth) const {
+    std::stringstream resultStream;
+
+    resultStream << "ASTUnaryOperator(" << magic_enum::enum_name(this->unaryOperator) << ")";
+
+    return resultStream.str();
+}
+
+Node ASTUnaryOperator::ToNode() {
+    return Node {
+        Node::Type::UnaryOperator,
+        std::make_unique<ASTUnaryOperator>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTUnaryIncrement::Match(Parser &parser) {
     return Parser::Expect(TokenType::Increment)
-            .Builder<ASTUnaryIncrement>([](const Token &token) {
-                return ASTUnaryIncrement{};
+            .Builder([](const Token &token) -> Node {
+                return ASTUnaryIncrement{}.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTUnaryDecrement> ASTUnaryDecrement::Match(Parser &parser) {
+Node ASTUnaryIncrement::ToNode() {
+    return Node {
+        Node::Type::UnaryIncrement,
+        std::make_unique<ASTUnaryIncrement>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTUnaryDecrement::Match(Parser &parser) {
     return Parser::Expect(TokenType::Decrement)
-            .Builder<ASTUnaryDecrement>([](const Token &token) {
-                return ASTUnaryDecrement{};
+            .Builder([](const Token &token) -> Node {
+                return ASTUnaryDecrement{}.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTUnaryExpression> ASTUnaryExpression::Match(Parser &parser) {
-    using UnaryOperatorAndCast = std::tuple<ASTUnaryOperator, ASTCastExpression>;
-    using Operation = std::variant<ASTUnaryIncrement, ASTUnaryDecrement>;
+Node ASTUnaryDecrement::ToNode() {
+    return Node {
+        Node::Type::UnaryDecrement,
+        std::make_unique<ASTUnaryDecrement>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTUnaryExpression::Match(Parser &parser) {
+    using UnaryOperatorAndCast = std::tuple<Node, Node>;
+    using Operation = Node;
 
     return Parser::Expect<ASTUnaryIncrement>()
             .Or<ASTUnaryDecrement>()
@@ -106,27 +213,26 @@ std::optional<ASTUnaryExpression> ASTUnaryExpression::Match(Parser &parser) {
                 Parser::Expect<ASTUnaryOperator>()
                         .FollowedBy<ASTCastExpression>()
             )
-            .Builder<ASTUnaryExpression>([](std::variant<std::tuple<std::vector<Operation>, ASTPostfixExpression>, UnaryOperatorAndCast>&& value) {
+            .Builder([](std::variant<std::tuple<std::vector<Operation>, Node>, UnaryOperatorAndCast>&& value) {
                 if (std::holds_alternative<UnaryOperatorAndCast>(value)) {
                     auto &unaryOperatorAndCast = std::get<UnaryOperatorAndCast>(value);
 
                     return ASTUnaryExpression{
-                            std::move(std::make_unique<ASTCastExpression>(std::move(std::get<1>(unaryOperatorAndCast)))),
+                            std::move(std::move(std::get<1>(unaryOperatorAndCast))),
                             std::move(std::get<0>(unaryOperatorAndCast))
-                    };
+                    }.ToNode();
                 } else {
-                    auto &unaryTuple = std::get<std::tuple<std::vector<Operation>, ASTPostfixExpression>>(value);
+                    auto &unaryTuple = std::get<std::tuple<std::vector<Operation>, Node>>(value);
                     std::vector<Operation> &operations = std::get<0>(unaryTuple);
-                    ASTPostfixExpression postfixExpression = std::move(std::get<1>(unaryTuple));
+                    Node postfixExpression = std::move(std::get<1>(unaryTuple));
 
-                    ASTUnaryExpression output{ std::move(postfixExpression), std::nullopt };
+                    Node output{ std::move(postfixExpression) };
+
+                    if (operations.empty())
+                        return output;
 
                     for (Operation &op : operations) {
-                        if (std::holds_alternative<ASTUnaryIncrement>(op)) {
-                            output = ASTUnaryExpression{ std::move(output), std::move(std::get<ASTUnaryIncrement>(op)) };
-                        } else {
-                            output = ASTUnaryExpression{ std::move(output), std::move(std::get<ASTUnaryDecrement>(op)) };
-                        }
+                        output = ASTUnaryExpression{ std::move(output), std::move(op) }.ToNode();
                     }
 
                     return output;
@@ -143,31 +249,28 @@ std::string ASTUnaryExpression::ToString(int depth) const  {
     resultStream << "ASTUnaryExpression {\n";
     resultStream << tabs << "inner = ";
 
-    if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(inner)) {
-        resultStream << std::get<std::unique_ptr<ASTUnaryExpression>>(inner)->ToString(depth + 1);
-    } else if (std::holds_alternative<ASTPostfixExpression>(inner)) {
-        resultStream << std::get<ASTPostfixExpression>(inner).ToString(depth + 1);
-    } else {
-        resultStream << std::get<std::unique_ptr<ASTCastExpression>>(inner)->ToString(depth + 1);
-    }
+    resultStream << this->inner.ToString(depth + 1);
 
-    if (operation.has_value()) {
-        resultStream << ",\n" << tabs << "operation = ";
+    resultStream << ",\n" << tabs << "operation = ";
 
-        resultStream << std::visit([](const auto &op) {
-            return op.ToString(0);
-        }, operation.value());
-    }
+    resultStream << operation.ToString(depth + 1);
     resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
 
     return resultStream.str();
 }
 
-std::optional<ASTPostfixIndex> ASTPostfixIndex::Match(Parser &parser) {
+Node ASTUnaryExpression::ToNode() {
+    return Node {
+        Node::Type::UnaryExpression,
+        std::make_unique<ASTUnaryExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixIndex::Match(Parser &parser) {
     return Parser::Expect<ASTExpression>()
             .SurroundedBy(TokenType::LeftBracket, TokenType::RightBracket)
-            .Builder<ASTPostfixIndex>([](ASTExpression &&expression) {
-                return ASTPostfixIndex{ std::make_unique<ASTExpression>(std::move(expression)) };
+            .Builder([](Node &&expression) -> Node {
+                return ASTPostfixIndex{ std::move(expression) }.ToNode();
             })
             .Match(parser);
 }
@@ -177,86 +280,149 @@ std::string ASTPostfixIndex::ToString(int depth) const {
 
     resultStream << "ASTPostfixIndex {\n";
 
-    resultStream << std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR) << "inner = " << this->inner->ToString(depth + 1) << '\n';
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR) << "inner = " << this->inner.ToString(depth + 1) << '\n';
 
     resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
 
     return resultStream.str();
 }
 
-std::optional<ASTPostfixDot> ASTPostfixDot::Match(Parser &parser) {
+Node ASTPostfixIndex::ToNode() {
+    return Node {
+        Node::Type::PostfixIndex,
+        std::make_unique<ASTPostfixIndex>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixDot::Match(Parser &parser) {
     return Parser::Expect(TokenType::Dot)
             .FollowedBy<ASTIdentifier>()
-            .Builder<ASTPostfixDot>([](const Token &, const ASTIdentifier &astIdentifier) {
-                return ASTPostfixDot{ astIdentifier };
+            .Builder([](Token &&, Node &&astIdentifier) -> Node {
+                return ASTPostfixDot{ std::move(astIdentifier) }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTPostfixArrow> ASTPostfixArrow::Match(Parser &parser) {
+Node ASTPostfixDot::ToNode() {
+    return Node {
+        Node::Type::PostfixDot,
+        std::make_unique<ASTPostfixDot>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixArrow::Match(Parser &parser) {
     return Parser::Expect(TokenType::Arrow)
             .FollowedBy<ASTIdentifier>()
-            .Builder<ASTPostfixArrow>([](const Token &, const ASTIdentifier &astIdentifier) {
-                return ASTPostfixArrow{ astIdentifier };
+            .Builder([](Token &&, Node &&astIdentifier) -> Node {
+                return ASTPostfixArrow{ std::move(astIdentifier) }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTPostfixDecrement> ASTPostfixDecrement::Match(Parser &parser) {
+Node ASTPostfixArrow::ToNode() {
+    return Node {
+        Node::Type::PostfixArrow,
+        std::make_unique<ASTPostfixArrow>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixDecrement::Match(Parser &parser) {
     return Parser::Expect(TokenType::Decrement)
-            .Builder<ASTPostfixDecrement>([](const Token &token) {
-                return ASTPostfixDecrement{};
+            .Builder([](Token &&token) -> Node {
+                return ASTPostfixDecrement{}.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTPostfixIncrement> ASTPostfixIncrement::Match(Parser &parser) {
+Node ASTPostfixDecrement::ToNode() {
+    return Node {
+        Node::Type::PostfixDecrement,
+        std::make_unique<ASTPostfixDecrement>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixIncrement::Match(Parser &parser) {
     return Parser::Expect(TokenType::Increment)
-            .Builder<ASTPostfixIncrement>([](const Token &token) {
-                return ASTPostfixIncrement{};
+            .Builder([](Token &&token) -> Node {
+                return ASTPostfixIncrement{}.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTPostfixExpression> ASTPostfixExpression::Match(Parser &parser) {
+Node ASTPostfixIncrement::ToNode() {
+    return Node {
+        Node::Type::PostfixIncrement,
+        std::make_unique<ASTPostfixIncrement>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTPostfixExpression::Match(Parser &parser) {
     return Parser::Expect<ASTPrimaryExpression>()
             .FollowedBy(
-                    Parser::Expect<ASTPostfixIncrement>()
+                Parser::Expect<ASTPostfixIncrement>()
                     .Or<ASTPostfixDecrement>()
                     .Or<ASTPostfixArrow>()
                     .Or<ASTPostfixDot>()
                     .Or<ASTPostfixIndex>()
                     .ZeroOrMore()
-            ).Builder<ASTPostfixExpression>(
+            ).Builder(
             [](
-                    ASTPrimaryExpression &&primaryExpressionNode,
-                    std::vector<typename ASTPostfixExpression::Operation> &&postfixExpressions
-            ) {
-                ASTPostfixExpression output{std::move(primaryExpressionNode), std::nullopt};
+                    Node &&primaryExpressionNode,
+                    std::vector<Node> &&postfixExpressions
+            ) -> Node {
+                if (postfixExpressions.empty()) {
+                    return std::move(primaryExpressionNode);
+                }
 
-                for (typename ASTPostfixExpression::Operation &item: postfixExpressions) {
-                    output = ASTPostfixExpression{std::move(output), std::move(item)};
+                Node output{ std::move(primaryExpressionNode) };
+
+                for (Node &item : postfixExpressions) {
+                    output = ASTPostfixExpression{std::move(output), std::move(item)}.ToNode();
                 }
 
                 return output;
-            }
-    ).Match(parser);
+            })
+            .Match(parser);
 }
 
-std::optional<ASTExpression> ASTExpression::Match(Parser &parser) {
+std::string ASTPostfixExpression::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << "ASTPostfixExpression {\n";
+    resultStream << tabs << "inner = " << this->inner.ToString(depth + 1) << ",\n" << tabs << "operation = ";
+
+    resultStream << operation.ToString(depth + 1);
+    resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+Node ASTPostfixExpression::ToNode() {
+    return Node {
+        Node::Type::PostfixExpression,
+        std::make_unique<ASTPostfixExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTExpression::Match(Parser &parser) {
     return Parser::Expect<ASTAdditiveExpression>()
             .FollowedBy(
             Parser::Expect(TokenType::Comma)
                         .FollowedBy<ASTAdditiveExpression>()
                         .ZeroOrMore()
-            ).Builder<ASTExpression>([](ASTAdditiveExpression &&expr, std::vector<std::tuple<Token, ASTAdditiveExpression>> &&capturedExpressions) {
-                std::vector<ASTAdditiveExpression> justTheExpressions{ };
+            ).Builder([](Node &&expr, std::vector<std::tuple<Token, Node>> &&capturedExpressions) -> Node {
+                if (capturedExpressions.empty())
+                    return std::move(expr);
+
+                std::vector<Node> justTheExpressions{ };
 
                 for (auto &item: capturedExpressions) {
                     justTheExpressions.push_back(std::move(std::get<1>(item)));
                 }
 
-                return ASTExpression{std::move(expr), std::move(justTheExpressions) };
+                return ASTExpression{std::move(expr), std::move(justTheExpressions) }.ToNode();
            })
             .Match(parser);
 }
@@ -287,18 +453,32 @@ std::string ASTExpression::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<ASTTypeQualifier> ASTTypeQualifier::Match(Parser &parser) {
+Node ASTExpression::ToNode() {
+    return Node {
+        Node::Type::Expression,
+        std::make_unique<ASTExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTTypeQualifier::Match(Parser &parser) {
     return Parser::Expect(TokenType::KeywordConst)
             .Or(TokenType::KeywordVolatile)
             .Or(TokenType::KeywordVolatile)
             .Or(TokenType::KeywordAtomic)
-            .Builder<ASTTypeQualifier>([](const Token &token) {
-                return ASTTypeQualifier{ ASTTypeQualifier::FromTokenType(token.type) };
+            .Builder([](Token &&token) -> Node {
+                return ASTTypeQualifier{ ASTTypeQualifier::FromTokenType(token.type) }.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTTypeSpecifier> ASTTypeSpecifier::Match(Parser &parser) {
+Node ASTTypeQualifier::ToNode() {
+    return Node {
+        Node::Type::TypeQualifier,
+        std::make_unique<ASTTypeQualifier>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTTypeSpecifier::Match(Parser &parser) {
     return Parser::Expect(TokenType::KeywordVoid)
             .Or(TokenType::KeywordChar)
             .Or(TokenType::KeywordShort)
@@ -310,20 +490,37 @@ std::optional<ASTTypeSpecifier> ASTTypeSpecifier::Match(Parser &parser) {
             .Or(TokenType::KeywordUnsigned)
             .Or(TokenType::KeywordBool)
             .Or(TokenType::KeywordComplex)
-            .Builder<ASTTypeSpecifier>([](const Token& token) {
+            .Builder([](Token &&token) -> Node {
                 ASTTypeSpecifier::TypeSpecifier typeSpecifier{ ASTTypeSpecifier::FromTokenType(token.type) };
 
-                return ASTTypeSpecifier{typeSpecifier};
+                return ASTTypeSpecifier{typeSpecifier}.ToNode();
             })
             .Match(parser);
 }
 
-std::optional<ASTSpecifierQualifierList> ASTSpecifierQualifierList::Match(Parser &parser) {
+Node ASTTypeSpecifier::ToNode() {
+    return Node {
+        Node::Type::TypeSpecifier,
+        std::make_unique<ASTTypeSpecifier>(std::move(*this))
+    };
+}
+
+std::string ASTTypeSpecifier::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR);
+
+    resultStream << tabs << "ASTTypeSpecifier(" << magic_enum::enum_name(this->specifier) << ')';
+
+    return resultStream.str();
+}
+
+std::optional<Node> ASTSpecifierQualifierList::Match(Parser &parser) {
     return Parser::Expect<ASTTypeSpecifier>()
             .Or<ASTTypeQualifier>()
             .OneOrMore()
-            .Builder<ASTSpecifierQualifierList>([](std::vector<std::variant<ASTTypeSpecifier, ASTTypeQualifier>> &&vec) {
-                return ASTSpecifierQualifierList{ std::move(vec) };
+            .Builder([](std::vector<Node> &&vec) -> Node {
+                return ASTSpecifierQualifierList{ std::move(vec) }.ToNode();
             })
             .Match(parser);
 }
@@ -332,7 +529,7 @@ std::string ASTSpecifierQualifierList::ToString(int depth) const {
     std::stringstream resultStream{};
 
     std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
-    std::string tabs2(PRETTY_PRINT_DEPTH(1), PRETTY_PRINT_CHAR);
+    std::string tabs2(PRETTY_PRINT_DEPTH(depth + 2), PRETTY_PRINT_CHAR);
 
     resultStream << "ASTSpecifierQualifierList {\n";
     resultStream << tabs << "list = [";
@@ -341,10 +538,8 @@ std::string ASTSpecifierQualifierList::ToString(int depth) const {
         resultStream << '\n';
     }
 
-    for (const std::variant<ASTTypeSpecifier, ASTTypeQualifier> &item : this->list) {
-        resultStream << tabs << std::visit([&tabs2](const auto &item) {
-            return tabs2 + item.ToString(0);
-        }, item) << ",\n";
+    for (const Node &node : this->list) {
+        resultStream << node.ToString(depth + 2) << ",\n";
     }
 
     if (!this->list.empty()) {
@@ -356,10 +551,17 @@ std::string ASTSpecifierQualifierList::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<ASTTypeName> ASTTypeName::Match(Parser &parser) {
+Node ASTSpecifierQualifierList::ToNode() {
+    return Node{
+        Node::Type::SpecifierQualifierList,
+        std::make_unique<ASTSpecifierQualifierList>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTTypeName::Match(Parser &parser) {
     return Parser::Expect<ASTSpecifierQualifierList>()
-            .Builder<ASTTypeName>([](ASTSpecifierQualifierList &&list) {
-                return ASTTypeName{ std::move(list) };
+            .Builder([](Node &&list) {
+                return std::move(list);
             })
             .Match(parser);
 }
@@ -376,16 +578,27 @@ std::string ASTTypeName::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<ASTCastExpression> ASTCastExpression::Match(Parser &parser) {
+Node ASTTypeName::ToNode() {
+    return Node {
+        Node::Type::TypeName,
+        std::make_unique<ASTTypeName>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTCastExpression::Match(Parser &parser) {
     return Parser::Expect<ASTTypeName>()
             .SurroundedBy(TokenType::LeftParenthesis, TokenType::RightParenthesis)
             .ZeroOrMore()
             .FollowedBy<ASTUnaryExpression>()
-            .Builder<ASTCastExpression>([](std::vector<ASTTypeName> &&casts, ASTUnaryExpression &&unaryExpression) {
-                ASTCastExpression output{ std::move(unaryExpression), std::nullopt };
+            .Builder([](std::vector<Node> &&casts, Node &&unaryExpression) -> Node {
+                if (casts.empty()) {
+                    return std::move(unaryExpression);
+                }
 
-                for (ASTTypeName &cast : casts) {
-                    output = ASTCastExpression{ std::make_unique<ASTCastExpression>(std::move(output)), std::move(cast) };
+                Node output{std::move(unaryExpression)};
+
+                for (Node &cast : casts) {
+                    output = ASTCastExpression{ std::move(output), std::move(cast) }.ToNode();
                 }
 
                 return output;
@@ -399,20 +612,19 @@ std::string ASTCastExpression::ToString(int depth) const {
     std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
 
     resultStream << "ASTCastExpression {\n";
-    resultStream << tabs << "inner = ";
+    resultStream << tabs << "inner = " << inner.ToString(depth + 1);
 
-    if (std::holds_alternative<ASTUnaryExpression>(inner)) {
-        resultStream << std::get<ASTUnaryExpression>(inner).ToString(depth + 1);
-    } else {
-        resultStream << std::get<std::unique_ptr<ASTCastExpression>>(inner)->ToString(depth + 1);
-    }
-
-    if (typeName.has_value()) {
-        resultStream << ",\n" << tabs << "typeName = " << typeName.value().ToString(depth + 1);
-    }
+    resultStream << ",\n" << tabs << "typeName = " << typeName.ToString(depth + 1);
     resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
 
     return resultStream.str();
+}
+
+Node ASTCastExpression::ToNode() {
+    return {
+        Node::Type::CastExpression,
+        std::make_unique<ASTCastExpression>(std::move(*this))
+    };
 }
 
 std::string ASTMultiplicativeExpression::ToString(int depth) const {
@@ -425,7 +637,7 @@ std::string ASTMultiplicativeExpression::ToString(int depth) const {
     resultStream << tabs << "lhs = ";
 
     if (this->lhs.has_value())
-        resultStream << this->lhs->get()->ToString(depth + 1) << ",\n";
+        resultStream << this->lhs->ToString(depth + 1) << ",\n";
     else
         resultStream << "none,\n";
 
@@ -443,7 +655,7 @@ std::string ASTMultiplicativeExpression::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<ASTMultiplicativeExpression> ASTMultiplicativeExpression::Match(Parser &parser) {
+std::optional<Node> ASTMultiplicativeExpression::Match(Parser &parser) {
     return Parser::Expect<ASTCastExpression>()
             .FollowedBy(
                 Parser::Expect(TokenType::Asterisk)
@@ -452,25 +664,28 @@ std::optional<ASTMultiplicativeExpression> ASTMultiplicativeExpression::Match(Pa
             )
             .ZeroOrMore()
             .FollowedBy<ASTCastExpression>()
-            .Builder<ASTMultiplicativeExpression>([](std::vector<std::tuple<ASTCastExpression, Token>> &&multiplicatives, ASTCastExpression &&rhs) {
-                std::optional<std::unique_ptr<ASTMultiplicativeExpression>> output{ std::nullopt };
+            .Builder([](std::vector<std::tuple<Node, Token>> &&multiplicatives, Node &&rhs) -> Node {
+                if (multiplicatives.empty())
+                    return std::move(rhs);
+
+                std::optional<Node> output{ std::nullopt };
+                MultiplicativeOperator op;
 
                 for (auto &multiplicative : multiplicatives) {
-                    ASTCastExpression &multLhs{std::get<0>(multiplicative) };
+                    Node &multLhs{std::get<0>(multiplicative) };
                     Token &opToken{ std::get<1>(multiplicative) };
-                    MultiplicativeOperator op{ ASTMultiplicativeExpression::OperatorFromTokenType(opToken.type) };
+                    op = ASTMultiplicativeExpression::OperatorFromTokenType(opToken.type);
 
-                    output = std::make_unique<ASTMultiplicativeExpression>( std::move(output), op, std::move(multLhs) );
+                    output = ASTMultiplicativeExpression{ std::move(output), op, std::move(multLhs) }.ToNode();
                 }
 
                 if (output.has_value()) {
-                    ASTMultiplicativeExpression::MultiplicativeOperator opType{output.value()->operatorType};
-                    std::unique_ptr<ASTMultiplicativeExpression> outputPtr{ std::move(output.value()) };
+                    Node outputPtr{ std::move(output.value()) };
 
-                    return ASTMultiplicativeExpression{ std::move(outputPtr), opType, std::move(rhs) };
+                    return ASTMultiplicativeExpression{ std::move(outputPtr), op, std::move(rhs) }.ToNode();
                 }
 
-                return ASTMultiplicativeExpression{ std::nullopt, MultiplicativeOperator::None, std::move(rhs) };
+                return ASTMultiplicativeExpression{ std::nullopt, MultiplicativeOperator::None, std::move(rhs) }.ToNode();
             })
             .Match(parser);
 }
@@ -492,6 +707,13 @@ ASTMultiplicativeExpression::OperatorFromTokenType(TokenType tokenType) {
     }
 }
 
+Node ASTMultiplicativeExpression::ToNode() {
+    return Node {
+        Node::Type::MultiplicativeExpression,
+        std::make_unique<ASTMultiplicativeExpression>(std::move(*this))
+    };
+}
+
 std::string ASTAdditiveExpression::ToString(int depth) const {
     std::stringstream resultStream{};
 
@@ -502,7 +724,7 @@ std::string ASTAdditiveExpression::ToString(int depth) const {
     resultStream << tabs << "lhs = ";
 
     if (this->lhs.has_value())
-        resultStream << this->lhs->get()->ToString(depth + 1) << ",\n";
+        resultStream << this->lhs->ToString(depth + 1) << ",\n";
     else
         resultStream << "none,\n";
 
@@ -536,7 +758,7 @@ ASTAdditiveExpression::OperatorFromTokenType(TokenType tokenType) {
 }
 
 // todo: same as multiplicative expression, refactor
-std::optional<ASTAdditiveExpression> ASTAdditiveExpression::Match(Parser &parser) {
+std::optional<Node> ASTAdditiveExpression::Match(Parser &parser) {
     return Parser::Expect<ASTMultiplicativeExpression>()
             .FollowedBy(
                     Parser::Expect(TokenType::Plus)
@@ -544,37 +766,73 @@ std::optional<ASTAdditiveExpression> ASTAdditiveExpression::Match(Parser &parser
             )
             .ZeroOrMore()
             .FollowedBy<ASTMultiplicativeExpression>()
-            .Builder<ASTAdditiveExpression>([](std::vector<std::tuple<ASTMultiplicativeExpression, Token>> &&multiplicatives, ASTMultiplicativeExpression &&rhs) {
-                std::optional<std::unique_ptr<ASTAdditiveExpression>> output{ std::nullopt };
+            .Builder([](std::vector<std::tuple<Node, Token>> &&additives, Node &&rhs) -> Node {
+                if (additives.empty())
+                    return std::move(rhs);
 
-                for (auto &multiplicative : multiplicatives) {
-                    ASTMultiplicativeExpression &multLhs{std::get<0>(multiplicative) };
+                std::optional<Node> output{ std::nullopt };
+                AdditiveOperator op;
+
+                for (auto &multiplicative : additives) {
+                    Node &multLhs{std::get<0>(multiplicative) };
                     Token &opToken{ std::get<1>(multiplicative) };
-                    AdditiveOperator op{ ASTAdditiveExpression::OperatorFromTokenType(opToken.type) };
+                    op = ASTAdditiveExpression::OperatorFromTokenType(opToken.type);
 
-                    output = std::make_unique<ASTAdditiveExpression>( std::move(output), op, std::move(multLhs) );
+                    output = ASTAdditiveExpression{ std::move(output), op, std::move(multLhs) }.ToNode();
                 }
 
                 if (output.has_value()) {
-                    AdditiveOperator opType{output.value()->operatorType};
-                    std::unique_ptr<ASTAdditiveExpression> outputPtr{ std::move(output.value()) };
+                    Node outputPtr{ std::move(output.value()) };
 
-                    return ASTAdditiveExpression{ std::move(outputPtr), opType, std::move(rhs) };
+                    return ASTAdditiveExpression{ std::move(outputPtr), op, std::move(rhs) }.ToNode();
                 }
 
-                return ASTAdditiveExpression{ std::nullopt, AdditiveOperator::None, std::move(rhs) };
+                return ASTAdditiveExpression{ std::nullopt, AdditiveOperator::None, std::move(rhs) }.ToNode();
             })
             .Match(parser);
+}
+
+Node ASTAdditiveExpression::ToNode() {
+    return Node {
+        Node::Type::AdditiveExpression,
+        std::make_unique<ASTAdditiveExpression>(std::move(*this))
+    };
 }
 
 std::string ASTDeclaration::ToString(int depth) const {
     std::stringstream resultStream;
 
     resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth),     PRETTY_PRINT_CHAR)   << "ASTDeclaration {\n";
-    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "specifier  = " << this->specifier.ToString(depth + 1) << ",\n";
+    resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "specifier = "  << this->specifier.ToString(depth + 1) << ",\n";
     resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "identifier = " << this->identifier.ToString(depth + 1) << ",\n";
     resultStream <<         std::string(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR)   << "expression = " << this->expression.ToString(depth + 1);
     resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth),     PRETTY_PRINT_CHAR)   << '}';
 
     return resultStream.str();
+}
+
+std::optional<Node> ASTDeclaration::Match(Parser &parser) {
+    return Parser::Expect<ASTSpecifierQualifierList>()
+            .FollowedBy<ASTIdentifier>()
+            .FollowedByIgnore(TokenType::Assign)
+            .FollowedBy<ASTExpression>()
+            .FollowedByIgnore(TokenType::Semicolon)
+            .Builder([](std::tuple<Node, Node>&& declInfo, Node &&value) -> Node {
+                Node &typeSpecifier{ std::get<0>(declInfo) };
+                Node &identifier{ std::get<1>(declInfo) };
+
+                return ASTDeclaration{ std::move(typeSpecifier), std::move(identifier), std::move(value) }.ToNode();
+            })
+            .Match(parser, true);
+}
+
+Node ASTDeclaration::ToNode() {
+    return Node {
+        Node::Type::Declaration,
+        std::make_unique<ASTDeclaration>(std::move(*this))
+    };
+}
+
+std::string Node::ToString(int depth) const {
+    return node->ToString(depth);
 }

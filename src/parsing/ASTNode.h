@@ -23,6 +23,8 @@
 
 class Parser;
 
+struct Node;
+
 struct ASTNode {
 
     virtual ~ASTNode() = default;
@@ -32,6 +34,41 @@ struct ASTNode {
 
     [[nodiscard]]
     virtual std::string ToString(int depth) const = 0;
+
+    [[nodiscard]]
+    virtual Node ToNode() = 0;
+};
+
+struct Node final {
+    enum class Type {
+        Identifier,
+        Constant,
+        PrimaryExpression,
+        PostfixIncrement,
+        PostfixDecrement,
+        PostfixArrow,
+        PostfixIndex,
+        PostfixDot,
+        PostfixExpression,
+        UnaryOperator,
+        UnaryIncrement,
+        UnaryDecrement,
+        UnaryExpression,
+        CastExpression,
+        TypeQualifier,
+        TypeSpecifier,
+        SpecifierQualifierList,
+        TypeName,
+        MultiplicativeExpression,
+        AdditiveExpression,
+        Declaration,
+        Expression
+    } type;
+
+    std::unique_ptr<ASTNode> node;
+
+    [[nodiscard]]
+    std::string ToString(int depth) const;
 };
 
 struct ASTIdentifier : public ASTNode {
@@ -48,7 +85,9 @@ struct ASTIdentifier : public ASTNode {
         return resultStream.str();
     }
 
-    static std::optional<ASTIdentifier> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTConstant final : public ASTNode {
@@ -57,52 +96,16 @@ struct ASTConstant final : public ASTNode {
     Token constantToken;
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream;
+    std::string ToString(int depth) const override;
 
-        resultStream << "ASTConstant(";
+    Node ToNode() override;
 
-        IntegerLiteralTokenValue tokenValue;
-
-        switch (this->constantToken.type) {
-            case TokenType::StringLiteral:
-                resultStream << '"' << std::get<std::string>(this->constantToken.value) << '"';
-                break;
-            case TokenType::IntegerLiteral:
-                tokenValue = std::get<IntegerLiteralTokenValue>(this->constantToken.value);
-                resultStream << std::to_string(tokenValue.value);
-                if (tokenValue.isUnsigned)
-                    resultStream << 'u';
-
-                switch (tokenValue.type) {
-                    case IntegerLiteralType::Int:
-                        break;
-                    case IntegerLiteralType::Long:
-                        resultStream << 'l';
-                        break;
-                    case IntegerLiteralType::LongLong:
-                        resultStream << "ll";
-                        break;
-                }
-                break;
-            case TokenType::DoubleLiteral:
-                resultStream << std::to_string(std::get<double>(this->constantToken.value));
-                break;
-            default:
-                assert(false);
-        }
-
-        resultStream << ')';
-
-        return resultStream.str();
-    }
-
-    static std::optional<ASTConstant> Match(Parser &parser);
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTExpression;
 
-struct ASTPrimaryExpression : public ASTNode {
+struct ASTPrimaryExpression final : public ASTNode {
     using Inner = std::variant<ASTIdentifier, ASTConstant, std::unique_ptr<ASTExpression>>;
 
     explicit ASTPrimaryExpression(Inner &&identifier) : inner{std::move(identifier)} {};
@@ -110,7 +113,9 @@ struct ASTPrimaryExpression : public ASTNode {
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTPrimaryExpression> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 
     Inner inner;
 };
@@ -121,7 +126,9 @@ struct ASTPostfixIncrement final : public ASTNode {
         return "ASTPostfixIncrement";
     }
 
-    static std::optional<ASTPostfixIncrement> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTPostfixDecrement final : public ASTNode {
@@ -130,13 +137,15 @@ struct ASTPostfixDecrement final : public ASTNode {
         return "ASTPostfixDecrement";
     }
 
-    static std::optional<ASTPostfixDecrement> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTPostfixArrow final : public ASTNode {
-    explicit ASTPostfixArrow(const ASTIdentifier &identifier) : identifier{identifier} {};
+    explicit ASTPostfixArrow(Node &&identifier) : identifier{std::move(identifier)} {};
 
-    ASTIdentifier identifier;
+    Node identifier;
 
     [[nodiscard]]
     std::string ToString(int depth) const override {
@@ -147,26 +156,30 @@ struct ASTPostfixArrow final : public ASTNode {
         return resultStream.str();
     }
 
-    static std::optional<ASTPostfixArrow> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTExpression;
 
 struct ASTPostfixIndex final : public ASTNode {
-    explicit ASTPostfixIndex(std::unique_ptr<ASTExpression> &&innerExpression) : inner{std::move(innerExpression)} {};
+    explicit ASTPostfixIndex(Node &&innerExpression) : inner{std::move(innerExpression)} {};
 
-    std::unique_ptr<ASTExpression> inner;
+    Node inner;
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTPostfixIndex> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTPostfixDot final : public ASTNode {
-    explicit ASTPostfixDot(const ASTIdentifier &identifier) : identifier{identifier} {};
+    explicit ASTPostfixDot(Node &&identifier) : identifier{std::move(identifier)} {};
 
-    ASTIdentifier identifier;
+    Node identifier;
 
     [[nodiscard]]
     std::string ToString(int depth) const override {
@@ -177,41 +190,22 @@ struct ASTPostfixDot final : public ASTNode {
         return resultStream.str();
     }
 
-    static std::optional<ASTPostfixDot> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTPostfixExpression final : public ASTNode {
-    using Operation = std::variant<ASTPostfixIncrement, ASTPostfixDecrement, ASTPostfixArrow, ASTPostfixDot, ASTPostfixIndex>;
-    using OptionalOperation = std::optional<Operation>;
+    ASTPostfixExpression(Node &&other, Node &&operation)
+        : inner{std::move(other)}
+        , operation{std::move(operation)} {}
 
-    ASTPostfixExpression(ASTPostfixExpression &&other, OptionalOperation &&operation)
-        : inner{
-            std::make_unique<ASTPostfixExpression>(std::move(other))
-        }
-        , operation{std::move(operation)} {};
-
-    ASTPostfixExpression(ASTPrimaryExpression &&primaryExpression, OptionalOperation &&operation)
-        : inner{
-            std::move(primaryExpression)
-        }
-        , operation{std::move(operation)} {};
-
-    ASTPostfixExpression(ASTPostfixExpression &&expression) noexcept {
-        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
-            this->inner = std::move(std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
-        } else {
-            this->inner = std::move(std::get<ASTPrimaryExpression>(expression.inner));
-        }
-
-        this->operation = std::move(expression.operation);
-    }
+    ASTPostfixExpression(ASTPostfixExpression &&expression) noexcept
+        : inner{std::move(expression.inner)}
+        , operation{std::move(expression.operation)} {}
 
     ASTPostfixExpression &operator=(ASTPostfixExpression &&expression) noexcept {
-        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(expression.inner)) {
-            this->inner = std::move(std::get<std::unique_ptr<ASTPostfixExpression>>(expression.inner));
-        } else {
-            this->inner = std::move(std::get<ASTPrimaryExpression>(expression.inner));
-        }
+        this->inner = std::move(expression.inner);
 
         this->operation = std::move(expression.operation);
 
@@ -219,75 +213,26 @@ struct ASTPostfixExpression final : public ASTNode {
     }
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream{};
+    std::string ToString(int depth) const override;
 
-        std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+    Node ToNode() override;
 
-        resultStream << "ASTPostfixExpression {\n";
-        resultStream << tabs << "inner = ";
+    static std::optional<Node> Match(Parser &parser);
 
-        if (std::holds_alternative<std::unique_ptr<ASTPostfixExpression>>(inner)) {
-            resultStream << std::get<std::unique_ptr<ASTPostfixExpression>>(inner)->ToString(depth + 1);
-        } else {
-            resultStream << std::get<ASTPrimaryExpression>(inner).ToString(depth + 1);
-        }
-
-        if (operation.has_value()) {
-            resultStream << ",\n" << tabs << "operation = ";
-
-            resultStream << std::visit([&depth](const auto &op) {
-                return op.ToString(depth + 1);
-            }, operation.value());
-        }
-        resultStream << '\n' << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
-
-        return resultStream.str();
-    }
-
-    static std::optional<ASTPostfixExpression> Match(Parser &parser);
-
-    std::variant<std::unique_ptr<ASTPostfixExpression>, ASTPrimaryExpression> inner;
-    OptionalOperation operation;
+    Node inner;
+    Node operation;
 };
 
 struct ASTUnaryOperator final : public ASTNode {
 public:
-    explicit ASTUnaryOperator(TokenType tokenType) {
-        switch (tokenType) {
-            case TokenType::Ampersand:
-                this->unaryOperator = UnaryOperator::Reference;
-                break;
-            case TokenType::Asterisk:
-                this->unaryOperator = UnaryOperator::Dereference;
-                break;
-            case TokenType::Plus:
-                this->unaryOperator = UnaryOperator::Positive;
-                break;
-            case TokenType::Minus:
-                this->unaryOperator = UnaryOperator::Negative;
-                break;
-            case TokenType::BitwiseNot:
-                this->unaryOperator = UnaryOperator::BitwiseNot;
-                break;
-            case TokenType::LogicalNot:
-                this->unaryOperator = UnaryOperator::Not;
-                break;
-            default:
-                assert(false);
-        }
-    }
+    explicit ASTUnaryOperator(TokenType tokenType);
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream;
+    std::string ToString(int depth) const override;
 
-        resultStream << "ASTUnaryOperator(" << magic_enum::enum_name(this->unaryOperator) << ")";
+    Node ToNode() override;
 
-        return resultStream.str();
-    }
-
-    static std::optional<ASTUnaryOperator> Match(Parser &parser);
+    static std::optional<Node> Match(Parser &parser);
 
 private:
     enum class UnaryOperator {
@@ -306,7 +251,9 @@ struct ASTUnaryIncrement final : public ASTNode {
         return "ASTUnaryIncrement";
     }
 
-    static std::optional<ASTUnaryIncrement> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTUnaryDecrement final : public ASTNode {
@@ -316,19 +263,17 @@ public:
         return "ASTUnaryDecrement";
     }
 
-    static std::optional<ASTUnaryDecrement> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTCastExpression;
 
 struct ASTUnaryExpression final : public ASTNode {
 public:
-    using Operator = std::variant<ASTUnaryOperator, ASTUnaryIncrement, ASTUnaryDecrement>;
-
-    ASTUnaryExpression(ASTUnaryExpression &&other, Operator &&operation)
-        : inner{
-            std::make_unique<ASTUnaryExpression>(std::move(other))
-        }
+    ASTUnaryExpression(Node &&other, Node &&operation)
+        : inner{std::move(other)}
         , operation{std::move(operation)} {}
 
 
@@ -337,38 +282,23 @@ public:
         , inner{std::move(other.inner)} {
     }
 
-    ASTUnaryExpression(ASTPostfixExpression &&astPostfixExpression, std::optional<Operator> &&operation)
-        : inner{
-            std::move(astPostfixExpression)
-        }
-        , operation{std::move(operation)} {}
-
-    ASTUnaryExpression(std::unique_ptr<ASTCastExpression> &&castExpression, std::optional<Operator> &&operation)
-        : inner{
-            std::move(castExpression)
-        }
-        , operation{std::move(operation)} {}
-
     ASTUnaryExpression &operator=(ASTUnaryExpression &&other) noexcept {
-        if (std::holds_alternative<std::unique_ptr<ASTUnaryExpression>>(other.inner)) {
-            this->inner = std::move(std::get<std::unique_ptr<ASTUnaryExpression>>(other.inner));
-        } else {
-            this->inner = std::move(std::get<ASTPostfixExpression>(other.inner));
-        }
-
+        this->inner = std::move(other.inner);
         this->operation = std::move(other.operation);
 
         return *this;
     }
 
+    Node ToNode() override;
+
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTUnaryExpression> Match(Parser &parser);
+    static std::optional<Node> Match(Parser &parser);
 
 private:
-    std::variant<std::unique_ptr<ASTUnaryExpression>, ASTPostfixExpression, std::unique_ptr<ASTCastExpression>> inner;
-    std::optional<Operator> operation;
+    Node inner;
+    Node operation;
 };
 
 struct ASTTypeQualifier : public ASTNode {
@@ -405,7 +335,9 @@ struct ASTTypeQualifier : public ASTNode {
         return resultStream.str();
     }
 
-    static std::optional<ASTTypeQualifier> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTTypeSpecifier final : public ASTNode {
@@ -455,27 +387,25 @@ struct ASTTypeSpecifier final : public ASTNode {
     }
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream{};
+    std::string ToString(int depth) const override;
 
-        resultStream << "ASTTypeSpecifier(" << magic_enum::enum_name(this->specifier) << ')';
+    Node ToNode() override;
 
-        return resultStream.str();
-    }
-
-    static std::optional<ASTTypeSpecifier> Match(Parser &parser);
+    static std::optional<Node> Match(Parser &parser);
 };
 
 struct ASTSpecifierQualifierList final : public ASTNode {
-    explicit ASTSpecifierQualifierList(std::vector<std::variant<ASTTypeSpecifier, ASTTypeQualifier>> &&list)
+    explicit ASTSpecifierQualifierList(std::vector<Node> &&list)
             : list{std::move(list)} {};
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTSpecifierQualifierList> Match(Parser &parser);
+    Node ToNode() override;
 
-    std::vector<std::variant<ASTTypeSpecifier, ASTTypeQualifier>> list;
+    static std::optional<Node> Match(Parser &parser);
+
+    std::vector<Node> list;
 };
 
 struct ASTTypeName final : public ASTNode {
@@ -485,27 +415,27 @@ struct ASTTypeName final : public ASTNode {
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTTypeName> Match(Parser &list);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &list);
 
     ASTSpecifierQualifierList specifierQualifierList;
 };
 
 struct ASTCastExpression final : public ASTNode {
-    ASTCastExpression(ASTUnaryExpression &&unaryExpression, std::optional<ASTTypeName> &&typeName)
+    ASTCastExpression(Node &&unaryExpression, Node &&typeName)
             : inner{std::move(unaryExpression)}
-            , typeName{std::move(typeName)} {};
-
-    ASTCastExpression(std::unique_ptr<ASTCastExpression> &&castExpressionPtr, std::optional<ASTTypeName> &&typeName)
-            : inner{std::move(castExpressionPtr)}
             , typeName{std::move(typeName)} {};
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTCastExpression> Match(Parser &parser);
+    Node ToNode() override;
 
-    std::variant<ASTUnaryExpression, std::unique_ptr<ASTCastExpression>> inner;
-    std::optional<ASTTypeName> typeName;
+    static std::optional<Node> Match(Parser &parser);
+
+    Node inner;
+    Node typeName;
 };
 
 struct ASTMultiplicativeExpression final : public ASTNode {
@@ -517,9 +447,9 @@ struct ASTMultiplicativeExpression final : public ASTNode {
     };
 
     ASTMultiplicativeExpression(
-            std::optional<std::unique_ptr<ASTMultiplicativeExpression>> &&lhs,
+            std::optional<Node> &&lhs,
             MultiplicativeOperator operatorType,
-            std::optional<ASTCastExpression> &&rhs
+            std::optional<Node> &&rhs
     )
     : lhs{std::move(lhs)}
     , operatorType{operatorType}
@@ -542,13 +472,15 @@ struct ASTMultiplicativeExpression final : public ASTNode {
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTMultiplicativeExpression> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 
     static MultiplicativeOperator OperatorFromTokenType(TokenType tokenType);
 
-    std::optional<std::unique_ptr<ASTMultiplicativeExpression>> lhs;
+    std::optional<Node> lhs;
     MultiplicativeOperator operatorType{};
-    std::optional<ASTCastExpression> rhs;
+    std::optional<Node> rhs;
 };
 
 struct ASTAdditiveExpression final : public ASTNode {
@@ -559,9 +491,9 @@ struct ASTAdditiveExpression final : public ASTNode {
     };
 
     ASTAdditiveExpression(
-            std::optional<std::unique_ptr<ASTAdditiveExpression>> &&lhs,
+            std::optional<Node> &&lhs,
             AdditiveOperator operatorType,
-            std::optional<ASTMultiplicativeExpression> &&rhs
+            std::optional<Node> &&rhs
     )
     : lhs{std::move(lhs)}
     , operatorType{operatorType}
@@ -584,27 +516,31 @@ struct ASTAdditiveExpression final : public ASTNode {
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTAdditiveExpression> Match(Parser &parser);
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &additives);
 
     static AdditiveOperator OperatorFromTokenType(TokenType tokenType);
 
-    std::optional<std::unique_ptr<ASTAdditiveExpression>> lhs;
+    std::optional<Node> lhs;
     AdditiveOperator operatorType{};
-    std::optional<ASTMultiplicativeExpression> rhs;
+    std::optional<Node> rhs;
 };
 
 struct ASTExpression final : public ASTNode {
-    ASTExpression(ASTAdditiveExpression &&first, std::vector<ASTAdditiveExpression> &&other)
+    ASTExpression(Node &&first, std::vector<Node> &&other)
         : first{std::move(first)}
         , expressions{std::move(other)} {};
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
 
-    static std::optional<ASTExpression> Match(Parser &expr);
+    Node ToNode() override;
 
-    ASTAdditiveExpression first;
-    std::vector<ASTAdditiveExpression> expressions;
+    static std::optional<Node> Match(Parser &expr);
+
+    Node first;
+    std::vector<Node> expressions;
 };
 
 struct ASTDeclarator : public ASTNode {
@@ -621,26 +557,28 @@ struct ASTFunctionSpecifier : public ASTNode {
         Inline,
         NoReturn,
     } specifier{};
-
 };
 
 struct ASTDeclaration final : public ASTNode {
-
     explicit ASTDeclaration(
-            ASTSpecifierQualifierList &&list,
-            ASTIdentifier    &&identifier,
-            ASTExpression    &&expression
+            Node &&list,
+            Node &&identifier,
+            Node &&expression
     )
-    : identifier{std::move(identifier)}
-    , specifier {std::move(list)}
-    , expression{std::move(expression)} {};
+        : identifier{std::move(identifier)}
+        , specifier {std::move(list)}
+        , expression{std::move(expression)} {};
 
-    ASTSpecifierQualifierList specifier;
-    ASTIdentifier identifier;
-    ASTExpression expression;
+    Node specifier;
+    Node identifier;
+    Node expression;
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
 };
 
 #endif //JCC_ASTNODE_H
