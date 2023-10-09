@@ -1,2 +1,1 @@
-unsigned int testIdentifier =
-    (unsigned int) ((unsigned char) some->array[(unsigned int) (++someValue.member + 15) * 3] * (unsigned char) (2 + 5));
+unsigned int testIdentifier = a & b ^ c | d << 2 && e || f == g != h > i < j >= k <= l + m - o * p / q & r;

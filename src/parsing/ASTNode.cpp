@@ -310,6 +310,14 @@ Node ASTPostfixDot::ToNode() {
     };
 }
 
+std::string ASTPostfixDot::ToString(int depth) const {
+    std::stringstream resultStream;
+
+    resultStream << "ASTPostfixDot( " << this->identifier.ToString(depth + 1) << " )";
+
+    return resultStream.str();
+}
+
 std::optional<Node> ASTPostfixArrow::Match(Parser &parser) {
     return Parser::Expect(TokenType::Arrow)
             .FollowedBy<ASTIdentifier>()
@@ -407,10 +415,10 @@ Node ASTPostfixExpression::ToNode() {
 }
 
 std::optional<Node> ASTExpression::Match(Parser &parser) {
-    return Parser::Expect<ASTAdditiveExpression>()
+    return Parser::Expect<ASTLogicalOrExpression>()
             .FollowedBy(
             Parser::Expect(TokenType::Comma)
-                        .FollowedBy<ASTAdditiveExpression>()
+                        .FollowedBy<ASTLogicalOrExpression>()
                         .ZeroOrMore()
             ).Builder([](Node &&expr, std::vector<std::tuple<Token, Node>> &&capturedExpressions) -> Node {
                 if (capturedExpressions.empty())
@@ -478,6 +486,29 @@ Node ASTTypeQualifier::ToNode() {
     };
 }
 
+ASTTypeQualifier::TypeQualifier ASTTypeQualifier::FromTokenType(TokenType tokenType) {
+    switch (tokenType) {
+        case TokenType::KeywordConst:
+            return ASTTypeQualifier::TypeQualifier::Const;
+        case TokenType::KeywordRestrict:
+            return ASTTypeQualifier::TypeQualifier::Restrict;
+        case TokenType::KeywordVolatile:
+            return ASTTypeQualifier::TypeQualifier::Volatile;
+        case TokenType::KeywordAtomic:
+            return ASTTypeQualifier::TypeQualifier::Atomic;
+        default:
+            assert(false);
+    }
+}
+
+std::string ASTTypeQualifier::ToString(int depth) const {
+    std::stringstream resultStream{};
+
+    resultStream << "ASTTypeQualifier(" << magic_enum::enum_name(this->qualifier) << ')';
+
+    return resultStream.str();
+}
+
 std::optional<Node> ASTTypeSpecifier::Match(Parser &parser) {
     return Parser::Expect(TokenType::KeywordVoid)
             .Or(TokenType::KeywordChar)
@@ -513,6 +544,35 @@ std::string ASTTypeSpecifier::ToString(int depth) const {
     resultStream << tabs << "ASTTypeSpecifier(" << magic_enum::enum_name(this->specifier) << ')';
 
     return resultStream.str();
+}
+
+ASTTypeSpecifier::TypeSpecifier ASTTypeSpecifier::FromTokenType(TokenType tokenType) {
+    switch (tokenType) {
+        case TokenType::KeywordVoid:
+            return ASTTypeSpecifier::TypeSpecifier::Void;
+        case TokenType::KeywordChar:
+            return ASTTypeSpecifier::TypeSpecifier::Char;
+        case TokenType::KeywordShort:
+            return ASTTypeSpecifier::TypeSpecifier::Short;
+        case TokenType::KeywordInt:
+            return ASTTypeSpecifier::TypeSpecifier::Int;
+        case TokenType::KeywordLong:
+            return ASTTypeSpecifier::TypeSpecifier::Long;
+        case TokenType::KeywordFloat:
+            return ASTTypeSpecifier::TypeSpecifier::Float;
+        case TokenType::KeywordDouble:
+            return ASTTypeSpecifier::TypeSpecifier::Double;
+        case TokenType::KeywordSigned:
+            return ASTTypeSpecifier::TypeSpecifier::Signed;
+        case TokenType::KeywordUnsigned:
+            return ASTTypeSpecifier::TypeSpecifier::Unsigned;
+        case TokenType::KeywordBool:
+            return ASTTypeSpecifier::TypeSpecifier::Bool;
+        case TokenType::KeywordComplex:
+            return ASTTypeSpecifier::TypeSpecifier::Complex;
+        default:
+            assert(false);
+    }
 }
 
 std::optional<Node> ASTSpecifierQualifierList::Match(Parser &parser) {
@@ -655,54 +715,95 @@ std::string ASTMultiplicativeExpression::ToString(int depth) const {
     return resultStream.str();
 }
 
-std::optional<Node> ASTMultiplicativeExpression::Match(Parser &parser) {
-    return Parser::Expect<ASTCastExpression>()
-            .FollowedBy(
-                Parser::Expect(TokenType::Asterisk)
-                    .Or(TokenType::Divide)
-                    .Or(TokenType::Modulo)
-            )
+template<class TNode>
+std::string BinaryExpressionToString(const TNode &node, std::string &&nodeName, int depth) {
+    std::stringstream resultStream{};
+
+    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
+
+    resultStream << nodeName << " {\n";
+
+    resultStream << tabs << "lhs = ";
+
+    if (node.lhs.has_value())
+        resultStream << node.lhs->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "rhs = ";
+
+    if (node.rhs.has_value())
+        resultStream << node.rhs->ToString(depth + 1) << ",\n";
+    else
+        resultStream << "none,\n";
+
+    resultStream << tabs << "operator = " << magic_enum::enum_name(node.operatorType) << '\n';
+
+    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
+
+    return resultStream.str();
+}
+
+template<class TChildren, class TOut, class TTokenRule>
+inline std::optional<Node> BinaryExpression(const TTokenRule &tokenRule, Parser &parser) {
+    return Parser::Expect<TChildren>()
+            .FollowedBy(tokenRule)
             .ZeroOrMore()
-            .FollowedBy<ASTCastExpression>()
-            .Builder([](std::vector<std::tuple<Node, Token>> &&multiplicatives, Node &&rhs) -> Node {
-                if (multiplicatives.empty())
+            .template FollowedBy<TChildren>()
+            .Builder([](std::vector<std::tuple<Node, Token>> &&expressions, Node &&rhs) -> Node {
+                if (expressions.empty())
                     return std::move(rhs);
 
                 std::optional<Node> output{ std::nullopt };
-                MultiplicativeOperator op;
+                typename TOut::Operator op;
 
-                for (auto &multiplicative : multiplicatives) {
-                    Node &multLhs{std::get<0>(multiplicative) };
-                    Token &opToken{ std::get<1>(multiplicative) };
-                    op = ASTMultiplicativeExpression::OperatorFromTokenType(opToken.type);
+                for (auto &expression : expressions) {
+                    Node &lhs{std::get<0>(expression) };
+                    Token &opToken{ std::get<1>(expression) };
+                    op = TOut::OperatorFromTokenType(opToken.type);
 
-                    output = ASTMultiplicativeExpression{ std::move(output), op, std::move(multLhs) }.ToNode();
+                    if (!output.has_value()) {
+                        output = std::move(lhs);
+                        continue;
+                    }
+
+                    output = TOut{ std::move(output), op, std::move(lhs) }.ToNode();
                 }
 
                 if (output.has_value()) {
                     Node outputPtr{ std::move(output.value()) };
 
-                    return ASTMultiplicativeExpression{ std::move(outputPtr), op, std::move(rhs) }.ToNode();
+                    return TOut{ std::move(outputPtr), op, std::move(rhs) }.ToNode();
                 }
 
-                return ASTMultiplicativeExpression{ std::nullopt, MultiplicativeOperator::None, std::move(rhs) }.ToNode();
+                return TOut{ std::nullopt, TOut::Operator::None, std::move(rhs) }.ToNode();
             })
             .Match(parser);
 }
 
-ASTMultiplicativeExpression::MultiplicativeOperator
+std::optional<Node> ASTMultiplicativeExpression::Match(Parser &parser) {
+    auto tokenRule{
+        Parser::Expect(TokenType::Asterisk)
+           .Or(TokenType::Divide)
+           .Or(TokenType::Modulo)
+    };
+
+    return BinaryExpression<ASTCastExpression, ASTMultiplicativeExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTMultiplicativeExpression::Operator
 ASTMultiplicativeExpression::OperatorFromTokenType(TokenType tokenType) {
     {
         switch (tokenType) {
             case TokenType::Asterisk:
-                return MultiplicativeOperator::Multiply;
+                return Operator::Multiply;
             case TokenType::Divide:
-                return MultiplicativeOperator::Divide;
+                return Operator::Divide;
             case TokenType::Modulo:
-                return MultiplicativeOperator::Modulo;
+                return Operator::Modulo;
             default:
                 assert(false && "invalid token type");
-                return MultiplicativeOperator::None;
+                return Operator::None;
         }
     }
 }
@@ -715,81 +816,31 @@ Node ASTMultiplicativeExpression::ToNode() {
 }
 
 std::string ASTAdditiveExpression::ToString(int depth) const {
-    std::stringstream resultStream{};
-
-    std::string tabs(PRETTY_PRINT_DEPTH(depth + 1), PRETTY_PRINT_CHAR);
-
-    resultStream << "ASTAdditiveExpression {\n";
-
-    resultStream << tabs << "lhs = ";
-
-    if (this->lhs.has_value())
-        resultStream << this->lhs->ToString(depth + 1) << ",\n";
-    else
-        resultStream << "none,\n";
-
-    resultStream << tabs << "rhs = ";
-
-    if (this->rhs.has_value())
-        resultStream << this->rhs->ToString(depth + 1) << ",\n";
-    else
-        resultStream << "none,\n";
-
-    resultStream << tabs << "operator = " << magic_enum::enum_name(this->operatorType) << '\n';
-
-    resultStream << std::string(PRETTY_PRINT_DEPTH(depth), PRETTY_PRINT_CHAR) << '}';
-
-    return resultStream.str();
+    return BinaryExpressionToString(*this, "ASTAdditiveExpression", depth);
 }
 
-ASTAdditiveExpression::AdditiveOperator
+ASTAdditiveExpression::Operator
 ASTAdditiveExpression::OperatorFromTokenType(TokenType tokenType) {
     {
         switch (tokenType) {
             case TokenType::Plus:
-                return AdditiveOperator::Add;
+                return Operator::Add;
             case TokenType::Minus:
-                return AdditiveOperator::Subtract;
+                return Operator::Subtract;
             default:
                 assert(false && "invalid token type");
-                return AdditiveOperator::None;
+                return Operator::None;
         }
     }
 }
 
-// todo: same as multiplicative expression, refactor
 std::optional<Node> ASTAdditiveExpression::Match(Parser &parser) {
-    return Parser::Expect<ASTMultiplicativeExpression>()
-            .FollowedBy(
-                    Parser::Expect(TokenType::Plus)
-                            .Or(TokenType::Minus)
-            )
-            .ZeroOrMore()
-            .FollowedBy<ASTMultiplicativeExpression>()
-            .Builder([](std::vector<std::tuple<Node, Token>> &&additives, Node &&rhs) -> Node {
-                if (additives.empty())
-                    return std::move(rhs);
+    auto tokenRule{
+        Parser::Expect(TokenType::Plus)
+            .Or(TokenType::Minus)
+    };
 
-                std::optional<Node> output{ std::nullopt };
-                AdditiveOperator op;
-
-                for (auto &multiplicative : additives) {
-                    Node &multLhs{std::get<0>(multiplicative) };
-                    Token &opToken{ std::get<1>(multiplicative) };
-                    op = ASTAdditiveExpression::OperatorFromTokenType(opToken.type);
-
-                    output = ASTAdditiveExpression{ std::move(output), op, std::move(multLhs) }.ToNode();
-                }
-
-                if (output.has_value()) {
-                    Node outputPtr{ std::move(output.value()) };
-
-                    return ASTAdditiveExpression{ std::move(outputPtr), op, std::move(rhs) }.ToNode();
-                }
-
-                return ASTAdditiveExpression{ std::nullopt, AdditiveOperator::None, std::move(rhs) }.ToNode();
-            })
-            .Match(parser);
+    return BinaryExpression<ASTMultiplicativeExpression, ASTAdditiveExpression, typeof tokenRule>(tokenRule, parser);
 }
 
 Node ASTAdditiveExpression::ToNode() {
@@ -835,4 +886,215 @@ Node ASTDeclaration::ToNode() {
 
 std::string Node::ToString(int depth) const {
     return node->ToString(depth);
+}
+
+std::string ASTShiftExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTShiftExpression", depth);
+}
+
+Node ASTShiftExpression::ToNode() {
+    return Node {
+        Node::Type::ShiftExpression,
+        std::make_unique<ASTShiftExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTShiftExpression::Match(Parser &parser) {
+    auto tokenRule{
+        Parser::Expect(TokenType::ShiftLeft)
+            .Or(TokenType::ShiftRight)
+    };
+
+    return BinaryExpression<ASTAdditiveExpression, ASTShiftExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTShiftExpression::Operator ASTShiftExpression::OperatorFromTokenType(TokenType tokenType) {
+    {
+        switch (tokenType) {
+            case TokenType::ShiftLeft:
+                return Operator::Left;
+            case TokenType::ShiftRight:
+                return Operator::Right;
+            default:
+                assert(false && "invalid token type");
+                return Operator::None;
+        }
+    }
+}
+
+std::string ASTRelationalExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTRelationalExpression", depth);
+}
+
+Node ASTRelationalExpression::ToNode() {
+    return Node {
+        Node::Type::RelationalExpression,
+        std::make_unique<ASTRelationalExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTRelationalExpression::Match(Parser &parser) {
+    auto tokenRule{
+        Parser::Expect(TokenType::LessThan)
+            .Or(TokenType::GreaterThan)
+            .Or(TokenType::LessThanOrEqual)
+            .Or(TokenType::GreaterThanOrEqual)
+    };
+
+    return BinaryExpression<ASTShiftExpression, ASTRelationalExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTRelationalExpression::Operator ASTRelationalExpression::OperatorFromTokenType(TokenType tokenType) {
+    {
+        switch (tokenType) {
+            case TokenType::LessThan:
+                return Operator::LessThan;
+            case TokenType::GreaterThan:
+                return Operator::GreaterThan;
+            case TokenType::LessThanOrEqual:
+                return Operator::LessThanOrEqual;
+            case TokenType::GreaterThanOrEqual:
+                return Operator::GreaterThanOrEqual;
+            default:
+                assert(false && "invalid token type");
+                return Operator::None;
+        }
+    }
+}
+
+std::string ASTEqualityExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTEqualityExpression", depth);
+}
+
+std::optional<Node> ASTEqualityExpression::Match(Parser &equality) {
+    auto tokenRule{
+        Parser::Expect(TokenType::Equals)
+            .Or(TokenType::NotEquals)
+    };
+
+    return BinaryExpression<ASTRelationalExpression, ASTEqualityExpression, typeof tokenRule>(tokenRule, equality);
+}
+
+Node ASTEqualityExpression::ToNode() {
+    return Node {
+        Node::Type::EqualityExpression,
+        std::make_unique<ASTEqualityExpression>(std::move(*this))
+    };
+}
+
+ASTEqualityExpression::Operator ASTEqualityExpression::OperatorFromTokenType(TokenType tokenType) {
+    switch (tokenType) {
+        case TokenType::Equals:
+            return Operator::Equal;
+        case TokenType::NotEquals:
+            return Operator::NotEqual;
+        default:
+            assert(false && "invalid token type");
+            return Operator::None;
+    }
+}
+
+std::string ASTAndExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTAndExpression", depth);
+}
+
+Node ASTAndExpression::ToNode() {
+    return Node {
+        Node::Type::AndExpression,
+        std::make_unique<ASTAndExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTAndExpression::Match(Parser &parser) {
+    auto tokenRule{ Parser::Expect(TokenType::Ampersand) };
+
+    return BinaryExpression<ASTEqualityExpression, ASTAndExpression, typeof tokenRule>(tokenRule, parser);;
+}
+
+ASTAndExpression::Operator ASTAndExpression::OperatorFromTokenType(TokenType tokenType) {
+    return Operator::And;
+}
+
+std::string ASTExclusiveOrExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTExclusiveOrExpression", depth);
+}
+
+Node ASTExclusiveOrExpression::ToNode() {
+    return Node {
+        Node::Type::ExclusiveOrExpression,
+        std::make_unique<ASTExclusiveOrExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTExclusiveOrExpression::Match(Parser &parser) {
+    auto tokenRule{ Parser::Expect(TokenType::ExclusiveOr) };
+
+    return BinaryExpression<ASTAndExpression, ASTExclusiveOrExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTExclusiveOrExpression::Operator ASTExclusiveOrExpression::OperatorFromTokenType(TokenType tokenType) {
+    return Operator::ExclusiveOr;
+}
+
+std::string ASTInclusiveOrExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTInclusiveOrExpression", depth);
+}
+
+Node ASTInclusiveOrExpression::ToNode() {
+    return Node {
+        Node::Type::InclusiveOrExpression,
+        std::make_unique<ASTInclusiveOrExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTInclusiveOrExpression::Match(Parser &parser) {
+    auto tokenRule{ Parser::Expect(TokenType::BitwiseOr) };
+
+    return BinaryExpression<ASTExclusiveOrExpression, ASTInclusiveOrExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTInclusiveOrExpression::Operator ASTInclusiveOrExpression::OperatorFromTokenType(TokenType tokenType) {
+    return Operator::InclusiveOr;
+}
+
+std::string ASTLogicalAndExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTLogicalAndExpression", depth);
+}
+
+Node ASTLogicalAndExpression::ToNode() {
+    return Node {
+        Node::Type::LogicalAndExpression,
+        std::make_unique<ASTLogicalAndExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTLogicalAndExpression::Match(Parser &parser) {
+    auto tokenRule{ Parser::Expect(TokenType::LogicalAnd) };
+
+    return BinaryExpression<ASTInclusiveOrExpression, ASTLogicalAndExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTLogicalAndExpression::Operator ASTLogicalAndExpression::OperatorFromTokenType(TokenType tokenType) {
+    return Operator::LogicalAnd;
+}
+
+std::string ASTLogicalOrExpression::ToString(int depth) const {
+    return BinaryExpressionToString(*this, "ASTLogicalOrExpression", depth);
+}
+
+Node ASTLogicalOrExpression::ToNode() {
+    return Node {
+        Node::Type::LogicalOrExpression,
+        std::make_unique<ASTLogicalOrExpression>(std::move(*this))
+    };
+}
+
+std::optional<Node> ASTLogicalOrExpression::Match(Parser &parser) {
+    auto tokenRule{ Parser::Expect(TokenType::LogicalOr) };
+
+    return BinaryExpression<ASTLogicalAndExpression, ASTLogicalOrExpression, typeof tokenRule>(tokenRule, parser);
+}
+
+ASTLogicalOrExpression::Operator ASTLogicalOrExpression::OperatorFromTokenType(TokenType tokenType) {
+    return Operator::LogicalOr;
 }

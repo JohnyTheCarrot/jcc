@@ -62,7 +62,18 @@ struct Node final {
         MultiplicativeExpression,
         AdditiveExpression,
         Declaration,
-        Expression
+        ShiftExpression,
+        RelationalExpression,
+        EqualityExpression,
+        AndExpression,
+        ExclusiveOrExpression,
+        InclusiveOrExpression,
+        LogicalAndExpression,
+        LogicalOrExpression,
+        ConditionalExpression,
+        AssignmentExpression,
+        AssignmentOperator,
+        Expression,
     } type;
 
     std::unique_ptr<ASTNode> node;
@@ -182,13 +193,7 @@ struct ASTPostfixDot final : public ASTNode {
     Node identifier;
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream;
-
-        resultStream << "ASTPostfixDot( " << this->identifier.ToString(depth + 1) << " )";
-
-        return resultStream.str();
-    }
+    std::string ToString(int depth) const override;
 
     Node ToNode() override;
 
@@ -311,29 +316,10 @@ struct ASTTypeQualifier : public ASTNode {
 
     explicit ASTTypeQualifier(TypeQualifier qualifier) : qualifier{qualifier} {};
 
-    static TypeQualifier FromTokenType(TokenType tokenType) {
-        switch (tokenType) {
-            case TokenType::KeywordConst:
-                return ASTTypeQualifier::TypeQualifier::Const;
-            case TokenType::KeywordRestrict:
-                return ASTTypeQualifier::TypeQualifier::Restrict;
-            case TokenType::KeywordVolatile:
-                return ASTTypeQualifier::TypeQualifier::Volatile;
-            case TokenType::KeywordAtomic:
-                return ASTTypeQualifier::TypeQualifier::Atomic;
-            default:
-                assert(false);
-        }
-    }
+    static TypeQualifier FromTokenType(TokenType tokenType);
 
     [[nodiscard]]
-    std::string ToString(int depth) const override {
-        std::stringstream resultStream{};
-
-        resultStream << "ASTTypeQualifier(" << magic_enum::enum_name(this->qualifier) << ')';
-
-        return resultStream.str();
-    }
+    std::string ToString(int depth) const override;
 
     Node ToNode() override;
 
@@ -357,34 +343,7 @@ struct ASTTypeSpecifier final : public ASTNode {
 
     explicit ASTTypeSpecifier(TypeSpecifier specifier) : specifier{specifier} {};
 
-    static TypeSpecifier FromTokenType(TokenType tokenType) {
-        switch (tokenType) {
-            case TokenType::KeywordVoid:
-                return ASTTypeSpecifier::TypeSpecifier::Void;
-            case TokenType::KeywordChar:
-                return ASTTypeSpecifier::TypeSpecifier::Char;
-            case TokenType::KeywordShort:
-                return ASTTypeSpecifier::TypeSpecifier::Short;
-            case TokenType::KeywordInt:
-                return ASTTypeSpecifier::TypeSpecifier::Int;
-            case TokenType::KeywordLong:
-                return ASTTypeSpecifier::TypeSpecifier::Long;
-            case TokenType::KeywordFloat:
-                return ASTTypeSpecifier::TypeSpecifier::Float;
-            case TokenType::KeywordDouble:
-                return ASTTypeSpecifier::TypeSpecifier::Double;
-            case TokenType::KeywordSigned:
-                return ASTTypeSpecifier::TypeSpecifier::Signed;
-            case TokenType::KeywordUnsigned:
-                return ASTTypeSpecifier::TypeSpecifier::Unsigned;
-            case TokenType::KeywordBool:
-                return ASTTypeSpecifier::TypeSpecifier::Bool;
-            case TokenType::KeywordComplex:
-                return ASTTypeSpecifier::TypeSpecifier::Complex;
-            default:
-                assert(false);
-        }
-    }
+    static TypeSpecifier FromTokenType(TokenType tokenType);
 
     [[nodiscard]]
     std::string ToString(int depth) const override;
@@ -439,7 +398,7 @@ struct ASTCastExpression final : public ASTNode {
 };
 
 struct ASTMultiplicativeExpression final : public ASTNode {
-    enum class MultiplicativeOperator {
+    enum class Operator {
         Multiply,
         Divide,
         Modulo,
@@ -448,12 +407,12 @@ struct ASTMultiplicativeExpression final : public ASTNode {
 
     ASTMultiplicativeExpression(
             std::optional<Node> &&lhs,
-            MultiplicativeOperator operatorType,
+            Operator operatorType,
             std::optional<Node> &&rhs
     )
-    : lhs{std::move(lhs)}
-    , operatorType{operatorType}
-    , rhs{std::move(rhs)} {};
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
 
     ASTMultiplicativeExpression(ASTMultiplicativeExpression &&other) noexcept {
         this->lhs = std::move(other.lhs);
@@ -476,15 +435,15 @@ struct ASTMultiplicativeExpression final : public ASTNode {
 
     static std::optional<Node> Match(Parser &parser);
 
-    static MultiplicativeOperator OperatorFromTokenType(TokenType tokenType);
+    static Operator OperatorFromTokenType(TokenType tokenType);
 
     std::optional<Node> lhs;
-    MultiplicativeOperator operatorType{};
+    Operator operatorType{};
     std::optional<Node> rhs;
 };
 
 struct ASTAdditiveExpression final : public ASTNode {
-    enum class AdditiveOperator {
+    enum class Operator {
         Add,
         Subtract,
         None,
@@ -492,12 +451,12 @@ struct ASTAdditiveExpression final : public ASTNode {
 
     ASTAdditiveExpression(
             std::optional<Node> &&lhs,
-            AdditiveOperator operatorType,
+            Operator operatorType,
             std::optional<Node> &&rhs
     )
-    : lhs{std::move(lhs)}
-    , operatorType{operatorType}
-    , rhs{std::move(rhs)} {};
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
 
     ASTAdditiveExpression(ASTAdditiveExpression &&other) noexcept {
         this->lhs = std::move(other.lhs);
@@ -518,12 +477,361 @@ struct ASTAdditiveExpression final : public ASTNode {
 
     Node ToNode() override;
 
-    static std::optional<Node> Match(Parser &additives);
+    static std::optional<Node> Match(Parser &parser);
 
-    static AdditiveOperator OperatorFromTokenType(TokenType tokenType);
+    static Operator OperatorFromTokenType(TokenType tokenType);
 
     std::optional<Node> lhs;
-    AdditiveOperator operatorType{};
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTShiftExpression final : public ASTNode {
+    enum class Operator {
+        Left,
+        Right,
+        None,
+    };
+
+    ASTShiftExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTShiftExpression(ASTShiftExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTShiftExpression &operator=(ASTShiftExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTRelationalExpression final : public ASTNode {
+    enum class Operator {
+        LessThan,
+        GreaterThan,
+        LessThanOrEqual,
+        GreaterThanOrEqual,
+        None,
+    };
+
+    ASTRelationalExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTRelationalExpression(ASTRelationalExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTRelationalExpression &operator=(ASTRelationalExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTEqualityExpression final : public ASTNode {
+    enum class Operator {
+        Equal,
+        NotEqual,
+        None,
+    };
+
+    ASTEqualityExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTEqualityExpression(ASTEqualityExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTEqualityExpression &operator=(ASTEqualityExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTAndExpression final : public ASTNode {
+    enum class Operator {
+        And,
+        None,
+    };
+
+    ASTAndExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTAndExpression(ASTAndExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTAndExpression &operator=(ASTAndExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTExclusiveOrExpression final : public ASTNode {
+    enum class Operator {
+        ExclusiveOr,
+        None,
+    };
+
+    ASTExclusiveOrExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTExclusiveOrExpression(ASTExclusiveOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTExclusiveOrExpression &operator=(ASTExclusiveOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTInclusiveOrExpression final : public ASTNode {
+    enum class Operator {
+        InclusiveOr,
+        None,
+    };
+
+    ASTInclusiveOrExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTInclusiveOrExpression(ASTInclusiveOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTInclusiveOrExpression &operator=(ASTInclusiveOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTLogicalAndExpression final : public ASTNode {
+    enum class Operator {
+        LogicalAnd,
+        None,
+    };
+
+    ASTLogicalAndExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTLogicalAndExpression(ASTLogicalAndExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTLogicalAndExpression &operator=(ASTLogicalAndExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
+    std::optional<Node> rhs;
+};
+
+struct ASTLogicalOrExpression final : public ASTNode {
+    enum class Operator {
+        LogicalOr,
+        None,
+    };
+
+    ASTLogicalOrExpression(
+            std::optional<Node> &&lhs,
+            Operator operatorType,
+            std::optional<Node> &&rhs
+    )
+        : lhs{std::move(lhs)}
+        , operatorType{operatorType}
+        , rhs{std::move(rhs)} {};
+
+    ASTLogicalOrExpression(ASTLogicalOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+    }
+
+    ASTLogicalOrExpression &operator=(ASTLogicalOrExpression &&other) noexcept {
+        this->lhs = std::move(other.lhs);
+        this->operatorType = other.operatorType;
+        this->rhs = std::move(other.rhs);
+
+        return *this;
+    }
+
+    [[nodiscard]]
+    std::string ToString(int depth) const override;
+
+    Node ToNode() override;
+
+    static std::optional<Node> Match(Parser &parser);
+
+    static Operator OperatorFromTokenType(TokenType tokenType);
+
+    std::optional<Node> lhs;
+    Operator operatorType{};
     std::optional<Node> rhs;
 };
 
