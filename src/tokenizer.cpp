@@ -256,10 +256,10 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
               fmt::format("Invalid digit for base {}.", base));
     }
 
-    int64_t integerLiteralValue{0};
+    IntegerTokenValue integerLiteralValue{0};
     for (size_t index{0}; index < amountOfDigits; ++index) {
         integerLiteralValue +=
-                integerLiteralDigits[index] * static_cast<int64_t>(pow(base, amountOfDigits - index - 1));
+                integerLiteralDigits[index] * static_cast<IntegerTokenValue>(pow(base, amountOfDigits - index - 1));
     }
 
     IntegerLiteralTokenValue value{integerLiteralValue, isUnsigned, type};

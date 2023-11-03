@@ -3,34 +3,39 @@
 //
 
 #include <iostream>
+#include <utility>
 #include "Parser.h"
 #include "../reporting.h"
-#include "ParserRuleBuilder.h"
+#include "Ast/AstIdentifier.h"
+#include "Ast/AstExpression.h"
 
-Parser::Parser(TokenList &&tokenList, const std::string &fileName, std::istream &inputStream)
-        : tokens{std::move(tokenList)}, fileName{fileName}, inputStream{ inputStream } {
+using namespace parsing;
+
+Parser::Parser(TokenList &&tokenList, std::string fileName, std::istream &inputStream)
+        : tokens{std::move(tokenList)}, fileName{std::move(fileName)}, inputStream{ inputStream } {
     inputStream.seekg(0, std::istream::beg);
 }
 
-std::optional<Token> Parser::PeekNextToken() {
-    if (this->cursor + 1 >= this->tokens.size())
-        return std::nullopt;
+const Token& Parser::PeekNextToken() {
+    assert(static_cast<bool>(*this) && "No next token");
 
     return *this->tokens[this->cursor + 1];
 }
 
 void Parser::AdvanceCursor() {
+    assert(static_cast<bool>(*this) && "No next token");
+
     ++this->cursor;
 }
 
 std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
-    std::optional<Token> token{this->PeekNextToken()};
-
-    if (!token.has_value())
+    if (!*this)
         return std::nullopt;
 
-    if (token.value().type == tokenType) {
-        ++this->cursor;
+    Token token{ this->PeekNextToken() };
+
+    if (token.type == tokenType) {
+        this->AdvanceCursor();
 
         return *this->tokens[this->cursor];
     }
@@ -39,11 +44,33 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    std::optional<Node> decl{ ASTDeclaration::Match(*this) };
-
-    std::cout << decl->ToString(0) << std::endl;
+    std::unique_ptr<AstNode> identifier{ AstExpression::Parse(*this) };
+    if (identifier != nullptr)
+        std::cout << identifier->ToString(0) << std::endl;
+    else
+        std::cout << "didn't match" << std::endl;
 }
 
-void Parser::Error(const Span &span, const std::string &message) {
+void Parser::Error(const Span &span, const std::string &message) const {
     ::Error(this->fileName, this->inputStream, span, message);
+}
+
+bool Parser::operator!() const {
+    return this->cursor + 1 == this->tokens.size();
+}
+
+Parser::operator bool() const {
+    return !!*this;
+}
+
+bool Parser::AdvanceIfTokenIs(TokenType tokenValue) {
+    if (!*this)
+        return false;
+
+    bool isTokenMatch{ this->PeekNextToken().type == tokenValue };
+
+    if (isTokenMatch)
+        this->AdvanceCursor();
+
+    return isTokenMatch;
 }
