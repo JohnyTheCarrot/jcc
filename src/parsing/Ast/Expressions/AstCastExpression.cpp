@@ -20,7 +20,8 @@ namespace parsing {
 
         std::optional<AstTypeName> typeName{ AstTypeName::Parse(parser) };
         if (!typeName) {
-            parser.Error(parser.PeekNextToken()._span, "Expected type name");
+            parser.SetCursor(cursor);
+            return AstUnaryExpression::Parse(parser);
         }
 
         std::optional<Token> rParen{parser.ConsumeIfTokenIs(TokenType::RightParenthesis) };

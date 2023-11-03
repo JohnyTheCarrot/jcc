@@ -41,6 +41,8 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Declarations/AstSpecifierQualifierList.cpp
         src/parsing/Ast/Declarations/AstSpecifierQualifierList.h
         src/parsing/Ast/Declarations/AstTypeQualifier.cpp
-        src/parsing/Ast/Declarations/AstTypeQualifier.h)
+        src/parsing/Ast/Declarations/AstTypeQualifier.h
+        src/parsing/Ast/Expressions/AstMultiplicativeExpression.cpp
+        src/parsing/Ast/Expressions/AstMultiplicativeExpression.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)
