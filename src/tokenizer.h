@@ -14,6 +14,9 @@
 #include <memory>
 #include "Span.h"
 
+using IntegerTokenValue = int64_t;
+using FloatingTokenValue = double;
+
 enum class TokenType {
     Increment,
     Plus,
@@ -232,23 +235,28 @@ enum class IntegerLiteralType {
 };
 
 struct IntegerLiteralTokenValue {
-    int64_t value;
+    IntegerTokenValue value;
     bool isUnsigned;
     IntegerLiteralType type;
 };
 
-typedef std::variant<IntegerLiteralTokenValue, double, std::string> TokenValue;
+struct FloatingPointLiteralTokenValue {
+    FloatingTokenValue value;
+    bool isDouble;
+};
+
+typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, std::string> TokenValue;
 
 struct Token {
     Token(TokenType type, Span &&span, TokenValue &&value) :
-            type{type}, span{span}, value{std::move(value)} {}
+            type{type}, _span{span}, value{std::move(value)} {}
 
     Token(TokenType type, Span &&span) :
-            type{type}, span{span}, value{} {}
+            type{type}, _span{span}, value{} {}
 
     TokenType type;
 
-    Span span;
+    Span _span;
 
     TokenValue value;
 };
