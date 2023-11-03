@@ -4,17 +4,17 @@
 
 #include <sstream>
 #include "AstConstant.h"
-#include "../Parser.h"
-#include "../../../libs/magic_enum/magic_enum.hpp"
+#include "../../Parser.h"
+#include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
     std::optional<AstConstant> AstConstant::Parse(Parser &parser) {
         Token token{ parser.PeekNextToken() };
 
-        switch(token.type) {
+        switch(token._type) {
             case TokenType::IntegerLiteral:
                 parser.AdvanceCursor();
-                return AstConstant(std::get<IntegerLiteralTokenValue>(token.value));
+                return AstConstant(std::get<IntegerLiteralTokenValue>(token._value));
             case TokenType::DoubleLiteral:
                 assert(false && 'TODO');
             default:

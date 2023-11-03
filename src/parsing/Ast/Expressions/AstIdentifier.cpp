@@ -3,7 +3,7 @@
 //
 
 #include "AstIdentifier.h"
-#include "../Parser.h"
+#include "../../Parser.h"
 
 std::optional<parsing::AstIdentifier> parsing::AstIdentifier::Parse(Parser &parser) {
     int parserCursor{ parser.GetCursor() };
@@ -15,7 +15,7 @@ std::optional<parsing::AstIdentifier> parsing::AstIdentifier::Parse(Parser &pars
         return std::nullopt;
     }
 
-    std::string identString{ std::get<std::string>(ident->value) };
+    std::string identString{ std::get<std::string>(ident->_value) };
 
     AstIdentifier identifier{ parsing::AstIdentifier(std::move(identString)) };
     identifier._span = ident->_span;

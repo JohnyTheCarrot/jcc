@@ -6,7 +6,7 @@
 #define JCC_ASTPRIMARYEXPRESSION_H
 
 #include <memory>
-#include "../AstNode.h"
+#include "../../AstNode.h"
 
 namespace parsing {
 

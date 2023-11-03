@@ -6,8 +6,8 @@
 #include <utility>
 #include "Parser.h"
 #include "../reporting.h"
-#include "Ast/AstIdentifier.h"
-#include "Ast/AstExpression.h"
+#include "Ast/Expressions/AstIdentifier.h"
+#include "Ast/Expressions/AstExpression.h"
 
 using namespace parsing;
 
@@ -34,7 +34,7 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 
     Token token{ this->PeekNextToken() };
 
-    if (token.type == tokenType) {
+    if (token._type == tokenType) {
         this->AdvanceCursor();
 
         return *this->tokens[this->cursor];
@@ -67,7 +67,7 @@ bool Parser::AdvanceIfTokenIs(TokenType tokenValue) {
     if (!*this)
         return false;
 
-    bool isTokenMatch{ this->PeekNextToken().type == tokenValue };
+    bool isTokenMatch{this->PeekNextToken()._type == tokenValue };
 
     if (isTokenMatch)
         this->AdvanceCursor();

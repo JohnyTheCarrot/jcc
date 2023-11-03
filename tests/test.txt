@@ -1,1 +1,1 @@
-a[b->c.d++]--
++(const short int) a[b->c.d++]--

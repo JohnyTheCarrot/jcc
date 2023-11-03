@@ -3,7 +3,7 @@
 //
 
 #include "AstStringLiteral.h"
-#include "../Parser.h"
+#include "../../Parser.h"
 
 namespace parsing {
     std::string AstStringLiteral::ToString(size_t depth) const {
@@ -20,7 +20,7 @@ namespace parsing {
             return std::nullopt;
         }
 
-        std::string string{ std::get<std::string>(stringLiteral->value) };
+        std::string string{ std::get<std::string>(stringLiteral->_value) };
 
         AstStringLiteral stringLiteralNode{ parsing::AstStringLiteral(std::move(string)) };
         stringLiteralNode._span = stringLiteral->_span;

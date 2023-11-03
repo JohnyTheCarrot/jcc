@@ -323,7 +323,7 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
             continue;
         }
 
-        std::string errorMessage{fmt::format("Unrecognized value: '{}'", this->currentChar)};
+        std::string errorMessage{fmt::format("Unrecognized _value: '{}'", this->currentChar)};
         Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
     }
 }

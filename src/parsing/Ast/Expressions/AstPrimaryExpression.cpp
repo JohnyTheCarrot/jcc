@@ -4,7 +4,7 @@
 
 #include "AstPrimaryExpression.h"
 #include "AstConstant.h"
-#include "../Parser.h"
+#include "../../Parser.h"
 #include "AstExpression.h"
 #include "AstStringLiteral.h"
 
