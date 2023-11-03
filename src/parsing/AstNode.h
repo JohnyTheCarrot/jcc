@@ -30,6 +30,7 @@ namespace parsing {
         SpecifierQualifierList,
         TypeName,
         MultiplicativeExpression,
+        AdditiveExpression,
     };
 
     struct AstNode {
