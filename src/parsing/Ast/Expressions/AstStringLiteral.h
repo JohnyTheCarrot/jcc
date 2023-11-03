@@ -5,7 +5,7 @@
 #ifndef JCC_ASTSTRINGLITERAL_H
 #define JCC_ASTSTRINGLITERAL_H
 
-#include "../AstNode.h"
+#include "../../AstNode.h"
 
 namespace parsing {
 

@@ -3,10 +3,10 @@
 //
 
 #include "AstExpression.h"
-#include "AstPostfixExpression.h"
+#include "AstUnaryExpression.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstExpression::Parse(Parser &parser) {
-        return AstPostfixExpression::Parse(parser);
+        return AstUnaryExpression::Parse(parser);
     }
 } // parsing

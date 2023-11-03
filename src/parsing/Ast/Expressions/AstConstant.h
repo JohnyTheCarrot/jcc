@@ -5,9 +5,9 @@
 #ifndef JCC_ASTCONSTANT_H
 #define JCC_ASTCONSTANT_H
 
-#include "../AstNode.h"
+#include "../../AstNode.h"
 #include "AstIdentifier.h"
-#include "../../tokenizer.h"
+#include "../../../tokenizer.h"
 
 
 namespace parsing {

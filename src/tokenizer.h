@@ -249,16 +249,16 @@ typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, s
 
 struct Token {
     Token(TokenType type, Span &&span, TokenValue &&value) :
-            type{type}, _span{span}, value{std::move(value)} {}
+            _type{type}, _span{span}, _value{std::move(value)} {}
 
     Token(TokenType type, Span &&span) :
-            type{type}, _span{span}, value{} {}
+            _type{type}, _span{span}, _value{} {}
 
-    TokenType type;
+    TokenType _type;
 
     Span _span;
 
-    TokenValue value;
+    TokenValue _value;
 };
 
 typedef std::unique_ptr<Token> TokenPtr;

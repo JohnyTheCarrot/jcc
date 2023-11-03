@@ -6,7 +6,7 @@
 #define JCC_ASTIDENTIFIER_H
 
 #include <string>
-#include "../AstNode.h"
+#include "../../AstNode.h"
 
 class Parser;
 

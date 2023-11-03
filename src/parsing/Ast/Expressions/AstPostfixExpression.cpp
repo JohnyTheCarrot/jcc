@@ -5,9 +5,9 @@
 #include <sstream>
 #include "AstPostfixExpression.h"
 #include "AstPrimaryExpression.h"
-#include "../Parser.h"
+#include "../../Parser.h"
 #include "AstExpression.h"
-#include "../../../libs/magic_enum/magic_enum.hpp"
+#include "../../../../libs/magic_enum/magic_enum.hpp"
 #include "AstIdentifier.h"
 
 namespace parsing {
@@ -26,7 +26,7 @@ namespace parsing {
 
             const Token& nextToken{ parser.PeekNextToken() };
 
-            switch (nextToken.type) {
+            switch (nextToken._type) {
                 case TokenType::LeftBracket: {
                     parser.AdvanceCursor();
 

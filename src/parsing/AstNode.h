@@ -23,6 +23,12 @@ namespace parsing {
         Constant,
         StringLiteral,
         PostfixExpression,
+        UnaryExpression,
+        CastExpression,
+        TypeSpecifier,
+        TypeQualifier,
+        SpecifierQualifierList,
+        TypeName
     };
 
     struct AstNode {
