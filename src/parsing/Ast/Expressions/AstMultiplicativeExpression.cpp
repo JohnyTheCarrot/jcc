@@ -56,7 +56,7 @@ namespace parsing {
 
         ss << "AstMultiplicativeExpression {" << std::endl;
         ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "multiplicativeOperator: " << magic_enum::enum_name(_multiplicativeOperator) << std::endl;
+        ss << tabsChildren << "operator: " << magic_enum::enum_name(_multiplicativeOperator) << std::endl;
         ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
         ss << tabs << '}';
 
