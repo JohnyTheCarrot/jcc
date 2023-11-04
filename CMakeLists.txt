@@ -49,6 +49,8 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Expressions/AstShiftExpression.cpp
         src/parsing/Ast/Expressions/AstShiftExpression.h
         src/parsing/Ast/Expressions/AstRelationalExpression.cpp
-        src/parsing/Ast/Expressions/AstRelationalExpression.h)
+        src/parsing/Ast/Expressions/AstRelationalExpression.h
+        src/parsing/Ast/Expressions/AstEqualityExpression.cpp
+        src/parsing/Ast/Expressions/AstEqualityExpression.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)

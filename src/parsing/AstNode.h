@@ -33,6 +33,7 @@ namespace parsing {
         AdditiveExpression,
         ShiftExpression,
         RelationalExpression,
+        EqualityExpression,
     };
 
     struct AstNode {
