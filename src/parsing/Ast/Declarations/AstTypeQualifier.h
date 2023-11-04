@@ -18,7 +18,7 @@ namespace parsing {
 
     struct AstTypeQualifier final : public AstNode {
         explicit AstTypeQualifier(AstTypeQualifierType qualifierType)
-            : AstNode(AstNodeType::TypeQualifier)
+            : AstNode(AstNodeType::TypeQualifier, Hierarchies::TypeQualifier)
             , _qualifierType{qualifierType} {};
 
         [[nodiscard]]

@@ -12,9 +12,10 @@ namespace parsing {
 
     struct AstExclusiveOrExpression final : public AstNode {
         AstExclusiveOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::ExclusiveOr)
+            : AstNode(AstNodeType::ExclusiveOr, Hierarchies::ExclusiveOrExpression)
             , _left{ std::move(left) }
-            , _right{ std::move(right) } {}
+            , _right{ std::move(right) }
+        {}
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &parser);

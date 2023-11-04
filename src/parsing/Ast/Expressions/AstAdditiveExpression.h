@@ -17,10 +17,10 @@ namespace parsing {
 
     struct AstAdditiveExpression final : public AstNode {
         AstAdditiveExpression(std::unique_ptr<AstNode> &&left, AdditiveOperator additiveOperator, std::unique_ptr<AstNode> &&right)
-                : AstNode(AstNodeType::AdditiveExpression)
-                , _left{std::move(left) }
-                , _additiveOperator{additiveOperator }
-                , _right{std::move(right) }
+                : AstNode(AstNodeType::AdditiveExpression, Hierarchies::AdditiveExpression)
+                , _left{ std::move(left) }
+                , _additiveOperator{ additiveOperator }
+                , _right{ std::move(right) }
         {}
 
         [[nodiscard]]

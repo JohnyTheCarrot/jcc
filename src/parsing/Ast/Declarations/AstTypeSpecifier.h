@@ -30,8 +30,8 @@ namespace parsing {
 
     struct AstTypeSpecifier final : public AstNode {
         explicit AstTypeSpecifier(AstTypeSpecifierType typeSpecifierType)
-            : AstNode(AstNodeType::TypeSpecifier)
-            , _specifierType{typeSpecifierType }
+            : AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
+            , _specifierType{ typeSpecifierType }
         {}
 
         [[nodiscard]]

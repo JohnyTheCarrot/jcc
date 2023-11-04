@@ -3,18 +3,18 @@
 //
 
 #include <sstream>
-#include "AstConstantExpression.h"
+#include "AstNumericalConstantExpression.h"
 #include "../../Parser.h"
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
-    std::optional<AstConstantExpression> AstConstantExpression::Parse(Parser &parser) {
+    std::optional<AstNumericalConstantExpression> AstNumericalConstantExpression::Parse(Parser &parser) {
         Token token{ parser.PeekNextToken() };
 
         switch(token._type) {
             case TokenType::IntegerLiteral:
                 parser.AdvanceCursor();
-                return AstConstantExpression(std::get<IntegerLiteralTokenValue>(token._value));
+                return AstNumericalConstantExpression(std::get<IntegerLiteralTokenValue>(token._value));
             case TokenType::DoubleLiteral:
                 assert(false && 'TODO');
             default:
@@ -22,15 +22,9 @@ namespace parsing {
         }
     }
 
-    AstConstantExpression::AstConstantExpression(AstConstantValue constant)
-        : AstNode(AstNodeType::Constant)
-        , _value{constant} {
-
-    }
-
-    std::string AstConstantExpression::ToString(size_t depth) const {
+    std::string AstNumericalConstantExpression::ToString(size_t depth) const {
         std::stringstream ss;
-        ss << "AstConstantExpression{ ";
+        ss << "AstNumericalConstantExpression{ ";
 
         if (std::holds_alternative<double>(_value))
             ss << "double: " << std::get<double>(_value);
@@ -43,8 +37,6 @@ namespace parsing {
         }
 
         ss << " }";
-
-
 
         return ss.str();
     }

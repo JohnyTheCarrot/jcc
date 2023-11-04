@@ -17,11 +17,11 @@ namespace parsing {
 
     struct AstShiftExpression final : public AstNode {
         AstShiftExpression(std::unique_ptr<AstNode> &&left, ShiftOperator additiveOperator, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::ShiftExpression)
+            : AstNode(AstNodeType::ShiftExpression, Hierarchies::ShiftExpression)
             , _left{ std::move(left) }
-            , _shiftOperator{additiveOperator }
+            , _shiftOperator{ additiveOperator }
             , _right{ std::move(right) }
-            {}
+        {}
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &parser);

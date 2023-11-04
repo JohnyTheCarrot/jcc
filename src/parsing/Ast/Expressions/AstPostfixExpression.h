@@ -21,11 +21,11 @@ namespace parsing {
     };
 
     struct AstPostfixExpression final : public AstNode {
-        AstPostfixExpression(std::unique_ptr<AstNode> left, PostfixExpressionType type, std::unique_ptr<AstNode> right)
-            : AstNode(AstNodeType::PostfixExpression)
-            , _left{std::move(left) }
-            , _postfixExpressionType{type }
-            , _right{std::move(right) }
+        AstPostfixExpression(std::unique_ptr<AstNode> &&left, PostfixExpressionType type, std::unique_ptr<AstNode> &&right)
+            : AstNode(AstNodeType::PostfixExpression, Hierarchies::PostfixExpression)
+            , _left{ std::move(left) }
+            , _postfixExpressionType{ type }
+            , _right{ std::move(right) }
         {}
 
         [[nodiscard]]

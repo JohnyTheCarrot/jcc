@@ -40,13 +40,45 @@ namespace parsing {
         LogicalAnd,
         LogicalOr,
         ConditionalExpression,
+        AssignmentExpression,
+        Expression,
     };
 
     struct AstNode {
-        explicit AstNode(AstNodeType type) : _type{ type } {};
+        AstNode(AstNodeType type, int hierarchyLevel)
+            : _type{ type }
+            , _hierarchyLevel{ hierarchyLevel }{};
 
         AstNodeType _type;
         Span _span;
+        int _hierarchyLevel;
+
+        // Hierarchy levels
+        struct Hierarchies {
+            // Expression hierarchy
+            static constexpr int PrimaryExpression          {  0 };
+            static constexpr int PostfixExpression          {  1 };
+            static constexpr int UnaryExpression            {  2 };
+            static constexpr int CastExpression             {  3 };
+            static constexpr int MultiplicativeExpression   {  4 };
+            static constexpr int AdditiveExpression         {  5 };
+            static constexpr int ShiftExpression            {  6 };
+            static constexpr int RelationalExpression       {  7 };
+            static constexpr int EqualityExpression         {  8 };
+            static constexpr int AndExpression              {  9 };
+            static constexpr int ExclusiveOrExpression      { 10 };
+            static constexpr int InclusiveOrExpression      { 11 };
+            static constexpr int LogicalAndExpression       { 12 };
+            static constexpr int LogicalOrExpression        { 13 };
+            static constexpr int ConditionalExpression      { 14 };
+            static constexpr int AssignmentExpression       { 15 };
+
+            // TODO: Declaration hierarchy
+            static constexpr int TypeSpecifier              {  0 };
+            static constexpr int TypeQualifier              {  0 };
+            static constexpr int SpecifierQualifierList     {  1 };
+            static constexpr int TypeName                   {  2 };
+        };
 
         virtual ~AstNode() = default;
 

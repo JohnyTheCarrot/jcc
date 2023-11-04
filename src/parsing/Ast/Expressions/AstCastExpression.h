@@ -13,11 +13,11 @@
 namespace parsing {
 
     struct AstCastExpression final : public AstNode {
-        AstCastExpression(std::optional<AstTypeName> typeName, std::unique_ptr<AstNode> expression)
-            : AstNode(AstNodeType::CastExpression)
+        AstCastExpression(std::optional<AstTypeName> typeName, std::unique_ptr<AstNode> &&expression)
+            : AstNode(AstNodeType::CastExpression, Hierarchies::CastExpression)
             , _typeName { std::move(typeName) }
             , _expression { std::move(expression) }
-            {};
+        {};
 
         std::optional<AstTypeName> _typeName;
         std::unique_ptr<AstNode> _expression;
