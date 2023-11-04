@@ -2,15 +2,15 @@
 // Created by johny on 11/3/23.
 //
 
-#include "AstStringLiteral.h"
+#include "AstStringLiteralExpression.h"
 #include "../../Parser.h"
 
 namespace parsing {
-    std::string AstStringLiteral::ToString(size_t depth) const {
-        return "AstStringLiteral(\"" + _string + "\")";
+    std::string AstStringLiteralExpression::ToString(size_t depth) const {
+        return "AstStringLiteralExpression(\"" + _string + "\")";
     }
 
-    std::optional<AstStringLiteral> AstStringLiteral::Parse(Parser &parser) {
+    std::optional<AstStringLiteralExpression> AstStringLiteralExpression::Parse(Parser &parser) {
         int parserCursor{ parser.GetCursor() };
 
         std::optional<Token> stringLiteral{ parser.ConsumeIfTokenIs(TokenType::StringLiteral) };
@@ -22,7 +22,7 @@ namespace parsing {
 
         std::string string{ std::get<std::string>(stringLiteral->_value) };
 
-        AstStringLiteral stringLiteralNode{ parsing::AstStringLiteral(std::move(string)) };
+        AstStringLiteralExpression stringLiteralNode{parsing::AstStringLiteralExpression(std::move(string)) };
         stringLiteralNode._span = stringLiteral->_span;
 
         return stringLiteralNode;

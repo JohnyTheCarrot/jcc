@@ -3,13 +3,13 @@
 //
 
 #include <sstream>
-#include "AstInclusiveOr.h"
-#include "AstExclusiveOr.h"
+#include "AstInclusiveOrExpression.h"
+#include "AstExclusiveOrExpression.h"
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstInclusiveOr::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstExclusiveOr::Parse(parser) };
+    std::unique_ptr<AstNode> AstInclusiveOrExpression::Parse(Parser &parser) {
+        std::unique_ptr<AstNode> left{AstExclusiveOrExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
@@ -25,21 +25,21 @@ namespace parsing {
 
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> right{ AstExclusiveOr::Parse(parser) };
+            std::unique_ptr<AstNode> right{AstExclusiveOrExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");
 
-            left = std::make_unique<AstInclusiveOr>(std::move(left), std::move(right));
+            left = std::make_unique<AstInclusiveOrExpression>(std::move(left), std::move(right));
         }
     }
 
-    std::string AstInclusiveOr::ToString(size_t depth) const {
+    std::string AstInclusiveOrExpression::ToString(size_t depth) const {
         std::stringstream ss;
         std::string tabs{ Indent(depth) };
         std::string tabsChildren{ Indent(depth + 1) };
 
-        ss << "AstInclusiveOr {" << std::endl;
+        ss << "AstInclusiveOrExpression {" << std::endl;
         ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
         ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
         ss << tabs << '}';

@@ -3,26 +3,26 @@
 //
 
 #include "AstPrimaryExpression.h"
-#include "AstConstant.h"
+#include "AstConstantExpression.h"
 #include "../../Parser.h"
 #include "AstExpression.h"
-#include "AstStringLiteral.h"
+#include "AstStringLiteralExpression.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstPrimaryExpression::Parse(Parser &parser) {
-        std::optional<AstConstant> constant = AstConstant::Parse(parser);
+        std::optional<AstConstantExpression> constant = AstConstantExpression::Parse(parser);
         if (constant) {
-            return std::make_unique<AstConstant>(*constant);
+            return std::make_unique<AstConstantExpression>(*constant);
         }
 
-        std::optional<AstIdentifier> identifier = AstIdentifier::Parse(parser);
+        std::optional<AstIdentifierExpression> identifier = AstIdentifierExpression::Parse(parser);
         if (identifier) {
-            return std::make_unique<AstIdentifier>(*identifier);
+            return std::make_unique<AstIdentifierExpression>(*identifier);
         }
 
-        std::optional<AstStringLiteral> stringLiteral = AstStringLiteral::Parse(parser);
+        std::optional<AstStringLiteralExpression> stringLiteral = AstStringLiteralExpression::Parse(parser);
         if (stringLiteral) {
-            return std::make_unique<AstStringLiteral>(*stringLiteral);
+            return std::make_unique<AstStringLiteralExpression>(*stringLiteral);
         }
 
         int parserCursor{ parser.GetCursor() };

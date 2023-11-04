@@ -2,16 +2,16 @@
 // Created by johny on 11/4/23.
 //
 
-#ifndef JCC_ASTLOGICALAND_H
-#define JCC_ASTLOGICALAND_H
+#ifndef JCC_ASTLOGICALANDEXPRESSION_H
+#define JCC_ASTLOGICALANDEXPRESSION_H
 
 #include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
-    struct AstLogicalAnd final : public AstNode {
-        AstLogicalAnd(std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
+    struct AstLogicalAndExpression final : public AstNode {
+        AstLogicalAndExpression(std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
             : AstNode(AstNodeType::LogicalAnd)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
@@ -29,4 +29,4 @@ namespace parsing {
 
 } // parsing
 
-#endif //JCC_ASTLOGICALAND_H
+#endif //JCC_ASTLOGICALANDEXPRESSION_H

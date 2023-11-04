@@ -18,16 +18,16 @@ add_executable(jcc src/main.cpp
         src/parsing/Parser.cpp
         src/parsing/Parser.h
         src/parsing/AstNode.h
-        src/parsing/Ast/Expressions/AstIdentifier.cpp
-        src/parsing/Ast/Expressions/AstIdentifier.h
-        src/parsing/Ast/Expressions/AstConstant.cpp
-        src/parsing/Ast/Expressions/AstConstant.h
+        src/parsing/Ast/Expressions/AstIdentifierExpression.cpp
+        src/parsing/Ast/Expressions/AstIdentifierExpression.h
+        src/parsing/Ast/Expressions/AstConstantExpression.cpp
+        src/parsing/Ast/Expressions/AstConstantExpression.h
         src/parsing/Ast/Expressions/AstPrimaryExpression.cpp
         src/parsing/Ast/Expressions/AstPrimaryExpression.h
         src/parsing/Ast/Expressions/AstExpression.cpp
         src/parsing/Ast/Expressions/AstExpression.h
-        src/parsing/Ast/Expressions/AstStringLiteral.cpp
-        src/parsing/Ast/Expressions/AstStringLiteral.h
+        src/parsing/Ast/Expressions/AstStringLiteralExpression.cpp
+        src/parsing/Ast/Expressions/AstStringLiteralExpression.h
         src/parsing/Ast/Expressions/AstPostfixExpression.cpp
         src/parsing/Ast/Expressions/AstPostfixExpression.h
         src/parsing/Ast/Expressions/AstUnaryExpression.cpp
@@ -54,13 +54,15 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Expressions/AstEqualityExpression.h
         src/parsing/Ast/Expressions/AstAndExpression.cpp
         src/parsing/Ast/Expressions/AstAndExpression.h
-        src/parsing/Ast/Expressions/AstExclusiveOr.cpp
-        src/parsing/Ast/Expressions/AstExclusiveOr.h
-        src/parsing/Ast/Expressions/AstInclusiveOr.cpp
-        src/parsing/Ast/Expressions/AstInclusiveOr.h
-        src/parsing/Ast/Expressions/AstLogicalAnd.cpp
-        src/parsing/Ast/Expressions/AstLogicalAnd.h
-        src/parsing/Ast/Expressions/AstLogicalOr.cpp
-        src/parsing/Ast/Expressions/AstLogicalOr.h)
+        src/parsing/Ast/Expressions/AstExclusiveOrExpression.cpp
+        src/parsing/Ast/Expressions/AstExclusiveOrExpression.h
+        src/parsing/Ast/Expressions/AstInclusiveOrExpression.cpp
+        src/parsing/Ast/Expressions/AstInclusiveOrExpression.h
+        src/parsing/Ast/Expressions/AstLogicalAndExpression.cpp
+        src/parsing/Ast/Expressions/AstLogicalAndExpression.h
+        src/parsing/Ast/Expressions/AstLogicalOrExpression.cpp
+        src/parsing/Ast/Expressions/AstLogicalOrExpression.h
+        src/parsing/Ast/Expressions/AstConditionalExpression.cpp
+        src/parsing/Ast/Expressions/AstConditionalExpression.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)

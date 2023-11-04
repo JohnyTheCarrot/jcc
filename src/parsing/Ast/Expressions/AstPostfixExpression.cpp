@@ -8,7 +8,7 @@
 #include "../../Parser.h"
 #include "AstExpression.h"
 #include "../../../../libs/magic_enum/magic_enum.hpp"
-#include "AstIdentifier.h"
+#include "AstIdentifierExpression.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstPostfixExpression::Parse(Parser &parser) {
@@ -48,14 +48,14 @@ namespace parsing {
                 case TokenType::Dot: {
                     parser.AdvanceCursor();
 
-                    std::optional<AstIdentifier> identifier{ AstIdentifier::Parse(parser) };
+                    std::optional<AstIdentifierExpression> identifier{AstIdentifierExpression::Parse(parser) };
 
                     if (!identifier.has_value()) {
                         parser.Error(nextToken._span, "Expected identifier");
                     }
 
                     Span identifierSpan{ identifier->_span };
-                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifier>(std::move(identifier.value())) };
+                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
 
                     left = std::make_unique<AstPostfixExpression>(std::move(left), PostfixExpressionType::MemberAccess, std::move(identifierNode));
                     left->_span = nextToken._span + identifierSpan;
@@ -64,14 +64,14 @@ namespace parsing {
                 case TokenType::Arrow: {
                     parser.AdvanceCursor();
 
-                    std::optional<AstIdentifier> identifier{ AstIdentifier::Parse(parser) };
+                    std::optional<AstIdentifierExpression> identifier{AstIdentifierExpression::Parse(parser) };
 
                     if (!identifier.has_value()) {
                         parser.Error(nextToken._span, "Expected identifier");
                     }
 
                     Span identifierSpan{ identifier->_span };
-                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifier>(std::move(identifier.value())) };
+                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
 
                     left = std::make_unique<AstPostfixExpression>(std::move(left), PostfixExpressionType::PointerMemberAccess, std::move(identifierNode));
                     left->_span = nextToken._span + identifierSpan;

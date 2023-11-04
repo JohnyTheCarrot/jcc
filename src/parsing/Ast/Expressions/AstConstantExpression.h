@@ -2,11 +2,11 @@
 // Created by johny on 10/19/23.
 //
 
-#ifndef JCC_ASTCONSTANT_H
-#define JCC_ASTCONSTANT_H
+#ifndef JCC_ASTCONSTANTEXPRESSION_H
+#define JCC_ASTCONSTANTEXPRESSION_H
 
 #include "../../AstNode.h"
-#include "AstIdentifier.h"
+#include "AstIdentifierExpression.h"
 #include "../../../tokenizer.h"
 
 
@@ -14,10 +14,10 @@ namespace parsing {
 
     using AstConstantValue = std::variant<IntegerLiteralTokenValue, double>;
 
-    struct AstConstant final : parsing::AstNode {
-        explicit AstConstant(AstConstantValue);
+    struct AstConstantExpression final : parsing::AstNode {
+        explicit AstConstantExpression(AstConstantValue);
 
-        static std::optional<AstConstant> Parse(Parser &);
+        static std::optional<AstConstantExpression> Parse(Parser &);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
@@ -27,4 +27,4 @@ namespace parsing {
 
 } // parsing
 
-#endif //JCC_ASTCONSTANT_H
+#endif //JCC_ASTCONSTANTEXPRESSION_H
