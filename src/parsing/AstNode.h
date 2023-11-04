@@ -34,6 +34,11 @@ namespace parsing {
         ShiftExpression,
         RelationalExpression,
         EqualityExpression,
+        AndExpression,
+        ExclusiveOr,
+        InclusiveOr,
+        LogicalAnd,
+        LogicalOr
     };
 
     struct AstNode {
