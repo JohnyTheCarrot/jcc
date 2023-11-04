@@ -3,10 +3,10 @@
 //
 
 #include "AstExpression.h"
-#include "AstShiftExpression.h"
+#include "AstRelationalExpression.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstExpression::Parse(Parser &parser) {
-        return AstShiftExpression::Parse(parser);
+        return AstRelationalExpression::Parse(parser);
     }
 } // parsing
