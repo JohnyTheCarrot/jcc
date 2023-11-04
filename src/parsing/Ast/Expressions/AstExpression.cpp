@@ -3,10 +3,10 @@
 //
 
 #include "AstExpression.h"
-#include "AstEqualityExpression.h"
+#include "AstLogicalOr.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstExpression::Parse(Parser &parser) {
-        return AstEqualityExpression::Parse(parser);
+        return AstLogicalOr::Parse(parser);
     }
 } // parsing
