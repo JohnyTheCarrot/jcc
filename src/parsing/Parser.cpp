@@ -4,10 +4,14 @@
 
 #include <iostream>
 #include <utility>
+#include <sstream>
 #include "Parser.h"
 #include "../reporting.h"
 #include "Ast/Expressions/AstIdentifierExpression.h"
 #include "Ast/Expressions/AstExpression.h"
+#include "../../libs/magic_enum/magic_enum.hpp"
+#include "Ast/Declarations/AstDeclaration.h"
+#include "Ast/Declarations/AstDeclarationSpecifiers.h"
 
 using namespace parsing;
 
@@ -44,11 +48,16 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    std::unique_ptr<AstNode> identifier{ AstExpression::Parse(*this) };
-    if (identifier != nullptr)
-        std::cout << identifier->ToString(0) << std::endl;
+    std::optional<AstDeclarationSpecifiers> astDeclaration{ AstDeclarationSpecifiers::Parse(*this) };
+    if (astDeclaration)
+        std::cout << astDeclaration->ToString(0) << std::endl;
     else
         std::cout << "didn't match" << std::endl;
+//    std::unique_ptr<AstNode> identifier{ AstExpression::Parse(*this) };
+//    if (identifier != nullptr)
+//        std::cout << identifier->ToString(0) << std::endl;
+//    else
+//        std::cout << "didn't match" << std::endl;
 }
 
 void Parser::Error(const Span &span, const std::string &message) const {
@@ -73,4 +82,29 @@ bool Parser::AdvanceIfTokenIs(TokenType tokenValue) {
         this->AdvanceCursor();
 
     return isTokenMatch;
+}
+
+const Token &Parser::ExpectToken(TokenType tokenType) {
+    std::stringstream errorMessage{ };
+    errorMessage << "Expected " << magic_enum::enum_name(tokenType) << " but got ";
+
+    if (!*this) {
+        errorMessage << "end of file";
+        Span span{};
+        if (this->tokens.size() > 0)
+            span = this->tokens[this->tokens.size() - 1]->_span;
+
+        this->Error(span, errorMessage.str());
+    }
+
+    const Token &token{ this->PeekNextToken() };
+
+    if (token._type != tokenType) {
+        errorMessage << magic_enum::enum_name(token._type);
+        this->Error(this->PeekNextToken()._span, errorMessage.str());
+    }
+
+    this->AdvanceCursor();
+
+    return token;
 }
