@@ -14,7 +14,10 @@
 namespace parsing {
 
     struct AstSpecifierQualifierList final : public AstNode {
-        AstSpecifierQualifierList() : AstNode(AstNodeType::SpecifierQualifierList), _list{} {};
+        AstSpecifierQualifierList()
+            : AstNode(AstNodeType::SpecifierQualifierList, Hierarchies::SpecifierQualifierList)
+            , _list{}
+        {};
 
         using SpecifierQualifier = std::variant<AstTypeSpecifier, AstTypeQualifier>;
 

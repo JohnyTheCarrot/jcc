@@ -11,8 +11,8 @@
 namespace parsing {
 
     struct AstAndExpression final : public AstNode {
-        AstAndExpression(std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
-            : AstNode(AstNodeType::AndExpression)
+        AstAndExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+            : AstNode(AstNodeType::AndExpression, Hierarchies::AndExpression)
             , _left{ std::move(left) }
             , _right{ std::move(right) } {}
 

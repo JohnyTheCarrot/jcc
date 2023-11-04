@@ -3,16 +3,16 @@
 //
 
 #include "AstPrimaryExpression.h"
-#include "AstConstantExpression.h"
+#include "AstNumericalConstantExpression.h"
 #include "../../Parser.h"
 #include "AstExpression.h"
 #include "AstStringLiteralExpression.h"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstPrimaryExpression::Parse(Parser &parser) {
-        std::optional<AstConstantExpression> constant = AstConstantExpression::Parse(parser);
+        std::optional<AstNumericalConstantExpression> constant = AstNumericalConstantExpression::Parse(parser);
         if (constant) {
-            return std::make_unique<AstConstantExpression>(*constant);
+            return std::make_unique<AstNumericalConstantExpression>(*constant);
         }
 
         std::optional<AstIdentifierExpression> identifier = AstIdentifierExpression::Parse(parser);

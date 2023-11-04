@@ -11,8 +11,8 @@
 namespace parsing {
 
     struct AstInclusiveOrExpression final : public AstNode {
-        AstInclusiveOrExpression(std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
-            : AstNode(AstNodeType::InclusiveOr)
+        AstInclusiveOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+            : AstNode(AstNodeType::InclusiveOr, Hierarchies::InclusiveOrExpression)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
         {}

@@ -12,7 +12,7 @@ namespace parsing {
 
     struct AstLogicalOrExpression final : public AstNode {
         AstLogicalOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::LogicalOr)
+            : AstNode(AstNodeType::LogicalOr, Hierarchies::LogicalOrExpression)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
         { }

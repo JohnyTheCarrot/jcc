@@ -14,8 +14,9 @@ namespace parsing {
 
     struct AstTypeName final : public AstNode {
         explicit AstTypeName(AstSpecifierQualifierList specifierQualifierList)
-            : AstNode(AstNodeType::TypeName)
-            , _specifierQualifierList{std::move(specifierQualifierList)} {};
+            : AstNode(AstNodeType::TypeName, Hierarchies::TypeName)
+            , _specifierQualifierList{ std::move(specifierQualifierList) }
+        {};
 
         [[nodiscard]]
         static std::optional<AstTypeName> Parse(Parser &parser);

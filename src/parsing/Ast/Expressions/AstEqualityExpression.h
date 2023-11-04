@@ -17,10 +17,11 @@ namespace parsing {
 
     struct AstEqualityExpression final : public AstNode {
         AstEqualityExpression(std::unique_ptr<AstNode> &&left, EqualityOperator equalityOperator, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::EqualityExpression)
+            : AstNode(AstNodeType::EqualityExpression, Hierarchies::EqualityExpression)
             , _left{ std::move(left) }
             , _equalityOperator{ equalityOperator }
-            , _right{ std::move(right) } {};
+            , _right{ std::move(right) }
+        {};
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser& parser);

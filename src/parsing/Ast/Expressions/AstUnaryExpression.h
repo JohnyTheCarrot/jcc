@@ -26,10 +26,10 @@ namespace parsing {
     };
 
     struct AstUnaryExpression final : public AstNode {
-        AstUnaryExpression(AstUnaryOperator unaryOperator, std::unique_ptr<AstNode> operand)
-            : AstNode(AstNodeType::UnaryExpression)
-            , _unaryOperator{unaryOperator }
-            , _operand{std::move(operand) }
+        AstUnaryExpression(AstUnaryOperator unaryOperator, std::unique_ptr<AstNode> &&operand)
+            : AstNode(AstNodeType::UnaryExpression, Hierarchies::UnaryExpression)
+            , _unaryOperator{ unaryOperator }
+            , _operand{ std::move(operand) }
         {}
 
         [[nodiscard]]

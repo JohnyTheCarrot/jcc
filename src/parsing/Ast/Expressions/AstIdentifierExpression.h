@@ -13,7 +13,9 @@ class Parser;
 namespace parsing {
 
     struct AstIdentifierExpression final : public parsing::AstNode {
-        explicit AstIdentifierExpression(std::string &&ident) : AstNode(AstNodeType::Identifier), _ident{std::move(ident)} {};
+        explicit AstIdentifierExpression(std::string &&ident)
+            : AstNode(AstNodeType::Identifier, Hierarchies::PrimaryExpression)
+            , _ident{ std::move(ident) } {};
 
         static std::optional<AstIdentifierExpression> Parse(Parser &);
 

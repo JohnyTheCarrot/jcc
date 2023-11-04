@@ -19,11 +19,11 @@ namespace parsing {
 
     struct AstRelationalExpression final : public AstNode {
         AstRelationalExpression(std::unique_ptr<AstNode> &&left, RelationalOperator relationalOperator, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::RelationalExpression)
+            : AstNode(AstNodeType::RelationalExpression, Hierarchies::RelationalExpression)
             , _left{ std::move(left) }
             , _relationalOperator{ relationalOperator }
             , _right{ std::move(right) }
-            {}
+        {}
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &parser);

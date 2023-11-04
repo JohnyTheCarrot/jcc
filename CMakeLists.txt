@@ -20,8 +20,8 @@ add_executable(jcc src/main.cpp
         src/parsing/AstNode.h
         src/parsing/Ast/Expressions/AstIdentifierExpression.cpp
         src/parsing/Ast/Expressions/AstIdentifierExpression.h
-        src/parsing/Ast/Expressions/AstConstantExpression.cpp
-        src/parsing/Ast/Expressions/AstConstantExpression.h
+        src/parsing/Ast/Expressions/AstNumericalConstantExpression.cpp
+        src/parsing/Ast/Expressions/AstNumericalConstantExpression.h
         src/parsing/Ast/Expressions/AstPrimaryExpression.cpp
         src/parsing/Ast/Expressions/AstPrimaryExpression.h
         src/parsing/Ast/Expressions/AstExpression.cpp
@@ -63,6 +63,8 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Expressions/AstLogicalOrExpression.cpp
         src/parsing/Ast/Expressions/AstLogicalOrExpression.h
         src/parsing/Ast/Expressions/AstConditionalExpression.cpp
-        src/parsing/Ast/Expressions/AstConditionalExpression.h)
+        src/parsing/Ast/Expressions/AstConditionalExpression.h
+        src/parsing/Ast/Expressions/AstAssignmentExpression.cpp
+        src/parsing/Ast/Expressions/AstAssignmentExpression.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)

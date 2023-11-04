@@ -12,10 +12,10 @@ namespace parsing {
 
     struct AstConditionalExpression final : public AstNode {
         AstConditionalExpression(std::unique_ptr<AstNode> &&condition, std::unique_ptr<AstNode> &&trueExpression, std::unique_ptr<AstNode> &&falseExpression)
-            : AstNode(AstNodeType::ConditionalExpression)
-            , _condition {std::move(condition) }
-            , _trueExpression {std::move(trueExpression) }
-            , _falseExpression {std::move(falseExpression) }
+            : AstNode(AstNodeType::ConditionalExpression, Hierarchies::ConditionalExpression)
+            , _condition { std::move(condition) }
+            , _trueExpression { std::move(trueExpression) }
+            , _falseExpression { std::move(falseExpression) }
         {};
 
         [[nodiscard]]

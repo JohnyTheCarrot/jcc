@@ -18,10 +18,10 @@ namespace parsing {
 
     struct AstMultiplicativeExpression final : public AstNode {
         AstMultiplicativeExpression(std::unique_ptr<AstNode> &&left, MultiplicativeOperator multiplicativeOperator, std::unique_ptr<AstNode> &&right)
-            : AstNode(AstNodeType::MultiplicativeExpression)
-            , _left{std::move(left) }
-            , _multiplicativeOperator{multiplicativeOperator }
-            , _right{std::move(right) }
+            : AstNode(AstNodeType::MultiplicativeExpression, Hierarchies::MultiplicativeExpression)
+            , _left{ std::move(left) }
+            , _multiplicativeOperator{ multiplicativeOperator }
+            , _right{ std::move(right) }
         {}
 
         [[nodiscard]]
