@@ -34,6 +34,8 @@ public:
     [[nodiscard]]
     std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
 
+    const Token &ExpectToken(TokenType tokenType);
+
     [[nodiscard]]
     bool AdvanceIfTokenIs(TokenType tokenValue);
 

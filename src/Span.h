@@ -10,7 +10,14 @@
 
 class Span final {
 public:
-    Span() : _lineNumber{}, _lineStartIndex{}, _startCharacterIndex{}, _length{1} {};
+    Span()
+        : _lineNumber{}
+        , _lineStartIndex{}
+        , _startCharacterIndex{}
+        , _length{1}
+        , _lineContent{ "no content" }
+        , _textVersion{ "no content" }
+    {};
 
     Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length, std::istream &inputStream);
 
@@ -31,6 +38,11 @@ public:
 
         return result;
     };
+
+    const Span &operator+=(const Span &other) {
+        *this = *this + other;
+        return *this;
+    }
 
     [[nodiscard]]
     size_t GetLineNumber() const { return this->_lineNumber; }

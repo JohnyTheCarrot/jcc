@@ -1,1 +1,1 @@
-(+(const short int) a[b->c.d++]-- * (8 * 2) * a++ + 5) << 2 >= 0 == 5
+extern inline unsigned int _Alignas(unsigned int)

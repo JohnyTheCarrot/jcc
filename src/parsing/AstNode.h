@@ -42,6 +42,11 @@ namespace parsing {
         ConditionalExpression,
         AssignmentExpression,
         Expression,
+        StaticAssertDeclaration,
+        StorageClassSpecifier,
+        FunctionSpecifier,
+        AlignmentSpecifier,
+        DeclarationSpecifiers,
     };
 
     struct AstNode {
@@ -74,6 +79,7 @@ namespace parsing {
             static constexpr int AssignmentExpression       { 15 };
 
             // TODO: Declaration hierarchy
+            static constexpr int Declaration                {  0 };
             static constexpr int TypeSpecifier              {  0 };
             static constexpr int TypeQualifier              {  0 };
             static constexpr int SpecifierQualifierList     {  1 };
