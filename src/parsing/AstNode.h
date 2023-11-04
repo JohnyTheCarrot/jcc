@@ -38,7 +38,8 @@ namespace parsing {
         ExclusiveOr,
         InclusiveOr,
         LogicalAnd,
-        LogicalOr
+        LogicalOr,
+        ConditionalExpression,
     };
 
     struct AstNode {

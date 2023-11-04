@@ -2,20 +2,19 @@
 // Created by johny on 11/4/23.
 //
 
-#ifndef JCC_ASTINCLUSIVEOR_H
-#define JCC_ASTINCLUSIVEOR_H
+#ifndef JCC_ASTEXCLUSIVEOREXPRESSION_H
+#define JCC_ASTEXCLUSIVEOREXPRESSION_H
 
 #include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
-    struct AstInclusiveOr final : public AstNode {
-        AstInclusiveOr(std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
-            : AstNode(AstNodeType::InclusiveOr)
+    struct AstExclusiveOrExpression final : public AstNode {
+        AstExclusiveOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+            : AstNode(AstNodeType::ExclusiveOr)
             , _left{ std::move(left) }
-            , _right{ std::move(right) }
-        {}
+            , _right{ std::move(right) } {}
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &parser);
@@ -29,4 +28,4 @@ namespace parsing {
 
 } // parsing
 
-#endif //JCC_ASTINCLUSIVEOR_H
+#endif //JCC_ASTEXCLUSIVEOREXPRESSION_H

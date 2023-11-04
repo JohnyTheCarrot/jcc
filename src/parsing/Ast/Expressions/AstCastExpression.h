@@ -7,7 +7,7 @@
 
 #include <memory>
 #include "../../AstNode.h"
-#include "AstIdentifier.h"
+#include "AstIdentifierExpression.h"
 #include "../Declarations/AstTypeName.h"
 
 namespace parsing {

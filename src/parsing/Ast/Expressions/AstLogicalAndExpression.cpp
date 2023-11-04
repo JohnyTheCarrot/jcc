@@ -3,13 +3,13 @@
 //
 
 #include <sstream>
-#include "AstLogicalOr.h"
-#include "AstLogicalAnd.h"
+#include "AstLogicalAndExpression.h"
+#include "AstInclusiveOrExpression.h"
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstLogicalOr::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstLogicalAnd::Parse(parser) };
+    std::unique_ptr<AstNode> AstLogicalAndExpression::Parse(Parser &parser) {
+        std::unique_ptr<AstNode> left{ AstInclusiveOrExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
@@ -20,26 +20,26 @@ namespace parsing {
 
             const Token &token{ parser.PeekNextToken() };
 
-            if (token._type != TokenType::LogicalOr)
+            if (token._type != TokenType::LogicalAnd)
                 return left;
 
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> right{ AstLogicalAnd::Parse(parser) };
+            std::unique_ptr<AstNode> right{ AstInclusiveOrExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");
 
-            left = std::make_unique<AstLogicalOr>(std::move(left), std::move(right));
+            left = std::make_unique<AstLogicalAndExpression>(std::move(left), std::move(right));
         }
     }
 
-    std::string AstLogicalOr::ToString(size_t depth) const {
+    std::string AstLogicalAndExpression::ToString(size_t depth) const {
         std::stringstream ss;
         std::string tabs{ Indent(depth) };
         std::string tabsChildren{ Indent(depth + 1) };
 
-        ss << "AstLogicalOr {" << std::endl;
+        ss << "AstLogicalAndExpression {" << std::endl;
         ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
         ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
         ss << tabs << '}';

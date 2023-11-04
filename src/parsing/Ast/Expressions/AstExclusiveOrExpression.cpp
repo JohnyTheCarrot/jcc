@@ -3,12 +3,12 @@
 //
 
 #include <sstream>
-#include "AstExclusiveOr.h"
+#include "AstExclusiveOrExpression.h"
 #include "AstAndExpression.h"
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstExclusiveOr::Parse(Parser &parser) {
+    std::unique_ptr<AstNode> AstExclusiveOrExpression::Parse(Parser &parser) {
         std::unique_ptr<AstNode> left{ AstAndExpression::Parse(parser) };
 
         if (left == nullptr)
@@ -30,16 +30,16 @@ namespace parsing {
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");
 
-            left = std::make_unique<AstExclusiveOr>(std::move(left), std::move(right));
+            left = std::make_unique<AstExclusiveOrExpression>(std::move(left), std::move(right));
         }
     }
 
-    std::string AstExclusiveOr::ToString(size_t depth) const {
+    std::string AstExclusiveOrExpression::ToString(size_t depth) const {
         std::stringstream ss;
         std::string tabs{ Indent(depth) };
         std::string tabsChildren{ Indent(depth + 1) };
 
-        ss << "AstExclusiveOr {" << std::endl;
+        ss << "AstExclusiveOrExpression {" << std::endl;
         ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
         ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
         ss << tabs << '}';

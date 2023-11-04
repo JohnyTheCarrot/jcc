@@ -6,7 +6,7 @@
 #include <utility>
 #include "Parser.h"
 #include "../reporting.h"
-#include "Ast/Expressions/AstIdentifier.h"
+#include "Ast/Expressions/AstIdentifierExpression.h"
 #include "Ast/Expressions/AstExpression.h"
 
 using namespace parsing;

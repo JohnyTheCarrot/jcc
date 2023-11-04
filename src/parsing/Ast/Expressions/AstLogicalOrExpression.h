@@ -2,16 +2,16 @@
 // Created by johny on 11/4/23.
 //
 
-#ifndef JCC_ASTLOGICALOR_H
-#define JCC_ASTLOGICALOR_H
+#ifndef JCC_ASTLOGICALOREXPRESSION_H
+#define JCC_ASTLOGICALOREXPRESSION_H
 
 #include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
-    struct AstLogicalOr final : public AstNode {
-        AstLogicalOr(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+    struct AstLogicalOrExpression final : public AstNode {
+        AstLogicalOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
             : AstNode(AstNodeType::LogicalOr)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
@@ -29,4 +29,4 @@ namespace parsing {
 
 } // parsing
 
-#endif //JCC_ASTLOGICALOR_H
+#endif //JCC_ASTLOGICALOREXPRESSION_H
