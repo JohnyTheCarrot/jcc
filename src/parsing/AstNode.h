@@ -31,6 +31,8 @@ namespace parsing {
         TypeName,
         MultiplicativeExpression,
         AdditiveExpression,
+        ShiftExpression,
+        RelationalExpression,
     };
 
     struct AstNode {

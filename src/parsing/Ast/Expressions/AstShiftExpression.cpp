@@ -43,7 +43,6 @@ namespace parsing {
 
             left = std::make_unique<AstShiftExpression>(std::move(left), shiftOperator, std::move(right));
         }
-
     }
 
     std::string AstShiftExpression::ToString(size_t depth) const {
