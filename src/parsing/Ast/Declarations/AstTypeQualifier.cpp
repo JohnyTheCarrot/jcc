@@ -35,7 +35,7 @@ namespace parsing {
 
         parser.AdvanceCursor();
 
-        return parsing::AstTypeQualifier(qualifierType);
+        return AstTypeQualifier{ token._span, qualifierType };
     }
 
     std::string AstTypeQualifier::ToString(size_t depth) const {

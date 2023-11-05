@@ -1,1 +1,1 @@
-extern inline unsigned int _Alignas(unsigned int)
+unsigned int (*const testIdent[static const 2])[static const 1];

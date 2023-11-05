@@ -47,12 +47,26 @@ namespace parsing {
         FunctionSpecifier,
         AlignmentSpecifier,
         DeclarationSpecifiers,
+        TypeQualifierList,
+        Pointer,
+        Declarator,
+        InitDeclarator,
+        InitDeclaratorList,
+        Declaration,
+        DirectDeclarator,
     };
 
     struct AstNode {
+        // todo: add span to constructor
         AstNode(AstNodeType type, int hierarchyLevel)
             : _type{ type }
-            , _hierarchyLevel{ hierarchyLevel }{};
+            , _span{}
+            , _hierarchyLevel{ hierarchyLevel }
+        {};
+
+        explicit AstNode(AstNodeType type)
+            : AstNode(type, Hierarchies::NotApplicable)
+        {};
 
         AstNodeType _type;
         Span _span;
@@ -79,6 +93,7 @@ namespace parsing {
             static constexpr int AssignmentExpression       { 15 };
 
             // TODO: Declaration hierarchy
+            static constexpr int NotApplicable              { -1 };
             static constexpr int Declaration                {  0 };
             static constexpr int TypeSpecifier              {  0 };
             static constexpr int TypeQualifier              {  0 };
