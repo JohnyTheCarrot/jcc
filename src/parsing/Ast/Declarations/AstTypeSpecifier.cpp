@@ -62,7 +62,7 @@ namespace parsing {
 
         parser.AdvanceCursor();
 
-        return AstTypeSpecifier{ typeSpecifierType };
+        return AstTypeSpecifier{ token._span, typeSpecifierType };
     }
 
     std::string AstTypeSpecifier::ToString(size_t depth) const {

@@ -21,6 +21,7 @@ namespace parsing {
             : AstNode(AstNodeType::DirectDeclarator)
             , _typeQualifierList{ std::nullopt }
             , _assignmentExpression{ nullptr }
+            , _parameterTypeList{ nullptr }
             , _lhs{ nullptr }
             , _isVLA{ false }
             , _isStatic{ false }
@@ -39,6 +40,7 @@ namespace parsing {
         bool _isVLA;
         std::optional<AstTypeQualifierList> _typeQualifierList;
         std::unique_ptr<AstNode> _assignmentExpression; // could be absent if _isStatic is false
+        std::unique_ptr<AstNode> _parameterTypeList;
     };
 
 } // parsing

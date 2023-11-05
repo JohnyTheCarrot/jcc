@@ -8,12 +8,14 @@
 #include "../Expressions/AstIdentifierExpression.h"
 #include "AstDeclarator.h"
 #include "../Expressions/AstAssignmentExpression.h"
+#include "AstParameterTypeList.h"
+#include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
     std::unique_ptr<AstNode> AstDirectDeclarator::Parse(Parser &parser) {
         std::unique_ptr<AstNode> result{};
 
-        std::optional<Token> leftParenDecl{parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
+        std::optional<Token> leftParenDecl{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
         if (leftParenDecl) {
             std::optional<AstDeclarator> decl{ AstDeclarator::Parse(parser) };
             if (!decl)
@@ -100,11 +102,22 @@ namespace parsing {
 
                 result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
                 parser.ExpectToken(TokenType::RightBracket);
+
+                return result;
             }
 
             std::optional<Token> leftParenFunc{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
             if (leftParenFunc) {
-                TODO()
+                std::unique_ptr<AstNode> parameterTypeList{ AstParameterTypeList::Parse(parser) };
+                directDeclarator._kind = Kind::Function;
+                directDeclarator._lhs = std::move(result);
+                parser.ExpectToken(TokenType::RightParenthesis);
+
+                if (parameterTypeList)
+                    directDeclarator._parameterTypeList = std::move(parameterTypeList);
+
+                result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+                return result;
             }
 
             return result;
@@ -121,6 +134,7 @@ namespace parsing {
         if (_lhs)
             ss << tabsChildren << "lhs: " << _lhs->ToString(depth + 1) << std::endl;
 
+        ss << tabsChildren << "kind: " << magic_enum::enum_name(_kind) << std::endl;
         ss << tabsChildren << "isStatic: " << (_isStatic ? "true" : "false") << std::endl;
         ss << tabsChildren << "isVLA: " << (_isVLA ? "true" : "false") << std::endl;
 
@@ -129,6 +143,9 @@ namespace parsing {
 
         if (_assignmentExpression)
             ss << tabsChildren << "assignmentExpression: " << _assignmentExpression->ToString(depth + 1) << std::endl;
+
+        if (_parameterTypeList)
+            ss << tabsChildren << "parameterTypeList: " << _parameterTypeList->ToString(depth + 1) << std::endl;
 
         ss << tabs << '}';
 

@@ -40,6 +40,11 @@ public:
     };
 
     const Span &operator+=(const Span &other) {
+        if (!this->_isInitialized) {
+            *this = other;
+            return *this;
+        }
+
         *this = *this + other;
         return *this;
     }
@@ -66,6 +71,7 @@ private:
     [[nodiscard]]
     std::string ToString() const;
 
+    bool _isInitialized{ false };
     size_t _lineNumber;
     size_t _lineStartIndex;
     size_t _startCharacterIndex;
