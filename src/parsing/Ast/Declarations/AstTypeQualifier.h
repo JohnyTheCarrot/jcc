@@ -17,9 +17,11 @@ namespace parsing {
     };
 
     struct AstTypeQualifier final : public AstNode {
-        explicit AstTypeQualifier(AstTypeQualifierType qualifierType)
+        AstTypeQualifier(const Span &span, AstTypeQualifierType qualifierType)
             : AstNode(AstNodeType::TypeQualifier, Hierarchies::TypeQualifier)
-            , _qualifierType{qualifierType} {};
+            , _qualifierType{qualifierType} {
+            this->_span = span;
+        };
 
         [[nodiscard]]
         static std::optional<AstTypeQualifier> Parse(Parser &parser);

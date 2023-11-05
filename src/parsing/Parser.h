@@ -42,6 +42,9 @@ public:
     [[noreturn]]
     void Error(const Span &span, const std::string &message) const;
 
+    [[noreturn]]
+    void Error(const std::string &message) const;
+
 private:
     std::string fileName;
     std::istream &inputStream;

@@ -8,10 +8,8 @@
 #include "Parser.h"
 #include "../reporting.h"
 #include "Ast/Expressions/AstIdentifierExpression.h"
-#include "Ast/Expressions/AstExpression.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
 #include "Ast/Declarations/AstDeclaration.h"
-#include "Ast/Declarations/AstDeclarationSpecifiers.h"
 
 using namespace parsing;
 
@@ -48,20 +46,26 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    std::optional<AstDeclarationSpecifiers> astDeclaration{ AstDeclarationSpecifiers::Parse(*this) };
+    std::unique_ptr<AstNode> astDeclaration{ AstDeclaration::Parse(*this) };
     if (astDeclaration)
         std::cout << astDeclaration->ToString(0) << std::endl;
     else
         std::cout << "didn't match" << std::endl;
-//    std::unique_ptr<AstNode> identifier{ AstExpression::Parse(*this) };
-//    if (identifier != nullptr)
-//        std::cout << identifier->ToString(0) << std::endl;
-//    else
-//        std::cout << "didn't match" << std::endl;
 }
 
 void Parser::Error(const Span &span, const std::string &message) const {
     ::Error(this->fileName, this->inputStream, span, message);
+}
+
+void Parser::Error(const std::string &message) const {
+    int currentCursor{ this->cursor };
+
+    if (currentCursor == -1)
+        currentCursor = 0;
+
+    Span span{ this->tokens[currentCursor]->_span };
+
+    this->Error(span, message);
 }
 
 bool Parser::operator!() const {
