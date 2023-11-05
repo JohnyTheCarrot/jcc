@@ -1,1 +1,1 @@
-unsigned int (*const testIdent[static const 2])[static const 1];
+unsigned int ident[const *][static const 5];
