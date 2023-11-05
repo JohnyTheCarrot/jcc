@@ -38,6 +38,7 @@ namespace parsing {
             std::optional<Token> leftBracket{ parser.ConsumeIfTokenIs(TokenType::LeftBracket) };
             if (leftBracket) {
                 std::optional<Token> staticKeyword{ parser.ConsumeIfTokenIs(TokenType::KeywordStatic) };
+                directDeclarator._kind = Kind::Array;
 
                 if (staticKeyword) {
                     // type qualifier list is optional
@@ -58,6 +59,47 @@ namespace parsing {
                     continue;
                 }
 
+                std::optional<AstTypeQualifierList> typeQualifierList{ AstTypeQualifierList::Parse(parser) };
+
+                std::optional<Token> staticToken{parser.ConsumeIfTokenIs(TokenType::KeywordStatic) };
+
+                if (staticToken) {
+                    directDeclarator._isStatic = true;
+                    directDeclarator._lhs = std::move(result);
+                    directDeclarator._typeQualifierList = typeQualifierList;
+
+                    std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+                    if (!assignmentExpression)
+                        parser.Error(staticKeyword->_span, "Expected assignment expression");
+
+                    directDeclarator._assignmentExpression = std::move(assignmentExpression);
+                    parser.ExpectToken(TokenType::RightBracket);
+                    result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+                    continue;
+                }
+
+                std::optional<Token> asterisk{ parser.ConsumeIfTokenIs(TokenType::Asterisk) };
+                if (asterisk)
+                {
+                    directDeclarator._isVLA = true;
+                    directDeclarator._typeQualifierList = typeQualifierList;
+                    directDeclarator._lhs = std::move(result);
+
+                    result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+                    parser.ExpectToken(TokenType::RightBracket);
+                    continue;
+                }
+
+                std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+                directDeclarator._typeQualifierList = typeQualifierList;
+                directDeclarator._lhs = std::move(result);
+
+                if (assignmentExpression) {
+                    directDeclarator._assignmentExpression = std::move(assignmentExpression);
+                }
+
+                result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+                parser.ExpectToken(TokenType::RightBracket);
             }
 
             std::optional<Token> leftParenFunc{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
@@ -80,6 +122,7 @@ namespace parsing {
             ss << tabsChildren << "lhs: " << _lhs->ToString(depth + 1) << std::endl;
 
         ss << tabsChildren << "isStatic: " << (_isStatic ? "true" : "false") << std::endl;
+        ss << tabsChildren << "isVLA: " << (_isVLA ? "true" : "false") << std::endl;
 
         if (_typeQualifierList)
             ss << tabsChildren << "typeQualifierList: " << _typeQualifierList->ToString(depth + 1) << std::endl;
