@@ -54,6 +54,9 @@ namespace parsing {
         InitDeclaratorList,
         Declaration,
         DirectDeclarator,
+        ParameterDeclaration,
+        ParameterList,
+        ParameterTypeList,
     };
 
     struct AstNode {
@@ -109,7 +112,7 @@ namespace parsing {
         static std::string Indent(size_t depth) {
             std::string indent{};
             for (size_t i = 0; i < depth; ++i) {
-                indent += '\t';
+                indent += "  ";
             }
             return indent;
         }

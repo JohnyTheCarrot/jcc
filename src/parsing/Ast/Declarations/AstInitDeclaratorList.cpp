@@ -46,7 +46,7 @@ namespace parsing {
             ss << tabsChildren << initDecl->ToString(depth + 1) << std::endl;
         }
 
-        ss << tabs << "])" << std::endl;
+        ss << tabs << "])";
 
         return ss.str();
     }

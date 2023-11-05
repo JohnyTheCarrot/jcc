@@ -69,6 +69,7 @@ enum class TokenType {
     FloatLiteral,
     DoubleLiteral,
     StringLiteral,
+    Ellipsis,
 
     // Keywords
     KeywordAuto,
@@ -123,7 +124,7 @@ constexpr frozen::string LINE_COMMENT{"//"};
 
 constexpr size_t MAX_TOKEN_LENGTH{16};
 
-constexpr frozen::unordered_map<frozen::string, TokenType, 100> TOKEN_DEFINITIONS = {
+constexpr frozen::unordered_map<frozen::string, TokenType, 101> TOKEN_DEFINITIONS = {
         {"+",              TokenType::Plus},
         {"+=",             TokenType::AddAssign},
         {"++",             TokenType::Increment},
@@ -180,6 +181,7 @@ constexpr frozen::unordered_map<frozen::string, TokenType, 100> TOKEN_DEFINITION
         {":",              TokenType::Colon},
         {"%",              TokenType::Modulo},
         {"%=",             TokenType::ModuloAssign},
+        {"...",            TokenType::Ellipsis},
 
         // Keywords
         {"auto",           TokenType::KeywordAuto},

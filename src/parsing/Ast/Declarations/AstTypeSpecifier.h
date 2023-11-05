@@ -29,10 +29,12 @@ namespace parsing {
     };
 
     struct AstTypeSpecifier final : public AstNode {
-        explicit AstTypeSpecifier(AstTypeSpecifierType typeSpecifierType)
+        AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
             : AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
             , _specifierType{ typeSpecifierType }
-        {}
+        {
+            this->_span = span;
+        }
 
         [[nodiscard]]
         static std::optional<AstTypeSpecifier> Parse(Parser &parser);
