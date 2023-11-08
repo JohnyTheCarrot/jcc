@@ -76,14 +76,18 @@ Parser::operator bool() const {
     return !!*this;
 }
 
-bool Parser::AdvanceIfTokenIs(TokenType tokenValue) {
+bool Parser::AdvanceIfTokenIs(TokenType tokenType, Token &token) {
     if (!*this)
         return false;
 
-    bool isTokenMatch{this->PeekNextToken()._type == tokenValue };
+    const Token &nextToken{ this->PeekNextToken() };
 
-    if (isTokenMatch)
+    bool isTokenMatch{nextToken._type == tokenType };
+
+    if (isTokenMatch) {
         this->AdvanceCursor();
+        token = nextToken;
+    }
 
     return isTokenMatch;
 }
@@ -111,4 +115,9 @@ const Token &Parser::ExpectToken(TokenType tokenType) {
     this->AdvanceCursor();
 
     return token;
+}
+
+bool Parser::AdvanceIfTokenIs(TokenType tokenType) {
+    Token token;
+    return this->AdvanceIfTokenIs(tokenType, token);
 }

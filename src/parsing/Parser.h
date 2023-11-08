@@ -36,8 +36,9 @@ public:
 
     const Token &ExpectToken(TokenType tokenType);
 
-    [[nodiscard]]
-    bool AdvanceIfTokenIs(TokenType tokenValue);
+    bool AdvanceIfTokenIs(TokenType tokenType, Token &token);
+
+    bool AdvanceIfTokenIs(TokenType tokenType);
 
     [[noreturn]]
     void Error(const Span &span, const std::string &message) const;

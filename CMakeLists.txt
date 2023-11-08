@@ -97,6 +97,16 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Declarations/AstParameterTypeList.cpp
         src/parsing/Ast/Declarations/AstParameterTypeList.h
         src/parsing/Ast/Declarations/AstParameterList.cpp
-        src/parsing/Ast/Declarations/AstParameterList.h)
+        src/parsing/Ast/Declarations/AstParameterList.h
+        src/parsing/Ast/Declarations/AstInitializer.cpp
+        src/parsing/Ast/Declarations/AstInitializer.h
+        src/parsing/Ast/Declarations/AstDesignator.cpp
+        src/parsing/Ast/Declarations/AstDesignator.h
+        src/parsing/Ast/Declarations/AstDesignatorList.cpp
+        src/parsing/Ast/Declarations/AstDesignatorList.h
+        src/parsing/Ast/Declarations/AstDesignation.cpp
+        src/parsing/Ast/Declarations/AstDesignation.h
+        src/parsing/Ast/Declarations/AstInitializerList.cpp
+        src/parsing/Ast/Declarations/AstInitializerList.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)
