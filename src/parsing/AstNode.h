@@ -57,6 +57,11 @@ namespace parsing {
         ParameterDeclaration,
         ParameterList,
         ParameterTypeList,
+        Designator,
+        DesignatorList,
+        Designation,
+        InitializerList,
+        Initializer,
     };
 
     struct AstNode {

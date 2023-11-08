@@ -1,1 +1,9 @@
-unsigned int (*const ident)(int x, int y[static const x], int *z[], ...);
+// unsigned int (*const ident)(int x, int y[static const x], int *z[], ...);
+
+// doesn't make semantic sense but that's alright
+unsigned int *const array[2] = {
+    [1] = 5u,
+
+    .test =  (0xDEAD << (8 * 2))
+            | 0xBEEF,
+};

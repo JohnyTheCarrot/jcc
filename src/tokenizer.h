@@ -250,6 +250,8 @@ struct FloatingPointLiteralTokenValue {
 typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, std::string> TokenValue;
 
 struct Token {
+    Token() = default;
+
     Token(TokenType type, Span &&span, TokenValue &&value) :
             _type{type}, _span{span}, _value{std::move(value)} {}
 

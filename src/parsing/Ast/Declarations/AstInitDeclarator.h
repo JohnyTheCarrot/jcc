@@ -8,14 +8,18 @@
 #include <memory>
 #include "../../AstNode.h"
 #include "AstDeclarator.h"
+#include "AstInitializer.h"
 
 namespace parsing {
 
     struct AstInitDeclarator final : public AstNode {
-        explicit AstInitDeclarator(AstDeclarator declarator)
+        AstInitDeclarator(const Span &span, AstDeclarator declarator, std::unique_ptr<AstNode> initializer)
             : AstNode(AstNodeType::InitDeclarator)
             , _declarator{ std::move(declarator) }
-        {}
+            , _initializer{ std::move(initializer) }
+        {
+            this->_span = span;
+        }
 
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &);
@@ -23,7 +27,8 @@ namespace parsing {
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::optional<AstDeclarator> _declarator{};
+        AstDeclarator _declarator;
+        std::unique_ptr<AstNode> _initializer;
     };
 
 } // parsing
