@@ -50,16 +50,10 @@ namespace parsing {
     }
 
     std::string AstMultiplicativeExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstMultiplicativeExpression {" << std::endl;
-        ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "operator: " << magic_enum::enum_name(_multiplicativeOperator) << std::endl;
-        ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstMultiplicativeExpression, depth, {
+            TOSTRING_FIELD_NODE("left", *_left)
+            TOSTRING_FIELD_ENUM("operator", _multiplicativeOperator)
+            TOSTRING_FIELD_NODE("right", *_right)
+        })
     }
 } // parsing

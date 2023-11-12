@@ -37,24 +37,15 @@ namespace parsing {
     }
 
     std::string AstSpecifierQualifierList::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstSpecifierQualifierList([" << std::endl;
-
-        for (const auto &item: this->_list) {
-            ss << tabsChildren;
-            if (std::holds_alternative<AstTypeSpecifier>(item)) {
-                ss << std::get<AstTypeSpecifier>(item).ToString(depth + 1) << ',' << std::endl;
-            } else if (std::holds_alternative<AstTypeQualifier>(item)) {
-                ss << std::get<AstTypeQualifier>(item).ToString(depth + 1) << ',' << std::endl;
-            } else
-                TODO()
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstSpecifierQualifierList, depth, {
+            for (const auto &item : this->_list) {
+                if (std::holds_alternative<AstTypeSpecifier>(item))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(item))
+                else if (std::holds_alternative<AstTypeQualifier>(item))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(item))
+                else
+                    TODO()
+            }
+        })
     }
 } // parsing

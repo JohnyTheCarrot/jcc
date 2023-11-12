@@ -107,6 +107,7 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Declarations/AstDesignation.cpp
         src/parsing/Ast/Declarations/AstDesignation.h
         src/parsing/Ast/Declarations/AstInitializerList.cpp
-        src/parsing/Ast/Declarations/AstInitializerList.h)
+        src/parsing/Ast/Declarations/AstInitializerList.h
+        src/parsing/AstNode.cpp)
 
 target_link_libraries(jcc PUBLIC frozen fmt)

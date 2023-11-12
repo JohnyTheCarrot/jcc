@@ -35,15 +35,10 @@ namespace parsing {
     }
 
     std::string AstExclusiveOrExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
+        TOSTRING_FIELDS(AstExclusiveOrExpression, depth, {
+            TOSTRING_FIELD_NODE("left", *_left)
+            TOSTRING_FIELD_NODE("right", *_right)
+        })
 
-        ss << "AstExclusiveOrExpression {" << std::endl;
-        ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
     }
 } // parsing

@@ -7,7 +7,6 @@
 #include "../../../tokenizer.h"
 #include "../../Parser.h"
 #include "AstCastExpression.h"
-#include "../../../../libs/magic_enum/magic_enum.hpp"
 #include "AstPostfixExpression.h"
 
 namespace parsing {
@@ -87,15 +86,9 @@ namespace parsing {
     }
 
     std::string AstUnaryExpression::ToString(size_t depth) const {
-        std::string tabs = Indent(depth);
-        std::string childTabs = Indent(depth + 1);
-
-        std::stringstream ss{};
-        ss << "UnaryExpression {" << std::endl;
-        ss << childTabs << "unaryOperator: " << magic_enum::enum_name(_unaryOperator) << std::endl;
-        ss << childTabs << "operand: " << _operand->ToString(depth + 1) << std::endl;
-        ss << tabs << "}";
-
-        return ss.str();
+        TOSTRING_FIELDS(AstUnaryExpression, depth, {
+            TOSTRING_FIELD_ENUM("unaryOperator", _unaryOperator)
+            TOSTRING_FIELD_NODE("operand", *_operand)
+        })
     }
 } // parsing

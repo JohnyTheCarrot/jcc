@@ -31,14 +31,6 @@ namespace parsing {
     }
 
     std::string AstInitializer::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "Initializer {" << std::endl;
-        ss << tabsChildren << _initializerList.ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_ONE_FIELD_NODE(AstInitializer, depth, _initializerList)
     }
 } // parsing

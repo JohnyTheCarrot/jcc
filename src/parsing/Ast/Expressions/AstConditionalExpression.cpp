@@ -41,16 +41,10 @@ namespace parsing {
     }
 
     std::string AstConditionalExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstConditionalExpression {" << std::endl;
-        ss << tabsChildren << "condition: " << _condition->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "trueExpression: " << _trueExpression->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "falseExpression: " << _falseExpression->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstConditionalExpression, depth, {
+            TOSTRING_FIELD_NODE("condition", *_condition)
+            TOSTRING_FIELD_NODE("trueExpression", *_trueExpression)
+            TOSTRING_FIELD_NODE("falseExpression", *_falseExpression)
+        })
     }
 } // parsing

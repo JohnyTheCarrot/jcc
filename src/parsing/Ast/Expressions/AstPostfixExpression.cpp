@@ -101,18 +101,11 @@ namespace parsing {
     }
 
     std::string AstPostfixExpression::ToString(size_t depth) const {
-        std::stringstream ss{};
-        std::string tabs{ Indent(depth) };
-        std::string childTabs{ Indent(depth + 1) };
-
-        ss << "AstPostfixExpression {" << std::endl;
-        ss << childTabs << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << childTabs << "type: " << magic_enum::enum_name(_postfixExpressionType) << std::endl;
-        if (_right != nullptr) {
-            ss << childTabs << "right: " << _right->ToString(depth + 1) << std::endl;
-        }
-        ss << tabs << "}";
-
-        return ss.str();
+        TOSTRING_FIELDS(AstPostfixExpression, depth, {
+            TOSTRING_FIELD_NODE("left", *_left)
+            TOSTRING_FIELD_ENUM("type", _postfixExpressionType)
+            if (_right != nullptr)
+                TOSTRING_FIELD_NODE("right", *_right)
+        })
     }
 } // parsing

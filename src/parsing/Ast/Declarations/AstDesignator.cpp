@@ -50,15 +50,9 @@ namespace parsing {
     }
 
     std::string AstDesignator::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "Designator {" << std::endl;
-        ss << tabsChildren << "kind: " << magic_enum::enum_name(_kind) << std::endl;
-        ss << tabsChildren << "value: " << _value->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstDesignator, depth, {
+            TOSTRING_FIELD_ENUM("kind", _kind)
+            TOSTRING_FIELD_NODE("value", *_value)
+        })
     }
 } // parsing

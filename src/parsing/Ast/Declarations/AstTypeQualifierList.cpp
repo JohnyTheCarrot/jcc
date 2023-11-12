@@ -29,18 +29,10 @@ namespace parsing {
     }
 
     std::string AstTypeQualifierList::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "TypeQualifierList([" << std::endl;
-
-        for (const auto &typeQualifier : _list) {
-            ss << tabsChildren << typeQualifier.ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstTypeQualifierList, depth, {
+            for (const auto &typeQualifier : _list) {
+                TOSTRING_LIST_ITEM_NODE(typeQualifier)
+            }
+        })
     }
 } // parsing

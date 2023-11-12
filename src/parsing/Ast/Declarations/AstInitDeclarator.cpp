@@ -32,19 +32,11 @@ namespace parsing {
     }
 
     std::string AstInitDeclarator::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{Indent(depth + 1) };
+        TOSTRING_FIELDS(AstInitDeclarator, depth, {
+            TOSTRING_FIELD_NODE("declarator", _declarator)
 
-        ss << "InitDeclarator {" << std::endl;
-        ss << tabsChildren << "declarator: " << _declarator.ToString(depth + 1) << std::endl;
-
-        if (_initializer) {
-            ss << tabsChildren << "initializer: " << _initializer->ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << '}';
-
-        return ss.str();
+            if (_initializer)
+                TOSTRING_FIELD_NODE("initializer", *_initializer)
+        })
     }
 } // parsing

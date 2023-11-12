@@ -24,5 +24,5 @@ std::optional<parsing::AstIdentifierExpression> parsing::AstIdentifierExpression
 }
 
 std::string parsing::AstIdentifierExpression::ToString(size_t depth) const {
-    return "AstIdentifierExpression(\"" + _ident + "\")";
+    TOSTRING_ONE_FIELD_DIRECT(AstIdentifierExpression, depth, _ident)
 }

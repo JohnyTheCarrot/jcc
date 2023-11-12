@@ -43,4 +43,8 @@ namespace parsing {
         parser.SetCursor(parserCursor);
         return nullptr;
     }
+
+    std::string AstPrimaryExpression::ToString(size_t depth) const {
+        NOT_APPLICABLE()
+    }
 } // parsing

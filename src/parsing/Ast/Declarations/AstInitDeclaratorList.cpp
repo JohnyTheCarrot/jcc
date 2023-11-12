@@ -36,18 +36,10 @@ namespace parsing {
     }
 
     std::string AstInitDeclaratorList::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstInitDeclaratorList([" << std::endl;
-
-        for (const auto &initDecl : _initDeclaratorList) {
-            ss << tabsChildren << initDecl->ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstInitDeclaratorList, depth, {
+            for (const auto &initDecl : _initDeclaratorList) {
+                TOSTRING_LIST_ITEM_NODE(*initDecl)
+            }
+        })
     }
 } // parsing

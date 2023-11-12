@@ -33,10 +33,6 @@ namespace parsing {
     }
 
     std::string AstFunctionSpecifier::ToString(size_t depth) const {
-        std::stringstream ss;
-
-        ss << "AstFunctionSpecifier(" << magic_enum::enum_name(_functionSpecifier) << ')';
-
-        return ss.str();
+        TOSTRING_ONE_FIELD_ENUM(AstFunctionSpecifier, depth, _functionSpecifier)
     }
 } // parsing

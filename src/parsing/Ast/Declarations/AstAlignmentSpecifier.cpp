@@ -2,12 +2,10 @@
 // Created by johny on 11/4/23.
 //
 
-#include <sstream>
 #include "AstAlignmentSpecifier.h"
 #include "../../Parser.h"
 #include "AstTypeName.h"
 #include "../Expressions/AstConstantExpression.h"
-#include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
     std::optional<AstAlignmentSpecifier> AstAlignmentSpecifier::Parse(Parser &parser) {
@@ -43,15 +41,9 @@ namespace parsing {
     }
 
     std::string AstAlignmentSpecifier::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstAlignmentSpecifier {" << std::endl;
-        ss << tabsChildren << "specifierType: " << magic_enum::enum_name(_alignmentSpecifier) << std::endl;
-        ss << tabsChildren << "inner: " << _alignmentSpecifierValue->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstAlignmentSpecifier, depth, {
+            TOSTRING_FIELD_ENUM("specifierType", _alignmentSpecifier)
+            TOSTRING_FIELD_NODE("inner", *_alignmentSpecifierValue)
+        })
     }
 } // parsing

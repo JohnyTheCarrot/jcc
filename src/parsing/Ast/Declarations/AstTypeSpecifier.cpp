@@ -66,10 +66,6 @@ namespace parsing {
     }
 
     std::string AstTypeSpecifier::ToString(size_t depth) const {
-        std::stringstream ss;
-
-        ss << "AstTypeSpecifier(" << magic_enum::enum_name(_specifierType) << ")";
-
-        return ss.str();
+        TOSTRING_ENUM(AstTypeSpecifier, _specifierType)
     }
 } // parsing

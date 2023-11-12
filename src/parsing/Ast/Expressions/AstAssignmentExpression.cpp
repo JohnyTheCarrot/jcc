@@ -76,16 +76,10 @@ namespace parsing {
     }
 
     std::string AstAssignmentExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstAssignmentExpression {" << std::endl;
-        ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "assignmentOperator: " << magic_enum::enum_name(_assignmentOperator) << std::endl;
-        ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstAssignmentExpression, depth, {
+            TOSTRING_FIELD_NODE("left", *_left)
+            TOSTRING_FIELD_ENUM("assignmentOperator", _assignmentOperator)
+            TOSTRING_FIELD_NODE("right", *_right)
+        })
     }
 } // parsing

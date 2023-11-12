@@ -6,10 +6,6 @@
 #include "../../Parser.h"
 
 namespace parsing {
-    std::string AstStringLiteralExpression::ToString(size_t depth) const {
-        return "AstStringLiteralExpression(\"" + _string + "\")";
-    }
-
     std::optional<AstStringLiteralExpression> AstStringLiteralExpression::Parse(Parser &parser) {
         int parserCursor{ parser.GetCursor() };
 
@@ -26,5 +22,9 @@ namespace parsing {
         stringLiteralNode._span = stringLiteral->_span;
 
         return stringLiteralNode;
+    }
+
+    std::string AstStringLiteralExpression::ToString(size_t depth) const {
+        TOSTRING_ONE_FIELD_DIRECT(AstStringLiteralExpression, depth, _string)
     }
 } // parsing
