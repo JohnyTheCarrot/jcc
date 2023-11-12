@@ -146,6 +146,10 @@ namespace parsing {
         InitializerList,
         Initializer,
         BlockItem,
+        CompoundStatement,
+        TranslationUnit,
+        FunctionDefinition,
+        ExpressionStatement,
     };
 
     struct AstNode {
