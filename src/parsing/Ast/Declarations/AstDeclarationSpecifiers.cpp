@@ -62,29 +62,19 @@ namespace parsing {
     }
 
     std::string AstDeclarationSpecifiers::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstDeclarationSpecifiers([" << std::endl;
-
-        for (const auto &specifier: _declarationSpecifiers) {
-            ss << tabsChildren;
-
-            if (std::holds_alternative<AstAlignmentSpecifier>(specifier))
-                ss << std::get<AstAlignmentSpecifier>(specifier).ToString(depth + 1) << std::endl;
-            else if (std::holds_alternative<AstFunctionSpecifier>(specifier))
-                ss << std::get<AstFunctionSpecifier>(specifier).ToString(depth + 1) << std::endl;
-            else if (std::holds_alternative<AstStorageClassSpecifier>(specifier))
-                ss << std::get<AstStorageClassSpecifier>(specifier).ToString(depth + 1) << std::endl;
-            else if (std::holds_alternative<AstTypeSpecifier>(specifier))
-                ss << std::get<AstTypeSpecifier>(specifier).ToString(depth + 1) << std::endl;
-            else if (std::holds_alternative<AstTypeQualifier>(specifier))
-                ss << std::get<AstTypeQualifier>(specifier).ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstDeclarationSpecifiers, depth, {
+            for (const auto &specifier : _declarationSpecifiers) {
+                if (std::holds_alternative<AstAlignmentSpecifier>(specifier))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstAlignmentSpecifier>(specifier))
+                else if (std::holds_alternative<AstFunctionSpecifier>(specifier))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstFunctionSpecifier>(specifier))
+                else if (std::holds_alternative<AstStorageClassSpecifier>(specifier))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstStorageClassSpecifier>(specifier))
+                else if (std::holds_alternative<AstTypeSpecifier>(specifier))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(specifier))
+                else if (std::holds_alternative<AstTypeQualifier>(specifier))
+                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(specifier))
+            }
+        })
     }
 } // parsing

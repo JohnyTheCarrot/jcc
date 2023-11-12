@@ -37,15 +37,9 @@ namespace parsing {
     }
 
     std::string AstStaticAssertDeclaration::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstStaticAssertDeclaration {" << std::endl;
-        ss << tabsChildren << "constantExpression: " << _constantExpression->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "message: " << _message.ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstStaticAssertDeclaration, depth, {
+            TOSTRING_FIELD_NODE("constantExpression", *_constantExpression)
+            TOSTRING_FIELD_NODE("message", _message)
+        })
     }
 } // parsing

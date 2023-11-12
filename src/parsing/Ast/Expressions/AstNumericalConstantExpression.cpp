@@ -23,21 +23,17 @@ namespace parsing {
     }
 
     std::string AstNumericalConstantExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        ss << "AstNumericalConstantExpression{ ";
+        TOSTRING_FIELDS(AstNumericalConstantExpression, depth, {
+            if (std::holds_alternative<double>(_value))
+                TOSTRING_FIELD_DIRECT("double", std::get<double>(_value))
+            else if (std::holds_alternative<IntegerLiteralTokenValue>(_value))
+            {
+                IntegerLiteralTokenValue value = std::get<IntegerLiteralTokenValue>(_value);
 
-        if (std::holds_alternative<double>(_value))
-            ss << "double: " << std::get<double>(_value);
-
-        if (std::holds_alternative<IntegerLiteralTokenValue>(_value))
-        {
-            IntegerLiteralTokenValue value = std::get<IntegerLiteralTokenValue>(_value);
-
-            ss << magic_enum::enum_name(value.type) << ": " << value.value;
-        }
-
-        ss << " }";
-
-        return ss.str();
+                TOSTRING_FIELD_BOOL("isUnsigned", value.isUnsigned)
+                TOSTRING_FIELD_ENUM("type", value.type)
+                TOSTRING_FIELD_DIRECT("value", value.value)
+            }
+        })
     }
 } // parsing

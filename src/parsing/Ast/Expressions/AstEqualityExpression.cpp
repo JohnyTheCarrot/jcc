@@ -46,16 +46,10 @@ namespace parsing {
     }
 
     std::string AstEqualityExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstEqualityExpression {" << std::endl;
-        ss << tabsChildren << "left: " << _left->ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "operator: " << magic_enum::enum_name(_equalityOperator) << std::endl;
-        ss << tabsChildren << "right: " << _right->ToString(depth + 1) << std::endl;
-        ss << tabs << "}";
-
-        return ss.str();
+        TOSTRING_FIELDS(AstEqualityExpression, depth, {
+            TOSTRING_FIELD_NODE("left", *_left)
+            TOSTRING_FIELD_ENUM("operator", _equalityOperator)
+            TOSTRING_FIELD_NODE("right", *_right)
+        })
     }
 } // parsing

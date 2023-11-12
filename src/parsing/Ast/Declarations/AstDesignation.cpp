@@ -18,14 +18,8 @@ namespace parsing {
     }
 
     std::string AstDesignation::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstDesignation {" << std::endl;
-        ss << tabsChildren << "designatorList: " << _designatorList.ToString(depth + 1) << std::endl;
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstDesignation, depth, {
+            TOSTRING_FIELD_NODE("designatorList", _designatorList)
+        })
     }
 } // parsing

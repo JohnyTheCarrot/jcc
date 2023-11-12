@@ -5,7 +5,6 @@
 #include <sstream>
 #include "AstStorageClassSpecifier.h"
 #include "../../Parser.h"
-#include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
     std::optional<AstStorageClassSpecifier> AstStorageClassSpecifier::Parse(Parser &parser) {
@@ -45,10 +44,6 @@ namespace parsing {
     }
 
     std::string AstStorageClassSpecifier::ToString(size_t depth) const {
-        std::stringstream ss;
-
-        ss << "AstStorageClassSpecifier(" << magic_enum::enum_name(_storageClassSpecifier) << ')';
-
-        return ss.str();
+        TOSTRING_ONE_FIELD_ENUM(AstStorageClassSpecifier, depth, _storageClassSpecifier)
     }
 } // parsing

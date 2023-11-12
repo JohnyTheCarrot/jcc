@@ -47,16 +47,9 @@ namespace parsing {
     }
 
     std::string AstCastExpression::ToString(size_t depth) const {
-        // _typeName won't ever be nullopt given if the cast expression node exists, it must have a type name
-        std::string tabs = Indent(depth);
-        std::string childTabs = Indent(depth + 1);
-
-        std::stringstream ss;
-        ss << "CastExpression {" << std::endl;
-        ss << childTabs << "typeName: " << _typeName->ToString(depth + 1) << std::endl;
-        ss << childTabs << "expression: " << _expression->ToString(depth + 1) << std::endl;
-        ss << tabs << "}";
-
-        return ss.str();
+        TOSTRING_FIELDS(AstCastExpression, depth, {
+            TOSTRING_FIELD_NODE("typeName", *_typeName)
+            TOSTRING_FIELD_NODE("expression", *_expression)
+        })
     }
 } // parsing

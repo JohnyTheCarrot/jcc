@@ -14,6 +14,9 @@ namespace parsing {
         struct InitializerListItem {
             std::optional<AstDesignation> _designation;
             std::unique_ptr<AstNode> _initializer;
+
+            [[nodiscard]]
+            std::string ToString(size_t depth) const;
         };
 
         AstInitializerList(const Span &span, std::vector<InitializerListItem> listItems)

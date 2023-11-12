@@ -20,17 +20,9 @@ namespace parsing {
     }
 
     std::string AstParameterDeclaration::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "ParameterDeclaration {" << std::endl;
-
-        ss << tabsChildren << "declarationSpecifiers: " << _declarationSpecifiers.ToString(depth + 1) << std::endl;
-        ss << tabsChildren << "declarator: " << _declarator.ToString(depth + 1) << std::endl;
-
-        ss << tabs << '}';
-
-        return ss.str();
+        TOSTRING_FIELDS(AstParameterDeclaration, depth, {
+            TOSTRING_FIELD_NODE("declarationSpecifiers", _declarationSpecifiers)
+            TOSTRING_FIELD_NODE("declarator", _declarator)
+        })
     }
 } // parsing

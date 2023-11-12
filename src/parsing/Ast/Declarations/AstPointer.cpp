@@ -41,22 +41,12 @@ namespace parsing {
     }
 
     std::string AstPointer::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
+        TOSTRING_FIELDS(AstPointer, depth, {
+            if (_typeQualifierList)
+                TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
 
-        ss << "AstPointer {" << std::endl;
-
-        if (_typeQualifierList) {
-            ss << tabsChildren << "typeQualifierList: " << _typeQualifierList->ToString(depth + 1) << std::endl;
-        }
-
-        if (_nextPointer) {
-            ss << tabsChildren << "nextPointer: " << _nextPointer->ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "}";
-
-        return ss.str();
+            if (_nextPointer)
+                TOSTRING_FIELD_NODE("nextPointer", *_nextPointer)
+        })
     }
 } // parsing

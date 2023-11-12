@@ -48,24 +48,19 @@ namespace parsing {
     }
 
     std::string AstInitializerList::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-        std::string tabsChildren2{ Indent(depth + 2) };
+        TOSTRING_LIST(AstInitializerList, depth, {
+            for (const auto &listItem : _listItems) {
+                TOSTRING_LIST_ITEM_NODE(listItem)
+            }
+        })
+    }
 
-        ss << "InitializerList([";
-        for (const auto &listItem: _listItems) {
-            ss << std::endl;
-            ss << tabsChildren << '{' << std::endl;
-            if (listItem._designation)
-                ss << tabsChildren2 << "designation: " << listItem._designation->ToString(depth + 2) << std::endl;
+    std::string AstInitializerList::InitializerListItem::ToString(size_t depth) const {
+        TOSTRING_FIELDS(AstInitializerList::InitializerListItem, depth, {
+            if (_designation)
+                TOSTRING_FIELD_NODE("designation", *_designation)
 
-            ss << tabsChildren2 << "initializer: " << listItem._initializer->ToString(depth + 2) << std::endl;
-            ss << tabsChildren << '}';
-        }
-
-        ss << std::endl << tabs << "])";
-
-        return ss.str();
+            TOSTRING_FIELD_NODE("initializer", *_initializer)
+        })
     }
 } // parsing

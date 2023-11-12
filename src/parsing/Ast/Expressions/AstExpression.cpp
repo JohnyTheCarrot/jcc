@@ -43,18 +43,10 @@ namespace parsing {
     }
 
     std::string AstExpression::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "AstExpression([" << std::endl;
-
-        for (const std::unique_ptr<AstNode> &expression : _expressions) {
-            ss << tabsChildren << expression->ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstExpression, depth, {
+            for (const auto &item: _expressions) {
+                TOSTRING_LIST_ITEM_NODE(*item)
+            }
+        })
     }
 } // parsing

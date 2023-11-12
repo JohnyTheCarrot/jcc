@@ -37,18 +37,10 @@ namespace parsing {
     }
 
     std::string AstParameterList::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
-
-        ss << "ParameterList([" << std::endl;
-
-        for (const auto &paramDeclaration: _paramDeclarations) {
-            ss << tabsChildren << paramDeclaration.ToString(depth + 1) << std::endl;
-        }
-
-        ss << tabs << "])";
-
-        return ss.str();
+        TOSTRING_LIST(AstParameterList, depth, {
+            for (const auto &paramDeclaration: _paramDeclarations) {
+                TOSTRING_LIST_ITEM_NODE(paramDeclaration)
+            }
+        })
     }
 } // parsing

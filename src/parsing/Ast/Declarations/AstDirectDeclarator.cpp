@@ -125,30 +125,22 @@ namespace parsing {
     }
 
     std::string AstDirectDeclarator::ToString(size_t depth) const {
-        std::stringstream ss;
-        std::string tabs{ Indent(depth) };
-        std::string tabsChildren{ Indent(depth + 1) };
+        TOSTRING_FIELDS(AstDirectDeclarator, depth, {
+            if (_lhs)
+                TOSTRING_FIELD_NODE("lhs", *_lhs)
 
-        ss << "AstDirectDeclarator {" << std::endl;
+            TOSTRING_FIELD_ENUM("kind", _kind)
+            TOSTRING_FIELD_BOOL("isStatic", _isStatic)
+            TOSTRING_FIELD_BOOL("isVLA", _isVLA)
 
-        if (_lhs)
-            ss << tabsChildren << "lhs: " << _lhs->ToString(depth + 1) << std::endl;
+            if (_typeQualifierList)
+                TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
 
-        ss << tabsChildren << "kind: " << magic_enum::enum_name(_kind) << std::endl;
-        ss << tabsChildren << "isStatic: " << (_isStatic ? "true" : "false") << std::endl;
-        ss << tabsChildren << "isVLA: " << (_isVLA ? "true" : "false") << std::endl;
+            if (_assignmentExpression)
+                TOSTRING_FIELD_NODE("assignmentExpression", *_assignmentExpression)
 
-        if (_typeQualifierList)
-            ss << tabsChildren << "typeQualifierList: " << _typeQualifierList->ToString(depth + 1) << std::endl;
-
-        if (_assignmentExpression)
-            ss << tabsChildren << "assignmentExpression: " << _assignmentExpression->ToString(depth + 1) << std::endl;
-
-        if (_parameterTypeList)
-            ss << tabsChildren << "parameterTypeList: " << _parameterTypeList->ToString(depth + 1) << std::endl;
-
-        ss << tabs << '}';
-
-        return ss.str();
+            if (_parameterTypeList)
+                TOSTRING_FIELD_NODE("parameterTypeList", *_parameterTypeList)
+        })
     }
 } // parsing

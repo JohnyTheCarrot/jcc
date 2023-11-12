@@ -8,11 +8,94 @@
 #include <optional>
 #include <iostream>
 #include "../Span.h"
+#include <sstream>
+#include "../../../libs/magic_enum/magic_enum.hpp"
 
 #define TODO() { \
     std::cerr << "TODO: " << __FILE__ << ":" << __LINE__ << std::endl; \
     std::exit(1);           \
     __builtin_unreachable(); \
+}
+#define NOT_APPLICABLE() { \
+    std::cerr << "NOT_APPLICABLE HIT AT " << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ')' << std::endl; \
+    std::exit(1); \
+}
+
+#define TOSTRING_ENUM(node, enumValue) \
+    std::stringstream ss;                                                       \
+    ss << #node "(" << magic_enum::enum_name(enumValue) << ')';                 \
+    return ss.str();
+
+#define TOSTRING_LIST_ITEM_NODE(field) \
+ss << tabsChildren << (field).ToString((depth) + 1) << std::endl;
+
+#define TOSTRING_LIST_ITEM_ENUM(field) \
+ss << tabsChildren << magic_enum::enum_name(field) << std::endl;
+
+#define TOSTRING_FIELD_NODE(fieldName, field) \
+ss << tabsChildren << fieldName ": " << (field).ToString(depth + 1) << std::endl;
+
+#define TOSTRING_FIELD_ENUM(fieldName, field) \
+ss << tabsChildren << fieldName ": " << magic_enum::enum_name(field) << std::endl;
+
+#define TOSTRING_FIELD_BOOL(fieldName, value) \
+ss << tabsChildren << fieldName ": " << ((value) ? "true" : "false") << std::endl;
+
+#define TOSTRING_FIELD_DIRECT(fieldName, value) \
+ss << tabsChildren << fieldName ": " << (value) << std::endl;
+
+#define TOSTRING_FIELDS(node, depth, code)          \
+{                                                   \
+    std::stringstream ss;                           \
+                                                    \
+    std::string tabs{ Indent(depth) };              \
+    std::string tabsChildren{ Indent((depth) + 1) };\
+                                                    \
+    ss << #node " {" << std::endl;                  \
+    code                                            \
+    ss << tabs << '}';                              \
+    return ss.str();                                \
+}
+
+#define TOSTRING_ONE_FIELD_DIRECT(node, depth, field) \
+{                                                  \
+    std::stringstream ss;                          \
+    ss << #node "(";                               \
+    ss << field;                                   \
+    ss << ')';                                     \
+    return ss.str();                               \
+}
+
+#define TOSTRING_ONE_FIELD_ENUM(node, depth, field)        \
+{                                                          \
+    std::stringstream ss;                                  \
+    ss << #node "(";                                       \
+    ss << magic_enum::enum_name(field);                    \
+    ss << ')';                                             \
+    return ss.str();                                       \
+}
+
+#define TOSTRING_ONE_FIELD_NODE(node, depth, field)     \
+{                                                       \
+    std::stringstream ss;                               \
+    std::string tabs{ Indent(depth) };                  \
+    std::string tabsChildren{ Indent((depth) + 1) };    \
+    ss << #node "(" << std::endl;                       \
+    ss << tabsChildren << (field).ToString((depth) + 1) \
+    << std::endl;                                       \
+    ss << tabs << ')';                                  \
+    return ss.str();                                    \
+}
+
+#define TOSTRING_LIST(node, depth, code)            \
+{                                                   \
+    std::stringstream ss;                           \
+    std::string tabs{ Indent(depth) };              \
+    std::string tabsChildren{ Indent((depth) + 1) };\
+    ss << #node "([" << std::endl;                  \
+    code                                            \
+    ss << tabs << "])";                             \
+    return ss.str();                                \
 }
 
 class Parser;
@@ -62,6 +145,7 @@ namespace parsing {
         Designation,
         InitializerList,
         Initializer,
+        BlockItem,
     };
 
     struct AstNode {
@@ -114,13 +198,7 @@ namespace parsing {
         [[nodiscard]]
         virtual std::string ToString(size_t depth) const = 0;
 
-        static std::string Indent(size_t depth) {
-            std::string indent{};
-            for (size_t i = 0; i < depth; ++i) {
-                indent += "  ";
-            }
-            return indent;
-        }
+        static std::string Indent(size_t depth);
     };
 } // parsing
 

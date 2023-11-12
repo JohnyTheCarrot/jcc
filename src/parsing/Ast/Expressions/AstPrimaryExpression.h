@@ -13,6 +13,9 @@ namespace parsing {
     struct AstPrimaryExpression final : public AstNode {
         [[nodiscard]]
         static std::unique_ptr<AstNode> Parse(Parser &parser);
+
+        [[nodiscard]]
+        std::string ToString(size_t depth) const override;
     };
 
 } // parsing
