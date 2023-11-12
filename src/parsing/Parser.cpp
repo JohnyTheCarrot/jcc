@@ -7,9 +7,8 @@
 #include <sstream>
 #include "Parser.h"
 #include "../reporting.h"
-#include "Ast/Expressions/AstIdentifierExpression.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
-#include "Ast/Declarations/AstDeclaration.h"
+#include "Ast/ExternalDefinitions/AstTranslationUnit.h"
 
 using namespace parsing;
 
@@ -46,9 +45,9 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 }
 
 void Parser::Parse() {
-    std::unique_ptr<AstNode> astDeclaration{ AstDeclaration::Parse(*this) };
-    if (astDeclaration)
-        std::cout << astDeclaration->ToString(0) << std::endl;
+    std::optional<AstTranslationUnit> translationUnit{AstTranslationUnit::Parse(*this) };
+    if (translationUnit)
+        std::cout << translationUnit->ToString(0) << std::endl;
     else
         std::cout << "didn't match" << std::endl;
 }

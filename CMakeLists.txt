@@ -108,6 +108,24 @@ add_executable(jcc src/main.cpp
         src/parsing/Ast/Declarations/AstDesignation.h
         src/parsing/Ast/Declarations/AstInitializerList.cpp
         src/parsing/Ast/Declarations/AstInitializerList.h
-        src/parsing/AstNode.cpp)
+        src/parsing/Ast/ExternalDefinitions/AstTranslationUnit.cpp
+        src/parsing/Ast/ExternalDefinitions/AstTranslationUnit.h
+        src/parsing/Ast/Statements/AstStatement.cpp
+        src/parsing/Ast/Statements/AstStatement.h
+        src/parsing/Ast/Statements/AstCompoundStatement.cpp
+        src/parsing/Ast/Statements/AstCompoundStatement.h
+        src/parsing/Ast/Statements/AstBlockItemList.cpp
+        src/parsing/Ast/Statements/AstBlockItemList.h
+        src/parsing/Ast/Statements/AstBlockItem.cpp
+        src/parsing/Ast/Statements/AstBlockItem.h
+        src/parsing/AstNode.cpp
+        src/parsing/Ast/ExternalDefinitions/AstExternalDeclaration.cpp
+        src/parsing/Ast/ExternalDefinitions/AstExternalDeclaration.h
+        src/parsing/Ast/ExternalDefinitions/AstFunctionDefinition.cpp
+        src/parsing/Ast/ExternalDefinitions/AstFunctionDefinition.h
+        src/parsing/Ast/ExternalDefinitions/AstDeclarationList.cpp
+        src/parsing/Ast/ExternalDefinitions/AstDeclarationList.h
+        src/parsing/Ast/Statements/AstExpressionStatement.cpp
+        src/parsing/Ast/Statements/AstExpressionStatement.h)
 
 target_link_libraries(jcc PUBLIC frozen fmt)
