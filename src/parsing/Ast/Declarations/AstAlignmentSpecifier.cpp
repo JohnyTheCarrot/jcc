@@ -15,7 +15,7 @@ namespace parsing {
             return std::nullopt;
 
         parser.ExpectToken(TokenType::LeftParenthesis);
-        std::unique_ptr<AstNode> inner{ nullptr };
+        AstNode::Ptr inner{ nullptr };
         AlignmentSpecifierType specifierType;
 
         std::optional<AstTypeName> type{ AstTypeName::Parse(parser) };

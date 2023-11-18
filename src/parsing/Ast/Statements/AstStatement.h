@@ -5,14 +5,13 @@
 #ifndef JCC_ASTSTATEMENT_H
 #define JCC_ASTSTATEMENT_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstStatement final : public AstNode {
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &);
+        static AstNode::Ptr Parse(Parser &);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;

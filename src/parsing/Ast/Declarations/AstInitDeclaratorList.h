@@ -6,13 +6,12 @@
 #define JCC_ASTINITDECLARATORLIST_H
 
 #include <vector>
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstInitDeclaratorList final : public AstNode {
-        explicit AstInitDeclaratorList(std::vector<std::unique_ptr<AstNode>> initDeclaratorList)
+        explicit AstInitDeclaratorList(std::vector<AstNode::Ptr> initDeclaratorList)
             : AstNode(AstNodeType::InitDeclaratorList)
             , _initDeclaratorList{ std::move(initDeclaratorList) }
         {}
@@ -23,7 +22,7 @@ namespace parsing {
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::vector<std::unique_ptr<AstNode>> _initDeclaratorList{};
+        std::vector<AstNode::Ptr> _initDeclaratorList{};
     };
 
 } // parsing

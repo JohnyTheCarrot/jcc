@@ -8,7 +8,7 @@
 #include "../Declarations/AstDeclaration.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstExternalDeclaration::Parse(Parser &parser) {
+    AstNode::Ptr AstExternalDeclaration::Parse(Parser &parser) {
         std::optional<AstFunctionDefinition> functionDefinition{ AstFunctionDefinition::Parse(parser) };
         if (functionDefinition)
             return std::make_unique<AstFunctionDefinition>(std::move(*functionDefinition));

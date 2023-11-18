@@ -11,8 +11,8 @@
 #include "AstIdentifierExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstPostfixExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstPrimaryExpression::Parse(parser) };
+    AstNode::Ptr AstPostfixExpression::Parse(Parser &parser) {
+        AstNode::Ptr left{ AstPrimaryExpression::Parse(parser) };
 
         if (left == nullptr) {
             return nullptr;
@@ -30,7 +30,7 @@ namespace parsing {
                 case TokenType::LeftBracket: {
                     parser.AdvanceCursor();
 
-                    std::unique_ptr<AstNode> expression{ AstExpression::Parse(parser) };
+                    AstNode::Ptr expression{ AstExpression::Parse(parser) };
                     std::optional<Token> rightBracket{ parser.ConsumeIfTokenIs(TokenType::RightBracket) };
 
                     if (expression == nullptr) {
@@ -55,7 +55,7 @@ namespace parsing {
                     }
 
                     Span identifierSpan{ identifier->_span };
-                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
+                    AstNode::Ptr identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
 
                     left = std::make_unique<AstPostfixExpression>(std::move(left), PostfixExpressionType::MemberAccess, std::move(identifierNode));
                     left->_span = nextToken._span + identifierSpan;
@@ -71,7 +71,7 @@ namespace parsing {
                     }
 
                     Span identifierSpan{ identifier->_span };
-                    std::unique_ptr<AstNode> identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
+                    AstNode::Ptr identifierNode{ std::make_unique<AstIdentifierExpression>(std::move(identifier.value())) };
 
                     left = std::make_unique<AstPostfixExpression>(std::move(left), PostfixExpressionType::PointerMemberAccess, std::move(identifierNode));
                     left->_span = nextToken._span + identifierSpan;

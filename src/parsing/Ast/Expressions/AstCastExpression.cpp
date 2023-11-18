@@ -8,7 +8,7 @@
 #include "AstUnaryExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstCastExpression::Parse(Parser &parser) {
+    AstNode::Ptr AstCastExpression::Parse(Parser &parser) {
         if (!parser)
             return nullptr;
 
@@ -29,7 +29,7 @@ namespace parsing {
             parser.Error(parser.PeekNextToken()._span, "Expected ')'");
         }
 
-        std::unique_ptr<AstNode> expression{ AstCastExpression::Parse(parser) };
+        AstNode::Ptr expression{ AstCastExpression::Parse(parser) };
 
         // if the type cast is not followed by an expression, it is not a type cast
         if (!expression) {
@@ -40,7 +40,7 @@ namespace parsing {
         Span typeNameSpan{ typeName->_span };
         Span expressionSpan{ expression->_span };
 
-        std::unique_ptr<AstNode> castExpression{ std::make_unique<AstCastExpression>(std::move(typeName), std::move(expression)) };
+        AstNode::Ptr castExpression{ std::make_unique<AstCastExpression>(std::move(typeName), std::move(expression)) };
         castExpression->_span = lParen->_span + typeNameSpan + rParen->_span + expressionSpan;
 
         return castExpression;

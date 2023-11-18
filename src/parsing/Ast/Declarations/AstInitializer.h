@@ -17,7 +17,7 @@ namespace parsing {
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &);
+        static AstNode::Ptr Parse(Parser &);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;

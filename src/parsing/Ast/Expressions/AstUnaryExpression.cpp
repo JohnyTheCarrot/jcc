@@ -10,7 +10,7 @@
 #include "AstPostfixExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstUnaryExpression::Parse(Parser &parser) {
+    AstNode::Ptr AstUnaryExpression::Parse(Parser &parser) {
         if (!parser)
             return nullptr;
 
@@ -19,7 +19,7 @@ namespace parsing {
         switch (token._type) {
             case TokenType::Increment: {
                 parser.AdvanceCursor();
-                std::unique_ptr<AstNode> expression{ AstUnaryExpression::Parse(parser) };
+                AstNode::Ptr expression{ AstUnaryExpression::Parse(parser) };
 
                 if (expression == nullptr) {
                     parser.Error(token._span, "Expected expression");
@@ -29,7 +29,7 @@ namespace parsing {
             }
             case TokenType::Decrement: {
                 parser.AdvanceCursor();
-                std::unique_ptr<AstNode> expression{ AstUnaryExpression::Parse(parser) };
+                AstNode::Ptr expression{ AstUnaryExpression::Parse(parser) };
 
                 if (expression == nullptr) {
                     parser.Error(token._span, "Expected expression");
@@ -44,7 +44,7 @@ namespace parsing {
             case TokenType::BitwiseNot:
             case TokenType::LogicalNot: {
                 parser.AdvanceCursor();
-                std::unique_ptr<AstNode> expression{ AstCastExpression::Parse(parser) };
+                AstNode::Ptr expression{ AstCastExpression::Parse(parser) };
 
                 if (expression == nullptr) {
                     parser.Error(token._span, "Expected expression");

@@ -5,7 +5,6 @@
 #ifndef JCC_ASTADDITIVEEXPRESSION_H
 #define JCC_ASTADDITIVEEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -16,7 +15,7 @@ namespace parsing {
     };
 
     struct AstAdditiveExpression final : public AstNode {
-        AstAdditiveExpression(std::unique_ptr<AstNode> &&left, AdditiveOperator additiveOperator, std::unique_ptr<AstNode> &&right)
+        AstAdditiveExpression(AstNode::Ptr &&left, AdditiveOperator additiveOperator, AstNode::Ptr &&right)
                 : AstNode(AstNodeType::AdditiveExpression, Hierarchies::AdditiveExpression)
                 , _left{ std::move(left) }
                 , _additiveOperator{ additiveOperator }
@@ -24,14 +23,14 @@ namespace parsing {
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
+        AstNode::Ptr _left;
         AdditiveOperator _additiveOperator;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _right;
     };
 
 } // parsing

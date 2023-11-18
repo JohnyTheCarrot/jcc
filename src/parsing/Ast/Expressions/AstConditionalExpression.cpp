@@ -9,8 +9,8 @@
 #include "AstExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstConditionalExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> condition{ AstLogicalOrExpression::Parse(parser) };
+    AstNode::Ptr AstConditionalExpression::Parse(Parser &parser) {
+        AstNode::Ptr condition{ AstLogicalOrExpression::Parse(parser) };
 
         if (condition == nullptr)
             return nullptr;
@@ -23,7 +23,7 @@ namespace parsing {
         if (!questionMark.has_value())
             return condition;
 
-        std::unique_ptr<AstNode> trueExpression{ AstExpression::Parse(parser) };
+        AstNode::Ptr trueExpression{ AstExpression::Parse(parser) };
 
         if (trueExpression == nullptr || !parser) {
             parser.Error(questionMark->_span, "Expected expression for true branch");
@@ -31,7 +31,7 @@ namespace parsing {
 
         std::optional<Token> colon{ parser.ConsumeIfTokenIs(TokenType::Colon) };
 
-        std::unique_ptr<AstNode> falseExpression{ AstConditionalExpression::Parse(parser) };
+        AstNode::Ptr falseExpression{ AstConditionalExpression::Parse(parser) };
 
         if (falseExpression == nullptr) {
             parser.Error(colon->_span, "Expected expression for false branch");

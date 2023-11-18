@@ -5,7 +5,6 @@
 #ifndef JCC_ASTINITDECLARATOR_H
 #define JCC_ASTINITDECLARATOR_H
 
-#include <memory>
 #include "../../AstNode.h"
 #include "AstDeclarator.h"
 #include "AstInitializer.h"
@@ -13,7 +12,7 @@
 namespace parsing {
 
     struct AstInitDeclarator final : public AstNode {
-        AstInitDeclarator(const Span &span, AstDeclarator declarator, std::unique_ptr<AstNode> initializer)
+        AstInitDeclarator(const Span &span, AstDeclarator declarator, AstNode::Ptr initializer)
             : AstNode(AstNodeType::InitDeclarator)
             , _declarator{ std::move(declarator) }
             , _initializer{ std::move(initializer) }
@@ -22,13 +21,13 @@ namespace parsing {
         }
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &);
+        static AstNode::Ptr Parse(Parser &);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
         AstDeclarator _declarator;
-        std::unique_ptr<AstNode> _initializer;
+        AstNode::Ptr _initializer;
     };
 
 } // parsing

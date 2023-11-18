@@ -9,7 +9,7 @@
 #include "AstStringLiteralExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstPrimaryExpression::Parse(Parser &parser) {
+    AstNode::Ptr AstPrimaryExpression::Parse(Parser &parser) {
         std::optional<AstNumericalConstantExpression> constant = AstNumericalConstantExpression::Parse(parser);
         if (constant) {
             return std::make_unique<AstNumericalConstantExpression>(*constant);
@@ -29,7 +29,7 @@ namespace parsing {
         std::optional<Token> leftParen{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
 
         if (leftParen.has_value()) {
-           std::unique_ptr<AstNode> expression{ AstExpression::Parse(parser) };
+           AstNode::Ptr expression{ AstExpression::Parse(parser) };
 
            if (expression == nullptr) {
                parser.Error(leftParen->_span, "Expected expression");

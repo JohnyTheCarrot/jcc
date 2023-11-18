@@ -6,7 +6,6 @@
 #define JCC_ASTDECLARATIONSPECIFIERS_H
 
 #include <vector>
-#include <memory>
 #include <variant>
 #include "../../AstNode.h"
 #include "AstTypeSpecifier.h"

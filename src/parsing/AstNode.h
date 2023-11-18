@@ -10,6 +10,7 @@
 #include <iostream>
 #include <optional>
 #include <sstream>
+#include <memory>
 
 #define TODO()                                                                 \
   {                                                                            \
@@ -164,6 +165,8 @@ struct AstNode {
 
   explicit AstNode(AstNodeType type)
       : AstNode(type, Hierarchies::NotApplicable){};
+
+  using Ptr = std::unique_ptr<AstNode>;
 
   AstNodeType _type;
   Span _span;

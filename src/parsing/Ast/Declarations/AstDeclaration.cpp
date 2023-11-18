@@ -10,7 +10,7 @@
 #include "AstInitDeclaratorList.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstDeclaration::Parse(Parser &parser) {
+    AstNode::Ptr AstDeclaration::Parse(Parser &parser) {
         std::optional<AstStaticAssertDeclaration> staticAssertDeclaration{ AstStaticAssertDeclaration::Parse(parser) };
 
         if (staticAssertDeclaration)

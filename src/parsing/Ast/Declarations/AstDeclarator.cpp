@@ -10,7 +10,7 @@
 namespace parsing {
     std::optional<AstDeclarator> AstDeclarator::Parse(Parser &parser) {
         std::optional<AstPointer> pointer{ AstPointer::Parse(parser) };
-        std::unique_ptr<AstNode> directDeclarator{ AstDirectDeclarator::Parse(parser) };
+        AstNode::Ptr directDeclarator{ AstDirectDeclarator::Parse(parser) };
 
         if (!directDeclarator) {
             if (pointer)

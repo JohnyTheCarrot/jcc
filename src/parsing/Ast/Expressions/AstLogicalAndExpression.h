@@ -5,26 +5,25 @@
 #ifndef JCC_ASTLOGICALANDEXPRESSION_H
 #define JCC_ASTLOGICALANDEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstLogicalAndExpression final : public AstNode {
-        AstLogicalAndExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+        AstLogicalAndExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
             : AstNode(AstNodeType::LogicalAnd, Hierarchies::LogicalAndExpression)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _left;
+        AstNode::Ptr _right;
     };
 
 } // parsing

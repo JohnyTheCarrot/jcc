@@ -13,7 +13,7 @@ namespace parsing {
     struct AstInitializerList final : public AstNode {
         struct InitializerListItem {
             std::optional<AstDesignation> _designation;
-            std::unique_ptr<AstNode> _initializer;
+            AstNode::Ptr _initializer;
 
             [[nodiscard]]
             std::string ToString(size_t depth) const;

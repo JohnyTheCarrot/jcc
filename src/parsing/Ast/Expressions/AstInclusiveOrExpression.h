@@ -5,26 +5,25 @@
 #ifndef JCC_ASTINCLUSIVEOREXPRESSION_H
 #define JCC_ASTINCLUSIVEOREXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstInclusiveOrExpression final : public AstNode {
-        AstInclusiveOrExpression(std::unique_ptr<AstNode> &&left, std::unique_ptr<AstNode> &&right)
+        AstInclusiveOrExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
             : AstNode(AstNodeType::InclusiveOr, Hierarchies::InclusiveOrExpression)
             , _left{ std::move(left) }
             , _right{ std::move(right) }
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _left;
+        AstNode::Ptr _right;
     };
 
 } // parsing

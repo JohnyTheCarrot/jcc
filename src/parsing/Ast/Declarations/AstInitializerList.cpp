@@ -22,7 +22,7 @@ namespace parsing {
 
         while (true) {
             std::optional<AstDesignation> designation{ AstDesignation::Parse(parser) };
-            std::unique_ptr<AstNode> initializer{ AstInitializer::Parse(parser) };
+            AstNode::Ptr initializer{ AstInitializer::Parse(parser) };
 
             if (!initializer) {
                 if (designation)

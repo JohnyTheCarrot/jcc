@@ -5,14 +5,13 @@
 #ifndef JCC_ASTDECLARATOR_H
 #define JCC_ASTDECLARATOR_H
 
-#include <memory>
 #include "../../AstNode.h"
 #include "AstPointer.h"
 
 namespace parsing {
 
     struct AstDeclarator final : public AstNode {
-        AstDeclarator(std::optional<AstPointer> pointer, std::unique_ptr<AstNode> directDeclarator)
+        AstDeclarator(std::optional<AstPointer> pointer, AstNode::Ptr directDeclarator)
             : AstNode(AstNodeType::Declarator)
             , _pointer{ std::move(pointer) }
             , _directDeclarator{ std::move(directDeclarator) }
@@ -25,7 +24,7 @@ namespace parsing {
         std::string ToString(size_t depth) const override;
 
         std::optional<AstPointer> _pointer{};
-        std::unique_ptr<AstNode> _directDeclarator{};
+        AstNode::Ptr _directDeclarator{};
     };
 
 } // parsing

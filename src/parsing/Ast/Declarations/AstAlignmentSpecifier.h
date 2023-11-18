@@ -5,7 +5,6 @@
 #ifndef JCC_ASTALIGNMENTSPECIFIER_H
 #define JCC_ASTALIGNMENTSPECIFIER_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -16,7 +15,7 @@ namespace parsing {
             ConstantExpression
         };
 
-        AstAlignmentSpecifier(AlignmentSpecifierType alignmentSpecifier, std::unique_ptr<AstNode> &&alignmentSpecifierValue)
+        AstAlignmentSpecifier(AlignmentSpecifierType alignmentSpecifier, AstNode::Ptr &&alignmentSpecifierValue)
             : AstNode(AstNodeType::AlignmentSpecifier, Hierarchies::Declaration)
             , _alignmentSpecifier{ alignmentSpecifier }
             , _alignmentSpecifierValue{ std::move(alignmentSpecifierValue) }
@@ -31,7 +30,7 @@ namespace parsing {
         std::string ToString(size_t depth) const override;
 
         AlignmentSpecifierType _alignmentSpecifier;
-        std::unique_ptr<AstNode> _alignmentSpecifierValue;
+        AstNode::Ptr _alignmentSpecifierValue;
     };
 
 } // parsing

@@ -5,7 +5,6 @@
 #ifndef JCC_ASTSHIFTEXPRESSION_H
 #define JCC_ASTSHIFTEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -16,7 +15,7 @@ namespace parsing {
     };
 
     struct AstShiftExpression final : public AstNode {
-        AstShiftExpression(std::unique_ptr<AstNode> &&left, ShiftOperator additiveOperator, std::unique_ptr<AstNode> &&right)
+        AstShiftExpression(AstNode::Ptr &&left, ShiftOperator additiveOperator, AstNode::Ptr &&right)
             : AstNode(AstNodeType::ShiftExpression, Hierarchies::ShiftExpression)
             , _left{ std::move(left) }
             , _shiftOperator{ additiveOperator }
@@ -24,14 +23,14 @@ namespace parsing {
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
+        AstNode::Ptr _left;
         ShiftOperator _shiftOperator;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _right;
     };
 
 } // parsing

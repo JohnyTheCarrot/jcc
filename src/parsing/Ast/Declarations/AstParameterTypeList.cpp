@@ -7,7 +7,7 @@
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstParameterTypeList::Parse(Parser &parser) {
+    AstNode::Ptr AstParameterTypeList::Parse(Parser &parser) {
         std::optional<AstParameterList> parameterList{ AstParameterList::Parse(parser) };
         if (!parameterList)
             return nullptr;
