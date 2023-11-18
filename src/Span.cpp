@@ -1,6 +1,6 @@
 #include "Span.h"
 #include <istream>
-#include "fmt/format.h"
+#include <fmt/format.h>
 
 Span::Span(size_t line, size_t lineStartIndex, size_t characterIndex, size_t length, std::istream &inputStream)
         : _lineNumber{line}

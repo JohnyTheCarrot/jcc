@@ -91,14 +91,14 @@ bool Parser::AdvanceIfTokenIs(TokenType tokenType, Token &token) {
     return isTokenMatch;
 }
 
-const Token &Parser::ExpectToken(TokenType tokenType) {
+const Token &Parser::ExpectToken(TokenType tokenType, Span &spanToAddTo) {
     std::stringstream errorMessage{ };
     errorMessage << "Expected " << magic_enum::enum_name(tokenType) << " but got ";
 
     if (!*this) {
         errorMessage << "end of file";
         Span span{};
-        if (this->tokens.size() > 0)
+        if (!this->tokens.empty())
             span = this->tokens[this->tokens.size() - 1]->_span;
 
         this->Error(span, errorMessage.str());
@@ -113,10 +113,16 @@ const Token &Parser::ExpectToken(TokenType tokenType) {
 
     this->AdvanceCursor();
 
+	spanToAddTo += token._span;
     return token;
 }
 
 bool Parser::AdvanceIfTokenIs(TokenType tokenType) {
     Token token;
     return this->AdvanceIfTokenIs(tokenType, token);
+}
+
+const Token &Parser::ExpectToken(TokenType tokenType) {
+	Span span;
+	return this->ExpectToken(tokenType, span);
 }
