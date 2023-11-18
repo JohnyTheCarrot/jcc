@@ -8,13 +8,13 @@
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstAssignmentExpression::Parse(parser) };
+    AstNode::Ptr AstExpression::Parse(Parser &parser) {
+        AstNode::Ptr left{ AstAssignmentExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
 
-        std::vector<std::unique_ptr<AstNode>> expressions{ };
+        std::vector<AstNode::Ptr> expressions{ };
         expressions.push_back(nullptr);
 
         while (true) {
@@ -26,7 +26,7 @@ namespace parsing {
             if (!token.has_value())
                 break;
 
-            std::unique_ptr<AstNode> right{ AstAssignmentExpression::Parse(parser) };
+            AstNode::Ptr right{ AstAssignmentExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token->_span, "Expected expression");

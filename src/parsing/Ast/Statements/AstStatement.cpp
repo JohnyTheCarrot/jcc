@@ -9,7 +9,7 @@
 #include "AstIterationStatement.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstStatement::Parse(Parser &parser) {
+    AstNode::Ptr AstStatement::Parse(Parser &parser) {
         std::optional<AstCompoundStatement> compoundStatement{ AstCompoundStatement::Parse(parser) };
         if (compoundStatement)
             return std::make_unique<AstCompoundStatement>(std::move(*compoundStatement));
@@ -18,7 +18,7 @@ namespace parsing {
         if (expressionStatement)
             return std::make_unique<AstExpressionStatement>(std::move(*expressionStatement));
 
-		std::unique_ptr<AstNode> iterationStatement{ AstIterationStatement::Parse(parser) };
+		AstNode::Ptr iterationStatement{ AstIterationStatement::Parse(parser) };
 		if (iterationStatement)
 			return iterationStatement;
 

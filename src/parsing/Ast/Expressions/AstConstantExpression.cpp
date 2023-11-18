@@ -6,7 +6,7 @@
 #include "AstConditionalExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstConstantExpression::Parse(Parser &parser) {
+    AstNode::Ptr AstConstantExpression::Parse(Parser &parser) {
         return AstConditionalExpression::Parse(parser);
     }
 

@@ -5,14 +5,13 @@
 #ifndef JCC_ASTSTATICASSERTDECLARATION_H
 #define JCC_ASTSTATICASSERTDECLARATION_H
 
-#include <memory>
 #include "../../AstNode.h"
 #include "../Expressions/AstStringLiteralExpression.h"
 
 namespace parsing {
 
     struct AstStaticAssertDeclaration final : public AstNode {
-        AstStaticAssertDeclaration(std::unique_ptr<AstNode> &&constantExpression, AstStringLiteralExpression message)
+        AstStaticAssertDeclaration(AstNode::Ptr &&constantExpression, AstStringLiteralExpression message)
             : AstNode(AstNodeType::StaticAssertDeclaration, Hierarchies::Declaration)
             , _constantExpression{ std::move(constantExpression) }
             , _message{ std::move(message) }
@@ -24,7 +23,7 @@ namespace parsing {
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _constantExpression;
+        AstNode::Ptr _constantExpression;
         AstStringLiteralExpression _message;
     };
 

@@ -9,8 +9,8 @@
 namespace parsing {
     std::optional<AstTranslationUnit> AstTranslationUnit::Parse(Parser &parser) {
         Span span{};
-        std::vector<std::unique_ptr<AstNode>> externalDeclarations{};
-        std::unique_ptr<AstNode> externalDeclaration{ AstExternalDeclaration::Parse(parser) };
+        std::vector<AstNode::Ptr> externalDeclarations{};
+        AstNode::Ptr externalDeclaration{ AstExternalDeclaration::Parse(parser) };
 
         if (!externalDeclaration)
             return std::nullopt;

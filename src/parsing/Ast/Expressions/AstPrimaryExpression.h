@@ -5,14 +5,13 @@
 #ifndef JCC_ASTPRIMARYEXPRESSION_H
 #define JCC_ASTPRIMARYEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstPrimaryExpression final : public AstNode {
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;

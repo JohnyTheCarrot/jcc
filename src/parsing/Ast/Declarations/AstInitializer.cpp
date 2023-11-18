@@ -8,8 +8,8 @@
 #include "../Expressions/AstAssignmentExpression.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstInitializer::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+    AstNode::Ptr AstInitializer::Parse(Parser &parser) {
+        AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
         if (assignmentExpression)
             return assignmentExpression;
 

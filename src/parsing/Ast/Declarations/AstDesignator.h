@@ -6,7 +6,6 @@
 #define JCC_ASTDESIGNATOR_H
 
 #include <variant>
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -17,7 +16,7 @@ namespace parsing {
             StructOrUnionMember,
         };
 
-        AstDesignator(const Span &span, Kind kind, std::unique_ptr<AstNode> value)
+        AstDesignator(const Span &span, Kind kind, AstNode::Ptr value)
             : AstNode(AstNodeType::Designator)
             , _kind{ kind }
             , _value{ std::move(value) }
@@ -32,7 +31,7 @@ namespace parsing {
         std::string ToString(size_t depth) const override;
 
         Kind _kind;
-        std::unique_ptr<AstNode> _value;
+        AstNode::Ptr _value;
     };
 
 } // parsing

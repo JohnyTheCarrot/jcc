@@ -11,7 +11,7 @@ namespace parsing {
         Span span{};
         int cursor{ parser.GetCursor() };
 
-        std::unique_ptr<AstNode> optionalExpression{ AstExpression::Parse(parser) };
+        AstNode::Ptr optionalExpression{ AstExpression::Parse(parser) };
         if (!parser)
             return std::nullopt;
 

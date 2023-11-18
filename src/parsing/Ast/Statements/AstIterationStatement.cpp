@@ -16,7 +16,7 @@ namespace parsing {
 		if (tokenDo) {
 			span += tokenDo->_span;
 
-			std::unique_ptr<AstNode> statement{AstStatement::Parse(parser)};
+			AstNode::Ptr statement{AstStatement::Parse(parser)};
 			if (!statement) parser.Error(tokenDo->_span, "Expected statement");
 
 			const std::optional<Token> tokenWhile{parser.ConsumeIfTokenIs(TokenType::KeywordWhile)};
@@ -26,7 +26,7 @@ namespace parsing {
 
 			const Token &lParen{parser.ExpectToken(TokenType::LeftParenthesis, span)};
 
-			std::unique_ptr<AstNode> expression{AstExpression::Parse(parser)};
+			AstNode::Ptr expression{AstExpression::Parse(parser)};
 			if (!expression) parser.Error(lParen._span, "Expected expression");
 
 			parser.ExpectToken(TokenType::RightParenthesis, span);
@@ -42,12 +42,12 @@ namespace parsing {
 
 		const Token &lParen{parser.ExpectToken(TokenType::LeftParenthesis, span)};
 
-		std::unique_ptr<AstNode> expression{AstExpression::Parse(parser)};
+		AstNode::Ptr expression{AstExpression::Parse(parser)};
 		if (!expression) parser.Error(lParen._span, "Expected expression");
 
 		const Token &rParen{parser.ExpectToken(TokenType::RightParenthesis, span)};
 
-		std::unique_ptr<AstNode> statement{AstStatement::Parse(parser)};
+		AstNode::Ptr statement{AstStatement::Parse(parser)};
 		if (!statement) parser.Error(rParen._span, "Expected statement");
 
 		return AstWhileIterationStatement{span, std::move(expression), std::move(statement), false};
@@ -78,20 +78,20 @@ namespace parsing {
 
 		parser.ExpectToken(TokenType::LeftParenthesis, span);
 
-		std::unique_ptr<AstNode> setUp{AstDeclaration::Parse(parser)};
+		AstNode::Ptr setUp{AstDeclaration::Parse(parser)};
 		if (!setUp) {
 			setUp = AstExpression::Parse(parser);
 			parser.ExpectToken(TokenType::Semicolon, span);
 		}
 
-		std::unique_ptr<AstNode> check{AstExpression::Parse(parser)};
+		AstNode::Ptr check{AstExpression::Parse(parser)};
 		parser.ExpectToken(TokenType::Semicolon, span);
 
-		std::unique_ptr<AstNode> after{AstExpression::Parse(parser)};
+		AstNode::Ptr after{AstExpression::Parse(parser)};
 
 		const Token &rParen{parser.ExpectToken(TokenType::RightParenthesis)};
 
-		const std::unique_ptr<AstNode> statement{AstStatement::Parse(parser)};
+		const AstNode::Ptr statement{AstStatement::Parse(parser)};
 		if (!statement) parser.Error(rParen._span, "Expected to be followed by statement");
 
 		return AstForIterationStatement{span, std::move(setUp), std::move(check), std::move(after)};
@@ -99,7 +99,7 @@ namespace parsing {
 
 	std::string AstIterationStatement::ToString(size_t depth) const {NOT_APPLICABLE()}
 
-	std::unique_ptr<AstNode> AstIterationStatement::Parse(Parser &parser) {
+	AstNode::Ptr AstIterationStatement::Parse(Parser &parser) {
 		std::optional<AstWhileIterationStatement> whileIterationStatement{AstWhileIterationStatement::Parse(parser)};
 		if (whileIterationStatement)
 			return std::make_unique<AstWhileIterationStatement>(std::move(*whileIterationStatement));

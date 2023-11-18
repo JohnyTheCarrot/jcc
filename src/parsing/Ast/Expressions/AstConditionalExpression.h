@@ -5,13 +5,12 @@
 #ifndef JCC_ASTCONDITIONALEXPRESSION_H
 #define JCC_ASTCONDITIONALEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstConditionalExpression final : public AstNode {
-        AstConditionalExpression(std::unique_ptr<AstNode> &&condition, std::unique_ptr<AstNode> &&trueExpression, std::unique_ptr<AstNode> &&falseExpression)
+        AstConditionalExpression(AstNode::Ptr &&condition, AstNode::Ptr &&trueExpression, AstNode::Ptr &&falseExpression)
             : AstNode(AstNodeType::ConditionalExpression, Hierarchies::ConditionalExpression)
             , _condition { std::move(condition) }
             , _trueExpression { std::move(trueExpression) }
@@ -19,14 +18,14 @@ namespace parsing {
         {};
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _condition;
-        std::unique_ptr<AstNode> _trueExpression;
-        std::unique_ptr<AstNode> _falseExpression;
+        AstNode::Ptr _condition;
+        AstNode::Ptr _trueExpression;
+        AstNode::Ptr _falseExpression;
     };
 
 } // parsing

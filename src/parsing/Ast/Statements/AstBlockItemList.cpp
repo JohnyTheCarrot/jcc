@@ -8,8 +8,8 @@
 namespace parsing {
     std::optional<AstBlockItemList> AstBlockItemList::Parse(Parser &parser) {
         Span span{};
-        std::vector<std::unique_ptr<AstNode>> blockItems{};
-        std::unique_ptr<AstNode> item{ AstBlockItem::Parse(parser) };
+        std::vector<AstNode::Ptr> blockItems{};
+        AstNode::Ptr item{ AstBlockItem::Parse(parser) };
         if (!item)
             return std::nullopt;
 

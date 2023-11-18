@@ -8,8 +8,8 @@
 #include "../../Parser.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstInclusiveOrExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{AstExclusiveOrExpression::Parse(parser) };
+    AstNode::Ptr AstInclusiveOrExpression::Parse(Parser &parser) {
+        AstNode::Ptr left{AstExclusiveOrExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
@@ -25,7 +25,7 @@ namespace parsing {
 
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> right{AstExclusiveOrExpression::Parse(parser) };
+            AstNode::Ptr right{AstExclusiveOrExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");

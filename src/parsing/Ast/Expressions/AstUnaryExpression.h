@@ -5,7 +5,6 @@
 #ifndef JCC_ASTUNARYEXPRESSION_H
 #define JCC_ASTUNARYEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -26,7 +25,7 @@ namespace parsing {
     };
 
     struct AstUnaryExpression final : public AstNode {
-        AstUnaryExpression(AstUnaryOperator unaryOperator, std::unique_ptr<AstNode> &&operand)
+        AstUnaryExpression(AstUnaryOperator unaryOperator, AstNode::Ptr &&operand)
             : AstNode(AstNodeType::UnaryExpression, Hierarchies::UnaryExpression)
             , _unaryOperator{ unaryOperator }
             , _operand{ std::move(operand) }
@@ -34,13 +33,13 @@ namespace parsing {
 
         [[nodiscard]]
 
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
         AstUnaryOperator _unaryOperator;
-        std::unique_ptr<AstNode> _operand;
+        AstNode::Ptr _operand;
     };
 
 } // parsing

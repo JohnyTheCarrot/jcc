@@ -19,7 +19,7 @@ namespace parsing {
         if (token._type == TokenType::LeftBracket) {
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> constantExpression{ AstConstantExpression::Parse(parser) };
+            AstNode::Ptr constantExpression{ AstConstantExpression::Parse(parser) };
             if (!constantExpression)
                 parser.Error(token._span, "Expected to be followed by constant expression");
 

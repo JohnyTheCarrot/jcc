@@ -16,7 +16,7 @@ namespace parsing {
 
         parser.ExpectToken(TokenType::LeftParenthesis);
 
-        std::unique_ptr<AstNode> constantExpression{ AstConstantExpression::Parse(parser) };
+        AstNode::Ptr constantExpression{ AstConstantExpression::Parse(parser) };
 
         if (!constantExpression) {
             parser.Error(keyword->_span, "Expected constant expression");

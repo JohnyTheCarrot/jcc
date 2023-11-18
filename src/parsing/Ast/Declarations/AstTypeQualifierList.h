@@ -6,7 +6,6 @@
 #define JCC_ASTTYPEQUALIFIERLIST_H
 
 #include <vector>
-#include <memory>
 #include "../../AstNode.h"
 #include "AstTypeQualifier.h"
 

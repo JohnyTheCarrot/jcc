@@ -5,7 +5,6 @@
 #ifndef JCC_ASTTYPENAME_H
 #define JCC_ASTTYPENAME_H
 
-#include <memory>
 #include <utility>
 #include "../../AstNode.h"
 #include "AstSpecifierQualifierList.h"

@@ -8,7 +8,7 @@
 #include "AstInitializer.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstInitDeclarator::Parse(Parser &parser) {
+    AstNode::Ptr AstInitDeclarator::Parse(Parser &parser) {
         std::optional<AstDeclarator> declarator{ AstDeclarator::Parse(parser) };
 
         if (!declarator) {
@@ -20,7 +20,7 @@ namespace parsing {
             return std::make_unique<AstDeclarator>(std::move(*declarator));
         }
 
-        std::unique_ptr<AstNode> initializer{ AstInitializer::Parse(parser) };
+        AstNode::Ptr initializer{ AstInitializer::Parse(parser) };
         if (!initializer)
             parser.Error(assignmentOperator->_span, "Expected to be followed by an initializer");
 

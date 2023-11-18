@@ -5,7 +5,6 @@
 #ifndef JCC_ASTDECLARATION_H
 #define JCC_ASTDECLARATION_H
 
-#include <memory>
 #include "../../AstNode.h"
 #include "AstDeclarationSpecifiers.h"
 #include "AstInitDeclaratorList.h"
@@ -19,7 +18,7 @@ namespace parsing {
             , _initDeclaratorList{ std::move(initDeclaratorList) } {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;

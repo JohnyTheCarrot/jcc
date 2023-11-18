@@ -9,8 +9,8 @@
 
 namespace parsing {
     std::optional<AstInitDeclaratorList> AstInitDeclaratorList::Parse(Parser &parser) {
-        std::vector<std::unique_ptr<AstNode>> list{};
-        std::unique_ptr<AstNode> initDecl{ AstInitDeclarator::Parse(parser) };
+        std::vector<AstNode::Ptr> list{};
+        AstNode::Ptr initDecl{ AstInitDeclarator::Parse(parser) };
 
         if (!initDecl) {
             return std::nullopt;
@@ -25,7 +25,7 @@ namespace parsing {
                 break;
             }
 
-            std::unique_ptr<AstNode> nextInitDecl{ AstInitDeclarator::Parse(parser) };
+            AstNode::Ptr nextInitDecl{ AstInitDeclarator::Parse(parser) };
             if (!nextInitDecl)
                 parser.Error("Expected init declarator after comma");
 

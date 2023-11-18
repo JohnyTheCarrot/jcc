@@ -5,7 +5,6 @@
 #ifndef JCC_ASTRELATIONALEXPRESSION_H
 #define JCC_ASTRELATIONALEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -18,7 +17,7 @@ namespace parsing {
     };
 
     struct AstRelationalExpression final : public AstNode {
-        AstRelationalExpression(std::unique_ptr<AstNode> &&left, RelationalOperator relationalOperator, std::unique_ptr<AstNode> &&right)
+        AstRelationalExpression(AstNode::Ptr &&left, RelationalOperator relationalOperator, AstNode::Ptr &&right)
             : AstNode(AstNodeType::RelationalExpression, Hierarchies::RelationalExpression)
             , _left{ std::move(left) }
             , _relationalOperator{ relationalOperator }
@@ -26,14 +25,14 @@ namespace parsing {
         {}
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
+        AstNode::Ptr _left;
         RelationalOperator _relationalOperator;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _right;
     };
 
 } // parsing

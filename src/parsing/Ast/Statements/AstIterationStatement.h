@@ -6,13 +6,12 @@
 #define JCC_ASTITERATIONSTATEMENT_H
 
 #include "../../AstNode.h"
-#include <memory>
 
 namespace parsing {
 
 	struct AstWhileIterationStatement final : public AstNode {
 		AstWhileIterationStatement(
-				const Span &span, std::unique_ptr<AstNode> condition, std::unique_ptr<AstNode> statement, bool isDoWhile
+				const Span &span, AstNode::Ptr condition, AstNode::Ptr statement, bool isDoWhile
 		)
 			: AstNode(AstNodeType::WhileIterationStatement)
 			, _condition{std::move(condition)}
@@ -27,15 +26,15 @@ namespace parsing {
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;
 
-		std::unique_ptr<AstNode> _condition;
-		std::unique_ptr<AstNode> _statement;
+		AstNode::Ptr _condition;
+		AstNode::Ptr _statement;
 		bool _isDoWhile;
 	};
 
 	struct AstForIterationStatement final : public AstNode {
 		AstForIterationStatement(
-				const Span &span, std::unique_ptr<AstNode> setUp, std::unique_ptr<AstNode> check,
-				std::unique_ptr<AstNode> after
+				const Span &span, AstNode::Ptr setUp, AstNode::Ptr check,
+				AstNode::Ptr after
 		)
 			: AstNode(AstNodeType::ForIterationStatement)
 			, _setUp{std::move(setUp)}
@@ -50,12 +49,12 @@ namespace parsing {
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;
 
-		std::unique_ptr<AstNode> _setUp, _check, _after;
+		AstNode::Ptr _setUp, _check, _after;
 	};
 
 	struct AstIterationStatement final : public AstNode {
 		[[nodiscard]]
-		static std::unique_ptr<AstNode> Parse(Parser &);
+		static AstNode::Ptr Parse(Parser &);
 
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;

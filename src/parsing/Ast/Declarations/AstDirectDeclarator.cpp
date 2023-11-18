@@ -12,8 +12,8 @@
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstDirectDeclarator::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> result{};
+    AstNode::Ptr AstDirectDeclarator::Parse(Parser &parser) {
+        AstNode::Ptr result{};
 
         std::optional<Token> leftParenDecl{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
         if (leftParenDecl) {
@@ -50,7 +50,7 @@ namespace parsing {
                     std::optional<AstTypeQualifierList> typeQualifierList{ AstTypeQualifierList::Parse(parser) };
                     directDeclarator._typeQualifierList = typeQualifierList;
 
-                    std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+                    AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
                     if (!assignmentExpression)
                         parser.Error(staticKeyword->_span, "Expected assignment expression");
 
@@ -70,7 +70,7 @@ namespace parsing {
                     directDeclarator._lhs = std::move(result);
                     directDeclarator._typeQualifierList = typeQualifierList;
 
-                    std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+                    AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
                     if (!assignmentExpression)
                         parser.Error(staticKeyword->_span, "Expected assignment expression");
 
@@ -92,7 +92,7 @@ namespace parsing {
                     continue;
                 }
 
-                std::unique_ptr<AstNode> assignmentExpression{ AstAssignmentExpression::Parse(parser) };
+                AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
                 directDeclarator._typeQualifierList = typeQualifierList;
                 directDeclarator._lhs = std::move(result);
 
@@ -108,7 +108,7 @@ namespace parsing {
 
             std::optional<Token> leftParenFunc{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
             if (leftParenFunc) {
-                std::unique_ptr<AstNode> parameterTypeList{ AstParameterTypeList::Parse(parser) };
+                AstNode::Ptr parameterTypeList{ AstParameterTypeList::Parse(parser) };
                 directDeclarator._kind = Kind::Function;
                 directDeclarator._lhs = std::move(result);
                 parser.ExpectToken(TokenType::RightParenthesis);

@@ -10,8 +10,8 @@
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstMultiplicativeExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstCastExpression::Parse(parser) };
+    AstNode::Ptr AstMultiplicativeExpression::Parse(Parser &parser) {
+        AstNode::Ptr left{ AstCastExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
@@ -40,7 +40,7 @@ namespace parsing {
 
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> right{ AstCastExpression::Parse(parser) };
+            AstNode::Ptr right{ AstCastExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");

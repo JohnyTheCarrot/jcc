@@ -7,8 +7,8 @@
 #include "AstStatement.h"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstBlockItem::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> declaration{ AstDeclaration::Parse(parser) };
+    AstNode::Ptr AstBlockItem::Parse(Parser &parser) {
+        AstNode::Ptr declaration{ AstDeclaration::Parse(parser) };
         if (declaration)
             return declaration;
 

@@ -9,8 +9,8 @@
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 
 namespace parsing {
-    std::unique_ptr<AstNode> AstRelationalExpression::Parse(Parser &parser) {
-        std::unique_ptr<AstNode> left{ AstShiftExpression::Parse(parser) };
+    AstNode::Ptr AstRelationalExpression::Parse(Parser &parser) {
+        AstNode::Ptr left{ AstShiftExpression::Parse(parser) };
 
         if (left == nullptr)
             return nullptr;
@@ -42,7 +42,7 @@ namespace parsing {
 
             parser.AdvanceCursor();
 
-            std::unique_ptr<AstNode> right{ AstShiftExpression::Parse(parser) };
+            AstNode::Ptr right{ AstShiftExpression::Parse(parser) };
 
             if (right == nullptr)
                 parser.Error(token._span, "Expected rhs expression");

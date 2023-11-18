@@ -12,7 +12,7 @@
 namespace parsing {
 
     struct AstBlockItemList final : public AstNode {
-        AstBlockItemList(const Span &span, std::vector<std::unique_ptr<AstNode>> blockItem)
+        AstBlockItemList(const Span &span, std::vector<AstNode::Ptr> blockItem)
             : AstNode(AstNodeType::BlockItem)
             , _items{ std::move(blockItem) }
         {
@@ -25,7 +25,7 @@ namespace parsing {
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::vector<std::unique_ptr<AstNode>> _items;
+        std::vector<AstNode::Ptr> _items;
     };
 
 } // parsing

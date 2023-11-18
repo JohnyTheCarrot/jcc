@@ -5,13 +5,12 @@
 #ifndef JCC_ASTTRANSLATIONUNIT_H
 #define JCC_ASTTRANSLATIONUNIT_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstTranslationUnit final : public AstNode {
-        AstTranslationUnit(const Span &span, std::vector<std::unique_ptr<AstNode>> &&externalDeclarations)
+        AstTranslationUnit(const Span &span, std::vector<AstNode::Ptr> &&externalDeclarations)
                 : AstNode(AstNodeType::TranslationUnit)
                 , _externalDeclarations{std::move(externalDeclarations)} {
             this->_span = span;
@@ -23,7 +22,7 @@ namespace parsing {
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::vector<std::unique_ptr<AstNode>> _externalDeclarations;
+        std::vector<AstNode::Ptr> _externalDeclarations;
     };
 
 } // parsing

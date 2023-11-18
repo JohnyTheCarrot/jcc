@@ -5,7 +5,6 @@
 #ifndef JCC_ASTMULTIPLICATIVEEXPRESSION_H
 #define JCC_ASTMULTIPLICATIVEEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
@@ -17,7 +16,7 @@ namespace parsing {
     };
 
     struct AstMultiplicativeExpression final : public AstNode {
-        AstMultiplicativeExpression(std::unique_ptr<AstNode> &&left, MultiplicativeOperator multiplicativeOperator, std::unique_ptr<AstNode> &&right)
+        AstMultiplicativeExpression(AstNode::Ptr &&left, MultiplicativeOperator multiplicativeOperator, AstNode::Ptr &&right)
             : AstNode(AstNodeType::MultiplicativeExpression, Hierarchies::MultiplicativeExpression)
             , _left{ std::move(left) }
             , _multiplicativeOperator{ multiplicativeOperator }
@@ -27,14 +26,14 @@ namespace parsing {
         [[nodiscard]]
 
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &parser);
+        static AstNode::Ptr Parse(Parser &parser);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
 
-        std::unique_ptr<AstNode> _left;
+        AstNode::Ptr _left;
         MultiplicativeOperator _multiplicativeOperator;
-        std::unique_ptr<AstNode> _right;
+        AstNode::Ptr _right;
     };
 
 } // parsing

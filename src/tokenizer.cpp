@@ -9,7 +9,6 @@
 #include "reporting.h"
 #include "Span.h"
 #include <cassert>
-#include <memory>
 
 size_t Tokenizer::TokenizeNormalToken() {
     std::streamoff inputStreamPos{this->inputStream.tellg()};

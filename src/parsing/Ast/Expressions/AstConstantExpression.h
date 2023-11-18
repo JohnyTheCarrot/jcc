@@ -5,14 +5,13 @@
 #ifndef JCC_ASTCONSTANTEXPRESSION_H
 #define JCC_ASTCONSTANTEXPRESSION_H
 
-#include <memory>
 #include "../../AstNode.h"
 
 namespace parsing {
 
     struct AstConstantExpression final : public AstNode {
         [[nodiscard]]
-        static std::unique_ptr<AstNode> Parse(Parser &);
+        static AstNode::Ptr Parse(Parser &);
 
         [[nodiscard]]
         std::string ToString(size_t depth) const override;
