@@ -14,11 +14,7 @@ int main(int argc, char *argv[]) {
   const int three = 3, five = 5, fifteen = 15, iterations = 100;
 
   for (int i = 1; i <= iterations; ++i)
-	  ;
-
-  while (three + five == fifteen)
-	  ;
-
-  do ;
-  while (1);
+  {
+	  printf("hi %s %i", "carrot man", i);
+  }
 }
