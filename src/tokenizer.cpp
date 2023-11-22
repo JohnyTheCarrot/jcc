@@ -293,7 +293,7 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
         if (this->currentChar == '/' && ConsumeIfNextChar('/')) {
             this->inputStream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             ++this->line;
-            this->lineStartIndex = GetCharIndex();
+            this->lineStartIndex = GetCharIndex() + 1;
             this->currentToken = std::nullopt;
             continue;
         }
@@ -336,7 +336,7 @@ bool Tokenizer::GetNextChar() {
 
     if (this->currentChar == '\n') {
         ++this->line;
-        this->lineStartIndex = GetCharIndex();
+        this->lineStartIndex = GetCharIndex() + 1;
     }
 
     return true;
