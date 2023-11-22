@@ -29,6 +29,14 @@ int main(int argc, char *argv[]) {
 		break;
 	}
 
+	switch (three) {
+		case 3:
+			break;
+		default:
+			break;
+	}
+
+someLabel:
 	goto someLabel;
 
 	return 0;
