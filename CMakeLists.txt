@@ -9,8 +9,6 @@ add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
 file(GLOB_RECURSE DIR_SRC src/*.cpp)
-add_executable("${PROJECT_NAME}" ${DIR_SRC}
-        src/parsing/Ast/Expressions/AstArgumentExpressionList.cpp
-        src/parsing/Ast/Expressions/AstArgumentExpressionList.h)
+add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
 target_link_libraries(jcc PUBLIC frozen fmt)

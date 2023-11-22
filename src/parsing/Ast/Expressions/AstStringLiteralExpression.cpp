@@ -25,6 +25,6 @@ namespace parsing {
     }
 
     std::string AstStringLiteralExpression::ToString(size_t depth) const {
-        TOSTRING_ONE_FIELD_DIRECT(AstStringLiteralExpression, depth, _string)
+        TOSTRING_ONE_FIELD_STR(AstStringLiteralExpression, depth, _string)
     }
 } // parsing

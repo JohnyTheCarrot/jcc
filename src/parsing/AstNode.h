@@ -12,6 +12,8 @@
 #include <optional>
 #include <sstream>
 
+std::ostream &WriteStringExact(std::ostream &out, const std::string &str);
+
 #define TODO()                                                                                                         \
 	{                                                                                                                  \
 		std::cerr << "TODO: " << __FILE__ << ":" << __LINE__ << std::endl;                                             \
@@ -45,6 +47,13 @@
 
 #define TOSTRING_FIELD_DIRECT(fieldName, value) ss << tabsChildren << fieldName ": " << (value) << std::endl;
 
+#define TOSTRING_FIELD_STR(fieldName, value)                                                                           \
+	{                                                                                                                  \
+		ss << tabsChildren << fieldName ": ";                                                                          \
+		WriteStringExact(ss, value);                                                                                   \
+		ss << std::endl                                                                                                \
+	};
+
 #define TOSTRING_FIELDS(node, depth, code)                                                                             \
 	{                                                                                                                  \
 		std::stringstream ss;                                                                                          \
@@ -62,6 +71,15 @@
 		std::stringstream ss;                                                                                          \
 		ss << #node "(";                                                                                               \
 		ss << field;                                                                                                   \
+		ss << ')';                                                                                                     \
+		return ss.str();                                                                                               \
+	}
+
+#define TOSTRING_ONE_FIELD_STR(node, depth, field)                                                                     \
+	{                                                                                                                  \
+		std::stringstream ss;                                                                                          \
+		ss << #node "(";                                                                                               \
+		WriteStringExact(ss, field);                                                                                   \
 		ss << ')';                                                                                                     \
 		return ss.str();                                                                                               \
 	}
@@ -151,6 +169,7 @@ namespace parsing {
 		WhileIterationStatement,
 		ForIterationStatement,
 		ArgumentExpressionList,
+		SelectionStatement,
 	};
 
 	struct AstNode {
