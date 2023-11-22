@@ -171,6 +171,7 @@ namespace parsing {
 		ArgumentExpressionList,
 		SelectionStatement,
 		JumpStatement,
+		LabeledStatement,
 	};
 
 	struct AstNode {

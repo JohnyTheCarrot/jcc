@@ -8,6 +8,7 @@
 #include "AstExpressionStatement.h"
 #include "AstIterationStatement.h"
 #include "AstJumpStatement.h"
+#include "AstLabeledStatement.h"
 #include "AstSelectionStatement.h"
 #include <memory>
 
@@ -27,6 +28,9 @@ namespace parsing {
 
 		std::optional<AstJumpStatement> jumpStatement{AstJumpStatement::Parse(parser)};
 		if (jumpStatement) return std::make_unique<AstJumpStatement>(std::move(*jumpStatement));
+
+		std::optional<AstLabeledStatement> labeledStatement{AstLabeledStatement::Parse(parser)};
+		if (labeledStatement) return std::make_unique<AstLabeledStatement>(std::move(*labeledStatement));
 
 		return nullptr;
 	}
