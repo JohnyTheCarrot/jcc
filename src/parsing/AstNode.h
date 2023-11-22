@@ -170,6 +170,7 @@ namespace parsing {
 		ForIterationStatement,
 		ArgumentExpressionList,
 		SelectionStatement,
+		JumpStatement,
 	};
 
 	struct AstNode {

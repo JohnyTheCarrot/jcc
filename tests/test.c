@@ -15,6 +15,7 @@ unsigned int _Alignas(8) *const array[2] = {
 int main(int argc, char *argv[]) {
 	const int three = 3, five = 5, fifteen = 15, iterations = 100;
 
+
 	for (int i = 1; i <= iterations; ++i) {
 		if (i % three == 0 && i % five == 0) printf("FizzBuzz\n");
 		else if (i % three == 0)
@@ -23,5 +24,12 @@ int main(int argc, char *argv[]) {
 			printf("Buzz\n");
 		else
 			printf("%d\n", i);
+
+		continue;
+		break;
 	}
+
+	goto someLabel;
+
+	return 0;
 }

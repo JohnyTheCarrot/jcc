@@ -7,7 +7,9 @@
 #include "AstCompoundStatement.h"
 #include "AstExpressionStatement.h"
 #include "AstIterationStatement.h"
+#include "AstJumpStatement.h"
 #include "AstSelectionStatement.h"
+#include <memory>
 
 namespace parsing {
 	AstNode::Ptr AstStatement::Parse(Parser &parser) {
@@ -22,6 +24,9 @@ namespace parsing {
 
 		std::optional<AstSelectionStatement> selectionStatement{AstSelectionStatement::Parse(parser)};
 		if (selectionStatement) return std::make_unique<AstSelectionStatement>(std::move(*selectionStatement));
+
+		std::optional<AstJumpStatement> jumpStatement{AstJumpStatement::Parse(parser)};
+		if (jumpStatement) return std::make_unique<AstJumpStatement>(std::move(*jumpStatement));
 
 		return nullptr;
 	}
