@@ -55,7 +55,7 @@ namespace parsing {
 
 	std::string AstWhileIterationStatement::ToString(size_t depth) const {TOSTRING_FIELDS(
 			AstWhileIterationStatement, depth,
-			{TOSTRING_FIELD_NODE("condition", *_condition) TOSTRING_FIELD_NODE("statement", *_statement)
+			{TOSTRING_FIELD_NODE("_condition", *_condition) TOSTRING_FIELD_NODE("statement", *_statement)
 					 TOSTRING_FIELD_BOOL("isDoWhile", _isDoWhile)}
 	)}
 

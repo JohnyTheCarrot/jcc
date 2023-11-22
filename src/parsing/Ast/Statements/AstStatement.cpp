@@ -7,25 +7,24 @@
 #include "AstCompoundStatement.h"
 #include "AstExpressionStatement.h"
 #include "AstIterationStatement.h"
+#include "AstSelectionStatement.h"
 
 namespace parsing {
-    AstNode::Ptr AstStatement::Parse(Parser &parser) {
-        std::optional<AstCompoundStatement> compoundStatement{ AstCompoundStatement::Parse(parser) };
-        if (compoundStatement)
-            return std::make_unique<AstCompoundStatement>(std::move(*compoundStatement));
+	AstNode::Ptr AstStatement::Parse(Parser &parser) {
+		std::optional<AstCompoundStatement> compoundStatement{AstCompoundStatement::Parse(parser)};
+		if (compoundStatement) return std::make_unique<AstCompoundStatement>(std::move(*compoundStatement));
 
-        std::optional<AstExpressionStatement> expressionStatement{ AstExpressionStatement::Parse(parser) };
-        if (expressionStatement)
-            return std::make_unique<AstExpressionStatement>(std::move(*expressionStatement));
+		std::optional<AstExpressionStatement> expressionStatement{AstExpressionStatement::Parse(parser)};
+		if (expressionStatement) return std::make_unique<AstExpressionStatement>(std::move(*expressionStatement));
 
-		AstNode::Ptr iterationStatement{ AstIterationStatement::Parse(parser) };
-		if (iterationStatement)
-			return iterationStatement;
+		AstNode::Ptr iterationStatement{AstIterationStatement::Parse(parser)};
+		if (iterationStatement) return iterationStatement;
 
-        return nullptr;
-    }
+		std::optional<AstSelectionStatement> selectionStatement{AstSelectionStatement::Parse(parser)};
+		if (selectionStatement) return std::make_unique<AstSelectionStatement>(std::move(*selectionStatement));
 
-    std::string AstStatement::ToString(size_t depth) const {
-        NOT_APPLICABLE()
-    }
-} // parsing
+		return nullptr;
+	}
+
+	std::string AstStatement::ToString(size_t depth) const { NOT_APPLICABLE() }
+}// namespace parsing

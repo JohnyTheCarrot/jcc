@@ -42,7 +42,7 @@ namespace parsing {
 
     std::string AstConditionalExpression::ToString(size_t depth) const {
         TOSTRING_FIELDS(AstConditionalExpression, depth, {
-            TOSTRING_FIELD_NODE("condition", *_condition)
+            TOSTRING_FIELD_NODE("_condition", *_condition)
             TOSTRING_FIELD_NODE("trueExpression", *_trueExpression)
             TOSTRING_FIELD_NODE("falseExpression", *_falseExpression)
         })
