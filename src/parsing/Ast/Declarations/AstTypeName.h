@@ -5,27 +5,32 @@
 #ifndef JCC_ASTTYPENAME_H
 #define JCC_ASTTYPENAME_H
 
-#include <utility>
 #include "../../AstNode.h"
+#include "AstAbstractDeclarator.h"
 #include "AstSpecifierQualifierList.h"
+#include <utility>
 
 namespace parsing {
 
-    struct AstTypeName final : public AstNode {
-        explicit AstTypeName(AstSpecifierQualifierList specifierQualifierList)
-            : AstNode(AstNodeType::TypeName, Hierarchies::TypeName)
-            , _specifierQualifierList{ std::move(specifierQualifierList) }
-        {};
+	struct AstTypeName final : public AstNode {
+		explicit AstTypeName(
+				AstSpecifierQualifierList &&specifierQualifierList,
+				std::optional<AstAbstractDeclarator> &&abstractDeclarator
+		)
+			: AstNode(AstNodeType::TypeName, Hierarchies::TypeName)
+			, _specifierQualifierList{std::move(specifierQualifierList)}
+			, _abstractDeclarator{std::move(abstractDeclarator)} {};
 
-        [[nodiscard]]
-        static std::optional<AstTypeName> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstTypeName> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstSpecifierQualifierList _specifierQualifierList;
-    };
+		AstSpecifierQualifierList _specifierQualifierList;
+		std::optional<AstAbstractDeclarator> _abstractDeclarator;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTTYPENAME_H
+#endif//JCC_ASTTYPENAME_H

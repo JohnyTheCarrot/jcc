@@ -37,7 +37,7 @@ namespace parsing {
 
         std::optional<AstCompoundStatement> compoundStatement{ AstCompoundStatement::Parse(parser) };
         if (!compoundStatement)
-            parser.Error("Expected compound statement");
+            parser.Error("Expected to be followed by compound statement");
 
         span += compoundStatement->_span;
 

@@ -6,13 +6,16 @@
 #define JCC_ASTPARAMETERDECLARATION_H
 
 #include "../../AstNode.h"
+#include "AstAbstractDeclarator.h"
 #include "AstDeclarationSpecifiers.h"
 #include "AstDeclarator.h"
 
 namespace parsing {
 
     struct AstParameterDeclaration final : public AstNode {
-        AstParameterDeclaration(AstDeclarationSpecifiers specifiers, AstDeclarator declarator)
+		using Declarator = std::variant<AstDeclarator, std::optional<AstAbstractDeclarator>>;
+
+        AstParameterDeclaration(AstDeclarationSpecifiers specifiers, Declarator declarator)
             : AstNode(AstNodeType::ParameterDeclaration)
             , _declarationSpecifiers{ std::move(specifiers) }
             , _declarator{ std::move(declarator) }
@@ -25,7 +28,7 @@ namespace parsing {
         std::string ToString(size_t depth) const override;
 
         AstDeclarationSpecifiers _declarationSpecifiers;
-        AstDeclarator _declarator;
+        Declarator _declarator;
         // todo: abstract declarators
     };
 

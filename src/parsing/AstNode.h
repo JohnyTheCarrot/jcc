@@ -153,6 +153,7 @@ namespace parsing {
 		InitDeclaratorList,
 		Declaration,
 		DirectDeclarator,
+		DirectAbstractDeclarator,
 		ParameterDeclaration,
 		ParameterList,
 		ParameterTypeList,

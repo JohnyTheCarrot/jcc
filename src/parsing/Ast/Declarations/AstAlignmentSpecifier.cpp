@@ -8,6 +8,7 @@
 #include "../Expressions/AstConstantExpression.h"
 
 namespace parsing {
+	// todo: this code uses goto, which is bad. Refactor it.
     std::optional<AstAlignmentSpecifier> AstAlignmentSpecifier::Parse(Parser &parser) {
         std::optional<Token> alignAsKw{ parser.ConsumeIfTokenIs(TokenType::KeywordAlignas) };
 
@@ -21,7 +22,7 @@ namespace parsing {
         std::optional<AstTypeName> type{ AstTypeName::Parse(parser) };
         if (type) {
             specifierType = AlignmentSpecifierType::Type;
-            inner = std::make_unique<AstTypeName>(*type);
+            inner = std::make_unique<AstTypeName>(std::move(*type));
             goto validResult;
         }
 

@@ -9,13 +9,12 @@
 
 namespace parsing {
     std::optional<AstDeclarator> AstDeclarator::Parse(Parser &parser) {
+		int currentCursor{ parser.GetCursor() };
         std::optional<AstPointer> pointer{ AstPointer::Parse(parser) };
         AstNode::Ptr directDeclarator{ AstDirectDeclarator::Parse(parser) };
 
         if (!directDeclarator) {
-            if (pointer)
-                parser.Error(pointer->_span, "Expected direct declarator after pointer");
-
+			parser.SetCursor(currentCursor);
             return std::nullopt;
         }
 
