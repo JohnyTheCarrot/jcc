@@ -19,7 +19,7 @@ namespace parsing {
         if (leftParenDecl) {
             std::optional<AstDeclarator> decl{ AstDeclarator::Parse(parser) };
             if (!decl)
-                parser.Error(leftParenDecl->_span, "Expected declarator after left parenthesis");
+                return nullptr;
 
             parser.ExpectToken(TokenType::RightParenthesis);
 
