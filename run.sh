@@ -1,4 +1,1 @@
-mkdir build
-cd build
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
-cmake --build . -j 4 && ./jcc ../tests/test.c
+./build.sh && cd build && ./jcc ../tests/test.c; cd ..
