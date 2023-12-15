@@ -9,35 +9,34 @@
 
 namespace parsing {
 
-    enum class PostfixExpressionType {
-        PrimaryExpression,
-        FunctionCall,
-        ArraySubscript,
-        MemberAccess,
-        PointerMemberAccess,
-        PostIncrement,
-        PostDecrement
-    };
+	enum class PostfixExpressionType {
+		PrimaryExpression,
+		FunctionCall,
+		ArraySubscript,
+		MemberAccess,
+		PointerMemberAccess,
+		PostIncrement,
+		PostDecrement
+	};
 
-    struct AstPostfixExpression final : public AstNode {
-        AstPostfixExpression(AstNode::Ptr &&left, PostfixExpressionType type, AstNode::Ptr &&right)
-            : AstNode(AstNodeType::PostfixExpression, Hierarchies::PostfixExpression)
-            , _left{ std::move(left) }
-            , _postfixExpressionType{ type }
-            , _right{ std::move(right) }
-        {}
+	struct AstPostfixExpression final : public AstNode {
+		AstPostfixExpression(AstNode::Ptr &&left, PostfixExpressionType type, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::PostfixExpression, Hierarchies::PostfixExpression)
+			, _left{std::move(left)}
+			, _postfixExpressionType{type}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        PostfixExpressionType _postfixExpressionType;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		PostfixExpressionType _postfixExpressionType;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTPOSTFIXEXPRESSION_H
+#endif//JCC_ASTPOSTFIXEXPRESSION_H

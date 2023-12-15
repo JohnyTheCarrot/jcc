@@ -5,11 +5,9 @@
 #include "AstDeclarationList.h"
 
 namespace parsing {
-    std::optional<AstDeclarationList> AstDeclarationList::Parse(Parser &parser) {
-        TODO()
-    }
+	std::optional<AstDeclarationList> AstDeclarationList::Parse(Parser &parser){TODO()}
 
-    std::string AstDeclarationList::ToString(size_t depth) const {
-        TODO()
-    }
-} // parsing
+	std::string AstDeclarationList::ToString(size_t depth) const {
+		TODO()
+	}
+}// namespace parsing

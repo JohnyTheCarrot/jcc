@@ -17,17 +17,20 @@ namespace parsing {
 			span += tokenDo->_span;
 
 			AstNode::Ptr statement{AstStatement::Parse(parser)};
-			if (!statement) parser.Error(tokenDo->_span, "Expected statement");
+			if (!statement)
+				parser.Error(tokenDo->_span, "Expected statement");
 
 			const std::optional<Token> tokenWhile{parser.ConsumeIfTokenIs(TokenType::KeywordWhile)};
-			if (!tokenWhile) return std::nullopt;
+			if (!tokenWhile)
+				return std::nullopt;
 
 			span += tokenWhile->_span;
 
 			const Token &lParen{parser.ExpectToken(TokenType::LeftParenthesis, span)};
 
 			AstNode::Ptr expression{AstExpression::Parse(parser)};
-			if (!expression) parser.Error(lParen._span, "Expected expression");
+			if (!expression)
+				parser.Error(lParen._span, "Expected expression");
 
 			parser.ExpectToken(TokenType::RightParenthesis, span);
 			parser.ExpectToken(TokenType::Semicolon, span);
@@ -36,19 +39,22 @@ namespace parsing {
 		}
 
 		const std::optional<Token> tokenWhile{parser.ConsumeIfTokenIs(TokenType::KeywordWhile)};
-		if (!tokenWhile) return std::nullopt;
+		if (!tokenWhile)
+			return std::nullopt;
 
 		span += tokenWhile->_span;
 
 		const Token &lParen{parser.ExpectToken(TokenType::LeftParenthesis, span)};
 
 		AstNode::Ptr expression{AstExpression::Parse(parser)};
-		if (!expression) parser.Error(lParen._span, "Expected expression");
+		if (!expression)
+			parser.Error(lParen._span, "Expected expression");
 
 		const Token &rParen{parser.ExpectToken(TokenType::RightParenthesis, span)};
 
 		AstNode::Ptr statement{AstStatement::Parse(parser)};
-		if (!statement) parser.Error(rParen._span, "Expected statement");
+		if (!statement)
+			parser.Error(rParen._span, "Expected statement");
 
 		return AstWhileIterationStatement{span, std::move(expression), std::move(statement), false};
 	}
@@ -62,9 +68,12 @@ namespace parsing {
 	std::string AstForIterationStatement::ToString(size_t depth) const {TOSTRING_FIELDS(
 			AstForIterationStatement, depth,
 			{
-				if (_setUp) TOSTRING_FIELD_NODE("setUp", *_setUp)
-				if (_check) TOSTRING_FIELD_NODE("check", *_check)
-				if (_after) TOSTRING_FIELD_NODE("after", *_check)
+				if (_setUp)
+					TOSTRING_FIELD_NODE("setUp", *_setUp)
+				if (_check)
+					TOSTRING_FIELD_NODE("check", *_check)
+				if (_after)
+					TOSTRING_FIELD_NODE("after", *_check)
 				TOSTRING_FIELD_NODE("statement", *_statement)
 			}
 	)}
@@ -73,7 +82,8 @@ namespace parsing {
 		Span span{};
 
 		const std::optional<Token> forToken{parser.ConsumeIfTokenIs(TokenType::KeywordFor)};
-		if (!forToken) return std::nullopt;
+		if (!forToken)
+			return std::nullopt;
 
 		span += forToken->_span;
 
@@ -93,9 +103,12 @@ namespace parsing {
 		const Token &rParen{parser.ExpectToken(TokenType::RightParenthesis)};
 
 		AstNode::Ptr statement{AstStatement::Parse(parser)};
-		if (!statement) parser.Error(rParen._span, "Expected to be followed by statement");
+		if (!statement)
+			parser.Error(rParen._span, "Expected to be followed by statement");
 
-		return AstForIterationStatement{span, std::move(setUp), std::move(check), std::move(after), std::move(statement)};
+		return AstForIterationStatement{
+				span, std::move(setUp), std::move(check), std::move(after), std::move(statement)
+		};
 	}
 
 	std::string AstIterationStatement::ToString(size_t depth) const {NOT_APPLICABLE()}
@@ -106,7 +119,8 @@ namespace parsing {
 			return std::make_unique<AstWhileIterationStatement>(std::move(*whileIterationStatement));
 
 		std::optional<AstForIterationStatement> forIterationStatement{AstForIterationStatement::Parse(parser)};
-		if (forIterationStatement) return std::make_unique<AstForIterationStatement>(std::move(*forIterationStatement));
+		if (forIterationStatement)
+			return std::make_unique<AstForIterationStatement>(std::move(*forIterationStatement));
 
 		return nullptr;
 	}

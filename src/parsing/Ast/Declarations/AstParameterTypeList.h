@@ -10,21 +10,20 @@
 
 namespace parsing {
 
-    struct AstParameterTypeList final : public AstNode {
-        explicit AstParameterTypeList(AstParameterList parameterList)
-            : AstNode(AstNodeType::ParameterTypeList)
-            , _parameterList{ std::move(parameterList) }
-        {}
+	struct AstParameterTypeList final : public AstNode {
+		explicit AstParameterTypeList(AstParameterList parameterList)
+			: AstNode(AstNodeType::ParameterTypeList)
+			, _parameterList{std::move(parameterList)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstParameterList _parameterList;
-    };
+		AstParameterList _parameterList;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTPARAMETERTYPELIST_H
+#endif//JCC_ASTPARAMETERTYPELIST_H

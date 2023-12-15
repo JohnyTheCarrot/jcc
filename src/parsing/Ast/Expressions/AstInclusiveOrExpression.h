@@ -9,23 +9,22 @@
 
 namespace parsing {
 
-    struct AstInclusiveOrExpression final : public AstNode {
-        AstInclusiveOrExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
-            : AstNode(AstNodeType::InclusiveOr, Hierarchies::InclusiveOrExpression)
-            , _left{ std::move(left) }
-            , _right{ std::move(right) }
-        {}
+	struct AstInclusiveOrExpression final : public AstNode {
+		AstInclusiveOrExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::InclusiveOr, Hierarchies::InclusiveOrExpression)
+			, _left{std::move(left)}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTINCLUSIVEOREXPRESSION_H
+#endif//JCC_ASTINCLUSIVEOREXPRESSION_H

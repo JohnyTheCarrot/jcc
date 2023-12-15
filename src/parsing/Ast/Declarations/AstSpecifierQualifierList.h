@@ -5,31 +5,30 @@
 #ifndef JCC_ASTSPECIFIERQUALIFIERLIST_H
 #define JCC_ASTSPECIFIERQUALIFIERLIST_H
 
-#include <vector>
-#include <variant>
 #include "../../AstNode.h"
-#include "AstTypeSpecifier.h"
 #include "AstTypeQualifier.h"
+#include "AstTypeSpecifier.h"
+#include <variant>
+#include <vector>
 
 namespace parsing {
 
-    struct AstSpecifierQualifierList final : public AstNode {
-        AstSpecifierQualifierList()
-            : AstNode(AstNodeType::SpecifierQualifierList, Hierarchies::SpecifierQualifierList)
-            , _list{}
-        {};
+	struct AstSpecifierQualifierList final : public AstNode {
+		AstSpecifierQualifierList()
+			: AstNode(AstNodeType::SpecifierQualifierList, Hierarchies::SpecifierQualifierList)
+			, _list{} {};
 
-        using SpecifierQualifier = std::variant<AstTypeSpecifier, AstTypeQualifier>;
+		using SpecifierQualifier = std::variant<AstTypeSpecifier, AstTypeQualifier>;
 
-        [[nodiscard]]
-        static std::optional<AstSpecifierQualifierList> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstSpecifierQualifierList> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        std::vector<SpecifierQualifier> _list;
-    };
+		std::vector<SpecifierQualifier> _list;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTSPECIFIERQUALIFIERLIST_H
+#endif//JCC_ASTSPECIFIERQUALIFIERLIST_H

@@ -2,145 +2,144 @@
 // Created by johny on 11/4/23.
 //
 
-#include <sstream>
 #include "AstDirectDeclarator.h"
+#include "../../../../libs/magic_enum/magic_enum.hpp"
 #include "../../Parser.h"
+#include "../Expressions/AstAssignmentExpression.h"
 #include "../Expressions/AstIdentifierExpression.h"
 #include "AstDeclarator.h"
-#include "../Expressions/AstAssignmentExpression.h"
 #include "AstParameterTypeList.h"
-#include "../../../../libs/magic_enum/magic_enum.hpp"
+#include <sstream>
 
 namespace parsing {
-    AstNode::Ptr AstDirectDeclarator::Parse(Parser &parser) {
-        AstNode::Ptr result{};
+	AstNode::Ptr AstDirectDeclarator::Parse(Parser &parser) {
+		AstNode::Ptr result{};
 
-        std::optional<Token> leftParenDecl{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
-        if (leftParenDecl) {
-            std::optional<AstDeclarator> decl{ AstDeclarator::Parse(parser) };
-            if (!decl)
-                return nullptr;
+		std::optional<Token> leftParenDecl{parser.ConsumeIfTokenIs(TokenType::LeftParenthesis)};
+		if (leftParenDecl) {
+			std::optional<AstDeclarator> decl{AstDeclarator::Parse(parser)};
+			if (!decl)
+				return nullptr;
 
-            parser.ExpectToken(TokenType::RightParenthesis);
+			parser.ExpectToken(TokenType::RightParenthesis);
 
-            result = std::make_unique<AstDeclarator>(std::move(*decl));
-        } else {
-            std::optional<AstIdentifierExpression> identifier{AstIdentifierExpression::Parse(parser)};
+			result = std::make_unique<AstDeclarator>(std::move(*decl));
+		} else {
+			std::optional<AstIdentifierExpression> identifier{AstIdentifierExpression::Parse(parser)};
 
-            if (identifier) {
-                result = std::make_unique<AstIdentifierExpression>(std::move(identifier.value()));
-            } else {
-                return nullptr;
-            }
-        }
+			if (identifier) {
+				result = std::make_unique<AstIdentifierExpression>(std::move(identifier.value()));
+			} else {
+				return nullptr;
+			}
+		}
 
-        while (true) {
-            AstDirectDeclarator directDeclarator;
+		while (true) {
+			AstDirectDeclarator directDeclarator;
 
-            std::optional<Token> leftBracket{ parser.ConsumeIfTokenIs(TokenType::LeftBracket) };
-            if (leftBracket) {
-                std::optional<Token> staticKeyword{ parser.ConsumeIfTokenIs(TokenType::KeywordStatic) };
-                directDeclarator._kind = Kind::Array;
+			std::optional<Token> leftBracket{parser.ConsumeIfTokenIs(TokenType::LeftBracket)};
+			if (leftBracket) {
+				std::optional<Token> staticKeyword{parser.ConsumeIfTokenIs(TokenType::KeywordStatic)};
+				directDeclarator._kind = Kind::Array;
 
-                if (staticKeyword) {
-                    // type qualifier list is optional
-                    // assignment expression is mandatory
-                    directDeclarator._isStatic = true;
+				if (staticKeyword) {
+					// type qualifier list is optional
+					// assignment expression is mandatory
+					directDeclarator._isStatic = true;
 
-                    std::optional<AstTypeQualifierList> typeQualifierList{ AstTypeQualifierList::Parse(parser) };
-                    directDeclarator._typeQualifierList = typeQualifierList;
+					std::optional<AstTypeQualifierList> typeQualifierList{AstTypeQualifierList::Parse(parser)};
+					directDeclarator._typeQualifierList = typeQualifierList;
 
-                    AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
-                    if (!assignmentExpression)
-                        parser.Error(staticKeyword->_span, "Expected assignment expression");
+					AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
+					if (!assignmentExpression)
+						parser.Error(staticKeyword->_span, "Expected assignment expression");
 
-                    directDeclarator._assignmentExpression = std::move(assignmentExpression);
-                    directDeclarator._lhs = std::move(result);
-                    parser.ExpectToken(TokenType::RightBracket);
-                    result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
-                    continue;
-                }
+					directDeclarator._assignmentExpression = std::move(assignmentExpression);
+					directDeclarator._lhs = std::move(result);
+					parser.ExpectToken(TokenType::RightBracket);
+					result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+					continue;
+				}
 
-                std::optional<AstTypeQualifierList> typeQualifierList{ AstTypeQualifierList::Parse(parser) };
+				std::optional<AstTypeQualifierList> typeQualifierList{AstTypeQualifierList::Parse(parser)};
 
-                std::optional<Token> staticToken{parser.ConsumeIfTokenIs(TokenType::KeywordStatic) };
+				std::optional<Token> staticToken{parser.ConsumeIfTokenIs(TokenType::KeywordStatic)};
 
-                if (staticToken) {
-                    directDeclarator._isStatic = true;
-                    directDeclarator._lhs = std::move(result);
-                    directDeclarator._typeQualifierList = typeQualifierList;
+				if (staticToken) {
+					directDeclarator._isStatic = true;
+					directDeclarator._lhs = std::move(result);
+					directDeclarator._typeQualifierList = typeQualifierList;
 
-                    AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
-                    if (!assignmentExpression)
-                        parser.Error(staticKeyword->_span, "Expected assignment expression");
+					AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
+					if (!assignmentExpression)
+						parser.Error(staticKeyword->_span, "Expected assignment expression");
 
-                    directDeclarator._assignmentExpression = std::move(assignmentExpression);
-                    parser.ExpectToken(TokenType::RightBracket);
-                    result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
-                    continue;
-                }
+					directDeclarator._assignmentExpression = std::move(assignmentExpression);
+					parser.ExpectToken(TokenType::RightBracket);
+					result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+					continue;
+				}
 
-                std::optional<Token> asterisk{ parser.ConsumeIfTokenIs(TokenType::Asterisk) };
-                if (asterisk)
-                {
-                    directDeclarator._isVLA = true;
-                    directDeclarator._typeQualifierList = typeQualifierList;
-                    directDeclarator._lhs = std::move(result);
+				std::optional<Token> asterisk{parser.ConsumeIfTokenIs(TokenType::Asterisk)};
+				if (asterisk) {
+					directDeclarator._isVLA = true;
+					directDeclarator._typeQualifierList = typeQualifierList;
+					directDeclarator._lhs = std::move(result);
 
-                    result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
-                    parser.ExpectToken(TokenType::RightBracket);
-                    continue;
-                }
+					result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+					parser.ExpectToken(TokenType::RightBracket);
+					continue;
+				}
 
-                AstNode::Ptr assignmentExpression{ AstAssignmentExpression::Parse(parser) };
-                directDeclarator._typeQualifierList = typeQualifierList;
-                directDeclarator._lhs = std::move(result);
+				AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
+				directDeclarator._typeQualifierList = typeQualifierList;
+				directDeclarator._lhs = std::move(result);
 
-                if (assignmentExpression) {
-                    directDeclarator._assignmentExpression = std::move(assignmentExpression);
-                }
+				if (assignmentExpression) {
+					directDeclarator._assignmentExpression = std::move(assignmentExpression);
+				}
 
-                result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
-                parser.ExpectToken(TokenType::RightBracket);
+				result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+				parser.ExpectToken(TokenType::RightBracket);
 
-                return result;
-            }
+				return result;
+			}
 
-            std::optional<Token> leftParenFunc{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
-            if (leftParenFunc) {
-                AstNode::Ptr parameterTypeList{ AstParameterTypeList::Parse(parser) };
-                directDeclarator._kind = Kind::Function;
-                directDeclarator._lhs = std::move(result);
-                parser.ExpectToken(TokenType::RightParenthesis);
+			std::optional<Token> leftParenFunc{parser.ConsumeIfTokenIs(TokenType::LeftParenthesis)};
+			if (leftParenFunc) {
+				AstNode::Ptr parameterTypeList{AstParameterTypeList::Parse(parser)};
+				directDeclarator._kind = Kind::Function;
+				directDeclarator._lhs = std::move(result);
+				parser.ExpectToken(TokenType::RightParenthesis);
 
-                if (parameterTypeList)
-                    directDeclarator._parameterTypeList = std::move(parameterTypeList);
+				if (parameterTypeList)
+					directDeclarator._parameterTypeList = std::move(parameterTypeList);
 
-                result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
-                return result;
-            }
+				result = std::make_unique<AstDirectDeclarator>(std::move(directDeclarator));
+				return result;
+			}
 
-            return result;
-        }
-    }
+			return result;
+		}
+	}
 
-    std::string AstDirectDeclarator::ToString(size_t depth) const {
-        TOSTRING_FIELDS(AstDirectDeclarator, depth, {
-            if (_lhs)
-                TOSTRING_FIELD_NODE("lhs", *_lhs)
+	std::string AstDirectDeclarator::ToString(size_t depth) const {
+		TOSTRING_FIELDS(AstDirectDeclarator, depth, {
+			if (_lhs)
+				TOSTRING_FIELD_NODE("lhs", *_lhs)
 
-            TOSTRING_FIELD_ENUM("kind", _kind)
-            TOSTRING_FIELD_BOOL("isStatic", _isStatic)
-            TOSTRING_FIELD_BOOL("isVLA", _isVLA)
+			TOSTRING_FIELD_ENUM("kind", _kind)
+			TOSTRING_FIELD_BOOL("isStatic", _isStatic)
+			TOSTRING_FIELD_BOOL("isVLA", _isVLA)
 
-            if (_typeQualifierList)
-                TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
+			if (_typeQualifierList)
+				TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
 
-            if (_assignmentExpression)
-                TOSTRING_FIELD_NODE("assignmentExpression", *_assignmentExpression)
+			if (_assignmentExpression)
+				TOSTRING_FIELD_NODE("assignmentExpression", *_assignmentExpression)
 
-            if (_parameterTypeList)
-                TOSTRING_FIELD_NODE("parameterTypeList", *_parameterTypeList)
-        })
-    }
-} // parsing
+			if (_parameterTypeList)
+				TOSTRING_FIELD_NODE("parameterTypeList", *_parameterTypeList)
+		})
+	}
+}// namespace parsing

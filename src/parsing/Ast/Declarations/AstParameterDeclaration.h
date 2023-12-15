@@ -12,26 +12,25 @@
 
 namespace parsing {
 
-    struct AstParameterDeclaration final : public AstNode {
+	struct AstParameterDeclaration final : public AstNode {
 		using Declarator = std::variant<AstDeclarator, std::optional<AstAbstractDeclarator>>;
 
-        AstParameterDeclaration(AstDeclarationSpecifiers specifiers, Declarator declarator)
-            : AstNode(AstNodeType::ParameterDeclaration)
-            , _declarationSpecifiers{ std::move(specifiers) }
-            , _declarator{ std::move(declarator) }
-        {}
+		AstParameterDeclaration(AstDeclarationSpecifiers specifiers, Declarator declarator)
+			: AstNode(AstNodeType::ParameterDeclaration)
+			, _declarationSpecifiers{std::move(specifiers)}
+			, _declarator{std::move(declarator)} {}
 
-        [[nodiscard]]
-        static std::optional<AstParameterDeclaration> Parse(Parser &);
+		[[nodiscard]]
+		static std::optional<AstParameterDeclaration> Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstDeclarationSpecifiers _declarationSpecifiers;
-        Declarator _declarator;
-        // todo: abstract declarators
-    };
+		AstDeclarationSpecifiers _declarationSpecifiers;
+		Declarator _declarator;
+		// todo: abstract declarators
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTPARAMETERDECLARATION_H
+#endif//JCC_ASTPARAMETERDECLARATION_H

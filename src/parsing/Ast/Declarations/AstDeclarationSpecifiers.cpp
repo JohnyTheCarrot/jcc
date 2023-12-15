@@ -2,79 +2,79 @@
 // Created by johny on 11/4/23.
 //
 
-#include <sstream>
 #include "AstDeclarationSpecifiers.h"
+#include <sstream>
 
 namespace parsing {
-    std::optional<AstDeclarationSpecifiers> AstDeclarationSpecifiers::Parse(Parser &parser) {
-        std::vector<DeclarationSpecifier> declarationSpecifiers{};
-        Span span{};
+	std::optional<AstDeclarationSpecifiers> AstDeclarationSpecifiers::Parse(Parser &parser) {
+		std::vector<DeclarationSpecifier> declarationSpecifiers{};
+		Span span{};
 
-        while (true) {
-            std::optional<AstStorageClassSpecifier> storageClassSpecifier{ AstStorageClassSpecifier::Parse(parser) };
+		while (true) {
+			std::optional<AstStorageClassSpecifier> storageClassSpecifier{AstStorageClassSpecifier::Parse(parser)};
 
-            if (storageClassSpecifier.has_value()) {
-                span += storageClassSpecifier->_span;
-                declarationSpecifiers.emplace_back(std::move(*storageClassSpecifier));
-                continue;
-            }
+			if (storageClassSpecifier.has_value()) {
+				span += storageClassSpecifier->_span;
+				declarationSpecifiers.emplace_back(std::move(*storageClassSpecifier));
+				continue;
+			}
 
-            std::optional<AstTypeSpecifier> typeSpecifier{ AstTypeSpecifier::Parse(parser) };
+			std::optional<AstTypeSpecifier> typeSpecifier{AstTypeSpecifier::Parse(parser)};
 
-            if (typeSpecifier.has_value()) {
-                span += typeSpecifier->_span;
-                declarationSpecifiers.emplace_back(std::move(*typeSpecifier));
-                continue;
-            }
+			if (typeSpecifier.has_value()) {
+				span += typeSpecifier->_span;
+				declarationSpecifiers.emplace_back(std::move(*typeSpecifier));
+				continue;
+			}
 
-            std::optional<AstTypeQualifier> typeQualifier{ AstTypeQualifier::Parse(parser) };
+			std::optional<AstTypeQualifier> typeQualifier{AstTypeQualifier::Parse(parser)};
 
-            if (typeQualifier.has_value()) {
-                span += typeQualifier->_span;
-                declarationSpecifiers.emplace_back(std::move(*typeQualifier));
-                continue;
-            }
+			if (typeQualifier.has_value()) {
+				span += typeQualifier->_span;
+				declarationSpecifiers.emplace_back(std::move(*typeQualifier));
+				continue;
+			}
 
-            std::optional<AstFunctionSpecifier> functionSpecifier{ AstFunctionSpecifier::Parse(parser) };
+			std::optional<AstFunctionSpecifier> functionSpecifier{AstFunctionSpecifier::Parse(parser)};
 
-            if (functionSpecifier.has_value()) {
-                span += functionSpecifier->_span;
-                declarationSpecifiers.emplace_back(std::move(*functionSpecifier));
-                continue;
-            }
+			if (functionSpecifier.has_value()) {
+				span += functionSpecifier->_span;
+				declarationSpecifiers.emplace_back(std::move(*functionSpecifier));
+				continue;
+			}
 
-            std::optional<AstAlignmentSpecifier> alignmentSpecifier{ AstAlignmentSpecifier::Parse(parser) };
+			std::optional<AstAlignmentSpecifier> alignmentSpecifier{AstAlignmentSpecifier::Parse(parser)};
 
-            if (alignmentSpecifier.has_value()) {
-                span += alignmentSpecifier->_span;
-                declarationSpecifiers.emplace_back(std::move(*alignmentSpecifier));
-                continue;
-            }
+			if (alignmentSpecifier.has_value()) {
+				span += alignmentSpecifier->_span;
+				declarationSpecifiers.emplace_back(std::move(*alignmentSpecifier));
+				continue;
+			}
 
-            if (declarationSpecifiers.empty()) {
-                return std::nullopt;
-            }
+			if (declarationSpecifiers.empty()) {
+				return std::nullopt;
+			}
 
-            AstDeclarationSpecifiers declarationSpecifiersNode{ std::move(declarationSpecifiers) };
-            declarationSpecifiersNode._span = span;
-            return declarationSpecifiersNode;
-        }
-    }
+			AstDeclarationSpecifiers declarationSpecifiersNode{std::move(declarationSpecifiers)};
+			declarationSpecifiersNode._span = span;
+			return declarationSpecifiersNode;
+		}
+	}
 
-    std::string AstDeclarationSpecifiers::ToString(size_t depth) const {
-        TOSTRING_LIST(AstDeclarationSpecifiers, depth, {
-            for (const auto &specifier : _declarationSpecifiers) {
-                if (std::holds_alternative<AstAlignmentSpecifier>(specifier))
-                    TOSTRING_LIST_ITEM_NODE(std::get<AstAlignmentSpecifier>(specifier))
-                else if (std::holds_alternative<AstFunctionSpecifier>(specifier))
-                    TOSTRING_LIST_ITEM_NODE(std::get<AstFunctionSpecifier>(specifier))
-                else if (std::holds_alternative<AstStorageClassSpecifier>(specifier))
-                    TOSTRING_LIST_ITEM_NODE(std::get<AstStorageClassSpecifier>(specifier))
-                else if (std::holds_alternative<AstTypeSpecifier>(specifier))
-                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(specifier))
-                else if (std::holds_alternative<AstTypeQualifier>(specifier))
-                    TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(specifier))
-            }
-        })
-    }
-} // parsing
+	std::string AstDeclarationSpecifiers::ToString(size_t depth) const {
+		TOSTRING_LIST(AstDeclarationSpecifiers, depth, {
+			for (const auto &specifier: _declarationSpecifiers) {
+				if (std::holds_alternative<AstAlignmentSpecifier>(specifier))
+					TOSTRING_LIST_ITEM_NODE(std::get<AstAlignmentSpecifier>(specifier))
+				else if (std::holds_alternative<AstFunctionSpecifier>(specifier))
+					TOSTRING_LIST_ITEM_NODE(std::get<AstFunctionSpecifier>(specifier))
+				else if (std::holds_alternative<AstStorageClassSpecifier>(specifier))
+					TOSTRING_LIST_ITEM_NODE(std::get<AstStorageClassSpecifier>(specifier))
+				else if (std::holds_alternative<AstTypeSpecifier>(specifier))
+					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(specifier))
+				else if (std::holds_alternative<AstTypeQualifier>(specifier))
+					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(specifier))
+			}
+		})
+	}
+}// namespace parsing

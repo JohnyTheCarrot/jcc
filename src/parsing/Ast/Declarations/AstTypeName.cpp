@@ -12,7 +12,9 @@ namespace parsing {
 	std::optional<AstTypeName> AstTypeName::Parse(Parser &parser) {
 		std::optional<AstSpecifierQualifierList> list{AstSpecifierQualifierList::Parse(parser)};
 
-		if (!list.has_value()) { return std::nullopt; }
+		if (!list.has_value()) {
+			return std::nullopt;
+		}
 
 		std::optional<AstAbstractDeclarator> abstractDeclarator{AstAbstractDeclarator::Parse(parser)};
 

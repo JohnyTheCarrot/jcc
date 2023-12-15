@@ -9,29 +9,24 @@
 
 namespace parsing {
 
-    enum class AstTypeQualifierType {
-        Const,
-        Restrict,
-        Volatile,
-        Atomic
-    };
+	enum class AstTypeQualifierType { Const, Restrict, Volatile, Atomic };
 
-    struct AstTypeQualifier final : public AstNode {
-        AstTypeQualifier(const Span &span, AstTypeQualifierType qualifierType)
-            : AstNode(AstNodeType::TypeQualifier, Hierarchies::TypeQualifier)
-            , _qualifierType{qualifierType} {
-            this->_span = span;
-        };
+	struct AstTypeQualifier final : public AstNode {
+		AstTypeQualifier(const Span &span, AstTypeQualifierType qualifierType)
+			: AstNode(AstNodeType::TypeQualifier, Hierarchies::TypeQualifier)
+			, _qualifierType{qualifierType} {
+			this->_span = span;
+		};
 
-        [[nodiscard]]
-        static std::optional<AstTypeQualifier> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstTypeQualifier> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstTypeQualifierType _qualifierType;
-    };
+		AstTypeQualifierType _qualifierType;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTTYPEQUALIFIER_H
+#endif//JCC_ASTTYPEQUALIFIER_H

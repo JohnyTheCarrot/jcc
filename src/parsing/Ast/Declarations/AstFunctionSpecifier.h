@@ -9,26 +9,22 @@
 
 namespace parsing {
 
-    struct AstFunctionSpecifier final : public AstNode {
-        enum class FunctionSpecifierType {
-            Inline,
-            Noreturn
-        };
+	struct AstFunctionSpecifier final : public AstNode {
+		enum class FunctionSpecifierType { Inline, Noreturn };
 
-        AstFunctionSpecifier(FunctionSpecifierType functionSpecifier)
-            : AstNode(AstNodeType::FunctionSpecifier, Hierarchies::Declaration)
-            , _functionSpecifier(functionSpecifier)
-        {}
+		AstFunctionSpecifier(FunctionSpecifierType functionSpecifier)
+			: AstNode(AstNodeType::FunctionSpecifier, Hierarchies::Declaration)
+			, _functionSpecifier(functionSpecifier) {}
 
-        [[nodiscard]]
-        static std::optional<AstFunctionSpecifier> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstFunctionSpecifier> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        FunctionSpecifierType _functionSpecifier;
-    };
+		FunctionSpecifierType _functionSpecifier;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTFUNCTIONSPECIFIER_H
+#endif//JCC_ASTFUNCTIONSPECIFIER_H

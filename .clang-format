@@ -4,9 +4,7 @@ BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: BlockIndent
 AlignConsecutiveAssignments:
-  Enabled: true
-  AcrossEmptyLines: false
-  AcrossComments: true
+  Enabled: false
 AlignOperands: AlignAfterOperator
 AlignEscapedNewlines: Right
 AllowAllArgumentsOnNextLine: true
@@ -15,7 +13,7 @@ AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterReturnType: None
@@ -69,7 +67,7 @@ SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 0
-SpacesInAngles: false
+SpacesInAngles: Never
 SpacesInCStyleCastParentheses: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false

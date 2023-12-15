@@ -9,23 +9,22 @@
 
 namespace parsing {
 
-    struct AstLogicalAndExpression final : public AstNode {
-        AstLogicalAndExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
-            : AstNode(AstNodeType::LogicalAnd, Hierarchies::LogicalAndExpression)
-            , _left{ std::move(left) }
-            , _right{ std::move(right) }
-        {}
+	struct AstLogicalAndExpression final : public AstNode {
+		AstLogicalAndExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::LogicalAnd, Hierarchies::LogicalAndExpression)
+			, _left{std::move(left)}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTLOGICALANDEXPRESSION_H
+#endif//JCC_ASTLOGICALANDEXPRESSION_H

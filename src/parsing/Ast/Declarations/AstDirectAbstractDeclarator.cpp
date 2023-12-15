@@ -49,7 +49,8 @@ namespace parsing {
 					const std::optional<Token> staticToken{parser.ConsumeIfTokenIs(TokenType::KeywordStatic)};
 					if (staticToken) {
 						span += staticToken->_span;
-						if (!typeQualifierList) typeQualifierList = AstTypeQualifierList::Parse(parser);
+						if (!typeQualifierList)
+							typeQualifierList = AstTypeQualifierList::Parse(parser);
 					}
 
 					AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
@@ -59,8 +60,8 @@ namespace parsing {
 
 					result = std::make_unique<AstDirectAbstractDeclarator>(span, Kind::Array, std::move(result));
 					result->_assignmentExpression = std::move(assignmentExpression);
-					result->_typeQualifierList	  = std::move(typeQualifierList);
-					result->_isStatic			  = staticToken.has_value();
+					result->_typeQualifierList = std::move(typeQualifierList);
+					result->_isStatic = staticToken.has_value();
 
 					continue;
 				}
@@ -75,11 +76,16 @@ namespace parsing {
 			TOSTRING_FIELD_ENUM("kind", _kind)
 			TOSTRING_FIELD_BOOL("isStatic", _isStatic)
 			TOSTRING_FIELD_BOOL("isVLA", _isVLA)
-			if (_lhs) TOSTRING_FIELD_NODE("lhs", *_lhs)
-			if (_parameterTypeList) TOSTRING_FIELD_NODE("parameterTypeList", *_parameterTypeList)
-			if (_assignmentExpression) TOSTRING_FIELD_NODE("assignmentExpression", *_assignmentExpression)
-			if (_abstractDeclarator) TOSTRING_FIELD_NODE("abstractDeclarator", *_abstractDeclarator)
-			if (_typeQualifierList) TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
+			if (_lhs)
+				TOSTRING_FIELD_NODE("lhs", *_lhs)
+			if (_parameterTypeList)
+				TOSTRING_FIELD_NODE("parameterTypeList", *_parameterTypeList)
+			if (_assignmentExpression)
+				TOSTRING_FIELD_NODE("assignmentExpression", *_assignmentExpression)
+			if (_abstractDeclarator)
+				TOSTRING_FIELD_NODE("abstractDeclarator", *_abstractDeclarator)
+			if (_typeQualifierList)
+				TOSTRING_FIELD_NODE("typeQualifierList", *_typeQualifierList)
 		})
 	}
 }// namespace parsing

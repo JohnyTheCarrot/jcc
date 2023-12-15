@@ -9,23 +9,22 @@
 
 namespace parsing {
 
-    struct AstLogicalOrExpression final : public AstNode {
-        AstLogicalOrExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
-            : AstNode(AstNodeType::LogicalOr, Hierarchies::LogicalOrExpression)
-            , _left{ std::move(left) }
-            , _right{ std::move(right) }
-        { }
+	struct AstLogicalOrExpression final : public AstNode {
+		AstLogicalOrExpression(AstNode::Ptr &&left, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::LogicalOr, Hierarchies::LogicalOrExpression)
+			, _left{std::move(left)}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTLOGICALOREXPRESSION_H
+#endif//JCC_ASTLOGICALOREXPRESSION_H

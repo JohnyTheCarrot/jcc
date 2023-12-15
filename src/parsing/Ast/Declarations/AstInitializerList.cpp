@@ -19,9 +19,11 @@ namespace parsing {
 			AstNode::Ptr initializer{AstInitializer::Parse(parser)};
 
 			if (!initializer) {
-				if (designation) parser.Error(designation->_span, "Expected to be followed by initializer");
+				if (designation)
+					parser.Error(designation->_span, "Expected to be followed by initializer");
 
-				if (isFirstIteration) return std::nullopt;
+				if (isFirstIteration)
+					return std::nullopt;
 
 				parser.SetCursor(cursor);
 				break;
@@ -29,7 +31,8 @@ namespace parsing {
 
 			isFirstIteration = false;
 
-			if (designation) designation->_span;
+			if (designation)
+				designation->_span;
 			span += initializer->_span;
 			initializerListItems.emplace_back(std::move(designation), std::move(initializer));
 
@@ -49,7 +52,8 @@ namespace parsing {
 
 	std::string AstInitializerList::InitializerListItem::ToString(size_t depth) const {
 		TOSTRING_FIELDS(AstInitializerList::InitializerListItem, depth, {
-			if (_designation) TOSTRING_FIELD_NODE("designation", *_designation)
+			if (_designation)
+				TOSTRING_FIELD_NODE("designation", *_designation)
 
 			TOSTRING_FIELD_NODE("initializer", *_initializer)
 		})

@@ -9,14 +9,14 @@
 
 namespace parsing {
 
-    struct AstExternalDeclaration final : public AstNode {
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+	struct AstExternalDeclaration final : public AstNode {
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
-    };
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTEXTERNALDECLARATION_H
+#endif//JCC_ASTEXTERNALDECLARATION_H

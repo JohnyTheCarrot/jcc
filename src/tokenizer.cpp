@@ -20,13 +20,14 @@ size_t Tokenizer::TokenizeNormalToken() {
 
 	std::optional<long> optionalFoundTokenLength{std::nullopt};
 	for (size_t index{0}; index < MAX_TOKEN_LENGTH; ++index) {
-		if (tokenBuffer[index] == '\0') break;
+		if (tokenBuffer[index] == '\0')
+			break;
 
 		frozen::string key{tokenBuffer, index + 1};
 
 		if (TOKEN_DEFINITIONS.contains(key)) {
 			TokenType token{TOKEN_DEFINITIONS.at(key)};
-			this->currentToken		 = token;
+			this->currentToken = token;
 			optionalFoundTokenLength = index + 1;
 		}
 	}
@@ -58,7 +59,8 @@ void Tokenizer::TokenizeIdentifier(TokenList &tokensOut) {
 				TokenType::Identifier,
 				Span(currentLine, currentLineStartIndex, currentCharIndex, identifierBuffer.length(),
 					 this->inputStream),
-				identifierBuffer};
+				identifierBuffer
+		};
 		tokensOut.push_back(token);
 
 		return;
@@ -140,9 +142,13 @@ BaseConvertResult ConvertToBase(int base, char digit, int &digitOut) {
 
 	digit = static_cast<char>(tolower(digit));
 
-	if (!isxdigit(digit)) { return BaseConvertResult::InvalidDigit; }
+	if (!isxdigit(digit)) {
+		return BaseConvertResult::InvalidDigit;
+	}
 
-	if (digit > NUMBERS[base - 1]) { return BaseConvertResult::DigitNotInBase; }
+	if (digit > NUMBERS[base - 1]) {
+		return BaseConvertResult::DigitNotInBase;
+	}
 
 	if (isdigit(digit)) {
 		digitOut = digit - '0';
@@ -156,10 +162,14 @@ BaseConvertResult ConvertToBase(int base, char digit, int &digitOut) {
 BaseConvertResult Tokenizer::GetDigit(int base, int &digitOut) {
 	char digit{};
 	bool peekResult{PeekNextChar(digit)};
-	if (!peekResult) { return BaseConvertResult::UnexpectedEndOfInput; }
+	if (!peekResult) {
+		return BaseConvertResult::UnexpectedEndOfInput;
+	}
 
 	BaseConvertResult convertResult;
-	if ((convertResult = ConvertToBase(base, digit, digitOut)) != BaseConvertResult::Success) { return convertResult; }
+	if ((convertResult = ConvertToBase(base, digit, digitOut)) != BaseConvertResult::Success) {
+		return convertResult;
+	}
 
 	this->currentChar = digit;
 	GetNextChar();
@@ -229,7 +239,9 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
 	IntegerLiteralType type{};
 
 	const IntLiteralSuffix suffixOne{GetIntLiteralSuffix(IntLiteralSuffix::None, isUnsigned, type)};
-	if (suffixOne != IntLiteralSuffix::None) { GetIntLiteralSuffix(suffixOne, isUnsigned, type); }
+	if (suffixOne != IntLiteralSuffix::None) {
+		GetIntLiteralSuffix(suffixOne, isUnsigned, type);
+	}
 
 	const size_t amountOfDigits{integerLiteralDigits.size()};
 	if (convertResult == BaseConvertResult::DigitNotInBase) {
@@ -268,14 +280,16 @@ bool Tokenizer::TokenizeConstant(TokenList &tokensOut) {
 
 void Tokenizer::Tokenize(TokenList &tokensOut) {
 	while (GetNextChar()) {
-		if (isspace(this->currentChar)) { continue; }
+		if (isspace(this->currentChar)) {
+			continue;
+		}
 
 		// Comments
 		if (this->currentChar == '/' && ConsumeIfNextChar('/')) {
 			this->inputStream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			++this->line;
 			this->lineStartIndex = GetCharIndex() + 1;
-			this->currentToken	 = std::nullopt;
+			this->currentToken = std::nullopt;
 			continue;
 		}
 
@@ -298,7 +312,9 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
 
 		// String literals
 		const bool didMatch{TokenizeConstant(tokensOut)};
-		if (didMatch) { continue; }
+		if (didMatch) {
+			continue;
+		}
 
 		const std::string errorMessage{fmt::format("Unrecognized _value: '{}'", this->currentChar)};
 		Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
@@ -308,7 +324,9 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
 bool Tokenizer::GetNextChar() {
 	const bool readResult{this->inputStream.get(this->currentChar)};
 
-	if (!readResult) { return false; }
+	if (!readResult) {
+		return false;
+	}
 
 	if (this->currentChar == '\n') {
 		++this->line;
@@ -320,7 +338,9 @@ bool Tokenizer::GetNextChar() {
 
 bool Tokenizer::PeekNextChar(char &out) {
 	const char nextChar{static_cast<char>(this->inputStream.peek())};
-	if (!this->inputStream) { return false; }
+	if (!this->inputStream) {
+		return false;
+	}
 
 	out = nextChar;
 	return true;
@@ -328,9 +348,13 @@ bool Tokenizer::PeekNextChar(char &out) {
 
 bool Tokenizer::ConsumeIfNextChar(char c, bool toLower) {
 	char nextChar{};
-	if (!PeekNextChar(nextChar)) { return false; }
+	if (!PeekNextChar(nextChar)) {
+		return false;
+	}
 
-	if (toLower) { nextChar = static_cast<char>(tolower(nextChar)); }
+	if (toLower) {
+		nextChar = static_cast<char>(tolower(nextChar));
+	}
 
 	if (nextChar == c) {
 		GetNextChar();

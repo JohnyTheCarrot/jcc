@@ -29,7 +29,8 @@ namespace parsing {
 
 	std::string AstAbstractDeclarator::ToString(size_t depth) const {
 		TOSTRING_FIELDS(AstDeclarator, depth, {
-			if (_pointer) TOSTRING_FIELD_NODE("pointer", *_pointer)
+			if (_pointer)
+				TOSTRING_FIELD_NODE("pointer", *_pointer)
 
 			TOSTRING_FIELD_NODE("directAbstractDeclarator", *_directAbstractDeclarator)
 		})

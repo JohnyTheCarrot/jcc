@@ -10,23 +10,22 @@
 
 namespace parsing {
 
-    struct AstStaticAssertDeclaration final : public AstNode {
-        AstStaticAssertDeclaration(AstNode::Ptr &&constantExpression, AstStringLiteralExpression message)
-            : AstNode(AstNodeType::StaticAssertDeclaration, Hierarchies::Declaration)
-            , _constantExpression{ std::move(constantExpression) }
-            , _message{ std::move(message) }
-        { }
+	struct AstStaticAssertDeclaration final : public AstNode {
+		AstStaticAssertDeclaration(AstNode::Ptr &&constantExpression, AstStringLiteralExpression message)
+			: AstNode(AstNodeType::StaticAssertDeclaration, Hierarchies::Declaration)
+			, _constantExpression{std::move(constantExpression)}
+			, _message{std::move(message)} {}
 
-        [[nodiscard]]
-        static std::optional<AstStaticAssertDeclaration> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstStaticAssertDeclaration> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _constantExpression;
-        AstStringLiteralExpression _message;
-    };
+		AstNode::Ptr _constantExpression;
+		AstStringLiteralExpression _message;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTSTATICASSERTDECLARATION_H
+#endif//JCC_ASTSTATICASSERTDECLARATION_H

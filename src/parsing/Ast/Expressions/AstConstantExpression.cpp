@@ -6,11 +6,7 @@
 #include "AstConditionalExpression.h"
 
 namespace parsing {
-    AstNode::Ptr AstConstantExpression::Parse(Parser &parser) {
-        return AstConditionalExpression::Parse(parser);
-    }
+	AstNode::Ptr AstConstantExpression::Parse(Parser &parser) { return AstConditionalExpression::Parse(parser); }
 
-    std::string AstConstantExpression::ToString(size_t depth) const {
-        TODO()
-    }
-} // parsing
+	std::string AstConstantExpression::ToString(size_t depth) const { TODO() }
+}// namespace parsing

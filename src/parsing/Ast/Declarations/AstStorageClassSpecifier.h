@@ -9,30 +9,22 @@
 
 namespace parsing {
 
-    struct AstStorageClassSpecifier final : public AstNode {
-        enum class StorageClassSpecifierType {
-            Typedef,
-            Extern,
-            Static,
-            ThreadLocal,
-            Auto,
-            Register
-        };
+	struct AstStorageClassSpecifier final : public AstNode {
+		enum class StorageClassSpecifierType { Typedef, Extern, Static, ThreadLocal, Auto, Register };
 
-        AstStorageClassSpecifier(StorageClassSpecifierType storageClassSpecifier)
-            : AstNode(AstNodeType::StorageClassSpecifier, Hierarchies::Declaration)
-            , _storageClassSpecifier(storageClassSpecifier)
-        {}
+		AstStorageClassSpecifier(StorageClassSpecifierType storageClassSpecifier)
+			: AstNode(AstNodeType::StorageClassSpecifier, Hierarchies::Declaration)
+			, _storageClassSpecifier(storageClassSpecifier) {}
 
-        [[nodiscard]]
-        static std::optional<AstStorageClassSpecifier> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstStorageClassSpecifier> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        StorageClassSpecifierType _storageClassSpecifier;
-    };
+		StorageClassSpecifierType _storageClassSpecifier;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTSTORAGECLASSSPECIFIER_H
+#endif//JCC_ASTSTORAGECLASSSPECIFIER_H

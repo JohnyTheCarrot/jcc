@@ -6,28 +6,27 @@
 #define JCC_ASTCASTEXPRESSION_H
 
 #include "../../AstNode.h"
-#include "AstIdentifierExpression.h"
 #include "../Declarations/AstTypeName.h"
+#include "AstIdentifierExpression.h"
 
 namespace parsing {
 
-    struct AstCastExpression final : public AstNode {
-        AstCastExpression(std::optional<AstTypeName> typeName, AstNode::Ptr &&expression)
-            : AstNode(AstNodeType::CastExpression, Hierarchies::CastExpression)
-            , _typeName { std::move(typeName) }
-            , _expression { std::move(expression) }
-        {};
+	struct AstCastExpression final : public AstNode {
+		AstCastExpression(std::optional<AstTypeName> typeName, AstNode::Ptr &&expression)
+			: AstNode(AstNodeType::CastExpression, Hierarchies::CastExpression)
+			, _typeName{std::move(typeName)}
+			, _expression{std::move(expression)} {};
 
-        std::optional<AstTypeName> _typeName;
-        AstNode::Ptr _expression;
+		std::optional<AstTypeName> _typeName;
+		AstNode::Ptr _expression;
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
-    };
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTCASTEXPRESSION_H
+#endif//JCC_ASTCASTEXPRESSION_H

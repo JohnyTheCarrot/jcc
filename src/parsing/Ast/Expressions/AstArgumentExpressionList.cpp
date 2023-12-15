@@ -11,14 +11,16 @@ namespace parsing {
 		Span span{};
 		std::vector<AstNode::Ptr> expressions{};
 		AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
-		if (!assignmentExpression) return std::nullopt;
+		if (!assignmentExpression)
+			return std::nullopt;
 
 		span += assignmentExpression->_span;
 		expressions.push_back(std::move(assignmentExpression));
 
 		while (true) {
 			std::optional<Token> comma{parser.ConsumeIfTokenIs(TokenType::Comma)};
-			if (!comma) return AstArgumentExpressionList(span, std::move(expressions));
+			if (!comma)
+				return AstArgumentExpressionList(span, std::move(expressions));
 
 			assignmentExpression = AstAssignmentExpression::Parse(parser);
 			if (!assignmentExpression)

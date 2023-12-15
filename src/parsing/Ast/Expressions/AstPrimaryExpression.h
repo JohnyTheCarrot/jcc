@@ -9,14 +9,14 @@
 
 namespace parsing {
 
-    struct AstPrimaryExpression final : public AstNode {
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+	struct AstPrimaryExpression final : public AstNode {
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
-    };
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTPRIMARYEXPRESSION_H
+#endif//JCC_ASTPRIMARYEXPRESSION_H
