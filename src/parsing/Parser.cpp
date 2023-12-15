@@ -20,7 +20,7 @@ Parser::Parser(TokenList &&tokenList, std::string fileName, std::istream &inputS
 const Token& Parser::PeekNextToken() {
     assert(static_cast<bool>(*this) && "No next token");
 
-    return *this->tokens[this->cursor + 1];
+    return this->tokens[this->cursor + 1];
 }
 
 void Parser::AdvanceCursor() {
@@ -38,7 +38,7 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
     if (token._type == tokenType) {
         this->AdvanceCursor();
 
-        return *this->tokens[this->cursor];
+        return this->tokens[this->cursor];
     }
 
     return std::nullopt;
@@ -62,7 +62,7 @@ void Parser::Error(const std::string &message) const {
     if (currentCursor == -1)
         currentCursor = 0;
 
-    Span span{ this->tokens[currentCursor]->_span };
+    Span span{ this->tokens[currentCursor]._span };
 
     this->Error(span, message);
 }
@@ -99,7 +99,7 @@ const Token &Parser::ExpectToken(TokenType tokenType, Span &spanToAddTo) {
         errorMessage << "end of file";
         Span span{};
         if (!this->tokens.empty())
-            span = this->tokens[this->tokens.size() - 1]->_span;
+            span = this->tokens[this->tokens.size() - 1]._span;
 
         this->Error(span, errorMessage.str());
     }
