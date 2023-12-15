@@ -5,10 +5,19 @@
 #ifndef JCC_PARSER_H
 #define JCC_PARSER_H
 
-
 #include "../tokenizer.h"
+#include "Ast/ExternalDefinitions/AstTranslationUnit.h"
+#include <unordered_map>
 
-class Parser {
+namespace parsing {
+	struct AstDeclarationSpecifiers;
+}
+
+struct TypeDefinition final {
+	parsing::AstDeclarationSpecifiers *specifierQualifierList_;
+};
+
+class Parser final {
 public:
 	Parser(TokenList &&tokenList, std::string fileName, std::istream &inputStream);
 
@@ -46,11 +55,14 @@ public:
 	[[noreturn]]
 	void Error(const std::string &message) const;
 
+	std::unordered_map<std::string, TypeDefinition> typeDefs_;
+
 private:
 	TokenList tokens{};
 	std::string fileName{};
 	std::istream &inputStream;
 	int cursor{-1};
+	std::optional<parsing::AstTranslationUnit> rootParsed_{};
 };
 
 
