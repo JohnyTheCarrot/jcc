@@ -47,9 +47,9 @@ public:
 	void Error(const std::string &message) const;
 
 private:
-	std::string fileName;
+	TokenList tokens{};
+	std::string fileName{};
 	std::istream &inputStream;
-	TokenList tokens;
 	int cursor{-1};
 };
 

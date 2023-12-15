@@ -69,7 +69,7 @@ void Parser::Error(const std::string &message) const {
 	this->Error(span, message);
 }
 
-bool Parser::operator!() const { return this->cursor + 1 == this->tokens.size(); }
+bool Parser::operator!() const { return this->cursor + 1ull == this->tokens.size(); }
 
 Parser::operator bool() const { return !!*this; }
 

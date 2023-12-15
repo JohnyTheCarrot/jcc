@@ -18,13 +18,13 @@ namespace parsing {
 
 		AstDirectDeclarator()
 			: AstNode(AstNodeType::DirectDeclarator)
+			, _kind{}
+			, _lhs{nullptr}
+			, _isStatic{false}
+			, _isVLA{false}
 			, _typeQualifierList{std::nullopt}
 			, _assignmentExpression{nullptr}
-			, _parameterTypeList{nullptr}
-			, _lhs{nullptr}
-			, _isVLA{false}
-			, _isStatic{false}
-			, _kind{} {}
+			, _parameterTypeList{nullptr} {}
 
 		[[nodiscard]]
 		static AstNode::Ptr Parse(Parser &);
