@@ -25,8 +25,8 @@ int main(int argCount, char *args[]) {
     tokenizer.Tokenize(tokens);
 
     std::cout << "Tokens: [";
-    for (const std::unique_ptr<Token> &token : tokens) {
-        std::cout << magic_enum::enum_name(token->_type) << ", ";
+    for (const Token &token : tokens) {
+        std::cout << magic_enum::enum_name(token._type) << ", ";
     }
 
     std::cout << ']' << std::endl << std::endl;
