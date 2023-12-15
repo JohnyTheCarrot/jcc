@@ -13,7 +13,8 @@ namespace parsing {
 
 	struct AstDeclaration final : public AstNode {
 		AstDeclaration(
-				AstDeclarationSpecifiers declarationSpecifiers, std::optional<AstInitDeclaratorList> initDeclaratorList
+				std::unique_ptr<AstDeclarationSpecifiers> declarationSpecifiers,
+				std::optional<AstInitDeclaratorList> initDeclaratorList
 		)
 			: AstNode(AstNodeType::Declaration)
 			, _declarationSpecifiers{std::move(declarationSpecifiers)}
@@ -25,7 +26,7 @@ namespace parsing {
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;
 
-		AstDeclarationSpecifiers _declarationSpecifiers;
+		std::unique_ptr<AstDeclarationSpecifiers> _declarationSpecifiers;
 		std::optional<AstInitDeclaratorList> _initDeclaratorList;
 	};
 

@@ -48,9 +48,10 @@ std::optional<Token> Parser::ConsumeIfTokenIs(TokenType tokenType) {
 
 void Parser::Parse() {
 	std::optional<AstTranslationUnit> translationUnit{AstTranslationUnit::Parse(*this)};
-	if (translationUnit)
+	if (translationUnit) {
 		std::cout << translationUnit->ToString(0) << std::endl;
-	else
+		rootParsed_ = std::move(translationUnit);
+	} else
 		std::cout << "didn't match" << std::endl;
 }
 

@@ -6,7 +6,9 @@
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 #include "../../../tokenizer.h"
 #include "../../Parser.h"
+#include <optional>
 #include <sstream>
+#include <variant>
 
 namespace parsing {
 	std::optional<AstTypeSpecifier> AstTypeSpecifier::Parse(Parser &parser) {
@@ -56,6 +58,14 @@ namespace parsing {
 			case TokenType::KeywordEnum:
 			case TokenType::KeywordAtomic:
 				TODO()
+			case TokenType::Identifier: {
+				const std::optional<AstTypedefName> typedefName{AstTypedefName::Parse(parser)};
+
+				if (!typedefName.has_value())
+					return std::nullopt;
+
+				return AstTypeSpecifier{token._span, typedefName.value()};
+			}
 			default:
 				return std::nullopt;
 		}
@@ -65,5 +75,11 @@ namespace parsing {
 		return AstTypeSpecifier{token._span, typeSpecifierType};
 	}
 
-	std::string AstTypeSpecifier::ToString(size_t depth) const { TOSTRING_ENUM(AstTypeSpecifier, _specifierType) }
+	std::string AstTypeSpecifier::ToString(size_t depth) const {
+		if (std::holds_alternative<AstTypeSpecifierType>(_specifierType)) {
+			TOSTRING_ENUM(AstTypeSpecifier, std::get<AstTypeSpecifierType>(_specifierType))
+		} else {
+			return std::get<AstTypedefName>(_specifierType).ToString(depth + 1);
+		}
+	}
 }// namespace parsing

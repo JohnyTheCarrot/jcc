@@ -6,6 +6,8 @@
 #define JCC_ASTTYPESPECIFIER_H
 
 #include "../../AstNode.h"
+#include "../Expressions/AstTypedefName.h"
+#include <variant>
 
 namespace parsing {
 
@@ -29,7 +31,9 @@ namespace parsing {
 	};
 
 	struct AstTypeSpecifier final : public AstNode {
-		AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
+		using TypeSpecifierType = std::variant<AstTypeSpecifierType, AstTypedefName>;
+
+		AstTypeSpecifier(const Span &span, TypeSpecifierType typeSpecifierType)
 			: AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
 			, _specifierType{typeSpecifierType} {
 			this->_span = span;
@@ -41,7 +45,7 @@ namespace parsing {
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;
 
-		AstTypeSpecifierType _specifierType;
+		TypeSpecifierType _specifierType;
 	};
 
 }// namespace parsing

@@ -1,4 +1,5 @@
 #include "../libs/magic_enum/magic_enum.hpp"
+#include "parsing/Ast/Declarations/AstDeclarationSpecifiers.h"
 #include "parsing/Parser.h"
 #include "tokenizer.h"
 #include <cstring>
@@ -32,6 +33,14 @@ int main(int argCount, char *args[]) {
 
 	Parser parser{std::move(tokens), filePath, inputFileStream};
 	parser.Parse();
+
+	if (!parser.typeDefs_.empty()) {
+		std::cout << std::endl << "Typedefs:" << std::endl;
+		for (const auto &typeDef: parser.typeDefs_) {
+			std::cout << typeDef.first << " maps to " << typeDef.second.specifierQualifierList_->ToString(0)
+					  << std::endl;
+		}
+	}
 
 	return 0;
 }

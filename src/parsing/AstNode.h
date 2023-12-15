@@ -173,6 +173,7 @@ namespace parsing {
 		SelectionStatement,
 		JumpStatement,
 		LabeledStatement,
+		TypedefName,
 	};
 
 	struct AstNode {

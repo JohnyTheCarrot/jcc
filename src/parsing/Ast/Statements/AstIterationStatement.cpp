@@ -73,7 +73,7 @@ namespace parsing {
 				if (_check)
 					TOSTRING_FIELD_NODE("check", *_check)
 				if (_after)
-					TOSTRING_FIELD_NODE("after", *_check)
+					TOSTRING_FIELD_NODE("after", *_after)
 				TOSTRING_FIELD_NODE("statement", *_statement)
 			}
 	)}
