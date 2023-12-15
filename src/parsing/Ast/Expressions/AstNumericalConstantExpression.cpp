@@ -16,7 +16,7 @@ namespace parsing {
 				parser.AdvanceCursor();
 				return AstNumericalConstantExpression(std::get<IntegerLiteralTokenValue>(token._value));
 			case TokenType::DoubleLiteral:
-				assert(false && 'TODO');
+				assert(false && "TODO");
 			default:
 				return std::nullopt;
 		}

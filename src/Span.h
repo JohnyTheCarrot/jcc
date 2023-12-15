@@ -84,11 +84,11 @@ private:
 	[[nodiscard]]
 	std::string ToString() const;
 
+	size_t _lineNumber{};
+	size_t _lineStartIndex{};
+	size_t _startCharacterIndex{};
+	size_t _length{};
 	bool _isInitialized{false};
-	size_t _lineNumber;
-	size_t _lineStartIndex;
-	size_t _startCharacterIndex;
-	size_t _length;
 	std::string _lineContent{};
 	std::string _textVersion{};
 };
