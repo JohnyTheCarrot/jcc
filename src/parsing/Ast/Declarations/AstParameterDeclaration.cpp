@@ -9,10 +9,13 @@
 namespace parsing {
 	std::optional<AstParameterDeclaration> AstParameterDeclaration::Parse(Parser &parser) {
 		std::optional<AstDeclarationSpecifiers> declSpecifiers{AstDeclarationSpecifiers::Parse(parser)};
-		if (!declSpecifiers) return std::nullopt;
+		if (!declSpecifiers)
+			return std::nullopt;
 
 		std::optional<AstDeclarator> declarator{AstDeclarator::Parse(parser)};
-		if (declarator) { return AstParameterDeclaration{std::move(*declSpecifiers), std::move(*declarator)}; }
+		if (declarator) {
+			return AstParameterDeclaration{std::move(*declSpecifiers), std::move(*declarator)};
+		}
 
 		std::optional<AstAbstractDeclarator> abstractDeclarator{AstAbstractDeclarator::Parse(parser)};
 		return AstParameterDeclaration{std::move(*declSpecifiers), std::move(abstractDeclarator)};

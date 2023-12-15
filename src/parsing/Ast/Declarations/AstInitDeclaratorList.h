@@ -5,26 +5,25 @@
 #ifndef JCC_ASTINITDECLARATORLIST_H
 #define JCC_ASTINITDECLARATORLIST_H
 
-#include <vector>
 #include "../../AstNode.h"
+#include <vector>
 
 namespace parsing {
 
-    struct AstInitDeclaratorList final : public AstNode {
-        explicit AstInitDeclaratorList(std::vector<AstNode::Ptr> initDeclaratorList)
-            : AstNode(AstNodeType::InitDeclaratorList)
-            , _initDeclaratorList{ std::move(initDeclaratorList) }
-        {}
+	struct AstInitDeclaratorList final : public AstNode {
+		explicit AstInitDeclaratorList(std::vector<AstNode::Ptr> initDeclaratorList)
+			: AstNode(AstNodeType::InitDeclaratorList)
+			, _initDeclaratorList{std::move(initDeclaratorList)} {}
 
-        [[nodiscard]]
-        static std::optional<AstInitDeclaratorList> Parse(Parser &);
+		[[nodiscard]]
+		static std::optional<AstInitDeclaratorList> Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        std::vector<AstNode::Ptr> _initDeclaratorList{};
-    };
+		std::vector<AstNode::Ptr> _initDeclaratorList{};
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTINITDECLARATORLIST_H
+#endif//JCC_ASTINITDECLARATORLIST_H

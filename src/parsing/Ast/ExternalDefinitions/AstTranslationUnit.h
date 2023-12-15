@@ -9,22 +9,22 @@
 
 namespace parsing {
 
-    struct AstTranslationUnit final : public AstNode {
-        AstTranslationUnit(const Span &span, std::vector<AstNode::Ptr> &&externalDeclarations)
-                : AstNode(AstNodeType::TranslationUnit)
-                , _externalDeclarations{std::move(externalDeclarations)} {
-            this->_span = span;
-        }
+	struct AstTranslationUnit final : public AstNode {
+		AstTranslationUnit(const Span &span, std::vector<AstNode::Ptr> &&externalDeclarations)
+			: AstNode(AstNodeType::TranslationUnit)
+			, _externalDeclarations{std::move(externalDeclarations)} {
+			this->_span = span;
+		}
 
-        [[nodiscard]]
-        static std::optional<AstTranslationUnit> Parse(Parser &);
+		[[nodiscard]]
+		static std::optional<AstTranslationUnit> Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        std::vector<AstNode::Ptr> _externalDeclarations;
-    };
+		std::vector<AstNode::Ptr> _externalDeclarations;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTTRANSLATIONUNIT_H
+#endif//JCC_ASTTRANSLATIONUNIT_H

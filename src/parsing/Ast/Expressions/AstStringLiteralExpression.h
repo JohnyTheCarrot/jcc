@@ -9,20 +9,20 @@
 
 namespace parsing {
 
-    struct AstStringLiteralExpression final : public AstNode {
-        explicit AstStringLiteralExpression(std::string string)
-            : AstNode(AstNodeType::StringLiteral, Hierarchies::PrimaryExpression)
-            , _string { std::move(string) } {};
+	struct AstStringLiteralExpression final : public AstNode {
+		explicit AstStringLiteralExpression(std::string string)
+			: AstNode(AstNodeType::StringLiteral, Hierarchies::PrimaryExpression)
+			, _string{std::move(string)} {};
 
-        [[nodiscard]]
-        static std::optional<AstStringLiteralExpression> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstStringLiteralExpression> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        std::string _string;
-    };
+		std::string _string;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTSTRINGLITERALEXPRESSION_H
+#endif//JCC_ASTSTRINGLITERALEXPRESSION_H

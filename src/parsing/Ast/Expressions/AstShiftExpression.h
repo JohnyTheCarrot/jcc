@@ -9,30 +9,26 @@
 
 namespace parsing {
 
-    enum class ShiftOperator {
-        ShiftLeft,
-        ShiftRight
-    };
+	enum class ShiftOperator { ShiftLeft, ShiftRight };
 
-    struct AstShiftExpression final : public AstNode {
-        AstShiftExpression(AstNode::Ptr &&left, ShiftOperator additiveOperator, AstNode::Ptr &&right)
-            : AstNode(AstNodeType::ShiftExpression, Hierarchies::ShiftExpression)
-            , _left{ std::move(left) }
-            , _shiftOperator{ additiveOperator }
-            , _right{ std::move(right) }
-        {}
+	struct AstShiftExpression final : public AstNode {
+		AstShiftExpression(AstNode::Ptr &&left, ShiftOperator additiveOperator, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::ShiftExpression, Hierarchies::ShiftExpression)
+			, _left{std::move(left)}
+			, _shiftOperator{additiveOperator}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        ShiftOperator _shiftOperator;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		ShiftOperator _shiftOperator;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTSHIFTEXPRESSION_H
+#endif//JCC_ASTSHIFTEXPRESSION_H

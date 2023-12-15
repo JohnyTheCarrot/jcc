@@ -10,50 +10,48 @@
 
 class Parser {
 public:
-    Parser(TokenList &&tokenList, std::string fileName, std::istream &inputStream);
+	Parser(TokenList &&tokenList, std::string fileName, std::istream &inputStream);
 
-    void Parse();
+	void Parse();
 
-    bool operator!() const;
+	bool operator!() const;
 
-    explicit operator bool() const;
+	explicit operator bool() const;
 
-    const Token& PeekNextToken();
+	const Token &PeekNextToken();
 
-    void AdvanceCursor();
+	void AdvanceCursor();
 
-    [[nodiscard]]
-    int GetCursor() const {
-        return this->cursor;
-    }
+	[[nodiscard]]
+	int GetCursor() const {
+		return this->cursor;
+	}
 
-    void SetCursor(int newCursor) {
-        this->cursor = newCursor;
-    }
+	void SetCursor(int newCursor) { this->cursor = newCursor; }
 
-    [[nodiscard]]
-    std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
+	[[nodiscard]]
+	std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
 
-    const Token &ExpectToken(TokenType tokenType, Span &spanToAddTo);
+	const Token &ExpectToken(TokenType tokenType, Span &spanToAddTo);
 
 	const Token &ExpectToken(TokenType tokenType);
 
-    bool AdvanceIfTokenIs(TokenType tokenType, Token &token);
+	bool AdvanceIfTokenIs(TokenType tokenType, Token &token);
 
-    bool AdvanceIfTokenIs(TokenType tokenType);
+	bool AdvanceIfTokenIs(TokenType tokenType);
 
-    [[noreturn]]
-    void Error(const Span &span, const std::string &message) const;
+	[[noreturn]]
+	void Error(const Span &span, const std::string &message) const;
 
-    [[noreturn]]
-    void Error(const std::string &message) const;
+	[[noreturn]]
+	void Error(const std::string &message) const;
 
 private:
-    std::string fileName;
-    std::istream &inputStream;
-    TokenList tokens;
-    int cursor{-1};
+	std::string fileName;
+	std::istream &inputStream;
+	TokenList tokens;
+	int cursor{-1};
 };
 
 
-#endif //JCC_PARSER_H
+#endif//JCC_PARSER_H

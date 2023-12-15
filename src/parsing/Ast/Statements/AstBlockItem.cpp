@@ -7,15 +7,13 @@
 #include "AstStatement.h"
 
 namespace parsing {
-    AstNode::Ptr AstBlockItem::Parse(Parser &parser) {
-        AstNode::Ptr declaration{ AstDeclaration::Parse(parser) };
-        if (declaration)
-            return declaration;
+	AstNode::Ptr AstBlockItem::Parse(Parser &parser) {
+		AstNode::Ptr declaration{AstDeclaration::Parse(parser)};
+		if (declaration)
+			return declaration;
 
-        return AstStatement::Parse(parser);
-    }
+		return AstStatement::Parse(parser);
+	}
 
-    std::string AstBlockItem::ToString(size_t depth) const {
-        NOT_APPLICABLE()
-    }
-} // parsing
+	std::string AstBlockItem::ToString(size_t depth) const { NOT_APPLICABLE() }
+}// namespace parsing

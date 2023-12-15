@@ -11,22 +11,24 @@
 
 namespace parsing {
 
-    struct AstDeclaration final : public AstNode {
-        AstDeclaration(AstDeclarationSpecifiers declarationSpecifiers, std::optional<AstInitDeclaratorList> initDeclaratorList)
-            : AstNode(AstNodeType::Declaration)
-            , _declarationSpecifiers{ std::move(declarationSpecifiers) }
-            , _initDeclaratorList{ std::move(initDeclaratorList) } {}
+	struct AstDeclaration final : public AstNode {
+		AstDeclaration(
+				AstDeclarationSpecifiers declarationSpecifiers, std::optional<AstInitDeclaratorList> initDeclaratorList
+		)
+			: AstNode(AstNodeType::Declaration)
+			, _declarationSpecifiers{std::move(declarationSpecifiers)}
+			, _initDeclaratorList{std::move(initDeclaratorList)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstDeclarationSpecifiers _declarationSpecifiers;
-        std::optional<AstInitDeclaratorList> _initDeclaratorList;
-    };
+		AstDeclarationSpecifiers _declarationSpecifiers;
+		std::optional<AstInitDeclaratorList> _initDeclaratorList;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTDECLARATION_H
+#endif//JCC_ASTDECLARATION_H

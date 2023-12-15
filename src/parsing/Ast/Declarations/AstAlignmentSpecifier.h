@@ -9,30 +9,26 @@
 
 namespace parsing {
 
-    struct AstAlignmentSpecifier final : public AstNode {
-        enum class AlignmentSpecifierType {
-            Type,
-            ConstantExpression
-        };
+	struct AstAlignmentSpecifier final : public AstNode {
+		enum class AlignmentSpecifierType { Type, ConstantExpression };
 
-        AstAlignmentSpecifier(AlignmentSpecifierType alignmentSpecifier, AstNode::Ptr &&alignmentSpecifierValue)
-            : AstNode(AstNodeType::AlignmentSpecifier, Hierarchies::Declaration)
-            , _alignmentSpecifier{ alignmentSpecifier }
-            , _alignmentSpecifierValue{ std::move(alignmentSpecifierValue) }
-        {
-            this->_span = _alignmentSpecifierValue->_span;
-        }
+		AstAlignmentSpecifier(AlignmentSpecifierType alignmentSpecifier, AstNode::Ptr &&alignmentSpecifierValue)
+			: AstNode(AstNodeType::AlignmentSpecifier, Hierarchies::Declaration)
+			, _alignmentSpecifier{alignmentSpecifier}
+			, _alignmentSpecifierValue{std::move(alignmentSpecifierValue)} {
+			this->_span = _alignmentSpecifierValue->_span;
+		}
 
-        [[nodiscard]]
-        static std::optional<AstAlignmentSpecifier> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstAlignmentSpecifier> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AlignmentSpecifierType _alignmentSpecifier;
-        AstNode::Ptr _alignmentSpecifierValue;
-    };
+		AlignmentSpecifierType _alignmentSpecifier;
+		AstNode::Ptr _alignmentSpecifierValue;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTALIGNMENTSPECIFIER_H
+#endif//JCC_ASTALIGNMENTSPECIFIER_H

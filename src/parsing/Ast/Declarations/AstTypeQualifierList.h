@@ -5,29 +5,28 @@
 #ifndef JCC_ASTTYPEQUALIFIERLIST_H
 #define JCC_ASTTYPEQUALIFIERLIST_H
 
-#include <vector>
 #include "../../AstNode.h"
 #include "AstTypeQualifier.h"
+#include <vector>
 
 namespace parsing {
 
-    struct AstTypeQualifierList final : public AstNode {
-        AstTypeQualifierList(const Span &span, std::vector<AstTypeQualifier> list)
-            : AstNode(AstNodeType::TypeQualifierList)
-            , _list{ std::move(list) }
-        {
-            this->_span = span;
-        }
+	struct AstTypeQualifierList final : public AstNode {
+		AstTypeQualifierList(const Span &span, std::vector<AstTypeQualifier> list)
+			: AstNode(AstNodeType::TypeQualifierList)
+			, _list{std::move(list)} {
+			this->_span = span;
+		}
 
-        [[nodiscard]]
-        static std::optional<AstTypeQualifierList> Parse(Parser &);
+		[[nodiscard]]
+		static std::optional<AstTypeQualifierList> Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        std::vector<AstTypeQualifier> _list;
-    };
+		std::vector<AstTypeQualifier> _list;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTTYPEQUALIFIERLIST_H
+#endif//JCC_ASTTYPEQUALIFIERLIST_H

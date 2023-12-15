@@ -9,14 +9,14 @@
 
 namespace parsing {
 
-    struct AstBlockItem final : public AstNode {
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &);
+	struct AstBlockItem final : public AstNode {
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
-    };
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTBLOCKITEM_H
+#endif//JCC_ASTBLOCKITEM_H

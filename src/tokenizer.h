@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-using IntegerTokenValue	 = int64_t;
+using IntegerTokenValue = int64_t;
 using FloatingTokenValue = double;
 
 enum class TokenType {

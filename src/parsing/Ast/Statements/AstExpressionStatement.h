@@ -9,22 +9,22 @@
 
 namespace parsing {
 
-    struct AstExpressionStatement final : public AstNode {
-        AstExpressionStatement(const Span &span, AstNode::Ptr &&expression)
-                : AstNode(AstNodeType::ExpressionStatement)
-                , _expression{ std::move(expression) } {
-            this->_span = span;
-        }
+	struct AstExpressionStatement final : public AstNode {
+		AstExpressionStatement(const Span &span, AstNode::Ptr &&expression)
+			: AstNode(AstNodeType::ExpressionStatement)
+			, _expression{std::move(expression)} {
+			this->_span = span;
+		}
 
-        [[nodiscard]]
-        static std::optional<AstExpressionStatement> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstExpressionStatement> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _expression;
-    };
+		AstNode::Ptr _expression;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTEXPRESSIONSTATEMENT_H
+#endif//JCC_ASTEXPRESSIONSTATEMENT_H

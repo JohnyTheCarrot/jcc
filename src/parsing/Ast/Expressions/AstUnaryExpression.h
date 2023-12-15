@@ -9,39 +9,38 @@
 
 namespace parsing {
 
-    enum class AstUnaryOperator {
-        Plus,
-        Minus,
-        Not,
-        BitwiseNot,
-        Dereference,
-        AddressOf,
-        SizeOf,
-        Cast,
-        PreIncrement,
-        PreDecrement,
-        PostIncrement,
-        PostDecrement
-    };
+	enum class AstUnaryOperator {
+		Plus,
+		Minus,
+		Not,
+		BitwiseNot,
+		Dereference,
+		AddressOf,
+		SizeOf,
+		Cast,
+		PreIncrement,
+		PreDecrement,
+		PostIncrement,
+		PostDecrement
+	};
 
-    struct AstUnaryExpression final : public AstNode {
-        AstUnaryExpression(AstUnaryOperator unaryOperator, AstNode::Ptr &&operand)
-            : AstNode(AstNodeType::UnaryExpression, Hierarchies::UnaryExpression)
-            , _unaryOperator{ unaryOperator }
-            , _operand{ std::move(operand) }
-        {}
+	struct AstUnaryExpression final : public AstNode {
+		AstUnaryExpression(AstUnaryOperator unaryOperator, AstNode::Ptr &&operand)
+			: AstNode(AstNodeType::UnaryExpression, Hierarchies::UnaryExpression)
+			, _unaryOperator{unaryOperator}
+			, _operand{std::move(operand)} {}
 
-        [[nodiscard]]
+		[[nodiscard]]
 
-        static AstNode::Ptr Parse(Parser &parser);
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstUnaryOperator _unaryOperator;
-        AstNode::Ptr _operand;
-    };
+		AstUnaryOperator _unaryOperator;
+		AstNode::Ptr _operand;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTUNARYEXPRESSION_H
+#endif//JCC_ASTUNARYEXPRESSION_H

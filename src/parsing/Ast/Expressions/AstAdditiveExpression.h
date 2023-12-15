@@ -9,30 +9,26 @@
 
 namespace parsing {
 
-    enum class AdditiveOperator {
-        Plus,
-        Minus
-    };
+	enum class AdditiveOperator { Plus, Minus };
 
-    struct AstAdditiveExpression final : public AstNode {
-        AstAdditiveExpression(AstNode::Ptr &&left, AdditiveOperator additiveOperator, AstNode::Ptr &&right)
-                : AstNode(AstNodeType::AdditiveExpression, Hierarchies::AdditiveExpression)
-                , _left{ std::move(left) }
-                , _additiveOperator{ additiveOperator }
-                , _right{ std::move(right) }
-        {}
+	struct AstAdditiveExpression final : public AstNode {
+		AstAdditiveExpression(AstNode::Ptr &&left, AdditiveOperator additiveOperator, AstNode::Ptr &&right)
+			: AstNode(AstNodeType::AdditiveExpression, Hierarchies::AdditiveExpression)
+			, _left{std::move(left)}
+			, _additiveOperator{additiveOperator}
+			, _right{std::move(right)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &parser);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstNode::Ptr _left;
-        AdditiveOperator _additiveOperator;
-        AstNode::Ptr _right;
-    };
+		AstNode::Ptr _left;
+		AdditiveOperator _additiveOperator;
+		AstNode::Ptr _right;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTADDITIVEEXPRESSION_H
+#endif//JCC_ASTADDITIVEEXPRESSION_H

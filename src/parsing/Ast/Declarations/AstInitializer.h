@@ -10,21 +10,20 @@
 
 namespace parsing {
 
-    struct AstInitializer final : public AstNode {
-        AstInitializer(const Span &span, AstInitializerList initializerList)
-            : AstNode(AstNodeType::Initializer)
-            , _initializerList{ std::move(initializerList) }
-        {}
+	struct AstInitializer final : public AstNode {
+		AstInitializer(const Span &span, AstInitializerList initializerList)
+			: AstNode(AstNodeType::Initializer)
+			, _initializerList{std::move(initializerList)} {}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstInitializerList _initializerList;
-    };
+		AstInitializerList _initializerList;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTINITIALIZER_H
+#endif//JCC_ASTINITIALIZER_H

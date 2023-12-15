@@ -18,17 +18,20 @@ namespace parsing {
 			kind = Kind::Case;
 			parser.AdvanceCursor();
 			inner = AstConstantExpression::Parse(parser);
-			if (!inner) parser.Error(nextToken->_span, "Exected to be followed by a constant expression");
+			if (!inner)
+				parser.Error(nextToken->_span, "Exected to be followed by a constant expression");
 		} else {
 			kind = Kind::Label;
 			std::optional<AstIdentifierExpression> identifier{AstIdentifierExpression::Parse(parser)};
-			if (!identifier) return std::nullopt;
+			if (!identifier)
+				return std::nullopt;
 			inner = std::make_unique<AstIdentifierExpression>(*identifier);
 		}
 
 		parser.ExpectToken(TokenType::Colon, span);
 		AstNode::Ptr statement{AstStatement::Parse(parser)};
-		if (!statement) parser.Error(nextToken->_span, "Expected to be followed by a statement");
+		if (!statement)
+			parser.Error(nextToken->_span, "Expected to be followed by a statement");
 
 		return AstLabeledStatement{span, kind, std::move(inner), std::move(statement)};
 	}
@@ -36,7 +39,8 @@ namespace parsing {
 	std::string AstLabeledStatement::ToString(size_t depth) const noexcept {
 		TOSTRING_FIELDS(AstLabeledStatement, depth, {
 			TOSTRING_FIELD_ENUM("kind", _kind);
-			if (_inner) TOSTRING_FIELD_NODE("inner", *_inner);
+			if (_inner)
+				TOSTRING_FIELD_NODE("inner", *_inner);
 			TOSTRING_FIELD_NODE("statement", *_statement);
 		})
 	}

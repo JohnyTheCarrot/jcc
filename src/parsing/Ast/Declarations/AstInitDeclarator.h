@@ -11,25 +11,24 @@
 
 namespace parsing {
 
-    struct AstInitDeclarator final : public AstNode {
-        AstInitDeclarator(const Span &span, AstDeclarator declarator, AstNode::Ptr initializer)
-            : AstNode(AstNodeType::InitDeclarator)
-            , _declarator{ std::move(declarator) }
-            , _initializer{ std::move(initializer) }
-        {
-            this->_span = span;
-        }
+	struct AstInitDeclarator final : public AstNode {
+		AstInitDeclarator(const Span &span, AstDeclarator declarator, AstNode::Ptr initializer)
+			: AstNode(AstNodeType::InitDeclarator)
+			, _declarator{std::move(declarator)}
+			, _initializer{std::move(initializer)} {
+			this->_span = span;
+		}
 
-        [[nodiscard]]
-        static AstNode::Ptr Parse(Parser &);
+		[[nodiscard]]
+		static AstNode::Ptr Parse(Parser &);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstDeclarator _declarator;
-        AstNode::Ptr _initializer;
-    };
+		AstDeclarator _declarator;
+		AstNode::Ptr _initializer;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTINITDECLARATOR_H
+#endif//JCC_ASTINITDECLARATOR_H

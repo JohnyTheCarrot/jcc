@@ -9,42 +9,41 @@
 
 namespace parsing {
 
-    enum class AstTypeSpecifierType {
-        Void,
-        Char,
-        Short,
-        Int,
-        Long,
-        Float,
-        Double,
-        Signed,
-        Unsigned,
-        Bool,
-        Complex,
-        Imaginary,
-        Struct,
-        Union,
-        Enum,
-        TypedefName
-    };
+	enum class AstTypeSpecifierType {
+		Void,
+		Char,
+		Short,
+		Int,
+		Long,
+		Float,
+		Double,
+		Signed,
+		Unsigned,
+		Bool,
+		Complex,
+		Imaginary,
+		Struct,
+		Union,
+		Enum,
+		TypedefName
+	};
 
-    struct AstTypeSpecifier final : public AstNode {
-        AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
-            : AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
-            , _specifierType{ typeSpecifierType }
-        {
-            this->_span = span;
-        }
+	struct AstTypeSpecifier final : public AstNode {
+		AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
+			: AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
+			, _specifierType{typeSpecifierType} {
+			this->_span = span;
+		}
 
-        [[nodiscard]]
-        static std::optional<AstTypeSpecifier> Parse(Parser &parser);
+		[[nodiscard]]
+		static std::optional<AstTypeSpecifier> Parse(Parser &parser);
 
-        [[nodiscard]]
-        std::string ToString(size_t depth) const override;
+		[[nodiscard]]
+		std::string ToString(size_t depth) const override;
 
-        AstTypeSpecifierType _specifierType;
-    };
+		AstTypeSpecifierType _specifierType;
+	};
 
-} // parsing
+}// namespace parsing
 
-#endif //JCC_ASTTYPESPECIFIER_H
+#endif//JCC_ASTTYPESPECIFIER_H

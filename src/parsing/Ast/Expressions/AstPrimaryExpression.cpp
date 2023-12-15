@@ -3,48 +3,46 @@
 //
 
 #include "AstPrimaryExpression.h"
-#include "AstNumericalConstantExpression.h"
 #include "../../Parser.h"
 #include "AstExpression.h"
+#include "AstNumericalConstantExpression.h"
 #include "AstStringLiteralExpression.h"
 
 namespace parsing {
-    AstNode::Ptr AstPrimaryExpression::Parse(Parser &parser) {
-        std::optional<AstNumericalConstantExpression> constant = AstNumericalConstantExpression::Parse(parser);
-        if (constant) {
-            return std::make_unique<AstNumericalConstantExpression>(*constant);
-        }
+	AstNode::Ptr AstPrimaryExpression::Parse(Parser &parser) {
+		std::optional<AstNumericalConstantExpression> constant = AstNumericalConstantExpression::Parse(parser);
+		if (constant) {
+			return std::make_unique<AstNumericalConstantExpression>(*constant);
+		}
 
-        std::optional<AstIdentifierExpression> identifier = AstIdentifierExpression::Parse(parser);
-        if (identifier) {
-            return std::make_unique<AstIdentifierExpression>(*identifier);
-        }
+		std::optional<AstIdentifierExpression> identifier = AstIdentifierExpression::Parse(parser);
+		if (identifier) {
+			return std::make_unique<AstIdentifierExpression>(*identifier);
+		}
 
-        std::optional<AstStringLiteralExpression> stringLiteral = AstStringLiteralExpression::Parse(parser);
-        if (stringLiteral) {
-            return std::make_unique<AstStringLiteralExpression>(*stringLiteral);
-        }
+		std::optional<AstStringLiteralExpression> stringLiteral = AstStringLiteralExpression::Parse(parser);
+		if (stringLiteral) {
+			return std::make_unique<AstStringLiteralExpression>(*stringLiteral);
+		}
 
-        int parserCursor{ parser.GetCursor() };
-        std::optional<Token> leftParen{ parser.ConsumeIfTokenIs(TokenType::LeftParenthesis) };
+		int parserCursor{parser.GetCursor()};
+		std::optional<Token> leftParen{parser.ConsumeIfTokenIs(TokenType::LeftParenthesis)};
 
-        if (leftParen.has_value()) {
-           AstNode::Ptr expression{ AstExpression::Parse(parser) };
+		if (leftParen.has_value()) {
+			AstNode::Ptr expression{AstExpression::Parse(parser)};
 
-           if (expression == nullptr) {
-               parser.Error(leftParen->_span, "Expected expression");
-           } else if (!parser.AdvanceIfTokenIs(TokenType::RightParenthesis)) {
-               parser.Error(expression->_span, "Expected to be followed by ')'");
-           }
+			if (expression == nullptr) {
+				parser.Error(leftParen->_span, "Expected expression");
+			} else if (!parser.AdvanceIfTokenIs(TokenType::RightParenthesis)) {
+				parser.Error(expression->_span, "Expected to be followed by ')'");
+			}
 
-           return expression;
-        }
+			return expression;
+		}
 
-        parser.SetCursor(parserCursor);
-        return nullptr;
-    }
+		parser.SetCursor(parserCursor);
+		return nullptr;
+	}
 
-    std::string AstPrimaryExpression::ToString(size_t depth) const {
-        NOT_APPLICABLE()
-    }
-} // parsing
+	std::string AstPrimaryExpression::ToString(size_t depth) const { NOT_APPLICABLE() }
+}// namespace parsing
