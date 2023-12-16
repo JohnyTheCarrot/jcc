@@ -18,7 +18,7 @@ namespace parsing {
 			: AstNode(AstNodeType::SpecifierQualifierList, Hierarchies::SpecifierQualifierList)
 			, _list{} {};
 
-		using SpecifierQualifier = std::variant<AstTypeSpecifier, AstTypeQualifier>;
+		using SpecifierQualifier = std::variant<AstNode::Ptr, AstTypeQualifier>;
 
 		[[nodiscard]]
 		static std::optional<AstSpecifierQualifierList> Parse(Parser &parser);

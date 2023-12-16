@@ -11,6 +11,7 @@
 #include "AstStorageClassSpecifier.h"
 #include "AstTypeQualifier.h"
 #include "AstTypeSpecifier.h"
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -18,8 +19,7 @@ namespace parsing {
 
 	struct AstDeclarationSpecifiers final : public AstNode {
 		using DeclarationSpecifier = std::variant<
-				AstAlignmentSpecifier, AstFunctionSpecifier, AstStorageClassSpecifier, AstTypeSpecifier,
-				AstTypeQualifier>;
+				AstAlignmentSpecifier, AstFunctionSpecifier, AstStorageClassSpecifier, AstNode::Ptr, AstTypeQualifier>;
 
 		AstDeclarationSpecifiers(std::vector<DeclarationSpecifier> &&declarationSpecifiers)
 			: AstNode(AstNodeType::DeclarationSpecifiers, Hierarchies::Declaration)

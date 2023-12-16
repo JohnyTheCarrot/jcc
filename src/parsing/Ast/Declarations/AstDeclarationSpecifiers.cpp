@@ -19,11 +19,11 @@ namespace parsing {
 				continue;
 			}
 
-			std::optional<AstTypeSpecifier> typeSpecifier{AstTypeSpecifier::Parse(parser)};
+			AstNode::Ptr typeSpecifier{AstTypeSpecifier::Parse(parser)};
 
-			if (typeSpecifier.has_value()) {
+			if (typeSpecifier) {
 				span += typeSpecifier->_span;
-				declarationSpecifiers.emplace_back(std::move(*typeSpecifier));
+				declarationSpecifiers.emplace_back(std::move(typeSpecifier));
 				continue;
 			}
 
@@ -70,8 +70,8 @@ namespace parsing {
 					TOSTRING_LIST_ITEM_NODE(std::get<AstFunctionSpecifier>(specifier))
 				else if (std::holds_alternative<AstStorageClassSpecifier>(specifier))
 					TOSTRING_LIST_ITEM_NODE(std::get<AstStorageClassSpecifier>(specifier))
-				else if (std::holds_alternative<AstTypeSpecifier>(specifier))
-					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(specifier))
+				else if (std::holds_alternative<AstNode::Ptr>(specifier))
+					TOSTRING_LIST_ITEM_NODE(*std::get<AstNode::Ptr>(specifier))
 				else if (std::holds_alternative<AstTypeQualifier>(specifier))
 					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(specifier))
 			}

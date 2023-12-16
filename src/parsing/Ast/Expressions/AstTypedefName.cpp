@@ -12,6 +12,7 @@ std::optional<AstTypedefName> AstTypedefName::Parse(Parser &parser) {
 
 	const std::string identStr{std::get<std::string>(ident->_value)};
 	if (parser.typeDefs_.find(identStr) == parser.typeDefs_.end()) {
+		//parser.Error(ident->_span, "Unknown type");
 		parser.SetCursor(currentCursor);
 		return std::nullopt;
 	}
