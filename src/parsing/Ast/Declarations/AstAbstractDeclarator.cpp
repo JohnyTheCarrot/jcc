@@ -17,7 +17,12 @@ namespace parsing {
 
 		Span span;
 		if (pointer) {
-			span = pointer->_span + directAbstractDeclarator->_span;
+			if (directAbstractDeclarator) {
+				span = pointer->_span + directAbstractDeclarator->_span;
+			}
+			else {
+				span = pointer->_span;
+			}
 		} else {
 			span = directAbstractDeclarator->_span;
 		}
