@@ -11,6 +11,7 @@
 #include <istream>
 
 size_t Tokenizer::TokenizeNormalToken() {
+	// TODO: identifiers starting with a keyword are falsely detected as the keyword followed by an identifier
 	const std::streamoff inputStreamPos{this->inputStream.tellg()};
 	char tokenBuffer[MAX_TOKEN_LENGTH + 1]{this->currentChar};
 	this->inputStream.readsome(tokenBuffer + 1, MAX_TOKEN_LENGTH);
@@ -59,8 +60,7 @@ void Tokenizer::TokenizeIdentifier(TokenList &tokensOut) {
 				TokenType::Identifier,
 				Span(currentLine, currentLineStartIndex, currentCharIndex, identifierBuffer.length(),
 					 this->inputStream),
-				identifierBuffer
-		};
+				identifierBuffer};
 		tokensOut.push_back(token);
 
 		return;

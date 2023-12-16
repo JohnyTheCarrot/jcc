@@ -1,6 +1,9 @@
 typedef unsigned long ulong;
 typedef ulong Align;
 
+ulong sizeOfInt = sizeof(int);
+ulong sizeOfTypedef = sizeof(ulong);
+
 unsigned int (*const ident)(ulong x, int y[static const x], int *z[], ...);
 
 union mem_header_union {
@@ -37,7 +40,6 @@ unsigned int _Alignas(8) *const array[2] = {
 
 int main(int argc, char *argv[]) {
 	const int three = 3, five = 5, fifteen = 15, iterations = 100;
-
 
 	for (int i = 1; i <= iterations; ++i) {
 		if (i % three == 0 && i % five == 0)
