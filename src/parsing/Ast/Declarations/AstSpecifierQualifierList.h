@@ -6,6 +6,7 @@
 #define JCC_ASTSPECIFIERQUALIFIERLIST_H
 
 #include "../../AstNode.h"
+#include "AstAlignmentSpecifier.h"
 #include "AstTypeQualifier.h"
 #include "AstTypeSpecifier.h"
 #include <variant>
@@ -18,7 +19,7 @@ namespace parsing {
 			: AstNode(AstNodeType::SpecifierQualifierList, Hierarchies::SpecifierQualifierList)
 			, _list{} {};
 
-		using SpecifierQualifier = std::variant<AstNode::Ptr, AstTypeQualifier>;
+		using SpecifierQualifier = std::variant<AstNode::Ptr, AstTypeQualifier, AstAlignmentSpecifier>;
 
 		[[nodiscard]]
 		static std::optional<AstSpecifierQualifierList> Parse(Parser &parser);
