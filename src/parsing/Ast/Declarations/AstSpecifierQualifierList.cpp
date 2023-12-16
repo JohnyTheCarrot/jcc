@@ -14,9 +14,9 @@ namespace parsing {
 		while (true) {
 			int parserCursor{parser.GetCursor()};
 
-			std::optional<AstTypeSpecifier> typeSpecifier{AstTypeSpecifier::Parse(parser)};
-			if (typeSpecifier.has_value()) {
-				specifierQualifierListNode._list.emplace_back(*typeSpecifier);
+			AstNode::Ptr typeSpecifier{AstTypeSpecifier::Parse(parser)};
+			if (typeSpecifier) {
+				specifierQualifierListNode._list.emplace_back(std::move(typeSpecifier));
 				continue;
 			}
 
@@ -39,8 +39,8 @@ namespace parsing {
 	std::string AstSpecifierQualifierList::ToString(size_t depth) const {
 		TOSTRING_LIST(AstSpecifierQualifierList, depth, {
 			for (const auto &item: this->_list) {
-				if (std::holds_alternative<AstTypeSpecifier>(item))
-					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeSpecifier>(item))
+				if (std::holds_alternative<AstNode::Ptr>(item))
+					TOSTRING_LIST_ITEM_NODE(*std::get<AstNode::Ptr>(item))
 				else if (std::holds_alternative<AstTypeQualifier>(item))
 					TOSTRING_LIST_ITEM_NODE(std::get<AstTypeQualifier>(item))
 				else

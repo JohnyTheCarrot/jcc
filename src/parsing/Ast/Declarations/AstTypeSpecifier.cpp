@@ -6,14 +6,16 @@
 #include "../../../../libs/magic_enum/magic_enum.hpp"
 #include "../../../tokenizer.h"
 #include "../../Parser.h"
+#include "AstStructOrUnionSpecifier.h"
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <variant>
 
 namespace parsing {
-	std::optional<AstTypeSpecifier> AstTypeSpecifier::Parse(Parser &parser) {
+	AstNode::Ptr AstTypeSpecifier::Parse(Parser &parser) {
 		if (!parser)
-			return std::nullopt;
+			return nullptr;
 
 		const Token &token{parser.PeekNextToken()};
 
@@ -54,32 +56,34 @@ namespace parsing {
 				typeSpecifierType = AstTypeSpecifierType::Complex;
 				break;
 			case TokenType::KeywordStruct:
-			case TokenType::KeywordUnion:
+			case TokenType::KeywordUnion: {
+				std::optional<AstStructOrUnionSpecifier> spec{AstStructOrUnionSpecifier::Parse(parser)};
+
+				if (!spec.has_value())
+					return nullptr;
+
+				return std::make_unique<AstStructOrUnionSpecifier>(std::move(spec.value()));
+			}
 			case TokenType::KeywordEnum:
 			case TokenType::KeywordAtomic:
 				TODO()
 			case TokenType::Identifier: {
 				const std::optional<AstTypedefName> typedefName{AstTypedefName::Parse(parser)};
 
-				if (!typedefName.has_value())
-					return std::nullopt;
+				if (!typedefName.has_value()) {
+					return nullptr;
+				}
 
-				return AstTypeSpecifier{token._span, typedefName.value()};
+				return std::make_unique<AstTypedefName>(typedefName.value());
 			}
 			default:
-				return std::nullopt;
+				return nullptr;
 		}
 
 		parser.AdvanceCursor();
 
-		return AstTypeSpecifier{token._span, typeSpecifierType};
+		return std::make_unique<AstTypeSpecifier>(token._span, typeSpecifierType);
 	}
 
-	std::string AstTypeSpecifier::ToString(size_t depth) const {
-		if (std::holds_alternative<AstTypeSpecifierType>(_specifierType)) {
-			TOSTRING_ENUM(AstTypeSpecifier, std::get<AstTypeSpecifierType>(_specifierType))
-		} else {
-			return std::get<AstTypedefName>(_specifierType).ToString(depth + 1);
-		}
-	}
+	std::string AstTypeSpecifier::ToString(size_t depth) const { TOSTRING_ENUM(AstTypeSpecifier, specifierType_) }
 }// namespace parsing

@@ -17,8 +17,10 @@ namespace parsing {
 		span += specifiers->_span;
 
 		std::optional<AstDeclarator> declarator{AstDeclarator::Parse(parser)};
-		if (!declarator)
-			parser.Error("Expected declarator");
+		if (!declarator) {
+			parser.SetCursor(cursor);
+			return std::nullopt;
+		}
 
 		span += declarator->_span;
 
@@ -41,8 +43,7 @@ namespace parsing {
 		span += compoundStatement->_span;
 
 		return AstFunctionDefinition{
-				span, std::move(*specifiers), std::move(*declarator), std::move(*compoundStatement)
-		};
+				span, std::move(*specifiers), std::move(*declarator), std::move(*compoundStatement)};
 	}
 
 	std::string AstFunctionDefinition::ToString(size_t depth) const {

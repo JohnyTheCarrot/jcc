@@ -31,21 +31,19 @@ namespace parsing {
 	};
 
 	struct AstTypeSpecifier final : public AstNode {
-		using TypeSpecifierType = std::variant<AstTypeSpecifierType, AstTypedefName>;
-
-		AstTypeSpecifier(const Span &span, TypeSpecifierType typeSpecifierType)
+		AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
 			: AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
-			, _specifierType{typeSpecifierType} {
+			, specifierType_{typeSpecifierType} {
 			this->_span = span;
 		}
 
 		[[nodiscard]]
-		static std::optional<AstTypeSpecifier> Parse(Parser &parser);
+		static AstNode::Ptr Parse(Parser &parser);
 
 		[[nodiscard]]
 		std::string ToString(size_t depth) const override;
 
-		TypeSpecifierType _specifierType;
+		AstTypeSpecifierType specifierType_;
 	};
 
 }// namespace parsing

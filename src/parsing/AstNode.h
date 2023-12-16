@@ -174,6 +174,12 @@ namespace parsing {
 		JumpStatement,
 		LabeledStatement,
 		TypedefName,
+		StructOrUnion,
+		StructOrUnionSpecifier,
+		StructDeclarator,
+		StructDeclaratorList,
+		StructDeclaration,
+		StructDeclarationList,
 	};
 
 	struct AstNode {
