@@ -7,6 +7,7 @@
 #include "../../Parser.h"
 #include "AstCastExpression.h"
 #include "AstPostfixExpression.h"
+#include <memory>
 #include <sstream>
 
 namespace parsing {
@@ -77,7 +78,28 @@ namespace parsing {
 
 				return std::make_unique<AstUnaryExpression>(unaryOperator, std::move(expression));
 			}
-			case TokenType::KeywordSizeof:
+			case TokenType::KeywordSizeof: {
+				parser.AdvanceCursor();
+				std::optional<Token> potentialParen{parser.ConsumeIfTokenIs(TokenType::LeftParenthesis)};
+
+				if (potentialParen.has_value()) {
+					std::optional<AstTypeName> typeName{AstTypeName::Parse(parser)};
+					if (!typeName.has_value())
+						parser.Error("Expected type name");
+
+					parser.ExpectToken(TokenType::RightParenthesis);
+
+					AstNode::Ptr typeNamePtr{std::make_unique<AstTypeName>(std::move(typeName.value()))};
+
+					return std::make_unique<AstUnaryExpression>(AstUnaryOperator::SizeOf, std::move(typeNamePtr));
+				}
+
+				AstNode::Ptr unaryExpression{AstUnaryExpression::Parse(parser)};
+				if (!unaryExpression)
+					parser.Error("Expected unary expression");
+
+				return std::make_unique<AstUnaryExpression>(AstUnaryOperator::SizeOf, std::move(unaryExpression));
+			}
 			case TokenType::KeywordAlignof:
 				TODO()
 			default:

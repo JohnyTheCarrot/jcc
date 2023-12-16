@@ -20,8 +20,6 @@ namespace parsing {
 		Cast,
 		PreIncrement,
 		PreDecrement,
-		PostIncrement,
-		PostDecrement
 	};
 
 	struct AstUnaryExpression final : public AstNode {

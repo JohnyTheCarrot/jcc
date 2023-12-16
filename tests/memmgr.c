@@ -8,6 +8,7 @@
 //#include "memmgr.h"
 
 typedef unsigned long ulong;
+typedef unsigned char byte;
 typedef ulong Align;
 
 union mem_header_union {
