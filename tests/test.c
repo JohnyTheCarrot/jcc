@@ -15,7 +15,7 @@ union mem_header_union {
 
 		// Size of the block (in quantas of sizeof(mem_header_t))
 		//
-		ulong size;
+		_Alignas(unsigned long) ulong size;
 	} s;
 
 	// Used to align headers in memory to a boundary
