@@ -17,6 +17,7 @@ namespace parsing {
 		Dereference,
 		AddressOf,
 		SizeOf,
+		AlignOf,
 		Cast,
 		PreIncrement,
 		PreDecrement,

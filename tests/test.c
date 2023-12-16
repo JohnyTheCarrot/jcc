@@ -3,6 +3,7 @@ typedef ulong Align;
 
 ulong sizeOfInt = sizeof(int);
 ulong sizeOfTypedef = sizeof(ulong);
+int alignmentInt = _Alignof(int);
 
 unsigned int (*const ident)(ulong x, int y[static const x], int *z[], ...);
 

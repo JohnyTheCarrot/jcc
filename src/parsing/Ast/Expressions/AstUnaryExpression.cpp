@@ -100,8 +100,20 @@ namespace parsing {
 
 				return std::make_unique<AstUnaryExpression>(AstUnaryOperator::SizeOf, std::move(unaryExpression));
 			}
-			case TokenType::KeywordAlignof:
-				TODO()
+			case TokenType::KeywordAlignof: {
+				parser.AdvanceCursor();
+				parser.ExpectToken(TokenType::LeftParenthesis);
+
+				std::optional<AstTypeName> typeName{AstTypeName::Parse(parser)};
+				if (!typeName.has_value())
+					parser.Error("Expected type name");
+
+				parser.ExpectToken(TokenType::RightParenthesis);
+
+				AstNode::Ptr typeNamePtr{std::make_unique<AstTypeName>(std::move(typeName.value()))};
+
+				return std::make_unique<AstUnaryExpression>(AstUnaryOperator::AlignOf, std::move(typeNamePtr));
+			}
 			default:
 				return AstPostfixExpression::Parse(parser);
 		}
