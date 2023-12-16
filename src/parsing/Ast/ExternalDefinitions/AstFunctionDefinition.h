@@ -9,7 +9,6 @@
 #include "../Declarations/AstDeclarationSpecifiers.h"
 #include "../Declarations/AstDeclarator.h"
 #include "../Statements/AstCompoundStatement.h"
-#include "AstDeclarationList.h"
 
 namespace parsing {
 
