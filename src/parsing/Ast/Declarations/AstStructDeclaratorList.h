@@ -11,7 +11,7 @@ namespace parsing {
 		using StructDeclaratorPtr = AstNode::Ptr;
 		using StructDeclaratorPtrList = std::vector<StructDeclaratorPtr>;
 
-		AstStructDeclaratorList(const Span &span, StructDeclaratorPtrList declarators)
+		AstStructDeclaratorList(const Span &span, StructDeclaratorPtrList &&declarators)
 			: AstNode(AstNodeType::StructDeclaratorList)
 			, declarators_{std::move(declarators)} {
 			this->_span = span;

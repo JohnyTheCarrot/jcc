@@ -12,7 +12,7 @@
 namespace parsing {
 
 	struct AstBlockItemList final : public AstNode {
-		AstBlockItemList(const Span &span, std::vector<AstNode::Ptr> blockItem)
+		AstBlockItemList(const Span &span, std::vector<AstNode::Ptr> &&blockItem)
 			: AstNode(AstNodeType::BlockItem)
 			, _items{std::move(blockItem)} {
 			this->_span = span;

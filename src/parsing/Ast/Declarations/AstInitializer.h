@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstInitializer final : public AstNode {
-		AstInitializer(const Span &span, AstInitializerList initializerList)
+		AstInitializer(const Span &span, AstInitializerList &&initializerList)
 			: AstNode(AstNodeType::Initializer)
 			, _initializerList{std::move(initializerList)} {}
 

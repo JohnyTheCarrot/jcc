@@ -10,7 +10,7 @@
 namespace parsing {
 
 	struct AstStringLiteralExpression final : public AstNode {
-		explicit AstStringLiteralExpression(std::string string)
+		explicit AstStringLiteralExpression(std::string &&string)
 			: AstNode(AstNodeType::StringLiteral, Hierarchies::PrimaryExpression)
 			, _string{std::move(string)} {};
 

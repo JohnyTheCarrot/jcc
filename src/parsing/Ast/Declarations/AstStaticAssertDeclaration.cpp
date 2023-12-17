@@ -33,7 +33,7 @@ namespace parsing {
 		parser.ExpectToken(TokenType::RightParenthesis);
 		parser.ExpectToken(TokenType::Semicolon);
 
-		return AstStaticAssertDeclaration{std::move(constantExpression), *stringLiteral};
+		return AstStaticAssertDeclaration{std::move(constantExpression), std::move(stringLiteral.value())};
 	}
 
 	std::string AstStaticAssertDeclaration::ToString(size_t depth) const {

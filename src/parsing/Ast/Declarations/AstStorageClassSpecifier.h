@@ -12,7 +12,7 @@ namespace parsing {
 	struct AstStorageClassSpecifier final : public AstNode {
 		enum class StorageClassSpecifierType { Typedef, Extern, Static, ThreadLocal, Auto, Register };
 
-		AstStorageClassSpecifier(StorageClassSpecifierType storageClassSpecifier)
+		AstStorageClassSpecifier(StorageClassSpecifierType &&storageClassSpecifier)
 			: AstNode(AstNodeType::StorageClassSpecifier, Hierarchies::Declaration)
 			, _storageClassSpecifier(storageClassSpecifier) {}
 

@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstAbstractDeclarator final : public AstNode {
-		AstAbstractDeclarator(std::optional<AstPointer> pointer, AstNode::Ptr directAbstractDeclarator)
+		AstAbstractDeclarator(std::optional<AstPointer> &&pointer, AstNode::Ptr &&directAbstractDeclarator)
 			: AstNode(AstNodeType::Declarator)
 			, _pointer{std::move(pointer)}
 			, _directAbstractDeclarator{std::move(directAbstractDeclarator)} {}

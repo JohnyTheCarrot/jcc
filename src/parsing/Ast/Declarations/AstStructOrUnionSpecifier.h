@@ -10,9 +10,9 @@
 namespace parsing {
 	struct AstStructOrUnionSpecifier final : public AstNode {
 		AstStructOrUnionSpecifier(
-				const Span &span, AstStructOrUnion structOrUnion,
-				std::optional<AstIdentifierExpression> identifierExpression,
-				std::optional<AstStructDeclarationList> declList
+				const Span &span, AstStructOrUnion &&structOrUnion,
+				std::optional<AstIdentifierExpression> &&identifierExpression,
+				std::optional<AstStructDeclarationList> &&declList
 		)
 			: AstNode(AstNodeType::StructOrUnionSpecifier)
 			, structOrUnion_{structOrUnion}

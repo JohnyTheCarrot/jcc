@@ -8,8 +8,8 @@
 namespace parsing {
 	struct AstStructDeclaration final : public AstNode {
 		AstStructDeclaration(
-				const Span &span, AstSpecifierQualifierList specifierQualifierList,
-				std::optional<AstStructDeclaratorList> declaratorList
+				const Span &span, AstSpecifierQualifierList &&specifierQualifierList,
+				std::optional<AstStructDeclaratorList> &&declaratorList
 		)
 			: AstNode(AstNodeType::StructDeclaration)
 			, specifierQualifierList_{std::move(specifierQualifierList)}
