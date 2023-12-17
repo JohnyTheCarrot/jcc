@@ -27,7 +27,8 @@ std::optional<AstStructOrUnionSpecifier> AstStructOrUnionSpecifier::Parse(Parser
 	}
 
 	if (!lBrace.has_value()) {
-		return AstStructOrUnionSpecifier{span, structOrUnion.value(), identExpr.value(), std::nullopt};
+		return AstStructOrUnionSpecifier{
+				span, std::move(structOrUnion.value()), std::move(identExpr.value()), std::nullopt};
 	}
 
 	span += lBrace->_span;
@@ -40,7 +41,7 @@ std::optional<AstStructOrUnionSpecifier> AstStructOrUnionSpecifier::Parse(Parser
 
 	parser.ExpectToken(TokenType::RightBrace, span);
 
-	return AstStructOrUnionSpecifier{span, structOrUnion.value(), identExpr, std::move(declList)};
+	return AstStructOrUnionSpecifier{span, std::move(structOrUnion.value()), std::move(identExpr), std::move(declList)};
 }
 
 std::string AstStructOrUnionSpecifier::ToString(size_t depth) const {

@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstInitDeclaratorList final : public AstNode {
-		explicit AstInitDeclaratorList(std::vector<AstNode::Ptr> initDeclaratorList)
+		explicit AstInitDeclaratorList(std::vector<AstNode::Ptr> &&initDeclaratorList)
 			: AstNode(AstNodeType::InitDeclaratorList)
 			, _initDeclaratorList{std::move(initDeclaratorList)} {}
 

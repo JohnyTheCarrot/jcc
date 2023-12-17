@@ -15,7 +15,7 @@ namespace parsing {
 	struct AstParameterDeclaration final : public AstNode {
 		using Declarator = std::variant<AstDeclarator, std::optional<AstAbstractDeclarator>>;
 
-		AstParameterDeclaration(AstDeclarationSpecifiers specifiers, Declarator declarator)
+		AstParameterDeclaration(AstDeclarationSpecifiers &&specifiers, Declarator &&declarator)
 			: AstNode(AstNodeType::ParameterDeclaration)
 			, _declarationSpecifiers{std::move(specifiers)}
 			, _declarator{std::move(declarator)} {}

@@ -68,13 +68,13 @@ namespace parsing {
 			case TokenType::KeywordAtomic:
 				TODO()
 			case TokenType::Identifier: {
-				const std::optional<AstTypedefName> typedefName{AstTypedefName::Parse(parser)};
+				std::optional<AstTypedefName> &&typedefName{AstTypedefName::Parse(parser)};
 
 				if (!typedefName.has_value()) {
 					return nullptr;
 				}
 
-				return std::make_unique<AstTypedefName>(typedefName.value());
+				return std::make_unique<AstTypedefName>(std::move(typedefName.value()));
 			}
 			default:
 				return nullptr;
@@ -82,7 +82,7 @@ namespace parsing {
 
 		parser.AdvanceCursor();
 
-		return std::make_unique<AstTypeSpecifier>(token._span, typeSpecifierType);
+		return std::make_unique<AstTypeSpecifier>(token._span, std::move(typeSpecifierType));
 	}
 
 	std::string AstTypeSpecifier::ToString(size_t depth) const { TOSTRING_ENUM(AstTypeSpecifier, specifierType_) }

@@ -19,7 +19,7 @@ namespace parsing {
 			std::string ToString(size_t depth) const;
 		};
 
-		AstInitializerList(const Span &span, std::vector<InitializerListItem> listItems)
+		AstInitializerList(const Span &span, std::vector<InitializerListItem> &&listItems)
 			: AstNode(AstNodeType::InitializerList)
 			, _listItems{std::move(listItems)} {}
 

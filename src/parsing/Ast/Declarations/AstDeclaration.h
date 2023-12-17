@@ -13,8 +13,8 @@ namespace parsing {
 
 	struct AstDeclaration final : public AstNode {
 		AstDeclaration(
-				std::unique_ptr<AstDeclarationSpecifiers> declarationSpecifiers,
-				std::optional<AstInitDeclaratorList> initDeclaratorList
+				std::unique_ptr<AstDeclarationSpecifiers> &&declarationSpecifiers,
+				std::optional<AstInitDeclaratorList> &&initDeclaratorList
 		)
 			: AstNode(AstNodeType::Declaration)
 			, _declarationSpecifiers{std::move(declarationSpecifiers)}

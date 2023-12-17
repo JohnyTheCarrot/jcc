@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstCompoundStatement final : public AstNode {
-		AstCompoundStatement(const Span &span, std::optional<AstBlockItemList> blockItemList)
+		AstCompoundStatement(const Span &span, std::optional<AstBlockItemList> &&blockItemList)
 			: AstNode(AstNodeType::CompoundStatement)
 			, _blockItemList{std::move(blockItemList)} {
 			this->_span = span;

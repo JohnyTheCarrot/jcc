@@ -12,7 +12,7 @@
 namespace parsing {
 
 	struct AstParameterList final : public AstNode {
-		explicit AstParameterList(std::vector<AstParameterDeclaration> declarations)
+		explicit AstParameterList(std::vector<AstParameterDeclaration> &&declarations)
 			: AstNode(AstNodeType::ParameterList)
 			, _paramDeclarations{std::move(declarations)} {}
 

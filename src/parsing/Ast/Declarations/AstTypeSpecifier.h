@@ -31,7 +31,7 @@ namespace parsing {
 	};
 
 	struct AstTypeSpecifier final : public AstNode {
-		AstTypeSpecifier(const Span &span, AstTypeSpecifierType typeSpecifierType)
+		AstTypeSpecifier(const Span &span, AstTypeSpecifierType &&typeSpecifierType)
 			: AstNode(AstNodeType::TypeSpecifier, Hierarchies::TypeSpecifier)
 			, specifierType_{typeSpecifierType} {
 			this->_span = span;

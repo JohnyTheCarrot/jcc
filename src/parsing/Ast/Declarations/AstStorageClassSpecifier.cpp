@@ -40,7 +40,7 @@ namespace parsing {
 
 		parser.AdvanceCursor();
 
-		return AstStorageClassSpecifier{specifierType};
+		return AstStorageClassSpecifier{std::move(specifierType)};
 	}
 
 	std::string AstStorageClassSpecifier::ToString(size_t depth) const {

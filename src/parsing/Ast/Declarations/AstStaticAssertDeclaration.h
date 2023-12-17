@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstStaticAssertDeclaration final : public AstNode {
-		AstStaticAssertDeclaration(AstNode::Ptr &&constantExpression, AstStringLiteralExpression message)
+		AstStaticAssertDeclaration(AstNode::Ptr &&constantExpression, AstStringLiteralExpression &&message)
 			: AstNode(AstNodeType::StaticAssertDeclaration, Hierarchies::Declaration)
 			, _constantExpression{std::move(constantExpression)}
 			, _message{std::move(message)} {}

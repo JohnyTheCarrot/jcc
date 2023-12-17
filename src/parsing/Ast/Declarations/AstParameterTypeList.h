@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstParameterTypeList final : public AstNode {
-		explicit AstParameterTypeList(AstParameterList parameterList)
+		explicit AstParameterTypeList(AstParameterList &&parameterList)
 			: AstNode(AstNodeType::ParameterTypeList)
 			, _parameterList{std::move(parameterList)} {}
 

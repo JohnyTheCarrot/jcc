@@ -32,7 +32,7 @@ namespace parsing {
 
 		parser.AdvanceCursor();
 
-		return AstTypeQualifier{token._span, qualifierType};
+		return AstTypeQualifier{token._span, std::move(qualifierType)};
 	}
 
 	std::string AstTypeQualifier::ToString(size_t depth) const { TOSTRING_ENUM(AstTypeQualifier, _qualifierType) }
