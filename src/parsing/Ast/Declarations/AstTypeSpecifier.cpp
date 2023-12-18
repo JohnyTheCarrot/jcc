@@ -4,7 +4,7 @@
 
 #include "AstTypeSpecifier.h"
 #include "../../../../libs/magic_enum/magic_enum.hpp"
-#include "../../../tokenizer.h"
+#include "../../../misc/tokenizer.h"
 #include "../../Parser.h"
 #include "AstStructOrUnionSpecifier.h"
 #include <memory>

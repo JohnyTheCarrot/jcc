@@ -5,7 +5,7 @@
 #ifndef JCC_PARSER_H
 #define JCC_PARSER_H
 
-#include "../tokenizer.h"
+#include "../misc/tokenizer.h"
 #include "Ast/ExternalDefinitions/AstTranslationUnit.h"
 #include <unordered_map>
 

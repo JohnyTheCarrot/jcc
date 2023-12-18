@@ -3,7 +3,7 @@
 //
 
 #include "tokenizer.h"
-#include "../libs/magic_enum/magic_enum.hpp"
+#include "../../libs/magic_enum/magic_enum.hpp"
 #include "Span.h"
 #include "reporting.h"
 #include <cassert>
