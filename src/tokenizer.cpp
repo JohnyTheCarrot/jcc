@@ -162,12 +162,26 @@ BaseConvertResult ConvertToBase(int base, char digit, int &digitOut) {
 BaseConvertResult Tokenizer::GetDigit(int base, int &digitOut) {
 	char digit{};
 	bool peekResult{PeekNextChar(digit)};
+
 	if (!peekResult) {
 		return BaseConvertResult::UnexpectedEndOfInput;
 	}
 
+	bool hadApostrophe{false};
+
+	if (digit == '\'') {
+		hadApostrophe = true;
+		if (!GetNextChar() || !GetNextChar())
+			return BaseConvertResult::UnexpectedEndOfInput;
+
+		digit = this->currentChar;
+	}
+
 	BaseConvertResult convertResult;
 	if ((convertResult = ConvertToBase(base, digit, digitOut)) != BaseConvertResult::Success) {
+		if (hadApostrophe)
+			Error(this->filePath, this->inputStream, SpanFromCurrent(1), "Expected digit after '");
+
 		return convertResult;
 	}
 
@@ -263,7 +277,7 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
 }
 
 bool Tokenizer::TokenizeConstant(TokenList &tokensOut) {
-	if (isdigit(this->currentChar)) {
+	if (isdigit(this->currentChar) || this->currentChar == '\'') {
 		TokenizeInteger(tokensOut);
 
 		return true;
@@ -316,7 +330,7 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
 			continue;
 		}
 
-		const std::string errorMessage{fmt::format("Unrecognized _value: '{}'", this->currentChar)};
+		const std::string errorMessage{fmt::format("Unrecognized value: '{}'", this->currentChar)};
 		Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
 	}
 }
