@@ -6,7 +6,7 @@
 #define JCC_ASTNODE_H
 
 #include "../../../libs/magic_enum/magic_enum.hpp"
-#include "../Span.h"
+#include "../misc/Span.h"
 #include <iostream>
 #include <memory>
 #include <optional>

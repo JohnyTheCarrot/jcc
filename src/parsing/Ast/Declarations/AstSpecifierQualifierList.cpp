@@ -3,7 +3,7 @@
 //
 
 #include "AstSpecifierQualifierList.h"
-#include "../../../tokenizer.h"
+#include "../../../misc/tokenizer.h"
 #include "../../Parser.h"
 #include "AstAlignmentSpecifier.h"
 #include <sstream>

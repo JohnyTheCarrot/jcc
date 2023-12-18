@@ -1,7 +1,7 @@
 #include "../libs/magic_enum/magic_enum.hpp"
+#include "misc/tokenizer.h"
 #include "parsing/Ast/Declarations/AstDeclarationSpecifiers.h"
 #include "parsing/Parser.h"
-#include "tokenizer.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>

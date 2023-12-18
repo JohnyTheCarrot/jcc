@@ -4,7 +4,7 @@
 
 #include "Parser.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
-#include "../reporting.h"
+#include "../misc/reporting.h"
 #include "Ast/ExternalDefinitions/AstTranslationUnit.h"
 #include <iostream>
 #include <sstream>
