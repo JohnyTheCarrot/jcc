@@ -124,7 +124,8 @@ constexpr frozen::string LINE_COMMENT{"//"};
 
 constexpr size_t MAX_TOKEN_LENGTH{16};
 
-constexpr frozen::unordered_map<frozen::string, TokenType, 101> TOKEN_DEFINITIONS = {
+// TODO: is it really necessary to use frozen? Reeks of premature optimisation...
+constexpr frozen::unordered_map<frozen::string, TokenType, 105> TOKEN_DEFINITIONS = {
 		{"+", TokenType::Plus},
 		{"+=", TokenType::AddAssign},
 		{"++", TokenType::Increment},
@@ -152,6 +153,10 @@ constexpr frozen::unordered_map<frozen::string, TokenType, 101> TOKEN_DEFINITION
 		{"\?\?>", TokenType::RightBrace},
 		{"\?\?<", TokenType::LeftBrace},
 		{"\?\?-", TokenType::BitwiseNot},
+		{"<:", TokenType::LeftBracket},
+		{":>", TokenType::RightBracket},
+		{"<%", TokenType::LeftBrace},
+		{"%>", TokenType::RightBrace},
 		{"(", TokenType::LeftParenthesis},
 		{")", TokenType::RightParenthesis},
 		{"^", TokenType::ExclusiveOr},
