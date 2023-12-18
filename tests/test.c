@@ -23,7 +23,7 @@ union mem_header_union {
 	Align align_dummy;
 };
 
-union mem_header_union testOne = {.align_dummy = 10ul};
+union mem_header_union testOne = <%.align_dummy = 10ul%>;
 
 union mem_header_union test = {.s = {.next = &testOne, .size = 2}};
 
