@@ -8,6 +8,7 @@
 
 #include "Span.h"
 #include "frozen/string.h"
+#include "reporting.h"
 #include <frozen/unordered_map.h>
 #include <memory>
 #include <optional>
@@ -291,6 +292,7 @@ enum class IntLiteralSuffix {
 	LongLong,
 };
 
+[[nodiscard]]
 BaseConvertResult ConvertToBase(int base, char digit, int &digitOut);
 
 class Tokenizer final {
@@ -299,23 +301,28 @@ public:
 		: filePath{filePath}
 		, inputStream{inputStream} {};
 
-	void Tokenize(TokenList &tokensOut);
+	[[nodiscard]]
+	bool Tokenize(TokenList &tokensOut, Diagnosis::Vec &diagnoses);
 
 private:
 	size_t TokenizeNormalToken();
 
 	void TokenizeIdentifier(TokenList &tokensOut);
 
-	void TokenizeString(TokenList &tokensOut);
+	[[nodiscard]]
+	bool TokenizeString(TokenList &tokensOut, Diagnosis::Vec &diagnoses);
 
 	BaseConvertResult GetDigit(int base, int &digitOut);
 
-	IntLiteralSuffix
-	GetIntLiteralSuffix(IntLiteralSuffix previousSuffix, bool &isSigned_Out, IntegerLiteralType &typeOut);
+	[[nodiscard]]
+	bool GetIntLiteralSuffix(
+			IntLiteralSuffix previousSuffix, bool &isUnsigned_Out, IntegerLiteralType &typeOut,
+			IntLiteralSuffix &suffixOut, Diagnosis::Vec &diagnoses
+	);
 
-	void TokenizeInteger(TokenList &tokensOut);
+	bool TokenizeInteger(TokenList &tokensOut, Diagnosis::Vec &diagnoses);
 
-	bool TokenizeConstant(TokenList &tokensOut);
+	bool TokenizeConstant(TokenList &tokensOut, Diagnosis::Vec &diagnoses);
 
 	bool GetNextChar();
 

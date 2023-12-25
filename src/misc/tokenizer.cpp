@@ -69,7 +69,7 @@ void Tokenizer::TokenizeIdentifier(TokenList &tokensOut) {
 	this->inputStream.putback(this->currentChar);
 }
 
-void Tokenizer::TokenizeString(TokenList &tokensOut) {
+bool Tokenizer::TokenizeString(TokenList &tokensOut, Diagnosis::Vec &diagnoses) {
 	std::string stringLiteralBuffer;
 	bool isEscaped{false};
 	bool wasTerminated{false};
@@ -102,20 +102,25 @@ void Tokenizer::TokenizeString(TokenList &tokensOut) {
 				case '"':
 					stringLiteralBuffer += '"';
 					break;
-				default:
-					Warn(this->filePath, this->inputStream,
-						 Span(this->line, this->lineStartIndex, GetCharIndex() - 1, 2, this->inputStream),
-						 fmt::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
+				default: {
+					const Span span{this->line, this->lineStartIndex, GetCharIndex() - 1, 2, this->inputStream};
+					diagnoses.emplace_back(
+							span, Diagnosis::Class::Warning, Diagnosis::Kind::TK_UnknownEscapeSequence,
+							this->currentChar
+					);
+					stringLiteralBuffer += '\\';
 					stringLiteralBuffer += this->currentChar;
 					break;
+				}
 			}
 			isEscaped = false;
 			continue;
 		}
 
 		if (this->currentChar == '\n') {
-			Error(this->filePath, this->inputStream,
-				  Span(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream), "Unexpected newline.");
+			const Span span{this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream};
+			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_StrUnterminated);
+			return false;
 		}
 
 		if (this->currentChar == '"') {
@@ -127,13 +132,15 @@ void Tokenizer::TokenizeString(TokenList &tokensOut) {
 	}
 
 	if (!wasTerminated) {
-		Error(this->filePath, this->inputStream,
-			  Span(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream), "Unexpected end of input.");
+		const Span span{this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream};
+		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_StrUnterminated);
+		return false;
 	}
 
 	tokensOut.emplace_back(
 			TokenType::StringLiteral, SpanFromCurrent(stringLiteralBuffer.length()), stringLiteralBuffer
 	);
+	return true;
 }
 
 BaseConvertResult ConvertToBase(int base, char digit, int &digitOut) {
@@ -190,42 +197,55 @@ BaseConvertResult Tokenizer::GetDigit(int base, int &digitOut) {
 	return BaseConvertResult::Success;
 }
 
-IntLiteralSuffix
-Tokenizer::GetIntLiteralSuffix(IntLiteralSuffix previousSuffix, bool &isSigned_Out, IntegerLiteralType &typeOut) {
+bool Tokenizer::GetIntLiteralSuffix(
+		IntLiteralSuffix previousSuffix, bool &isUnsigned_Out, IntegerLiteralType &typeOut, IntLiteralSuffix &suffixOut,
+		Diagnosis::Vec &diagnoses
+) {
 	const std::string errorString{"Invalid integer literal suffix."};
 
 	if (ConsumeIfNextChar('u')) {
-		if (previousSuffix == IntLiteralSuffix::Unsigned)
+		if (previousSuffix == IntLiteralSuffix::Unsigned) {
 			Error(this->filePath, this->inputStream, SpanFromCurrent(1), errorString);
+			return false;
+		}
 
-		isSigned_Out = true;
-		return IntLiteralSuffix::Unsigned;
+		isUnsigned_Out = true;
+		suffixOut = IntLiteralSuffix::Unsigned;
+		return true;
+	} else {
+		isUnsigned_Out = false;
 	}
 
-	if (previousSuffix == IntLiteralSuffix::Long || previousSuffix == IntLiteralSuffix::LongLong)
+	if (previousSuffix == IntLiteralSuffix::Long || previousSuffix == IntLiteralSuffix::LongLong) {
 		Error(this->filePath, this->inputStream, SpanFromCurrent(1), errorString);
+		return false;
+	}
 
 	if (ConsumeIfNextChar('l')) {
 		if (ConsumeIfNextChar('l')) {
 			typeOut = IntegerLiteralType::LongLong;
-			return IntLiteralSuffix::LongLong;
+			suffixOut = IntLiteralSuffix::LongLong;
+			return true;
 		}
 
 		typeOut = IntegerLiteralType::Long;
-		return IntLiteralSuffix::Long;
+		suffixOut = IntLiteralSuffix::Long;
+		return true;
 	}
 
 	char nextChar{};
 	if (PeekNextChar(nextChar) && isalpha(nextChar)) {
 		GetNextChar();
 		Error(this->filePath, this->inputStream, SpanFromCurrent(1), errorString);
+		return false;
 	}
 
-	return IntLiteralSuffix::None;
+	suffixOut = IntLiteralSuffix::None;
+	return true;// not specifying a suffix is of course valid
 }
 
 // todo: handle literal > type_max
-void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
+bool Tokenizer::TokenizeInteger(TokenList &tokensOut, Diagnosis::Vec &diagnoses) {
 	int base{10};
 
 	if (this->currentChar == '0') {
@@ -239,15 +259,29 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
 	std::vector<int> integerLiteralDigits{};
 	if (base == 10) {
 		int firstDigit{};
-		ConvertToBase(base, this->currentChar, firstDigit);
-		integerLiteralDigits.push_back(firstDigit);
+		if (auto result{ConvertToBase(base, this->currentChar, firstDigit)}; result == BaseConvertResult::Success) {
+			integerLiteralDigits.push_back(firstDigit);
+		} else {
+			diagnoses.emplace_back(
+					SpanFromCurrent(), Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidBaseDigit, this->currentChar
+			);
+			return false;
+		}
 	}
 
 	int digit{};
-	BaseConvertResult convertResult;
-	while ((convertResult = GetDigit(base, digit)) == BaseConvertResult::Success) {
-		integerLiteralDigits.push_back(digit);
+	BaseConvertResult convertResult{GetDigit(base, digit)};
+
+	if (convertResult != BaseConvertResult::Success) {
+		diagnoses.emplace_back(
+				SpanFromCurrent(), Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidBaseDigit, this->currentChar
+		);
+		return false;
 	}
+
+	do {
+		integerLiteralDigits.push_back(digit);
+	} while ((convertResult = GetDigit(base, digit)) == BaseConvertResult::Success);
 
 	bool isUnsigned{false};
 	IntegerLiteralType type{};
@@ -259,9 +293,9 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
 
 	const size_t amountOfDigits{integerLiteralDigits.size()};
 	if (convertResult == BaseConvertResult::DigitNotInBase) {
-		Error(this->filePath, this->inputStream,
-			  Span(this->line, this->lineStartIndex, GetCharIndex() + 1, 1, this->inputStream),
-			  fmt::format("Invalid digit for base {}.", base));
+		const Span span{this->line, this->lineStartIndex, GetCharIndex() + 1, 1, this->inputStream};
+		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidBaseDigit, this->currentChar);
+		return false;
 	}
 
 	IntegerTokenValue integerLiteralValue{0};
@@ -274,25 +308,22 @@ void Tokenizer::TokenizeInteger(TokenList &tokensOut) {
 
 	const IntegerLiteralTokenValue value{integerLiteralValue, isUnsigned, type};
 	tokensOut.emplace_back(TokenType::IntegerLiteral, SpanFromCurrent(amountOfDigits), value);
+	return true;
 }
 
-bool Tokenizer::TokenizeConstant(TokenList &tokensOut) {
+bool Tokenizer::TokenizeConstant(TokenList &tokensOut, Diagnosis::Vec &diagnoses) {
 	if (isdigit(this->currentChar) || this->currentChar == '\'') {
-		TokenizeInteger(tokensOut);
-
-		return true;
+		return TokenizeInteger(tokensOut, diagnoses);
 	}
 
 	if (this->currentChar == '"') {
-		TokenizeString(tokensOut);
-
-		return true;
+		return TokenizeString(tokensOut, diagnoses);
 	}
 
 	return false;
 }
 
-void Tokenizer::Tokenize(TokenList &tokensOut) {
+bool Tokenizer::Tokenize(TokenList &tokensOut, Diagnosis::Vec &diagnoses) {
 	while (GetNextChar()) {
 		if (isspace(this->currentChar)) {
 			continue;
@@ -325,14 +356,18 @@ void Tokenizer::Tokenize(TokenList &tokensOut) {
 		}
 
 		// String literals
-		const bool didMatch{TokenizeConstant(tokensOut)};
+		const bool didMatch{TokenizeConstant(tokensOut, diagnoses)};
 		if (didMatch) {
 			continue;
 		}
 
-		const std::string errorMessage{fmt::format("Unrecognized value: '{}'", this->currentChar)};
-		Error(filePath, inputStream, SpanFromCurrent(), errorMessage);
+		diagnoses.emplace_back(
+				SpanFromCurrent(), Diagnosis::Class::Error, Diagnosis::Kind::TK_Unrecognized, this->currentChar
+		);
+		return false;
 	}
+
+	return true;
 }
 
 bool Tokenizer::GetNextChar() {

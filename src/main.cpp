@@ -1,4 +1,5 @@
 #include "../libs/magic_enum/magic_enum.hpp"
+#include "misc/reporting.h"
 #include "misc/tokenizer.h"
 #include "parsing/Ast/Declarations/AstDeclarationSpecifiers.h"
 #include "parsing/Parser.h"
@@ -20,9 +21,11 @@ int main(int argCount, char *args[]) {
 		exit(1);
 	}
 
-	TokenList tokens;
+	TokenList tokens{};
+	Diagnosis::Vec diagnoses{};
+
 	Tokenizer tokenizer{filePath, inputFileStream};
-	tokenizer.Tokenize(tokens);
+	tokenizer.Tokenize(tokens, diagnoses);
 
 	std::cout << "Tokens: [";
 	for (const Token &token: tokens) { std::cout << magic_enum::enum_name(token._type) << ", "; }
