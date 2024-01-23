@@ -8,7 +8,7 @@
 
 namespace parsing {
 	std::optional<AstArgumentExpressionList> AstArgumentExpressionList::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 		std::vector<AstNode::Ptr> expressions{};
 		AstNode::Ptr assignmentExpression{AstAssignmentExpression::Parse(parser)};
 		if (!assignmentExpression)

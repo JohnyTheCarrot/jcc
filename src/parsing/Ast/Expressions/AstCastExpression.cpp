@@ -37,8 +37,8 @@ namespace parsing {
 			return AstUnaryExpression::Parse(parser);
 		}
 
-		Span typeNameSpan{typeName->_span};
-		Span expressionSpan{expression->_span};
+		SpanOld typeNameSpan{typeName->_span};
+		SpanOld expressionSpan{expression->_span};
 
 		AstNode::Ptr castExpression{std::make_unique<AstCastExpression>(std::move(typeName), std::move(expression))};
 		castExpression->_span = lParen->_span + typeNameSpan + rParen->_span + expressionSpan;

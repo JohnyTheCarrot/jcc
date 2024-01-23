@@ -1,4 +1,4 @@
-#include "../../src/misc/tokenizer.h"
+#include "../../src/misc/tokenizer_old.h"
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -11,7 +11,7 @@ TEST(Tokenizer_Comments, LineComment) {
 
 	TokenList tokens{};
 
-	Tokenizer tokenizer{"test", iStream};
+	TokenizerOld tokenizer{"test", iStream};
 	tokenizer.Tokenize(tokens);
 
 	ASSERT_EQ(tokens.size(), 1);

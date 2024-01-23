@@ -14,7 +14,7 @@ namespace parsing {
 		std::optional<AstBlockItemList> blockItemList{AstBlockItemList::Parse(parser)};
 		const Token &rBrace{parser.ExpectToken(TokenType::RightBrace)};
 
-		Span span{lBrace->_span + rBrace._span};
+		SpanOld span{lBrace->_span + rBrace._span};
 		if (blockItemList)
 			span += blockItemList->_span;
 

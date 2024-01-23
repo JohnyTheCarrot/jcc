@@ -5,7 +5,7 @@
 #ifndef JCC_PARSER_H
 #define JCC_PARSER_H
 
-#include "../misc/tokenizer.h"
+#include "../misc/tokenizer_old.h"
 #include "Ast/ExternalDefinitions/AstTranslationUnit.h"
 #include <unordered_map>
 
@@ -41,7 +41,7 @@ public:
 	[[nodiscard]]
 	std::optional<Token> ConsumeIfTokenIs(TokenType tokenType);
 
-	const Token &ExpectToken(TokenType tokenType, Span &spanToAddTo);
+	const Token &ExpectToken(TokenType tokenType, SpanOld &spanToAddTo);
 
 	const Token &ExpectToken(TokenType tokenType);
 
@@ -50,7 +50,7 @@ public:
 	bool AdvanceIfTokenIs(TokenType tokenType);
 
 	[[noreturn]]
-	void Error(const Span &span, const std::string &message) const;
+	void Error(const SpanOld &span, const std::string &message) const;
 
 	[[noreturn]]
 	void Error(const std::string &message) const;

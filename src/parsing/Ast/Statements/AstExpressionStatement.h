@@ -10,7 +10,7 @@
 namespace parsing {
 
 	struct AstExpressionStatement final : public AstNode {
-		AstExpressionStatement(const Span &span, AstNode::Ptr &&expression)
+		AstExpressionStatement(const SpanOld &span, AstNode::Ptr &&expression)
 			: AstNode(AstNodeType::ExpressionStatement)
 			, _expression{std::move(expression)} {
 			this->_span = span;

@@ -10,7 +10,7 @@
 namespace parsing {
 
 	struct AstWhileIterationStatement final : public AstNode {
-		AstWhileIterationStatement(const Span &span, AstNode::Ptr &&condition, AstNode::Ptr &&statement, bool isDoWhile)
+		AstWhileIterationStatement(const SpanOld &span, AstNode::Ptr &&condition, AstNode::Ptr &&statement, bool isDoWhile)
 			: AstNode(AstNodeType::WhileIterationStatement)
 			, _condition{std::move(condition)}
 			, _statement{std::move(statement)}
@@ -31,7 +31,7 @@ namespace parsing {
 
 	struct AstForIterationStatement final : public AstNode {
 		AstForIterationStatement(
-				const Span &span, AstNode::Ptr setUp, AstNode::Ptr check, AstNode::Ptr after, AstNode::Ptr statement
+				const SpanOld &span, AstNode::Ptr setUp, AstNode::Ptr check, AstNode::Ptr after, AstNode::Ptr statement
 		)
 			: AstNode(AstNodeType::ForIterationStatement)
 			, _setUp{std::move(setUp)}

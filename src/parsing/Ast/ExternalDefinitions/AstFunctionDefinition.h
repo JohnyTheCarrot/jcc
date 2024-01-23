@@ -14,7 +14,7 @@ namespace parsing {
 
 	struct AstFunctionDefinition final : public AstNode {
 		AstFunctionDefinition(
-				const Span &span, AstDeclarationSpecifiers &&declarationSpecifiers, AstDeclarator &&declarator,
+				const SpanOld &span, AstDeclarationSpecifiers &&declarationSpecifiers, AstDeclarator &&declarator,
 				AstCompoundStatement &&compoundStatement
 		)
 			: AstNode(AstNodeType::FunctionDefinition)

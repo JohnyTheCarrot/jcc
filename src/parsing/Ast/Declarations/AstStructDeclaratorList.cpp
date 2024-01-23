@@ -6,7 +6,7 @@
 using namespace parsing;
 
 std::optional<AstStructDeclaratorList> AstStructDeclaratorList::Parse(Parser &parser) {
-	Span span{};
+	SpanOld span{};
 
 	StructDeclaratorPtrList list{};
 

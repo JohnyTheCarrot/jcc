@@ -24,7 +24,7 @@ AstNode::Ptr AstStructDeclarator::Parse(Parser &parser) {
 	if (!constantExpression)
 		parser.Error("Expected to be followed by constant expression");
 
-	Span span{};
+	SpanOld span{};
 	if (declarator)
 		span += declarator->_span;
 

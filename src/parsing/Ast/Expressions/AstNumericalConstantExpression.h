@@ -5,7 +5,7 @@
 #ifndef JCC_ASTNUMERICALCONSTANTEXPRESSION_H
 #define JCC_ASTNUMERICALCONSTANTEXPRESSION_H
 
-#include "../../../misc/tokenizer.h"
+#include "../../../misc/tokenizer_old.h"
 #include "../../AstNode.h"
 #include "AstIdentifierExpression.h"
 

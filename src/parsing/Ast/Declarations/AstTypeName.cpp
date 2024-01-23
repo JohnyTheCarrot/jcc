@@ -3,7 +3,7 @@
 //
 
 #include "AstTypeName.h"
-#include "../../../misc/tokenizer.h"
+#include "../../../misc/tokenizer_old.h"
 #include "../../Parser.h"
 #include "AstAbstractDeclarator.h"
 #include <sstream>

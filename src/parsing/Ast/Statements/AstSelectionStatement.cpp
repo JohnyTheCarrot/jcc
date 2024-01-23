@@ -10,7 +10,7 @@
 
 namespace parsing {
 	std::optional<AstSelectionStatement> AstSelectionStatement::Parse(Parser &parser) noexcept {
-		Span span{};
+		SpanOld span{};
 		const std::optional<Token> keywordIf{parser.ConsumeIfTokenIs(TokenType::KeywordIf)};
 		if (!keywordIf) {
 			const std::optional<Token> keywordSwitch{parser.ConsumeIfTokenIs(TokenType::KeywordSwitch)};

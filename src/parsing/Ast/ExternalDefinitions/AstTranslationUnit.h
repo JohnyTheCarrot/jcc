@@ -10,7 +10,7 @@
 namespace parsing {
 
 	struct AstTranslationUnit final : public AstNode {
-		AstTranslationUnit(const Span &span, std::vector<AstNode::Ptr> &&externalDeclarations)
+		AstTranslationUnit(const SpanOld &span, std::vector<AstNode::Ptr> &&externalDeclarations)
 			: AstNode(AstNodeType::TranslationUnit)
 			, _externalDeclarations{std::move(externalDeclarations)} {
 			this->_span = span;

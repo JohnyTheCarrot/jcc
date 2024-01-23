@@ -14,7 +14,7 @@ namespace parsing {
 	struct AstDirectAbstractDeclarator final : public AstNode {
 		enum class Kind { Array, Function };
 
-		AstDirectAbstractDeclarator(const Span &span, Kind kind, AstNode::Ptr &&lhs)
+		AstDirectAbstractDeclarator(const SpanOld &span, Kind kind, AstNode::Ptr &&lhs)
 			: AstNode(AstNodeType::DirectAbstractDeclarator)
 			, _kind{kind}
 			, _lhs{std::move(lhs)} {

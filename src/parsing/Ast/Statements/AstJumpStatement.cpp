@@ -7,7 +7,7 @@
 
 namespace parsing {
 	std::optional<AstJumpStatement> AstJumpStatement::Parse(Parser &parser) noexcept {
-		Span span{};
+		SpanOld span{};
 		const std::optional<Token> nextToken{parser.PeekNextToken()};
 		if (!nextToken)
 			return std::nullopt;

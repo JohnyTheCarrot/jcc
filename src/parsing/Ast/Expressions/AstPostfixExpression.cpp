@@ -39,7 +39,7 @@ namespace parsing {
 						parser.Error(expression->_span, "Expected to be followed by ']'");
 					}
 
-					Span expressionSpan{expression->_span};
+					SpanOld expressionSpan{expression->_span};
 					left = std::make_unique<AstPostfixExpression>(
 							std::move(left), PostfixExpressionType::ArraySubscript, std::move(expression)
 					);
@@ -55,7 +55,7 @@ namespace parsing {
 						parser.Error(nextToken._span, "Expected identifier");
 					}
 
-					Span identifierSpan{identifier->_span};
+					SpanOld identifierSpan{identifier->_span};
 					AstNode::Ptr identifierNode{std::make_unique<AstIdentifierExpression>(std::move(identifier.value()))
 					};
 
@@ -74,7 +74,7 @@ namespace parsing {
 						parser.Error(nextToken._span, "Expected identifier");
 					}
 
-					Span identifierSpan{identifier->_span};
+					SpanOld identifierSpan{identifier->_span};
 					AstNode::Ptr identifierNode{std::make_unique<AstIdentifierExpression>(std::move(identifier.value()))
 					};
 

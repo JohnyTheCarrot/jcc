@@ -8,7 +8,7 @@
 
 namespace parsing {
 	std::optional<AstExpressionStatement> AstExpressionStatement::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 		int cursor{parser.GetCursor()};
 
 		AstNode::Ptr optionalExpression{AstExpression::Parse(parser)};

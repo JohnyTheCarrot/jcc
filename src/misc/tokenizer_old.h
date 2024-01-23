@@ -6,7 +6,7 @@
 #define JCC_TOKENIZER_H
 
 
-#include "Span.h"
+#include "SpanOld.h"
 #include "frozen/string.h"
 #include <frozen/unordered_map.h>
 #include <memory>
@@ -257,19 +257,19 @@ typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, s
 struct Token final {
 	Token() = default;
 
-	Token(TokenType type, Span &&span, TokenValue &&value)
+	Token(TokenType type, SpanOld &&span, TokenValue &&value)
 		: _type{type}
 		, _span{span}
 		, _value{std::move(value)} {}
 
-	Token(TokenType type, Span &&span)
+	Token(TokenType type, SpanOld &&span)
 		: _type{type}
 		, _span{span}
 		, _value{} {}
 
 	TokenType _type{};
 
-	Span _span;
+	SpanOld _span;
 
 	TokenValue _value;
 };
@@ -293,9 +293,9 @@ enum class IntLiteralSuffix {
 
 BaseConvertResult ConvertToBase(int base, char digit, int &digitOut);
 
-class Tokenizer final {
+class [[deprecated]] TokenizerOld final {
 public:
-	Tokenizer(const std::string &filePath, std::istream &inputStream)
+	TokenizerOld(const std::string &filePath, std::istream &inputStream)
 		: filePath{filePath}
 		, inputStream{inputStream} {};
 
@@ -330,7 +330,7 @@ private:
 	size_t GetColumnIndex() const;
 
 	[[nodiscard]]
-	Span SpanFromCurrent(size_t length = 1) const;
+	SpanOld SpanFromCurrent(size_t length = 1) const;
 
 	std::string filePath;
 	std::istream &inputStream;

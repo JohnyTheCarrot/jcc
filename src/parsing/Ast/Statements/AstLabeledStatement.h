@@ -8,7 +8,7 @@ namespace parsing {
 	struct AstLabeledStatement final : public AstNode {
 		enum class Kind { Label, Case, Default };
 
-		AstLabeledStatement(const Span &span, Kind kind, AstNode::Ptr &&inner, AstNode::Ptr &&statement)
+		AstLabeledStatement(const SpanOld &span, Kind kind, AstNode::Ptr &&inner, AstNode::Ptr &&statement)
 			: AstNode(AstNodeType::LabeledStatement)
 			, _kind{kind}
 			, _inner{std::move(inner)}

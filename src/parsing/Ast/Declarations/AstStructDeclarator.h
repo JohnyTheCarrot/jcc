@@ -9,7 +9,7 @@
 namespace parsing {
 	struct AstStructDeclarator final : public AstNode {
 		AstStructDeclarator(
-				const Span &span, std::optional<AstDeclarator> &&declarator, AstNode::Ptr &&constantExpression
+				const SpanOld &span, std::optional<AstDeclarator> &&declarator, AstNode::Ptr &&constantExpression
 		)
 			: AstNode(AstNodeType::StructDeclarator)
 			, declarator_{std::move(declarator)}

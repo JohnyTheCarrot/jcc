@@ -10,7 +10,7 @@
 namespace parsing {
 	std::optional<AstInitializerList> AstInitializerList::Parse(Parser &parser) {
 		std::vector<InitializerListItem> initializerListItems{};
-		Span span{};
+		SpanOld span{};
 		bool isFirstIteration{true};
 		int cursor{parser.GetCursor()};
 
