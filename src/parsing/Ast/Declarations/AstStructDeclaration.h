@@ -8,7 +8,7 @@
 namespace parsing {
 	struct AstStructDeclaration final : public AstNode {
 		AstStructDeclaration(
-				const Span &span, AstSpecifierQualifierList &&specifierQualifierList,
+				const SpanOld &span, AstSpecifierQualifierList &&specifierQualifierList,
 				std::optional<AstStructDeclaratorList> &&declaratorList
 		)
 			: AstNode(AstNodeType::StructDeclaration)

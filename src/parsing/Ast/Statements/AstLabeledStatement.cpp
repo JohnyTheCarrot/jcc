@@ -7,7 +7,7 @@
 
 namespace parsing {
 	std::optional<AstLabeledStatement> AstLabeledStatement::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 		std::optional<Token> nextToken{parser.PeekNextToken()};
 		Kind kind;
 		AstNode::Ptr inner{nullptr};

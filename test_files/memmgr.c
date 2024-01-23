@@ -5,7 +5,7 @@
 //
 // This code is in the public domain.
 //----------------------------------------------------------------
-//#include "memmgr.h"
+//#include "memmgr.h" // no preprocessor yet
 
 typedef unsigned long ulong;
 typedef unsigned char byte;

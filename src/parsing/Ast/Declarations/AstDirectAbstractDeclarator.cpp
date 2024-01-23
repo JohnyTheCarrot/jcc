@@ -12,7 +12,7 @@ namespace parsing {
 	AstNode::Ptr AstDirectAbstractDeclarator::Parse(Parser &parser) {
 		std::unique_ptr<AstDirectAbstractDeclarator> result{nullptr};
 
-		Span span{};
+		SpanOld span{};
 		while (true) {
 			const Token &firstToken{parser.PeekNextToken()};
 

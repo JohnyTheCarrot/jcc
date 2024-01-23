@@ -12,7 +12,7 @@ std::optional<AstStructOrUnionSpecifier> AstStructOrUnionSpecifier::Parse(Parser
 	if (!structOrUnion)
 		return std::nullopt;
 
-	Span span{structOrUnion->_span};
+	SpanOld span{structOrUnion->_span};
 
 	std::optional<AstIdentifierExpression> identExpr{AstIdentifierExpression::Parse(parser)};
 

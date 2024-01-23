@@ -13,7 +13,7 @@ AstNode::Ptr AstStructDeclaration::Parse(Parser &parser) {
 	if (staticAssertDecl.has_value())
 		return std::make_unique<AstStaticAssertDeclaration>(std::move(staticAssertDecl.value()));
 
-	Span span{};
+	SpanOld span{};
 	std::optional<AstSpecifierQualifierList> specifierQualifierList{AstSpecifierQualifierList::Parse(parser)};
 
 	if (!specifierQualifierList.has_value())

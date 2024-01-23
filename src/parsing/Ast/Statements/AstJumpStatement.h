@@ -8,7 +8,7 @@ namespace parsing {
 	struct AstJumpStatement final : public AstNode {
 		enum class Kind { Goto, Continue, Break, Return };
 
-		AstJumpStatement(const Span &span, Kind kind, AstNode::Ptr &&inner)
+		AstJumpStatement(const SpanOld &span, Kind kind, AstNode::Ptr &&inner)
 			: AstNode(AstNodeType::JumpStatement)
 			, _kind{kind}
 			, _inner{std::move(inner)} {

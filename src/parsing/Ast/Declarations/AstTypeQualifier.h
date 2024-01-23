@@ -12,7 +12,7 @@ namespace parsing {
 	enum class AstTypeQualifierType { Const, Restrict, Volatile, Atomic };
 
 	struct AstTypeQualifier final : public AstNode {
-		AstTypeQualifier(const Span &span, AstTypeQualifierType &&qualifierType)
+		AstTypeQualifier(const SpanOld &span, AstTypeQualifierType &&qualifierType)
 			: AstNode(AstNodeType::TypeQualifier, Hierarchies::TypeQualifier)
 			, _qualifierType{qualifierType} {
 			this->_span = span;

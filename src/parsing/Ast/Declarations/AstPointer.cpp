@@ -16,7 +16,7 @@ namespace parsing {
 			return std::nullopt;
 		}
 
-		Span span{asterisk->_span};
+		SpanOld span{asterisk->_span};
 
 		std::optional<AstTypeQualifierList> typeQualifierList{AstTypeQualifierList::Parse(parser)};
 		pointer._typeQualifierList = typeQualifierList;

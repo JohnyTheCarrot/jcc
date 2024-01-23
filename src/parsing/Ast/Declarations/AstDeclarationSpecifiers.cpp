@@ -8,7 +8,7 @@
 namespace parsing {
 	std::optional<AstDeclarationSpecifiers> AstDeclarationSpecifiers::Parse(Parser &parser) {
 		std::vector<DeclarationSpecifier> declarationSpecifiers{};
-		Span span{};
+		SpanOld span{};
 
 		while (true) {
 			std::optional<AstStorageClassSpecifier> storageClassSpecifier{AstStorageClassSpecifier::Parse(parser)};

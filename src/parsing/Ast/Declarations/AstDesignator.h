@@ -16,7 +16,7 @@ namespace parsing {
 			StructOrUnionMember,
 		};
 
-		AstDesignator(const Span &span, Kind kind, AstNode::Ptr &&value)
+		AstDesignator(const SpanOld &span, Kind kind, AstNode::Ptr &&value)
 			: AstNode(AstNodeType::Designator)
 			, _kind{kind}
 			, _value{std::move(value)} {

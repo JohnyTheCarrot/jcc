@@ -6,7 +6,7 @@
 #define JCC_ASTNODE_H
 
 #include "../../../libs/magic_enum/magic_enum.hpp"
-#include "../misc/Span.h"
+#include "../misc/SpanOld.h"
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -195,7 +195,7 @@ namespace parsing {
 		using Ptr = std::unique_ptr<AstNode>;
 
 		AstNodeType _type;
-		Span _span;
+		SpanOld _span;
 		int _hierarchyLevel;
 
 		// Hierarchy levels

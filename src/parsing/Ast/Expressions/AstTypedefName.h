@@ -5,7 +5,7 @@
 
 namespace parsing {
 	struct AstTypedefName final : public AstNode {
-		AstTypedefName(const Span &span, const std::string &ident)
+		AstTypedefName(const SpanOld &span, const std::string &ident)
 			: AstNode(AstNodeType::TypedefName)
 			, typeDefName_{ident} {
 			this->_span = span;

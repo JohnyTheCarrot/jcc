@@ -7,7 +7,7 @@
 
 namespace parsing {
 	std::optional<AstBlockItemList> AstBlockItemList::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 		std::vector<AstNode::Ptr> blockItems{};
 		AstNode::Ptr item{AstBlockItem::Parse(parser)};
 		if (!item)

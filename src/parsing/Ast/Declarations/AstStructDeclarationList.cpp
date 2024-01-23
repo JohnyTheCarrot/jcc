@@ -5,7 +5,7 @@
 using namespace parsing;
 
 std::optional<AstStructDeclarationList> AstStructDeclarationList::Parse(Parser &parser) {
-	Span span{};
+	SpanOld span{};
 	StructDeclarationList list{};
 
 	while (true) {

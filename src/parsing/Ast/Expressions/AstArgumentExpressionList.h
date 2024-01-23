@@ -10,7 +10,7 @@
 namespace parsing {
 
 	struct AstArgumentExpressionList final : public AstNode {
-		AstArgumentExpressionList(const Span &span, std::vector<AstNode::Ptr> &&expressions)
+		AstArgumentExpressionList(const SpanOld &span, std::vector<AstNode::Ptr> &&expressions)
 			: AstNode(AstNodeType::ArgumentExpressionList)
 			, _expressions{std::move(expressions)} {
 			this->_span = span;

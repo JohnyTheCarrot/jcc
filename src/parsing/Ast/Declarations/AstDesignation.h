@@ -11,7 +11,7 @@
 namespace parsing {
 
 	struct AstDesignation final : public AstNode {
-		AstDesignation(const Span &span, AstDesignatorList &&designatorList)
+		AstDesignation(const SpanOld &span, AstDesignatorList &&designatorList)
 			: AstNode(AstNodeType::Designation)
 			, _designatorList{std::move(designatorList)} {
 			this->_span = span;

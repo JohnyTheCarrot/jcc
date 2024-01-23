@@ -8,7 +8,7 @@
 namespace parsing {
 	std::optional<AstFunctionDefinition> AstFunctionDefinition::Parse(Parser &parser) {
 		int cursor{parser.GetCursor()};
-		Span span{};
+		SpanOld span{};
 
 		std::optional<AstDeclarationSpecifiers> specifiers{AstDeclarationSpecifiers::Parse(parser)};
 		if (!specifiers)

@@ -12,7 +12,7 @@
 namespace parsing {
 
 	struct AstDesignatorList final : public AstNode {
-		AstDesignatorList(const Span &span, std::vector<AstDesignator> &&designators)
+		AstDesignatorList(const SpanOld &span, std::vector<AstDesignator> &&designators)
 			: AstNode(AstNodeType::DesignatorList)
 			, _designators{std::move(designators)} {
 			this->_span = span;

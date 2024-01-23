@@ -8,7 +8,7 @@
 namespace parsing {
 	std::optional<AstTypeQualifierList> AstTypeQualifierList::Parse(Parser &parser) {
 		std::vector<AstTypeQualifier> list;
-		Span span;
+		SpanOld span;
 
 		if (auto typeQualifier{AstTypeQualifier::Parse(parser)}) {
 			span = typeQualifier->_span;

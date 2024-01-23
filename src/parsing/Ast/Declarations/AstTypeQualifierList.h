@@ -12,7 +12,7 @@
 namespace parsing {
 
 	struct AstTypeQualifierList final : public AstNode {
-		AstTypeQualifierList(const Span &span, std::vector<AstTypeQualifier> &&list)
+		AstTypeQualifierList(const SpanOld &span, std::vector<AstTypeQualifier> &&list)
 			: AstNode(AstNodeType::TypeQualifierList)
 			, _list{std::move(list)} {
 			this->_span = span;

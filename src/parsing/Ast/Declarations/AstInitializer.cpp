@@ -21,7 +21,7 @@ namespace parsing {
 		if (!initializerList)
 			parser.Error(lBrace->_span, "Expected to be followed by an initializer list");
 
-		Span span{lBrace->_span + initializerList->_span};
+		SpanOld span{lBrace->_span + initializerList->_span};
 		Token comma;
 		if (parser.AdvanceIfTokenIs(TokenType::Comma, comma))
 			span += comma._span;

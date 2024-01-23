@@ -7,7 +7,7 @@ namespace parsing {
 	struct AstStructOrUnion final : public AstNode {
 		enum class Kind { Struct, Union };
 
-		AstStructOrUnion(const Span &span, Kind kind)
+		AstStructOrUnion(const SpanOld &span, Kind kind)
 			: AstNode(AstNodeType::StructOrUnion)
 			, kind_{kind} {
 			this->_span = span;

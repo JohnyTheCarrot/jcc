@@ -13,7 +13,7 @@ namespace parsing {
 		enum class Kind { If, Switch };
 
 		AstSelectionStatement(
-				const Span &span, AstNode::Ptr &&condition, AstNode::Ptr &&body, AstNode::Ptr &&elseBody, Kind kind
+				const SpanOld &span, AstNode::Ptr &&condition, AstNode::Ptr &&body, AstNode::Ptr &&elseBody, Kind kind
 		) noexcept
 			: AstNode(AstNodeType::SelectionStatement)
 			, _condition{std::move(condition)}

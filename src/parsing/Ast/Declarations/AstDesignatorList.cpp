@@ -9,7 +9,7 @@
 namespace parsing {
 	std::optional<AstDesignatorList> AstDesignatorList::Parse(Parser &parser) {
 		std::vector<AstDesignator> designators{};
-		Span span;
+		SpanOld span;
 
 		std::optional<AstDesignator> designator{AstDesignator::Parse(parser)};
 		if (!designator)

@@ -10,7 +10,7 @@
 
 namespace parsing {
 	std::optional<AstWhileIterationStatement> AstWhileIterationStatement::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 
 		const std::optional<Token> tokenDo{parser.ConsumeIfTokenIs(TokenType::KeywordDo)};
 		if (tokenDo) {
@@ -79,7 +79,7 @@ namespace parsing {
 	)}
 
 	std::optional<AstForIterationStatement> AstForIterationStatement::Parse(Parser &parser) {
-		Span span{};
+		SpanOld span{};
 
 		const std::optional<Token> forToken{parser.ConsumeIfTokenIs(TokenType::KeywordFor)};
 		if (!forToken)

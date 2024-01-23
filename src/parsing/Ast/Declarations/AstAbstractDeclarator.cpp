@@ -15,7 +15,7 @@ namespace parsing {
 			return std::nullopt;
 		}
 
-		Span span;
+		SpanOld span;
 		if (pointer) {
 			if (directAbstractDeclarator) {
 				span = pointer->_span + directAbstractDeclarator->_span;

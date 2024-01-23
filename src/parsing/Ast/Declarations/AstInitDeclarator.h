@@ -12,7 +12,7 @@
 namespace parsing {
 
 	struct AstInitDeclarator final : public AstNode {
-		AstInitDeclarator(const Span &span, AstDeclarator &&declarator, AstNode::Ptr &&initializer)
+		AstInitDeclarator(const SpanOld &span, AstDeclarator &&declarator, AstNode::Ptr &&initializer)
 			: AstNode(AstNodeType::InitDeclarator)
 			, _declarator{std::move(declarator)}
 			, _initializer{std::move(initializer)} {

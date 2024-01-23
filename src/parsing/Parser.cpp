@@ -55,7 +55,7 @@ void Parser::Parse() {
 		std::cout << "didn't match" << std::endl;
 }
 
-void Parser::Error(const Span &span, const std::string &message) const {
+void Parser::Error(const SpanOld &span, const std::string &message) const {
 	::Error(this->fileName, this->inputStream, span, message);
 }
 
@@ -65,7 +65,7 @@ void Parser::Error(const std::string &message) const {
 	if (currentCursor == -1)
 		currentCursor = 0;
 
-	Span span{this->tokens[currentCursor]._span};
+	SpanOld span{this->tokens[currentCursor]._span};
 
 	this->Error(span, message);
 }
@@ -90,13 +90,13 @@ bool Parser::AdvanceIfTokenIs(TokenType tokenType, Token &token) {
 	return isTokenMatch;
 }
 
-const Token &Parser::ExpectToken(TokenType tokenType, Span &spanToAddTo) {
+const Token &Parser::ExpectToken(TokenType tokenType, SpanOld &spanToAddTo) {
 	std::stringstream errorMessage{};
 	errorMessage << "Expected " << magic_enum::enum_name(tokenType) << " but got ";
 
 	if (!*this) {
 		errorMessage << "end of file";
-		Span span{};
+		SpanOld span{};
 		if (!this->tokens.empty())
 			span = this->tokens[this->tokens.size() - 1]._span;
 
@@ -122,6 +122,6 @@ bool Parser::AdvanceIfTokenIs(TokenType tokenType) {
 }
 
 const Token &Parser::ExpectToken(TokenType tokenType) {
-	Span span;
+	SpanOld span;
 	return this->ExpectToken(tokenType, span);
 }
