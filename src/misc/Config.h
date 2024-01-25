@@ -17,8 +17,11 @@ using Char = wchar_t;
 #define C(c) c
 using Char = char;
 #endif
-using IStream = std::basic_istream<Char>;
+constexpr auto EOFChar = std::char_traits<Char>::eof();
+
+using IStream  = std::basic_istream<Char>;
 using IFStream = std::basic_ifstream<Char>;
-using String = std::basic_string<Char>;
+using ISStream = std::basic_istringstream<Char>;
+using String   = std::basic_string<Char>;
 
 #endif//CONFIG_H

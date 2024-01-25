@@ -18,7 +18,6 @@ std::ostream &WriteStringExact(std::ostream &out, const std::string &str);
 	{                                                                                                                  \
 		std::cerr << "TODO: " << __FILE__ << ":" << __LINE__ << std::endl;                                             \
 		std::exit(1);                                                                                                  \
-		__builtin_unreachable();                                                                                       \
 	}
 #define NOT_APPLICABLE()                                                                                               \
 	{                                                                                                                  \

@@ -6,9 +6,9 @@
 #define JCC_SPAN_H
 #include "Config.h"
 
-class Span final {
-	size_t m_lineNumberStart{}, m_lineNumberEnd{};
-	size_t m_characterIndexStart{}, m_characterIndexEnd{};
+struct Span final {
+	std::size_t m_LineNumberStart{}, m_LineNumberEnd{};
+	std::size_t m_CharacterIndexStart{}, m_CharacterIndexEnd{};
 };
 
 #endif//JCC_SPAN_H

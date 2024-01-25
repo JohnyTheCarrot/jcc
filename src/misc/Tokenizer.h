@@ -5,15 +5,19 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 #include "Config.h"
-#include "SpanOld.h"
+#include "Span.h"
 #include "Trie.h"
 
 
+#include <algorithm>
 #include <iterator>
 #include <variant>
 #include <vector>
 
 enum class TokenType {
+	Util_NewLine,
+	Util_LineComment,
+
 	Increment,
 	Plus,
 	AddAssign,
@@ -122,7 +126,7 @@ enum class IntegerLiteralType {
 	LongLong,
 };
 
-using IntegerTokenValue = int64_t;
+using IntegerTokenValue	 = int64_t;
 using FloatingTokenValue = double;
 
 struct IntegerLiteralTokenValue {
@@ -139,147 +143,158 @@ struct FloatingPointLiteralTokenValue {
 typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, std::string> TokenValue;
 
 struct Token final {
-	Token() = default;
+	TokenType m_Type{};
 
-	TokenType _type{};
+	Span m_Span{};
 
-	SpanOld _span{};
-
-	TokenValue _value{};
+	std::optional<TokenValue> m_Value{};
 };
 
+using TokenList = std::vector<Token>;
+
 class Tokenizer final {
-	TrieNode<C('!'), C('~'), Char, TokenType> m_tokenDefs{};
-	std::vector<Token> m_tokens{};
-	IStream &m_istream;
-	std::vector<String> m_lines{};
-	size_t m_currentLine{};
+public:
+	static constexpr std::size_t FIRST_CHAR_INDEX{1};
+	static constexpr std::size_t FIRST_LINE_INDEX{1};
 
-	void Tokenize() {
-		std::optional<TokenType> tokenType;
-		while ((tokenType = m_tokenDefs.Find(m_istream)).has_value()) {
-
-			//			 m_tokens.emplace_back({
-			//			 		tokenType,
-			//					Span{m_currentLine}
-			//			 })
-		}
-	}
+private:
+	TrieNode<C('\n'), C('~'), Char, TokenType> m_TokenDefs{};
+	IStream &m_IStream;
+	std::vector<String> m_Lines{};
+	std::size_t m_LineNumber{FIRST_LINE_INDEX};
 
 public:
-	explicit Tokenizer(std::basic_istream<Char> &is)
-		: m_istream{is} {
+	void Tokenize(TokenList &tokens);
+
+	explicit Tokenizer(IStream &is)
+		: m_IStream{is} {
 #pragma region token initialisation
-		m_tokenDefs.Insert(C("+"), TokenType::Plus);
-		m_tokenDefs.Insert(C("+="), TokenType::AddAssign);
-		m_tokenDefs.Insert(C("++"), TokenType::Increment);
-		m_tokenDefs.Insert(C("-"), TokenType::Minus);
-		m_tokenDefs.Insert(C("-="), TokenType::SubtractAssign);
-		m_tokenDefs.Insert(C("--"), TokenType::Decrement);
-		m_tokenDefs.Insert(C("~"), TokenType::BitwiseNot);
-		m_tokenDefs.Insert(C("*"), TokenType::Asterisk);
-		m_tokenDefs.Insert(C("*="), TokenType::MultiplyAssign);
-		m_tokenDefs.Insert(C("/"), TokenType::Divide);
-		m_tokenDefs.Insert(C("/="), TokenType::DivideAssign);
-		m_tokenDefs.Insert(C("\\"), TokenType::Backslash);
-		m_tokenDefs.Insert(C(";"), TokenType::Semicolon);
-		m_tokenDefs.Insert(C("{"), TokenType::LeftBrace);
-		m_tokenDefs.Insert(C("}"), TokenType::RightBrace);
-		m_tokenDefs.Insert(C("["), TokenType::LeftBracket);
-		m_tokenDefs.Insert(C("]"), TokenType::RightBracket);
-		m_tokenDefs.Insert(C("#"), TokenType::Hash);
-		m_tokenDefs.Insert(C("\?\?="), TokenType::Hash);
-		m_tokenDefs.Insert(C("\?\?("), TokenType::LeftBracket);
-		m_tokenDefs.Insert(C("\?\?/"), TokenType::Backslash);
-		m_tokenDefs.Insert(C("\?\?)"), TokenType::RightBracket);
-		m_tokenDefs.Insert(C("\?\?'"), TokenType::RightBracket);
-		m_tokenDefs.Insert(C("\?\?!"), TokenType::BitwiseOr);
-		m_tokenDefs.Insert(C("\?\?>"), TokenType::RightBrace);
-		m_tokenDefs.Insert(C("\?\?<"), TokenType::LeftBrace);
-		m_tokenDefs.Insert(C("\?\?-"), TokenType::BitwiseNot);
-		m_tokenDefs.Insert(C("<:"), TokenType::LeftBracket);
-		m_tokenDefs.Insert(C(":>"), TokenType::RightBracket);
-		m_tokenDefs.Insert(C("<%"), TokenType::LeftBrace);
-		m_tokenDefs.Insert(C("%>"), TokenType::RightBrace);
-		m_tokenDefs.Insert(C("("), TokenType::LeftParenthesis);
-		m_tokenDefs.Insert(C(")"), TokenType::RightParenthesis);
-		m_tokenDefs.Insert(C("^"), TokenType::ExclusiveOr);
-		m_tokenDefs.Insert(C("^="), TokenType::ExclusiveOrAssign);
-		m_tokenDefs.Insert(C("."), TokenType::Dot);
-		m_tokenDefs.Insert(C("->"), TokenType::Arrow);
-		m_tokenDefs.Insert(C(","), TokenType::Comma);
-		m_tokenDefs.Insert(C("<"), TokenType::LessThan);
-		m_tokenDefs.Insert(C("<="), TokenType::LessThanOrEqual);
-		m_tokenDefs.Insert(C("<<"), TokenType::ShiftLeft);
-		m_tokenDefs.Insert(C("<<="), TokenType::ShiftLeftAssign);
-		m_tokenDefs.Insert(C(">>"), TokenType::ShiftRight);
-		m_tokenDefs.Insert(C(">>="), TokenType::ShiftRightAssign);
-		m_tokenDefs.Insert(C(">"), TokenType::GreaterThan);
-		m_tokenDefs.Insert(C(">="), TokenType::GreaterThanOrEqual);
-		m_tokenDefs.Insert(C("|"), TokenType::BitwiseOr);
-		m_tokenDefs.Insert(C("|="), TokenType::BitwiseOrAssign);
-		m_tokenDefs.Insert(C("||"), TokenType::LogicalOr);
-		m_tokenDefs.Insert(C("&"), TokenType::Ampersand);
-		m_tokenDefs.Insert(C("&="), TokenType::BitwiseAndAssign);
-		m_tokenDefs.Insert(C("&&"), TokenType::LogicalAnd);
-		m_tokenDefs.Insert(C("!"), TokenType::LogicalNot);
-		m_tokenDefs.Insert(C("!="), TokenType::NotEquals);
-		m_tokenDefs.Insert(C("="), TokenType::Assign);
-		m_tokenDefs.Insert(C("=="), TokenType::Equals);
-		m_tokenDefs.Insert(C("?"), TokenType::QuestionMark);
-		m_tokenDefs.Insert(C(":"), TokenType::Colon);
-		m_tokenDefs.Insert(C("%"), TokenType::Modulo);
-		m_tokenDefs.Insert(C("%="), TokenType::ModuloAssign);
-		m_tokenDefs.Insert(C("..."), TokenType::Ellipsis);
+		// TODO: should the difference between \r\n and \n be handled by the preprocessor?
+		m_TokenDefs.Insert(C("\r\n"), TokenType::Util_NewLine);
+		m_TokenDefs.Insert(C("\n"), TokenType::Util_NewLine);
+
+		// FIXME: this isn't part of the tokenizer, it should be handled by the preprocessor
+		m_TokenDefs.Insert(C("//"), TokenType::Util_LineComment);
+
+		m_TokenDefs.Insert(C("+"), TokenType::Plus);
+		m_TokenDefs.Insert(C("+="), TokenType::AddAssign);
+		m_TokenDefs.Insert(C("++"), TokenType::Increment);
+		m_TokenDefs.Insert(C("-"), TokenType::Minus);
+		m_TokenDefs.Insert(C("-="), TokenType::SubtractAssign);
+		m_TokenDefs.Insert(C("--"), TokenType::Decrement);
+		m_TokenDefs.Insert(C("~"), TokenType::BitwiseNot);
+		m_TokenDefs.Insert(C("*"), TokenType::Asterisk);
+		m_TokenDefs.Insert(C("*="), TokenType::MultiplyAssign);
+		m_TokenDefs.Insert(C("/"), TokenType::Divide);
+		m_TokenDefs.Insert(C("/="), TokenType::DivideAssign);
+		m_TokenDefs.Insert(C(";"), TokenType::Semicolon);
+		m_TokenDefs.Insert(C("{"), TokenType::LeftBrace);
+		m_TokenDefs.Insert(C("}"), TokenType::RightBrace);
+		m_TokenDefs.Insert(C("["), TokenType::LeftBracket);
+		m_TokenDefs.Insert(C("]"), TokenType::RightBracket);
+
+		// TODO: investigate if this is even relevant to the tokenizer... isn't it only relevant to the preprocessor?
+		m_TokenDefs.Insert(C("#"), TokenType::Hash);
+
+		// FIXME: irrelevant to the tokenizer, should be handled by the preprocessor
+		m_TokenDefs.Insert(C("\\"), TokenType::Backslash);
+
+		// FIXME: trigraphs aren't part of the tokenizer, they should be handled by the preprocessor
+		m_TokenDefs.Insert(C("\?\?="), TokenType::Hash);
+		m_TokenDefs.Insert(C("\?\?("), TokenType::LeftBracket);
+		m_TokenDefs.Insert(C("\?\?/"), TokenType::Backslash);
+		m_TokenDefs.Insert(C("\?\?)"), TokenType::RightBracket);
+		m_TokenDefs.Insert(C("\?\?'"), TokenType::RightBracket);
+		m_TokenDefs.Insert(C("\?\?!"), TokenType::BitwiseOr);
+		m_TokenDefs.Insert(C("\?\?>"), TokenType::RightBrace);
+		m_TokenDefs.Insert(C("\?\?<"), TokenType::LeftBrace);
+		m_TokenDefs.Insert(C("\?\?-"), TokenType::BitwiseNot);
+
+		// FIXME: digraphs aren't part of the tokenizer, they should be handled by the preprocessor
+		m_TokenDefs.Insert(C("<:"), TokenType::LeftBracket);
+		m_TokenDefs.Insert(C(":>"), TokenType::RightBracket);
+		m_TokenDefs.Insert(C("<%"), TokenType::LeftBrace);
+		m_TokenDefs.Insert(C("%>"), TokenType::RightBrace);
+
+		m_TokenDefs.Insert(C("("), TokenType::LeftParenthesis);
+		m_TokenDefs.Insert(C(")"), TokenType::RightParenthesis);
+		m_TokenDefs.Insert(C("^"), TokenType::ExclusiveOr);
+		m_TokenDefs.Insert(C("^="), TokenType::ExclusiveOrAssign);
+		m_TokenDefs.Insert(C("."), TokenType::Dot);
+		m_TokenDefs.Insert(C("->"), TokenType::Arrow);
+		m_TokenDefs.Insert(C(","), TokenType::Comma);
+		m_TokenDefs.Insert(C("<"), TokenType::LessThan);
+		m_TokenDefs.Insert(C("<="), TokenType::LessThanOrEqual);
+		m_TokenDefs.Insert(C("<<"), TokenType::ShiftLeft);
+		m_TokenDefs.Insert(C("<<="), TokenType::ShiftLeftAssign);
+		m_TokenDefs.Insert(C(">>"), TokenType::ShiftRight);
+		m_TokenDefs.Insert(C(">>="), TokenType::ShiftRightAssign);
+		m_TokenDefs.Insert(C(">"), TokenType::GreaterThan);
+		m_TokenDefs.Insert(C(">="), TokenType::GreaterThanOrEqual);
+		m_TokenDefs.Insert(C("|"), TokenType::BitwiseOr);
+		m_TokenDefs.Insert(C("|="), TokenType::BitwiseOrAssign);
+		m_TokenDefs.Insert(C("||"), TokenType::LogicalOr);
+		m_TokenDefs.Insert(C("&"), TokenType::Ampersand);
+		m_TokenDefs.Insert(C("&="), TokenType::BitwiseAndAssign);
+		m_TokenDefs.Insert(C("&&"), TokenType::LogicalAnd);
+		m_TokenDefs.Insert(C("!"), TokenType::LogicalNot);
+		m_TokenDefs.Insert(C("!="), TokenType::NotEquals);
+		m_TokenDefs.Insert(C("="), TokenType::Assign);
+		m_TokenDefs.Insert(C("=="), TokenType::Equals);
+		m_TokenDefs.Insert(C("?"), TokenType::QuestionMark);
+		m_TokenDefs.Insert(C(":"), TokenType::Colon);
+		m_TokenDefs.Insert(C("%"), TokenType::Modulo);
+		m_TokenDefs.Insert(C("%="), TokenType::ModuloAssign);
+		m_TokenDefs.Insert(C("..."), TokenType::Ellipsis);
 
 		// Keywords
-		m_tokenDefs.Insert(C("auto"), TokenType::KeywordAuto);
-		m_tokenDefs.Insert(C("break"), TokenType::KeywordBreak);
-		m_tokenDefs.Insert(C("case"), TokenType::KeywordCase);
-		m_tokenDefs.Insert(C("char"), TokenType::KeywordChar);
-		m_tokenDefs.Insert(C("const"), TokenType::KeywordConst);
-		m_tokenDefs.Insert(C("continue"), TokenType::KeywordContinue);
-		m_tokenDefs.Insert(C("default"), TokenType::KeywordDefault);
-		m_tokenDefs.Insert(C("do"), TokenType::KeywordDo);
-		m_tokenDefs.Insert(C("double"), TokenType::KeywordDouble);
-		m_tokenDefs.Insert(C("else"), TokenType::KeywordElse);
-		m_tokenDefs.Insert(C("enum"), TokenType::KeywordEnum);
-		m_tokenDefs.Insert(C("extern"), TokenType::KeywordExtern);
-		m_tokenDefs.Insert(C("float"), TokenType::KeywordFloat);
-		m_tokenDefs.Insert(C("for"), TokenType::KeywordFor);
-		m_tokenDefs.Insert(C("goto"), TokenType::KeywordGoto);
-		m_tokenDefs.Insert(C("if"), TokenType::KeywordIf);
-		m_tokenDefs.Insert(C("inline"), TokenType::KeywordInline);
-		m_tokenDefs.Insert(C("int"), TokenType::KeywordInt);
-		m_tokenDefs.Insert(C("long"), TokenType::KeywordLong);
-		m_tokenDefs.Insert(C("register"), TokenType::KeywordRegister);
-		m_tokenDefs.Insert(C("restrict"), TokenType::KeywordRestrict);
-		m_tokenDefs.Insert(C("return"), TokenType::KeywordReturn);
-		m_tokenDefs.Insert(C("short"), TokenType::KeywordShort);
-		m_tokenDefs.Insert(C("signed"), TokenType::KeywordSigned);
-		m_tokenDefs.Insert(C("sizeof"), TokenType::KeywordSizeof);
-		m_tokenDefs.Insert(C("static"), TokenType::KeywordStatic);
-		m_tokenDefs.Insert(C("struct"), TokenType::KeywordStruct);
-		m_tokenDefs.Insert(C("switch"), TokenType::KeywordSwitch);
-		m_tokenDefs.Insert(C("typedef"), TokenType::KeywordTypedef);
-		m_tokenDefs.Insert(C("union"), TokenType::KeywordUnion);
-		m_tokenDefs.Insert(C("unsigned"), TokenType::KeywordUnsigned);
-		m_tokenDefs.Insert(C("void"), TokenType::KeywordVoid);
-		m_tokenDefs.Insert(C("volatile"), TokenType::KeywordVolatile);
-		m_tokenDefs.Insert(C("while"), TokenType::KeywordWhile);
-		m_tokenDefs.Insert(C("_Alignas"), TokenType::KeywordAlignas);
-		m_tokenDefs.Insert(C("_Alignof"), TokenType::KeywordAlignof);
-		m_tokenDefs.Insert(C("_Atomic"), TokenType::KeywordAtomic);
-		m_tokenDefs.Insert(C("_Bool"), TokenType::KeywordBool);
-		m_tokenDefs.Insert(C("_Complex"), TokenType::KeywordComplex);
-		m_tokenDefs.Insert(C("_Generic"), TokenType::KeywordGeneric);
-		m_tokenDefs.Insert(C("_Imaginary"), TokenType::KeywordImaginary);
-		m_tokenDefs.Insert(C("_Noreturn"), TokenType::KeywordNoreturn);
-		m_tokenDefs.Insert(C("_Static_assert"), TokenType::KeywordStaticAssert);
-		m_tokenDefs.Insert(C("_Thread_local"), TokenType::KeywordThreadLocal);
+		m_TokenDefs.Insert(C("auto"), TokenType::KeywordAuto);
+		m_TokenDefs.Insert(C("break"), TokenType::KeywordBreak);
+		m_TokenDefs.Insert(C("case"), TokenType::KeywordCase);
+		m_TokenDefs.Insert(C("char"), TokenType::KeywordChar);
+		m_TokenDefs.Insert(C("const"), TokenType::KeywordConst);
+		m_TokenDefs.Insert(C("continue"), TokenType::KeywordContinue);
+		m_TokenDefs.Insert(C("default"), TokenType::KeywordDefault);
+		m_TokenDefs.Insert(C("do"), TokenType::KeywordDo);
+		m_TokenDefs.Insert(C("double"), TokenType::KeywordDouble);
+		m_TokenDefs.Insert(C("else"), TokenType::KeywordElse);
+		m_TokenDefs.Insert(C("enum"), TokenType::KeywordEnum);
+		m_TokenDefs.Insert(C("extern"), TokenType::KeywordExtern);
+		m_TokenDefs.Insert(C("float"), TokenType::KeywordFloat);
+		m_TokenDefs.Insert(C("for"), TokenType::KeywordFor);
+		m_TokenDefs.Insert(C("goto"), TokenType::KeywordGoto);
+		m_TokenDefs.Insert(C("if"), TokenType::KeywordIf);
+		m_TokenDefs.Insert(C("inline"), TokenType::KeywordInline);
+		m_TokenDefs.Insert(C("int"), TokenType::KeywordInt);
+		m_TokenDefs.Insert(C("long"), TokenType::KeywordLong);
+		m_TokenDefs.Insert(C("register"), TokenType::KeywordRegister);
+		m_TokenDefs.Insert(C("restrict"), TokenType::KeywordRestrict);
+		m_TokenDefs.Insert(C("return"), TokenType::KeywordReturn);
+		m_TokenDefs.Insert(C("short"), TokenType::KeywordShort);
+		m_TokenDefs.Insert(C("signed"), TokenType::KeywordSigned);
+		m_TokenDefs.Insert(C("sizeof"), TokenType::KeywordSizeof);
+		m_TokenDefs.Insert(C("static"), TokenType::KeywordStatic);
+		m_TokenDefs.Insert(C("struct"), TokenType::KeywordStruct);
+		m_TokenDefs.Insert(C("switch"), TokenType::KeywordSwitch);
+		m_TokenDefs.Insert(C("typedef"), TokenType::KeywordTypedef);
+		m_TokenDefs.Insert(C("union"), TokenType::KeywordUnion);
+		m_TokenDefs.Insert(C("unsigned"), TokenType::KeywordUnsigned);
+		m_TokenDefs.Insert(C("void"), TokenType::KeywordVoid);
+		m_TokenDefs.Insert(C("volatile"), TokenType::KeywordVolatile);
+		m_TokenDefs.Insert(C("while"), TokenType::KeywordWhile);
+		m_TokenDefs.Insert(C("_Alignas"), TokenType::KeywordAlignas);
+		m_TokenDefs.Insert(C("_Alignof"), TokenType::KeywordAlignof);
+		m_TokenDefs.Insert(C("_Atomic"), TokenType::KeywordAtomic);
+		m_TokenDefs.Insert(C("_Bool"), TokenType::KeywordBool);
+		m_TokenDefs.Insert(C("_Complex"), TokenType::KeywordComplex);
+		m_TokenDefs.Insert(C("_Generic"), TokenType::KeywordGeneric);
+		m_TokenDefs.Insert(C("_Imaginary"), TokenType::KeywordImaginary);
+		m_TokenDefs.Insert(C("_Noreturn"), TokenType::KeywordNoreturn);
+		m_TokenDefs.Insert(C("_Static_assert"), TokenType::KeywordStaticAssert);
+		m_TokenDefs.Insert(C("_Thread_local"), TokenType::KeywordThreadLocal);
 
-		String str{};
-		while (std::getline(m_istream, str, C('\n'))) { m_lines.push_back(std::move(str)); }
+		//String str{};
+		//while (std::getline(m_IStream, str, C('\n'))) { m_Lines.push_back(std::move(str)); }
 #pragma endregion
 	}
 };
