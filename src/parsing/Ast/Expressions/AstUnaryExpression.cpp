@@ -73,7 +73,8 @@ namespace parsing {
 						unaryOperator = AstUnaryOperator::Not;
 						break;
 					default:
-						__builtin_unreachable();
+						// unreachable
+						break;
 				}
 
 				return std::make_unique<AstUnaryExpression>(unaryOperator, std::move(expression));
