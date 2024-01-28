@@ -326,29 +326,49 @@ Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
 				continue;
 			case C('?'):
 				lastPunctuator = Punctuator::QuestionMark;
-				break;
+				continue;
 			case C('^'):
 				lastPunctuator = Punctuator::Caret;
-				break;
+				continue;
 			case C('/'):
 				lastPunctuator = Punctuator::Slash;
-				break;
+				continue;
 			case C(','):
 				lastPunctuator = Punctuator::Comma;
-				break;
+				continue;
 			case C(':'):
 				lastPunctuator = Punctuator::Colon;
-				break;
+				continue;
 			case C(';'):
 				lastPunctuator = Punctuator::Semicolon;
-				break;
+				continue;
 			case C('#'):
 				lastPunctuator = Punctuator::Hash;
-				break;
+				continue;
 			default:
 				lastPunctuator = Punctuator::None;
-				continue;
+				break;
 		}
+
+		// TODO: Handle literals, as the keyword/identifier code relies on the character being a valid initial character
+
+		// Keywords or Identifiers
+		const String::const_iterator end{std::find_if(current, m_Buffer.cend(), [](auto c) {
+			return !isalnum(c) && c != C('_');
+		})};
+		if (end == current)
+			continue;
+
+		const StringView content(current, end);
+		const std::optional<Keyword> keyword{MatchKeyword(content)};
+		const String contentStr{content};
+
+		if (keyword.has_value()) {
+			tokens.emplace_back(keyword.value());
+		} else {
+			tokens.emplace_back(Identifier{contentStr});
+		}
+		current = end - 1;// -1 because the for loop will increment it
 	}
 
 	const auto [firstPunctuator, secondPunctuator] = CollapsePartialPunctuator(lastPunctuator);
@@ -375,6 +395,19 @@ Preprocessor::TokenList Preprocessor::Process(Diagnosis::Vec &diagnoses) {
 	return tokenList;
 }
 
+std::optional<Preprocessor::Keyword> Preprocessor::MatchKeyword(const StringView &view) const {
+	const auto matchIt{m_KeywordStrings.find(view)};
+
+	if (matchIt == m_KeywordStrings.cend())
+		return std::nullopt;
+
+	return matchIt->second;
+}
+
 std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator) {
 	return os << magic_enum::enum_name(punctuator);
+}
+
+std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword) {
+	return os << magic_enum::enum_name(keyword);
 }

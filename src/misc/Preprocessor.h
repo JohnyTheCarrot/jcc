@@ -3,7 +3,9 @@
 
 #include "Config.h"
 #include "reporting.h"
+#include <gtest/gtest-printers.h>
 #include <string>
+#include <unordered_map>
 #include <variant>
 
 // Preprocessing tokens:
@@ -21,24 +23,52 @@ class Preprocessor final {
 public:
 	struct HeaderName final {
 		String m_Name;
+
+		bool operator==(const HeaderName &other) const {
+			return m_Name == other.m_Name;
+		}
+
+		friend void PrintTo(const HeaderName &headerName, std::ostream *os) {
+			*os << testing::PrintToString(headerName.m_Name);
+		}
 	};
 
 	struct Identifier final {
 		String m_Name;
+
+		bool operator==(const Identifier &other) const {
+			return m_Name == other.m_Name;
+		}
+
+		friend void PrintTo(const Identifier &identifier, std::ostream *os) {
+			*os << testing::PrintToString(identifier.m_Name);
+		}
 	};
 
 	struct PpNumber final {
 		// A preprocessing number has neither a value nor a type at the time of preprocessing.
 		// It acquires both after a successful conversion to a number token.
 		String m_Number;
+
+		bool operator==(const PpNumber &other) const {
+			return m_Number == other.m_Number;
+		}
 	};
 
 	struct CharacterConstant final {
 		Char m_Character;
+
+		bool operator==(const CharacterConstant &other) const {
+			return m_Character == other.m_Character;
+		}
 	};
 
 	struct StringLiteral final {
 		String m_String;
+
+		bool operator==(const StringLiteral &other) const {
+			return m_String == other.m_String;
+		}
 	};
 
 	enum class Punctuator {
@@ -161,6 +191,56 @@ public:
 	using TokenList = std::vector<Token>;
 
 private:
+	std::unordered_map<StringView, Keyword> m_KeywordStrings{
+	        {C("auto"), Keyword::Auto},
+	        {C("break"), Keyword::Break},
+	        {C("case"), Keyword::Case},
+	        {C("char"), Keyword::Char},
+	        {C("const"), Keyword::Const},
+	        {C("continue"), Keyword::Continue},
+	        {C("default"), Keyword::Default},
+	        {C("do"), Keyword::Do},
+	        {C("double"), Keyword::Double},
+	        {C("else"), Keyword::Else},
+	        {C("enum"), Keyword::Enum},
+	        {C("extern"), Keyword::Extern},
+	        {C("float"), Keyword::Float},
+	        {C("for"), Keyword::For},
+	        {C("goto"), Keyword::Goto},
+	        {C("if"), Keyword::If},
+	        {C("inline"), Keyword::Inline},
+	        {C("int"), Keyword::Int},
+	        {C("long"), Keyword::Long},
+	        {C("register"), Keyword::Register},
+	        {C("restrict"), Keyword::Restrict},
+	        {C("return"), Keyword::Return},
+	        {C("short"), Keyword::Short},
+	        {C("signed"), Keyword::Signed},
+	        {C("sizeof"), Keyword::Sizeof},
+	        {C("static"), Keyword::Static},
+	        {C("struct"), Keyword::Struct},
+	        {C("switch"), Keyword::Switch},
+	        {C("typedef"), Keyword::Typedef},
+	        {C("union"), Keyword::Union},
+	        {C("unsigned"), Keyword::Unsigned},
+	        {C("void"), Keyword::Void},
+	        {C("volatile"), Keyword::Volatile},
+	        {C("while"), Keyword::While},
+	        {C("_Alignas"), Keyword::Alignas},
+	        {C("_Alignof"), Keyword::Alignof},
+	        {C("_Atomic"), Keyword::Atomic},
+	        {C("_Bool"), Keyword::Bool},
+	        {C("_Complex"), Keyword::Complex},
+	        {C("_Generic"), Keyword::Generic},
+	        {C("_Imaginary"), Keyword::Imaginary},
+	        {C("_Noreturn"), Keyword::Noreturn},
+	        {C("_Static_assert"), Keyword::StaticAssert},
+	        {C("_Thread_local"), Keyword::ThreadLocal}
+	};
+
+	[[nodiscard]]
+	std::optional<Keyword> MatchKeyword(const StringView &view) const;
+
 	[[nodiscard]]
 	TokenList Tokenize(Diagnosis::Vec &diagnoses);
 
@@ -183,5 +263,6 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator);
+std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword);
 
 #endif//JCC_PREPROCESSOR_H
