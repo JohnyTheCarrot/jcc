@@ -233,9 +233,10 @@ Preprocessor::Punctuator HandlePreviousPunctuator(String::const_iterator &curren
 }
 
 Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
-	String buffer{};
-	std::vector<Preprocessor::Token> tokens{};
+	TokenList tokens{};
 	Punctuator lastPunctuator{Punctuator::None};
+	bool wasLastPunctuatorHash{false};
+	Token *lastHash{nullptr};
 
 	for (String::const_iterator current{m_Buffer.cbegin()}; current != m_Buffer.cend(); ++current) {
 		if (*current != C('\n') && isspace(*current)) {
@@ -246,8 +247,13 @@ Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
 			Punctuator punctuator{HandlePreviousPunctuator(current, lastPunctuator)};
 
 			if (punctuator < Punctuator::None) {
-				tokens.emplace_back(punctuator);
+				Token &inserted{tokens.emplace_back(punctuator)};
 				lastPunctuator = Punctuator::None;
+
+				if (punctuator == Punctuator::Hash) {
+					wasLastPunctuatorHash = true;
+					lastHash              = &inserted;
+				}
 			}
 
 			if (current == m_Buffer.cend()) {
@@ -266,6 +272,14 @@ Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
 				lastPunctuator = punctuator;
 				continue;
 			}
+		}
+
+		if (*current == C('\n')) {
+			// TODO: Handle line continuations
+			// TODO: invalid in string literals
+			lastPunctuator        = Punctuator::None;
+			wasLastPunctuatorHash = false;
+			continue;
 		}
 
 		// Punctuators
@@ -360,8 +374,18 @@ Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
 			continue;
 
 		const StringView content(current, end);
-		const std::optional<Keyword> keyword{MatchKeyword(content)};
 		const String contentStr{content};
+
+		if (wasLastPunctuatorHash) {
+			const std::optional<Directive> directive{MatchDirective(content)};
+			if (directive.has_value()) {
+				*lastHash = directive.value();
+				current   = end - 1;// -1 because the for loop will increment it
+				continue;
+			}
+		}
+
+		const std::optional<Keyword> keyword{MatchKeyword(content)};
 
 		if (keyword.has_value()) {
 			tokens.emplace_back(keyword.value());
@@ -396,9 +420,18 @@ Preprocessor::TokenList Preprocessor::Process(Diagnosis::Vec &diagnoses) {
 }
 
 std::optional<Preprocessor::Keyword> Preprocessor::MatchKeyword(const StringView &view) const {
-	const auto matchIt{m_KeywordStrings.find(view)};
+	const auto matchIt{m_Keywords.find(view)};
 
-	if (matchIt == m_KeywordStrings.cend())
+	if (matchIt == m_Keywords.cend())
+		return std::nullopt;
+
+	return matchIt->second;
+}
+
+std::optional<Preprocessor::Directive> Preprocessor::MatchDirective(const StringView &view) const {
+	const auto matchIt{m_Directives.find(view)};
+
+	if (matchIt == m_Directives.cend())
 		return std::nullopt;
 
 	return matchIt->second;
@@ -410,4 +443,8 @@ std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator) 
 
 std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword) {
 	return os << magic_enum::enum_name(keyword);
+}
+
+std::ostream &operator<<(std::ostream &os, Preprocessor::Directive directive) {
+	return os << magic_enum::enum_name(directive);
 }

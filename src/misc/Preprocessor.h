@@ -187,11 +187,14 @@ public:
 		ThreadLocal,
 	};
 
-	using Token = std::variant<HeaderName, Identifier, PpNumber, CharacterConstant, StringLiteral, Punctuator, Keyword>;
+	enum class Directive { Include, Define, Undef, Line, Error, Pragma, If, Ifdef, Ifndef, Elif, Else, Endif };
+
+	using Token = std::variant<
+	        HeaderName, Identifier, PpNumber, CharacterConstant, StringLiteral, Punctuator, Keyword, Directive>;
 	using TokenList = std::vector<Token>;
 
 private:
-	std::unordered_map<StringView, Keyword> m_KeywordStrings{
+	std::unordered_map<StringView, Keyword> m_Keywords{
 	        {C("auto"), Keyword::Auto},
 	        {C("break"), Keyword::Break},
 	        {C("case"), Keyword::Case},
@@ -235,11 +238,21 @@ private:
 	        {C("_Imaginary"), Keyword::Imaginary},
 	        {C("_Noreturn"), Keyword::Noreturn},
 	        {C("_Static_assert"), Keyword::StaticAssert},
-	        {C("_Thread_local"), Keyword::ThreadLocal}
+	        {C("_Thread_local"), Keyword::ThreadLocal},
+	};
+
+	std::unordered_map<StringView, Directive> m_Directives{
+	        {C("include"), Directive::Include}, {C("define"), Directive::Define}, {C("undef"), Directive::Undef},
+	        {C("line"), Directive::Line},       {C("error"), Directive::Error},   {C("pragma"), Directive::Pragma},
+	        {C("if"), Directive::If},           {C("ifdef"), Directive::Ifdef},   {C("ifndef"), Directive::Ifndef},
+	        {C("elif"), Directive::Elif},       {C("else"), Directive::Else},     {C("endif"), Directive::Endif}
 	};
 
 	[[nodiscard]]
 	std::optional<Keyword> MatchKeyword(const StringView &view) const;
+
+	[[nodiscard]]
+	std::optional<Directive> MatchDirective(const StringView &view) const;
 
 	[[nodiscard]]
 	TokenList Tokenize(Diagnosis::Vec &diagnoses);
@@ -263,6 +276,9 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator);
+
 std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword);
+
+std::ostream &operator<<(std::ostream &os, Preprocessor::Directive directive);
 
 #endif//JCC_PREPROCESSOR_H
