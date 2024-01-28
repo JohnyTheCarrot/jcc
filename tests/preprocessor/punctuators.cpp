@@ -1,7 +1,7 @@
-#include "misc/reporting.h"
 #include <gtest/gtest.h>
 #include <misc/Config.h>
 #include <misc/Preprocessor.h>
+#include <misc/reporting.h>
 #include <tuple>
 #include <variant>
 
@@ -11,26 +11,20 @@ TEST_P(PunctuatorTest, Punctuators) {
 	Preprocessor preprocessor{std::get<0>(GetParam())};
 
 	Diagnosis::Vec diagnoses{};
-	Preprocessor::TokenList tokenList{preprocessor.Process(diagnoses)};
+	const Preprocessor::TokenList tokenList{preprocessor.Process(diagnoses)};
 	const auto expectedPunctuators{std::get<1>(GetParam())};
+	Preprocessor::TokenList expectedPunctuatorTokenList{};
+	std::transform(
+	        expectedPunctuators.cbegin(), expectedPunctuators.cend(), std::back_inserter(expectedPunctuatorTokenList),
+	        [](auto punctuator) { return Preprocessor::Token{punctuator}; }
+	);
 
 	ASSERT_GE(tokenList.size(), 1);
-	EXPECT_EQ(tokenList.size(), expectedPunctuators.size());
-	const bool areTokensValid{std::all_of(tokenList.cbegin(), tokenList.cend(), [](auto token) {
-		return std::holds_alternative<Preprocessor::Punctuator>(token);
-	})};
-	ASSERT_TRUE(areTokensValid);
-
-	std::vector<Preprocessor::Punctuator> tokensPunctuators{};
-	std::transform(tokenList.cbegin(), tokenList.cend(), std::back_inserter(tokensPunctuators), [](auto token) {
-		return std::get<Preprocessor::Punctuator>(token);
-	});
-
-	EXPECT_EQ(expectedPunctuators, tokensPunctuators);
+	EXPECT_EQ(expectedPunctuatorTokenList, tokenList);
 }
 
 using Punctuator = Preprocessor::Punctuator;
-using PunctVec   = std::vector<Preprocessor::Punctuator>;
+using PunctVec   = std::vector<Punctuator>;
 
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_Punctuators, PunctuatorTest,
