@@ -15,6 +15,7 @@ add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 target_link_libraries(jcc PUBLIC frozen fmt)
+target_include_directories(${PROJECT_NAME} PRIVATE libs)
 
 # GoogleTest
 include(FetchContent)
@@ -34,6 +35,7 @@ file(GLOB_RECURSE SRC_NO_MAIN src/parsing/*.cpp src/misc/*.cpp)
 add_executable(jcc_tests ${TEST_SRC} ${SRC_NO_MAIN})
 
 target_link_libraries(jcc_tests GTest::gtest_main frozen fmt)
+target_include_directories(jcc_tests PRIVATE src libs)
 
 include(GoogleTest)
 gtest_discover_tests(jcc_tests)
