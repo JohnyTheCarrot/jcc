@@ -17,14 +17,14 @@ std::string Diagnosis::ToString() const {
 
 std::ostream &operator<<(std::ostream &os, const Diagnosis &diagnosis) {
 	switch (diagnosis.kind_) {
+		case Diagnosis::Kind::PP_StrUnterminated:
+			os << "String literal was not terminated";
+			break;
 		case Diagnosis::Kind::TK_Unrecognized:
 			os << "Unrecognized token '" << std::get<char>(diagnosis.data0_.value()) << '\'';
 			break;
 		case Diagnosis::Kind::TK_UnknownEscapeSequence:
 			os << "Unknown escape sequence '\\" << std::get<char>(diagnosis.data0_.value()) << '\'';
-			break;
-		case Diagnosis::Kind::TK_StrUnterminated:
-			os << "String literal was not terminated";
 			break;
 		case Diagnosis::Kind::TK_InvalidBaseDigit:
 			os << "Invalid base digit \'" << std::get<char>(diagnosis.data0_.value()) << '\'';
@@ -37,7 +37,7 @@ std::ostream &operator<<(std::ostream &os, const Diagnosis &diagnosis) {
 
 	os << '\n';
 
-	os << diagnosis.span_.GetTextVersion();
+	// os << diagnosis.span_.GetTextVersion();
 
 	return os;
 }

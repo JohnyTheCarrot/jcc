@@ -1,7 +1,6 @@
-#include "../../src/misc/Config.h"
-#include "../../src/misc/Tokenizer.h"
 #include <gtest/gtest.h>
-#include <sstream>
+#include <misc/Config.h>
+#include <misc/Tokenizer.h>
 
 TEST(Tokenizer_SpanCreation, Simple) {
 	const String input{C("int")};
@@ -53,14 +52,14 @@ TEST_P(LeadingWhitespaceTest, LeadingSpaces) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-		Tokenizer_SpanCreation, LeadingWhitespaceTest,
-		testing::Values(
-				std::make_tuple(String{C(" ")}, String{C("_Alignas")}, TokenType::KeywordAlignas),
-				std::make_tuple(String{C("\t")}, String{C("int")}, TokenType::KeywordInt),
-				std::make_tuple(String{C("\t ")}, String{C("volatile")}, TokenType::KeywordVolatile),
-				std::make_tuple(String{C("\n")}, String{C("while")}, TokenType::KeywordWhile),
-				std::make_tuple(String{C("\n\t")}, String{C("_Alignof")}, TokenType::KeywordAlignof),
-				std::make_tuple(String{C("\n\n")}, String{C("_Atomic")}, TokenType::KeywordAtomic),
-				std::make_tuple(String{C("\r\n")}, String{C("_Bool")}, TokenType::KeywordBool)
-		)
+        Tokenizer_SpanCreation, LeadingWhitespaceTest,
+        testing::Values(
+                std::make_tuple(String{C(" ")}, String{C("_Alignas")}, TokenType::KeywordAlignas),
+                std::make_tuple(String{C("\t")}, String{C("int")}, TokenType::KeywordInt),
+                std::make_tuple(String{C("\t ")}, String{C("volatile")}, TokenType::KeywordVolatile),
+                std::make_tuple(String{C("\n")}, String{C("while")}, TokenType::KeywordWhile),
+                std::make_tuple(String{C("\n\t")}, String{C("_Alignof")}, TokenType::KeywordAlignof),
+                std::make_tuple(String{C("\n\n")}, String{C("_Atomic")}, TokenType::KeywordAtomic),
+                std::make_tuple(String{C("\r\n")}, String{C("_Bool")}, TokenType::KeywordBool)
+        )
 );

@@ -1,7 +1,6 @@
-#include "../../src/misc/Config.h"
-#include "../../src/misc/Tokenizer.h"
 #include <gtest/gtest.h>
-#include <sstream>
+#include <misc/Config.h>
+#include <misc/Tokenizer.h>
 
 TEST(Tokenizer_Tokens, Simple) {
 	const String input{C("volatile")};

@@ -6,6 +6,7 @@
 #define CONFIG_H
 
 #include <istream>
+#include <regex>
 #include <string>
 
 #define TK_WIDE
@@ -23,5 +24,6 @@ using IStream  = std::basic_istream<Char>;
 using IFStream = std::basic_ifstream<Char>;
 using ISStream = std::basic_istringstream<Char>;
 using String   = std::basic_string<Char>;
+using Regex	   = std::basic_regex<Char>;
 
 #endif//CONFIG_H
