@@ -1,7 +1,3 @@
-//
-// Created by Tuur Martens on 15/01/2024.
-//
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -20,11 +16,13 @@ using Char = char;
 #endif
 constexpr auto EOFChar = std::char_traits<Char>::eof();
 
-using IStream    = std::basic_istream<Char>;
-using IFStream   = std::basic_ifstream<Char>;
-using ISStream   = std::basic_istringstream<Char>;
-using String     = std::basic_string<Char>;
-using StringView = std::basic_string_view<Char>;
-using Regex      = std::basic_regex<Char>;
+using IStream      = std::basic_istream<Char>;
+using IFStream     = std::basic_ifstream<Char>;
+using ISStream     = std::basic_istringstream<Char>;
+using OStream      = std::basic_ostream<Char>;
+using String       = std::basic_string<Char>;
+using StringView   = std::basic_string_view<Char>;
+using StringStream = std::basic_stringstream<Char>;
+using Regex        = std::basic_regex<Char>;
 
 #endif//CONFIG_H
