@@ -1,6 +1,7 @@
 #ifndef JCC_REPORTING_H
 #define JCC_REPORTING_H
 
+#include "Config.h"
 #include "Span.h"
 #include "SpanOld.h"
 #include <optional>
@@ -14,8 +15,13 @@ struct Diagnosis final {
 
 	enum class Kind {
 		PP_StrUnterminated,
+		PP_CharUnterminated,
+		PP_CharNoValue,
+		PP_CharOutOfRange,
+		PP_CharHexNoDigits,
+		PP_UnknownEscapeSequence,
+		PP_UnexpectedEOF,
 		TK_Unrecognized,
-		TK_UnknownEscapeSequence,
 		TK_InvalidBaseDigit,
 		TK_UnexpectedIntSuffixChar,
 	};
@@ -25,16 +31,18 @@ struct Diagnosis final {
 		Error,
 	};
 
-	Span span_{};
-	Class class_{};
-	Kind kind_{};
-	Data data0_{}, data1_{};
+	Span  m_Span{};
+	Class m_Class{};
+	Kind  m_Kind{};
+	Data  m_Data0{}, m_Data1{};
 
 	[[nodiscard]]
-	std::string ToString() const;
+	String ToString() const;
 };
 
-std::ostream &operator<<(std::ostream &os, const Diagnosis &diagnosis);
+OStream &operator<<(OStream &os, const Diagnosis &diagnosis);
+
+std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind);
 
 void Warn(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message);
 

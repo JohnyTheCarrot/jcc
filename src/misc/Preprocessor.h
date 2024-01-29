@@ -1,7 +1,7 @@
 #ifndef JCC_PREPROCESSOR_H
 #define JCC_PREPROCESSOR_H
 
-#include "Config.h"
+#include "CompilerDatatypes.h"
 #include "reporting.h"
 #include <gtest/gtest-printers.h>
 #include <string>
@@ -18,11 +18,13 @@
 // each non-white-space character that cannot be one of the above
 
 class Preprocessor final {
-	String m_Buffer;
+	std::string m_Buffer;
 
 public:
+	using StringConstIter = CompilerDataTypes::StringConstIter;
+
 	struct HeaderName final {
-		String m_Name;
+		CompilerDataTypes::String m_Name;
 
 		bool operator==(const HeaderName &other) const {
 			return m_Name == other.m_Name;
@@ -34,7 +36,7 @@ public:
 	};
 
 	struct Identifier final {
-		String m_Name;
+		CompilerDataTypes::String m_Name;
 
 		bool operator==(const Identifier &other) const {
 			return m_Name == other.m_Name;
@@ -48,27 +50,35 @@ public:
 	struct PpNumber final {
 		// A preprocessing number has neither a value nor a type at the time of preprocessing.
 		// It acquires both after a successful conversion to a number token.
-		String m_Number;
+		CompilerDataTypes::String m_Number;
 
 		bool operator==(const PpNumber &other) const {
 			return m_Number == other.m_Number;
 		}
 	};
 
+	enum class ConstantPrefix { None, L, u, U, u8 };
+
 	struct CharacterConstant final {
-		Char m_Character;
+		uint32_t       m_Character;
+		ConstantPrefix m_Prefix;
 
 		bool operator==(const CharacterConstant &other) const {
-			return m_Character == other.m_Character;
+			return m_Character == other.m_Character && m_Prefix == other.m_Prefix;
 		}
+
+		friend void PrintTo(const CharacterConstant &characterConstant, std::ostream *os);
 	};
 
-	struct StringLiteral final {
-		String m_String;
+	struct StringConstant final {
+		CompilerDataTypes::String m_String;
+		ConstantPrefix            m_Prefix;
 
-		bool operator==(const StringLiteral &other) const {
-			return m_String == other.m_String;
+		bool operator==(const StringConstant &other) const {
+			return m_String == other.m_String && m_Prefix == other.m_Prefix;
 		}
+
+		friend void PrintTo(const StringConstant &stringConstant, std::ostream *os);
 	};
 
 	enum class Punctuator {
@@ -190,79 +200,103 @@ public:
 	enum class Directive { Include, Define, Undef, Line, Error, Pragma, If, Ifdef, Ifndef, Elif, Else, Endif };
 
 	using Token = std::variant<
-	        HeaderName, Identifier, PpNumber, CharacterConstant, StringLiteral, Punctuator, Keyword, Directive>;
+	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive>;
 	using TokenList = std::vector<Token>;
 
 private:
-	std::unordered_map<StringView, Keyword> m_Keywords{
-	        {C("auto"), Keyword::Auto},
-	        {C("break"), Keyword::Break},
-	        {C("case"), Keyword::Case},
-	        {C("char"), Keyword::Char},
-	        {C("const"), Keyword::Const},
-	        {C("continue"), Keyword::Continue},
-	        {C("default"), Keyword::Default},
-	        {C("do"), Keyword::Do},
-	        {C("double"), Keyword::Double},
-	        {C("else"), Keyword::Else},
-	        {C("enum"), Keyword::Enum},
-	        {C("extern"), Keyword::Extern},
-	        {C("float"), Keyword::Float},
-	        {C("for"), Keyword::For},
-	        {C("goto"), Keyword::Goto},
-	        {C("if"), Keyword::If},
-	        {C("inline"), Keyword::Inline},
-	        {C("int"), Keyword::Int},
-	        {C("long"), Keyword::Long},
-	        {C("register"), Keyword::Register},
-	        {C("restrict"), Keyword::Restrict},
-	        {C("return"), Keyword::Return},
-	        {C("short"), Keyword::Short},
-	        {C("signed"), Keyword::Signed},
-	        {C("sizeof"), Keyword::Sizeof},
-	        {C("static"), Keyword::Static},
-	        {C("struct"), Keyword::Struct},
-	        {C("switch"), Keyword::Switch},
-	        {C("typedef"), Keyword::Typedef},
-	        {C("union"), Keyword::Union},
-	        {C("unsigned"), Keyword::Unsigned},
-	        {C("void"), Keyword::Void},
-	        {C("volatile"), Keyword::Volatile},
-	        {C("while"), Keyword::While},
-	        {C("_Alignas"), Keyword::Alignas},
-	        {C("_Alignof"), Keyword::Alignof},
-	        {C("_Atomic"), Keyword::Atomic},
-	        {C("_Bool"), Keyword::Bool},
-	        {C("_Complex"), Keyword::Complex},
-	        {C("_Generic"), Keyword::Generic},
-	        {C("_Imaginary"), Keyword::Imaginary},
-	        {C("_Noreturn"), Keyword::Noreturn},
-	        {C("_Static_assert"), Keyword::StaticAssert},
-	        {C("_Thread_local"), Keyword::ThreadLocal},
+	std::unordered_map<CompilerDataTypes::StringView, Keyword> m_Keywords{
+	        {COMP_STRING("auto"), Keyword::Auto},
+	        {COMP_STRING("break"), Keyword::Break},
+	        {COMP_STRING("case"), Keyword::Case},
+	        {COMP_STRING("char"), Keyword::Char},
+	        {COMP_STRING("const"), Keyword::Const},
+	        {COMP_STRING("continue"), Keyword::Continue},
+	        {COMP_STRING("default"), Keyword::Default},
+	        {COMP_STRING("do"), Keyword::Do},
+	        {COMP_STRING("double"), Keyword::Double},
+	        {COMP_STRING("else"), Keyword::Else},
+	        {COMP_STRING("enum"), Keyword::Enum},
+	        {COMP_STRING("extern"), Keyword::Extern},
+	        {COMP_STRING("float"), Keyword::Float},
+	        {COMP_STRING("for"), Keyword::For},
+	        {COMP_STRING("goto"), Keyword::Goto},
+	        {COMP_STRING("if"), Keyword::If},
+	        {COMP_STRING("inline"), Keyword::Inline},
+	        {COMP_STRING("int"), Keyword::Int},
+	        {COMP_STRING("long"), Keyword::Long},
+	        {COMP_STRING("register"), Keyword::Register},
+	        {COMP_STRING("restrict"), Keyword::Restrict},
+	        {COMP_STRING("return"), Keyword::Return},
+	        {COMP_STRING("short"), Keyword::Short},
+	        {COMP_STRING("signed"), Keyword::Signed},
+	        {COMP_STRING("sizeof"), Keyword::Sizeof},
+	        {COMP_STRING("static"), Keyword::Static},
+	        {COMP_STRING("struct"), Keyword::Struct},
+	        {COMP_STRING("switch"), Keyword::Switch},
+	        {COMP_STRING("typedef"), Keyword::Typedef},
+	        {COMP_STRING("union"), Keyword::Union},
+	        {COMP_STRING("unsigned"), Keyword::Unsigned},
+	        {COMP_STRING("void"), Keyword::Void},
+	        {COMP_STRING("volatile"), Keyword::Volatile},
+	        {COMP_STRING("while"), Keyword::While},
+	        {COMP_STRING("_Alignas"), Keyword::Alignas},
+	        {COMP_STRING("_Alignof"), Keyword::Alignof},
+	        {COMP_STRING("_Atomic"), Keyword::Atomic},
+	        {COMP_STRING("_Bool"), Keyword::Bool},
+	        {COMP_STRING("_Complex"), Keyword::Complex},
+	        {COMP_STRING("_Generic"), Keyword::Generic},
+	        {COMP_STRING("_Imaginary"), Keyword::Imaginary},
+	        {COMP_STRING("_Noreturn"), Keyword::Noreturn},
+	        {COMP_STRING("_Static_assert"), Keyword::StaticAssert},
+	        {COMP_STRING("_Thread_local"), Keyword::ThreadLocal},
 	};
 
-	std::unordered_map<StringView, Directive> m_Directives{
-	        {C("include"), Directive::Include}, {C("define"), Directive::Define}, {C("undef"), Directive::Undef},
-	        {C("line"), Directive::Line},       {C("error"), Directive::Error},   {C("pragma"), Directive::Pragma},
-	        {C("if"), Directive::If},           {C("ifdef"), Directive::Ifdef},   {C("ifndef"), Directive::Ifndef},
-	        {C("elif"), Directive::Elif},       {C("else"), Directive::Else},     {C("endif"), Directive::Endif}
+	std::unordered_map<CompilerDataTypes::StringView, Directive> m_Directives{
+	        {COMP_STRING("include"), Directive::Include}, {COMP_STRING("define"), Directive::Define},
+	        {COMP_STRING("undef"), Directive::Undef},     {COMP_STRING("line"), Directive::Line},
+	        {COMP_STRING("error"), Directive::Error},     {COMP_STRING("pragma"), Directive::Pragma},
+	        {COMP_STRING("if"), Directive::If},           {COMP_STRING("ifdef"), Directive::Ifdef},
+	        {COMP_STRING("ifndef"), Directive::Ifndef},   {COMP_STRING("elif"), Directive::Elif},
+	        {COMP_STRING("else"), Directive::Else},       {COMP_STRING("endif"), Directive::Endif}
 	};
 
 	[[nodiscard]]
-	std::optional<Keyword> MatchKeyword(const StringView &view) const;
+	std::optional<Keyword> MatchKeyword(const CompilerDataTypes::StringView &view) const;
 
 	[[nodiscard]]
-	std::optional<Directive> MatchDirective(const StringView &view) const;
+	std::optional<Directive> MatchDirective(const CompilerDataTypes::StringView &view) const;
+
+	enum class ValidEscapeBase {
+		Octal,
+		Hexadecimal,
+	};
+
+	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
+
+	bool TokenizeNumericalEscapeSequence(
+	        StringConstIter &current, CompilerDataTypes::String &literalContent, Diagnosis::Vec &diagnoses,
+	        unsigned long valueLimit, uint32_t valueMask, ValidEscapeBase base
+	);
+
+	enum class ConstantType {
+		Character,
+		String,
+	};
+
+	bool TokenizeCharacterOrStringLiteral(
+	        StringConstIter &current, ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses,
+	        Preprocessor::ConstantType type
+	);
 
 	[[nodiscard]]
 	TokenList Tokenize(Diagnosis::Vec &diagnoses);
 
 public:
-	explicit Preprocessor(const String &buffer)
+	explicit Preprocessor(const CompilerDataTypes::String &buffer)
 	    : m_Buffer{buffer} {
 	}
 
-	explicit Preprocessor(String &&buffer)
+	explicit Preprocessor(CompilerDataTypes::String &&buffer)
 	    : m_Buffer{std::move(buffer)} {
 	}
 
