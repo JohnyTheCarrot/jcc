@@ -4,453 +4,532 @@
 #include <magic_enum/magic_enum.hpp>
 #include <regex>
 
-std::tuple<Preprocessor::Punctuator, Preprocessor::Punctuator>
-CollapsePartialPunctuator(Preprocessor::Punctuator punctuator) {
-	using Punctuator = Preprocessor::Punctuator;
-
-	switch (punctuator) {
-		case Punctuator::PartialLeftShift:
-			return {Punctuator::LessThanLessThan, Punctuator::None};
-		case Punctuator::PartialRightShift:
-			return {Punctuator::GreaterThanGreaterThan, Punctuator::None};
-		case Punctuator::PartialHashHashDigraph:
-			return {Punctuator::Hash, Punctuator::None};
-		case Punctuator::HashHashDigraphFailure:
-		case Punctuator::PartialHashHashDigraphStage2:
-			return {Punctuator::Hash, Punctuator::Percent};
-		case Punctuator::PartialEllipsis:
-			return {Punctuator::Dot, Punctuator::Dot};
-		default:
-			return {punctuator, Punctuator::None};
+Preprocessor::Punctuator Preprocessor::TokenizeDot(Diagnosis::Vec &diagnoses) {
+	if (m_Current == m_Buffer.cend() || *m_Current != '.') {
+		return Punctuator::Dot;
 	}
+
+	if (++m_Current == m_Buffer.cend() || *m_Current++ != '.') {
+		const Span span{};// TODO: Get the span
+		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_PartialTokenEncountered, "...");
+		return Punctuator::None;
+	}
+
+	return Punctuator::Ellipsis;
 }
 
-std::tuple<Preprocessor::Punctuator, Preprocessor::Punctuator> CollapseFailures(Preprocessor::Punctuator punctuator) {
-	using Punctuator = Preprocessor::Punctuator;
-
-	switch (punctuator) {
-		case Punctuator::HashHashDigraphFailure:
-			return {Punctuator::Hash, Punctuator::Percent};
-		case Punctuator::EllipsisFailure:
-			return {Punctuator::Dot, Punctuator::Dot};
-		default:
-			return {punctuator, Punctuator::None};
+Preprocessor::Punctuator Preprocessor::TokenizeDash() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::Minus;
 	}
-}
 
-Preprocessor::Punctuator
-HandlePreviousPunctuator(Preprocessor::StringConstIter &current, Preprocessor::Punctuator prev) {
-	using Punctuator = Preprocessor::Punctuator;
 	Punctuator result;
 
-	switch (prev) {
-		case Punctuator::Minus:
-			switch (*current) {
-				case '-':
-					result = Punctuator::MinusMinus;
-					break;
-				case '>':
-					result = Punctuator::Arrow;
-					break;
-				case '=':
-					result = Punctuator::MinusEqual;
-					break;
-				default:
-					return Punctuator::Minus;
-			}
+	switch (*m_Current) {
+		case '-':
+			result = Punctuator::MinusMinus;
 			break;
-		case Punctuator::Plus:
-			switch (*current) {
-				case '+':
-					result = Punctuator::PlusPlus;
-					break;
-				case '=':
-					result = Punctuator::PlusEqual;
-					break;
-				default:
-					return Punctuator::Plus;
-			}
+		case '>':
+			result = Punctuator::Arrow;
 			break;
-		case Punctuator::Percent:
-			switch (*current) {
-				case '>':
-					result = Punctuator::RightBrace;
-					break;
-				case ':':
-					return Punctuator::PartialHashHashDigraph;
-				case '=':
-					result = Punctuator::PercentEqual;
-					break;
-				default:
-					return Punctuator::Percent;
-			}
-			break;
-		case Punctuator::Equal:
-			if (*current == '=')
-				result = Punctuator::EqualEqual;
-			else
-				return Punctuator::Equal;
-			break;
-		case Punctuator::Ampersand:
-			switch (*current) {
-				case '&':
-					result = Punctuator::AmpersandAmpersand;
-					break;
-				case '=':
-					result = Punctuator::AmpersandEqual;
-					break;
-				default:
-					return Punctuator::Ampersand;
-			}
-			break;
-		case Punctuator::VerticalBar:
-			switch (*current) {
-				case '|':
-					result = Punctuator::VerticalBarVerticalBar;
-					break;
-				case '=':
-					result = Punctuator::VerticalBarEqual;
-					break;
-				default:
-					return Punctuator::VerticalBar;
-			}
-			break;
-		case Punctuator::LessThan:
-			switch (*current) {
-				case '<':
-					return Punctuator::PartialLeftShift;
-				case '=':
-					result = Punctuator::LessThanEqual;
-					break;
-				case ':':
-					result = Punctuator::LeftBracket;
-					break;
-				case '%':
-					result = Punctuator::LeftBrace;
-					break;
-				default:
-					return Punctuator::LessThan;
-			}
-			break;
-		case Punctuator::GreaterThan:
-			switch (*current) {
-				case '>':
-					return Punctuator::PartialRightShift;
-				case '=':
-					result = Punctuator::GreaterThanEqual;
-					break;
-				case ':':
-					result = Punctuator::RightBracket;
-					break;
-				default:
-					return Punctuator::GreaterThan;
-			}
-			break;
-		case Punctuator::PartialLeftShift:
-			if (*current == '=')
-				result = Punctuator::LessThanLessThanEqual;
-			else
-				return Punctuator::LessThanLessThan;
-			break;
-		case Punctuator::PartialRightShift:
-			if (*current == '=')
-				result = Punctuator::GreaterThanGreaterThanEqual;
-			else
-				return Punctuator::GreaterThanGreaterThan;
-			break;
-		case Punctuator::PartialHashHashDigraph:
-			if (*current == '%') {
-				return Punctuator::PartialHashHashDigraphStage2;
-			}
-
-			return Punctuator::Hash;
-		case Punctuator::PartialHashHashDigraphStage2:
-			if (*current == ':') {
-				result = Punctuator::HashHash;
-			} else {
-				return Punctuator::HashHashDigraphFailure;
-			}
-			break;
-		case Punctuator::Hash:
-			if (*current == '#') {
-				result = Punctuator::HashHash;
-			} else {
-				return Punctuator::Hash;
-			}
-			break;
-		case Punctuator::ExclamationMark:
-			if (*current == '=') {
-				result = Punctuator::ExclamationMarkEqual;
-			} else {
-				return Punctuator::ExclamationMark;
-			}
-			break;
-		case Punctuator::Dot:
-			if (*current == '.') {
-				return Punctuator::PartialEllipsis;
-			}
-			return Punctuator::Dot;
-		case Punctuator::PartialEllipsis:
-			if (*current == '.') {
-				result = Punctuator::Ellipsis;
-			} else {
-				return Punctuator::EllipsisFailure;
-			}
-			break;
-		case Punctuator::Asterisk:
-			if (*current == '=') {
-				result = Punctuator::AsteriskEqual;
-			} else {
-				return Punctuator::Asterisk;
-			}
-			break;
-		case Punctuator::Slash:
-			if (*current == '=') {
-				result = Punctuator::SlashEqual;
-			} else {
-				return Punctuator::Slash;
-			}
-			break;
-		case Punctuator::Caret:
-			if (*current == '=') {
-				result = Punctuator::CaretEqual;
-			} else {
-				return Punctuator::Caret;
-			}
-			break;
-		case Punctuator::Colon:
-			if (*current == '>') {
-				result = Punctuator::RightBracket;
-			} else {
-				return Punctuator::Colon;
-			}
+		case '=':
+			result = Punctuator::MinusEqual;
 			break;
 		default:
-			// the previousPunctuator is itself a complete punctuator
-			return prev;
+			return Punctuator::Minus;
 	}
 
-	++current;
+	++m_Current;
 	return result;
 }
 
-Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
-	TokenList      tokens{};
-	Punctuator     lastPunctuator{Punctuator::None};
-	bool           wasLastPunctuatorHash{false};
-	Token         *lastHash{nullptr};
-	ConstantPrefix genericConstantPrefix{ConstantPrefix::None};
+Preprocessor::Punctuator Preprocessor::TokenizePlus() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::Plus;
+	}
 
-	for (StringConstIter current{m_Buffer.cbegin()}; current != m_Buffer.cend(); ++current) {
-		if (*current != '\n' && isspace(*current)) {
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '+':
+			result = Punctuator::PlusPlus;
+			break;
+		case '=':
+			result = Punctuator::PlusEqual;
+			break;
+		default:
+			return Punctuator::Plus;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeAmpersand() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::Ampersand;
+	}
+
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '&':
+			result = Punctuator::AmpersandAmpersand;
+			break;
+		case '=':
+			result = Punctuator::AmpersandEqual;
+			break;
+		default:
+			return Punctuator::Ampersand;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeVerticalBar() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::VerticalBar;
+	}
+
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '|':
+			result = Punctuator::VerticalBarVerticalBar;
+			break;
+		case '=':
+			result = Punctuator::VerticalBarEqual;
+			break;
+		default:
+			return Punctuator::VerticalBar;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeAsterisk() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::Asterisk;
+	}
+
+	++m_Current;
+	return Punctuator::AsteriskEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeLessThan() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::LessThan;
+	}
+
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '<':
+			++m_Current;
+			return TokenizeDoubleLessThan();
+		case '=':
+			result = Punctuator::LessThanEqual;
+			break;
+		case ':':
+			result = Punctuator::LeftBracket;
+			break;
+		case '%':
+			result = Punctuator::LeftBrace;
+			break;
+		default:
+			return Punctuator::LessThan;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeDoubleLessThan() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::LessThanLessThan;
+	}
+
+	++m_Current;
+	return Punctuator::LessThanLessThanEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeGreaterThan() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::GreaterThan;
+	}
+
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '>':
+			++m_Current;
+			return TokenizeDoubleGreaterThan();
+		case '=':
+			result = Punctuator::GreaterThanEqual;
+			break;
+		case ':':
+			result = Punctuator::RightBracket;
+			break;
+		default:
+			return Punctuator::GreaterThan;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeDoubleGreaterThan() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::GreaterThanGreaterThan;
+	}
+
+	++m_Current;
+	return Punctuator::GreaterThanGreaterThanEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeEqual() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::Equal;
+	}
+
+	++m_Current;
+	return Punctuator::EqualEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeExclamationMark() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::ExclamationMark;
+	}
+
+	++m_Current;
+	return Punctuator::ExclamationMarkEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizePercent(Diagnosis::Vec &diagnoses) {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::Percent;
+	}
+
+	Punctuator result;
+
+	switch (*m_Current) {
+		case '>':
+			result = Punctuator::RightBrace;
+			break;
+		case ':':
+			++m_Current;
+			return TokenizeHashHashDigraph(diagnoses);
+		case '=':
+			result = Punctuator::PercentEqual;
+			break;
+		default:
+			return Punctuator::Percent;
+	}
+
+	++m_Current;
+	return result;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeHashHashDigraph(Diagnosis::Vec &diagnoses) {
+	if (m_Current == m_Buffer.cend() || *m_Current != '%') {
+		return Punctuator::Hash;
+	}
+
+	if (++m_Current == m_Buffer.cend() || *m_Current++ != ':') {
+		const Span span{};// TODO: Get the span
+		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_PartialTokenEncountered, "%:%:");
+		return Punctuator::None;
+	}
+
+	return Punctuator::HashHash;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeCaret() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '=') {
+		return Punctuator::Caret;
+	}
+
+	++m_Current;
+	return Punctuator::CaretEqual;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeSlash() {
+	if (m_Current == m_Buffer.cend()) {
+		return Punctuator::Slash;
+	}
+
+	switch (*m_Current) {
+		case '/':
+			m_Current = std::find(m_Current, m_Buffer.cend(), '\n');
+			return Punctuator::None;
+		case '=':
+			++m_Current;
+			return Punctuator::SlashEqual;
+		default:
+			return Punctuator::Slash;
+	}
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeColon() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '>') {
+		return Punctuator::Colon;
+	}
+
+	++m_Current;
+	return Punctuator::RightBracket;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizeHash() {
+	if (m_Current == m_Buffer.cend() || *m_Current != '#') {
+		return Punctuator::Hash;
+	}
+
+	++m_Current;
+	return Punctuator::HashHash;
+}
+
+Preprocessor::Punctuator Preprocessor::TokenizePunctuator(Diagnosis::Vec &diagnoses) {
+	Punctuator result{Punctuator::None};
+
+	switch (*m_Current) {
+		case '[':
+			result = Punctuator::LeftBracket;
+			break;
+		case ']':
+			result = Punctuator::RightBracket;
+			break;
+		case '{':
+			result = Punctuator::LeftBrace;
+			break;
+		case '}':
+			result = Punctuator::RightBrace;
+			break;
+		case '(':
+			result = Punctuator::LeftParenthesis;
+			break;
+		case ')':
+			result = Punctuator::RightParenthesis;
+			break;
+		case ';':
+			result = Punctuator::Semicolon;
+			break;
+		case '~':
+			result = Punctuator::Tilde;
+			break;
+		case '?':
+			// trigraphs are replaced with their corresponding character before tokenization
+			result = Punctuator::QuestionMark;
+			break;
+		case ',':
+			result = Punctuator::Comma;
+			break;
+		case '-':
+			++m_Current;
+			return TokenizeDash();
+		case '+':
+			++m_Current;
+			return TokenizePlus();
+		case '&':
+			++m_Current;
+			return TokenizeAmpersand();
+		case '|':
+			++m_Current;
+			return TokenizeVerticalBar();
+		case '*':
+			++m_Current;
+			return TokenizeAsterisk();
+		case '<':
+			++m_Current;
+			return TokenizeLessThan();
+		case '>':
+			++m_Current;
+			return TokenizeGreaterThan();
+		case '=':
+			++m_Current;
+			return TokenizeEqual();
+		case '!':
+			++m_Current;
+			return TokenizeExclamationMark();
+		case '^':
+			++m_Current;
+			return TokenizeCaret();
+		case '/':
+			++m_Current;
+			return TokenizeSlash();
+		case ':':
+			++m_Current;
+			return TokenizeColon();
+		case '#':
+			++m_Current;
+			return TokenizeHash();
+		case '.':
+			++m_Current;
+			return TokenizeDot(diagnoses);
+		case '%':
+			++m_Current;
+			return TokenizePercent(diagnoses);
+		default:
+			return Punctuator::None;
+	}
+
+	++m_Current;
+	return result;
+}
+
+std::optional<Preprocessor::Directive> Preprocessor::TokenizeDirective(Diagnosis::Vec &diagnoses) {
+	m_Current = std::find_if(m_Current, m_Buffer.cend(), [](auto c) { return !isspace(c) || c == '\n'; });
+
+	if (m_Current == m_Buffer.cend())
+		return std::nullopt;
+
+	if (*m_Current == '\n') {
+		++m_Current;
+		return std::nullopt;
+	}
+
+	const StringConstIter end{std::find_if(m_Current, m_Buffer.cend(), [](auto c) { return !isalnum(c) && c != '_'; })};
+	if (end == m_Current) {
+		return std::nullopt;
+	}
+
+	const CompilerDataTypes::StringView content(m_Current, end);
+
+	const std::optional<Directive> directive{MatchDirective(content)};
+	if (!directive.has_value()) {
+		const Span                      span{};// TODO: Get the span
+		const CompilerDataTypes::String contentStr{content};
+
+		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnknownDirective, contentStr);
+		return std::nullopt;
+	}
+
+	m_Current = end;
+	return directive;
+}
+
+bool Preprocessor::TokenizeConstantPrefix(TokenList &tokens, Diagnosis::Vec &diagnoses) {
+	ConstantPrefix result;
+
+	switch (*m_Current) {
+		case 'L':
+			result = ConstantPrefix::L;
+			break;
+		case 'u':
+			result = ConstantPrefix::u;
+			break;
+		case 'U':
+			result = ConstantPrefix::U;
+			break;
+		default:
+			return true;
+	}
+
+	++m_Current;
+
+	if (result == ConstantPrefix::u && *m_Current == '8') {
+		result = ConstantPrefix::u8;
+		++m_Current;
+	}
+
+	return TokenizeCharacterConstant(result, tokens, diagnoses);
+}
+
+bool Preprocessor::TokenizeCharacterConstant(ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses) {
+	switch (*m_Current) {
+		case '\'':// character literal
+			++m_Current;
+			return TokenizeCharacterOrStringLiteral(prefix, tokens, diagnoses, ConstantType::Character);
+		case '"':// string literal
+			++m_Current;
+			return TokenizeCharacterOrStringLiteral(prefix, tokens, diagnoses, ConstantType::String);
+	}
+
+	switch (prefix) {
+		case ConstantPrefix::L:
+		case ConstantPrefix::u:
+		case ConstantPrefix::U:
+			--m_Current;
+			break;
+		case ConstantPrefix::u8:
+			m_Current -= 2;
+			break;
+		default:
+			break;
+	}
+
+	TokenizeIdentifierOrKeyword(tokens);
+	return true;
+}
+
+void Preprocessor::TokenizeIdentifierOrKeyword(TokenList &tokens) {
+	const StringConstIter end{std::find_if(m_Current, m_Buffer.cend(), [](auto c) { return !isalnum(c) && c != '_'; })};
+
+	if (end == m_Current)
+		return;
+
+	const std::string_view content(m_Current, end);
+
+	const std::optional<Keyword> keyword{MatchKeyword(content)};
+
+	m_Current = end;
+	if (keyword.has_value()) {
+		tokens.emplace_back(keyword.value());
+		return;
+	}
+
+	tokens.emplace_back(Identifier{std::string{content}});
+}
+
+Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
+	TokenList tokens{};
+
+	while (m_Current != m_Buffer.cend()) {
+		if (*m_Current != '\n' && isspace(*m_Current)) {
+			++m_Current;
 			continue;
 		}
 
-		if (lastPunctuator != Punctuator::None) {
-			const Punctuator punctuator{HandlePreviousPunctuator(current, lastPunctuator)};
-
-			if (punctuator < Punctuator::None) {
-				Token &inserted{tokens.emplace_back(punctuator)};
-
-				if (punctuator == Punctuator::Hash) {
-					wasLastPunctuatorHash = true;
-					lastHash              = &inserted;
-				}
-			}
-
-			if (current == m_Buffer.cend()) {
-				if (punctuator > Punctuator::None) {
-					const auto [one, two] = CollapsePartialPunctuator(punctuator);
-					if (one != Punctuator::None) {
-						tokens.emplace_back(one);
-					}
-					lastPunctuator = two;
-				} else
-					lastPunctuator = Punctuator::None;
-				break;
-			}
-
-			if (punctuator > Punctuator::None) {
-				lastPunctuator = punctuator;
-				continue;
-			}
+		if (*m_Current == '\n') {
+			++m_Current;
+			continue;
 		}
 
-		if (*current == '\n') {
-			// TODO: Handle line continuations
-			// TODO: invalid in string literals
-			lastPunctuator        = Punctuator::None;
-			wasLastPunctuatorHash = false;
+		if (*m_Current == '#') {
+			++m_Current;
+			// directives must start on a new line
+			const auto potentialDirective{TokenizeDirective(diagnoses)};
+			if (potentialDirective.has_value()) {
+				tokens.emplace_back(potentialDirective.value());
+			} else {
+				tokens.emplace_back(TokenizeHash());
+			}
+
 			continue;
 		}
 
 		// Punctuators
-		switch (*current) {
-			case '[':
-				lastPunctuator = Punctuator::LeftBracket;
-				continue;
-			case ']':
-				lastPunctuator = Punctuator::RightBracket;
-				continue;
-			case '{':
-				lastPunctuator = Punctuator::LeftBrace;
-				continue;
-			case '}':
-				lastPunctuator = Punctuator::RightBrace;
-				continue;
-			case '(':
-				lastPunctuator = Punctuator::LeftParenthesis;
-				continue;
-			case ')':
-				lastPunctuator = Punctuator::RightParenthesis;
-				continue;
-			case '.':
-				lastPunctuator = Punctuator::Dot;
-				continue;
-			case '-':
-				lastPunctuator = Punctuator::Minus;
-				continue;
-			case '+':
-				lastPunctuator = Punctuator::Plus;
-				continue;
-			case '&':
-				lastPunctuator = Punctuator::Ampersand;
-				continue;
-			case '|':
-				lastPunctuator = Punctuator::VerticalBar;
-				continue;
-			case '*':
-				lastPunctuator = Punctuator::Asterisk;
-				continue;
-			case '~':
-				lastPunctuator = Punctuator::Tilde;
-				continue;
-			case '<':
-				lastPunctuator = Punctuator::LessThan;
-				continue;
-			case '>':
-				lastPunctuator = Punctuator::GreaterThan;
-				continue;
-			case '=':
-				lastPunctuator = Punctuator::Equal;
-				continue;
-			case '!':
-				lastPunctuator = Punctuator::ExclamationMark;
-				continue;
-			case '%':
-				lastPunctuator = Punctuator::Percent;
-				continue;
-			case '?':
-				lastPunctuator = Punctuator::QuestionMark;
-				continue;
-			case '^':
-				lastPunctuator = Punctuator::Caret;
-				continue;
-			case '/':
-				lastPunctuator = Punctuator::Slash;
-				continue;
-			case ',':
-				lastPunctuator = Punctuator::Comma;
-				continue;
-			case ':':
-				lastPunctuator = Punctuator::Colon;
-				continue;
-			case ';':
-				lastPunctuator = Punctuator::Semicolon;
-				continue;
-			case '#':
-				lastPunctuator = Punctuator::Hash;
-				continue;
-			default:
-				lastPunctuator = Punctuator::None;
+		if (const auto punctuator{TokenizePunctuator(diagnoses)}; punctuator != Punctuator::None) {
+			tokens.emplace_back(punctuator);
+			continue;
+		}
+
+		switch (*m_Current) {
+			case 'L':
+			case 'u':
+			case 'U':
+				if (!TokenizeConstantPrefix(tokens, diagnoses))
+					return tokens;
+				break;
+			case '\'':
+			case '"':
+				if (!TokenizeCharacterConstant(ConstantPrefix::None, tokens, diagnoses))
+					return tokens;
 				break;
 		}
 
-		// TODO: Handle literals, as the keyword/identifier code relies on the character being a valid initial character
-		if (genericConstantPrefix == ConstantPrefix::u && *current == '8') {
-			genericConstantPrefix = ConstantPrefix::u8;
-			continue;
-		} else if (genericConstantPrefix == ConstantPrefix::None) {
-			switch (*current) {
-				case 'L':
-					genericConstantPrefix = ConstantPrefix::L;
-					continue;
-				case 'u':
-					genericConstantPrefix = ConstantPrefix::u;
-					continue;
-				case 'U':
-					genericConstantPrefix = ConstantPrefix::U;
-					continue;
-				default:
-					break;
-			}
-		}
-
-		if (*current == '\'') {
-			if (!TokenizeCharacterOrStringLiteral(
-			            current, genericConstantPrefix, tokens, diagnoses, ConstantType::Character
-			    ))
-				return tokens;
-			continue;
-		}
-
-		if (*current == '"') {
-			if (!TokenizeCharacterOrStringLiteral(
-			            current, genericConstantPrefix, tokens, diagnoses, ConstantType::String
-			    ))
-				return tokens;
-			continue;
-		}
-
-		StringConstIter firstCharacter{current};
-
-		if (genericConstantPrefix != ConstantPrefix::None) {
-			if (genericConstantPrefix == ConstantPrefix::u8)
-				firstCharacter -= 2;
-			else
-				--firstCharacter;
-		}
-
-		// never mind, the prefix is part of a keyword or identifier
-		genericConstantPrefix = ConstantPrefix::None;
-
-		// Keywords, Preprocessor Directives or Identifiers
-		const StringConstIter end{std::find_if(firstCharacter, m_Buffer.cend(), [](auto c) {
-			return !isalnum(c) && c != '_';
-		})};
-		if (end == firstCharacter)
-			continue;
-
-		const CompilerDataTypes::StringView content(firstCharacter, end);
-		const CompilerDataTypes::String     contentStr{content};
-
-		if (wasLastPunctuatorHash) {
-			const std::optional<Directive> directive{MatchDirective(content)};
-			if (directive.has_value()) {
-				*lastHash = directive.value();
-				current   = end - 1;// -1 because the for loop will increment it
-				continue;
-			}
-		}
-
-		const std::optional<Keyword> keyword{MatchKeyword(content)};
-
-		if (keyword.has_value()) {
-			tokens.emplace_back(keyword.value());
-		} else {
-			tokens.emplace_back(Identifier{contentStr});
-		}
-		current = end - 1;// -1 because the for loop will increment it
-	}
-
-	const auto [firstPunctuator, secondPunctuator] = CollapsePartialPunctuator(lastPunctuator);
-
-	if (firstPunctuator != Punctuator::None) {
-		tokens.emplace_back(firstPunctuator);
-	}
-
-	if (secondPunctuator != Punctuator::None) {
-		tokens.emplace_back(secondPunctuator);
+		TokenizeIdentifierOrKeyword(tokens);
 	}
 
 	return tokens;
@@ -460,7 +539,8 @@ Preprocessor::TokenList Preprocessor::Process(Diagnosis::Vec &diagnoses) {
 	if (m_Buffer.empty())
 		return TokenList{};
 
-	m_Buffer = std::regex_replace(m_Buffer, std::regex{"\r\n"}, "\n");
+	m_Buffer  = std::regex_replace(m_Buffer, std::regex{"\r\n"}, "\n");
+	m_Current = m_Buffer.cbegin();
 
 	TokenList tokenList{Tokenize(diagnoses)};
 
@@ -534,12 +614,13 @@ bool Preprocessor::TokenizeNumericalEscapeSequence(
 }
 
 bool Preprocessor::TokenizeCharacterOrStringLiteral(
-        CompilerDataTypes::String::const_iterator &current, ConstantPrefix prefix, TokenList &tokens,
-        Diagnosis::Vec &diagnoses, Preprocessor::ConstantType type
+        ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses, Preprocessor::ConstantType type
 ) {
+	if (m_Current == m_Buffer.cend())
+		return false;
+
 	bool                      isEscaped{false};
 	CompilerDataTypes::String literalContent{};
-	++current;
 
 	int      charValueLimit{};
 	uint32_t charValueMask{};
@@ -575,10 +656,10 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 			break;
 	}
 
-	for (; current != m_Buffer.cend(); ++current) {
+	for (; m_Current != m_Buffer.cend(); ++m_Current) {
 		// TODO: move to functor
 
-		const char c{*current};
+		const char c{*m_Current};
 
 		if (c == '\\' && !isEscaped) {
 			isEscaped = true;
@@ -631,12 +712,12 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 				case '6':
 				case '7':
 					TokenizeNumericalEscapeSequence(
-					        current, literalContent, diagnoses, charValueLimit, charValueMask, ValidEscapeBase::Octal
+					        m_Current, literalContent, diagnoses, charValueLimit, charValueMask, ValidEscapeBase::Octal
 					);
 					continue;
 				case 'x': {
 					if (!TokenizeNumericalEscapeSequence(
-					            current, literalContent, diagnoses, charValueLimit, charValueMask,
+					            m_Current, literalContent, diagnoses, charValueLimit, charValueMask,
 					            ValidEscapeBase::Hexadecimal
 					    ))
 						return false;
@@ -669,7 +750,7 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 	}
 
 	if (type == ConstantType::String) {
-		if (current == m_Buffer.cend() || *current != '"') {
+		if (m_Current == m_Buffer.cend() || *m_Current != '"') {
 			const Span span{};// TODO: Get the span
 			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_StrUnterminated);
 			return false;
@@ -680,7 +761,7 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 	}
 	// TODO: move to helper function
 
-	if (current == m_Buffer.cend() || *current != '\'') {
+	if (m_Current == m_Buffer.cend() || *m_Current != '\'') {
 		const Span span{};// TODO: Get the span
 		diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharUnterminated);
 		return false;

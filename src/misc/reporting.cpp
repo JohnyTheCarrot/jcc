@@ -39,6 +39,16 @@ OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 		case Diagnosis::Kind::PP_UnexpectedEOF:
 			os << "Unexpected end of file";
 			break;
+		case Diagnosis::Kind::PP_PartialTokenEncountered:
+			os << "Partial token encountered, did you mean '" << std::get<std::string>(diagnosis.m_Data0.value())
+			   << '\'';
+			break;
+		case Diagnosis::Kind::PP_UnknownDirective:
+			os << "Unknown directive '" << std::get<std::string>(diagnosis.m_Data0.value()) << '\'';
+			break;
+		case Diagnosis::Kind::PP_EscapeExpectedNewline:
+			os << "Expected newline after \\";
+			break;
 		case Diagnosis::Kind::TK_Unrecognized:
 			os << "Unrecognized token '" << std::get<char>(diagnosis.m_Data0.value()) << '\'';
 			break;

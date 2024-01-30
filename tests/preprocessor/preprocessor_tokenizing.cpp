@@ -150,7 +150,11 @@ INSTANTIATE_TEST_SUITE_P(
                         "|| &&", TokenList{Punctuator::VerticalBarVerticalBar, Punctuator::AmpersandAmpersand},
                         DiagnosisKindVec{}
                 ),
-                std::make_tuple("%:%", TokenList{Punctuator::Hash, Punctuator::Percent}, DiagnosisKindVec{})
+                std::make_tuple("%:%", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_PartialTokenEncountered}),
+                std::make_tuple("-+", TokenList{Punctuator::Minus, Punctuator::Plus}, DiagnosisKindVec{}),
+                std::make_tuple("->*", TokenList{Punctuator::Arrow, Punctuator::Asterisk}, DiagnosisKindVec{}),
+                std::make_tuple("*...", TokenList{Punctuator::Asterisk, Punctuator::Ellipsis}, DiagnosisKindVec{}),
+                std::make_tuple("<^", TokenList{Punctuator::LessThan, Punctuator::Caret}, DiagnosisKindVec{})
         )
 );
 

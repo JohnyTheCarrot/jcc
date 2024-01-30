@@ -18,8 +18,6 @@
 // each non-white-space character that cannot be one of the above
 
 class Preprocessor final {
-	std::string m_Buffer;
-
 public:
 	using StringConstIter = CompilerDataTypes::StringConstIter;
 
@@ -201,7 +199,8 @@ public:
 
 	using Token = std::variant<
 	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive>;
-	using TokenList = std::vector<Token>;
+	using TokenList             = std::vector<Token>;
+	using PunctuatorOrDirective = std::variant<Punctuator, Directive>;
 
 private:
 	std::unordered_map<CompilerDataTypes::StringView, Keyword> m_Keywords{
@@ -284,20 +283,92 @@ private:
 	};
 
 	bool TokenizeCharacterOrStringLiteral(
-	        StringConstIter &current, ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses,
-	        Preprocessor::ConstantType type
+	        ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses, Preprocessor::ConstantType type
 	);
+
+	std::string                 m_Buffer;
+	std::string::const_iterator m_Current;
+
+	[[nodiscard]]
+	Punctuator TokenizeDot(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	Punctuator TokenizeDash();
+
+	[[nodiscard]]
+	Punctuator TokenizePlus();
+
+	[[nodiscard]]
+	Punctuator TokenizeAmpersand();
+
+	[[nodiscard]]
+	Punctuator TokenizeVerticalBar();
+
+	[[nodiscard]]
+	Punctuator TokenizeAsterisk();
+
+	[[nodiscard]]
+	Punctuator TokenizeLessThan();
+
+	[[nodiscard]]
+	Punctuator TokenizeDoubleLessThan();
+
+	[[nodiscard]]
+	Punctuator TokenizeGreaterThan();
+
+	[[nodiscard]]
+	Punctuator TokenizeDoubleGreaterThan();
+
+	[[nodiscard]]
+	Punctuator TokenizeEqual();
+
+	[[nodiscard]]
+	Punctuator TokenizeExclamationMark();
+
+	[[nodiscard]]
+	Punctuator TokenizePercent(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	Punctuator TokenizeHashHashDigraph(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	Punctuator TokenizeCaret();
+
+	[[nodiscard]]
+	Punctuator TokenizeSlash();
+
+	[[nodiscard]]
+	Punctuator TokenizeColon();
+
+	[[nodiscard]]
+	Preprocessor::Punctuator TokenizeHash();
+
+	[[nodiscard]]
+	Punctuator TokenizePunctuator(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	std::optional<Directive> TokenizeDirective(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	bool TokenizeCharacterConstant(ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
+	bool TokenizeConstantPrefix(TokenList &tokens, Diagnosis::Vec &diagnoses);
+
+	void TokenizeIdentifierOrKeyword(TokenList &tokens);
 
 	[[nodiscard]]
 	TokenList Tokenize(Diagnosis::Vec &diagnoses);
 
 public:
 	explicit Preprocessor(const CompilerDataTypes::String &buffer)
-	    : m_Buffer{buffer} {
+	    : m_Buffer{buffer}
+	    , m_Current{m_Buffer.cbegin()} {
 	}
 
 	explicit Preprocessor(CompilerDataTypes::String &&buffer)
-	    : m_Buffer{std::move(buffer)} {
+	    : m_Buffer{std::move(buffer)}
+	    , m_Current{m_Buffer.cbegin()} {
 	}
 
 	Preprocessor(const Preprocessor &)            = delete;
