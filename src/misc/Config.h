@@ -5,7 +5,7 @@
 #include <regex>
 #include <string>
 
-#define TK_WIDE
+//#define TK_WIDE
 
 #ifdef TK_WIDE
 #define C(c) L##c
