@@ -563,16 +563,14 @@ std::optional<Preprocessor::Directive> Preprocessor::MatchDirective(const Compil
 	return matchIt->second;
 }
 
-bool Preprocessor::TokenizeNumericalEscapeSequence(
-        StringConstIter &current, CompilerDataTypes::String &literalContent, Diagnosis::Vec &diagnoses,
-        unsigned long valueLimit, uint32_t valueMask, ValidEscapeBase base
-) {
+std::optional<CompilerDataTypes::Char>
+Preprocessor::TokenizeNumericalEscapeSequence(ValidEscapeBase base, Diagnosis::Vec &diagnoses) {
 	StringConstIter endOfHex{};
 
 	if (base == ValidEscapeBase::Octal) {
 		size_t charsRead{0};
-		endOfHex = current + 1;
-		for (StringConstIter it{current}; it != m_Buffer.cend() && charsRead != NUM_DIGITS_OCTAL_ESCAPE;
+		endOfHex = m_Current + 1;
+		for (StringConstIter it{m_Current}; it != m_Buffer.cend() && charsRead != NUM_DIGITS_OCTAL_ESCAPE;
 		     ++it, ++charsRead) {
 			if (*it < '0' || *it > '7') {
 				break;
@@ -580,35 +578,76 @@ bool Preprocessor::TokenizeNumericalEscapeSequence(
 			endOfHex = it + 1;
 		}
 	} else /* hex */ {
-		++current;// skip the 'x'
-		if (current == m_Buffer.cend()) {
+		++m_Current;// skip the 'x'
+		if (m_Current == m_Buffer.cend()) {
 			const Span span{};// TODO: Get the span
-			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedEOF, *current);
-			return false;
+			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedEOF, *m_Current);
+			return std::nullopt;
 		}
 
-		endOfHex = std::find_if(current, m_Buffer.cend(), [=](auto c) { return !isxdigit(c); });
+		endOfHex = std::find_if(m_Current, m_Buffer.cend(), [=](auto c) { return !isxdigit(c); });
 
-		if (endOfHex == current) {
+		if (endOfHex == m_Current) {
 			const Span span{};// TODO: Get the span
-			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharHexNoDigits, *current);
-			return false;
+			diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharHexNoDigits, *m_Current);
+			return std::nullopt;
 		}
 
 		// endOfHex may be m_Buffer.cend() here but that's fine because that will be checked later
 	}
 
-	const String  chars{current, endOfHex};
+	const String  chars{m_Current, endOfHex};
 	unsigned long value{std::stoul(chars, nullptr, base == ValidEscapeBase::Octal ? 8 : 16)};
-	if (value > valueLimit) {
-		const Span span{};// TODO: Get the span
-		diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::PP_CharOutOfRange);
-		value &= valueMask;
-	}
 
-	literalContent += static_cast<CompilerDataTypes::Char>(value);
-	current = endOfHex - 1;
-	return true;
+	m_Current = endOfHex - 1;
+	return static_cast<CompilerDataTypes::Char>(value);
+}
+
+std::optional<char> Preprocessor::TokenizeEscapeSequence(Diagnosis::Vec &diagnoses) {
+	// m_Current is incremented by the for loop that calls this function
+	switch (*m_Current) {
+		case 'n':
+			return '\n';
+		case 't':
+			return '\t';
+		case 'v':
+			return '\v';
+		case 'b':
+			return '\b';
+		case 'f':
+			return '\f';
+		case 'r':
+			return '\r';
+		case 'a':
+			return '\a';
+		case '\\':
+			return '\\';
+		case '?':
+			return '?';
+		case '"':
+			return '"';
+		case '\'':
+			return '\'';
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7': {
+			return TokenizeNumericalEscapeSequence(ValidEscapeBase::Octal, diagnoses);
+		}
+		case 'x': {
+			return TokenizeNumericalEscapeSequence(ValidEscapeBase::Hexadecimal, diagnoses);
+		}
+		default:
+			const Span span{};// TODO: Get the span
+			diagnoses.emplace_back(
+			        span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnknownEscapeSequence, *m_Current
+			);
+			return std::nullopt;
+	}
 }
 
 bool Preprocessor::TokenizeCharacterOrStringLiteral(
@@ -617,39 +656,26 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 	if (m_Current == m_Buffer.cend())
 		return false;
 
-	bool                      isEscaped{false};
 	CompilerDataTypes::String literalContent{};
+	const auto                terminator{type == ConstantType::String ? '"' : '\''};
 
-	int      charValueLimit{};
-	uint32_t charValueMask{};
 	uint32_t charConstValueMask{};
 
 	switch (prefix) {
 		case ConstantPrefix::None:
-			charValueLimit     = CompilerDataTypeInfo::CHAR::max();
-			charValueMask      = CompilerDataTypeInfo::CHAR::MASK;
 			charConstValueMask = CompilerDataTypeInfo::INT::MASK;
 			break;
 		case ConstantPrefix::L:
-			charValueLimit     = CompilerDataTypeInfo::WCHAR_T::max();
-			charValueMask      = CompilerDataTypeInfo::WCHAR_T::MASK;
 			charConstValueMask = CompilerDataTypeInfo::WCHAR_T::MASK;
 			break;
 		case ConstantPrefix::u:
-			charValueLimit     = CompilerDataTypeInfo::CHAR16_T::max();
-			charValueMask      = CompilerDataTypeInfo::CHAR16_T::MASK;
 			charConstValueMask = CompilerDataTypeInfo::CHAR16_T::MASK;
 			break;
 		case ConstantPrefix::U:
-			charValueLimit     = CompilerDataTypeInfo::CHAR32_T::max();
-			charValueMask      = CompilerDataTypeInfo::CHAR32_T::MASK;
 			charConstValueMask = CompilerDataTypeInfo::CHAR32_T::MASK;
 			break;
 		case ConstantPrefix::u8:
-			charValueLimit = CompilerDataTypeInfo::CHAR::max();
-			charValueMask  = CompilerDataTypeInfo::CHAR::MASK;
 			// charConstValueMask is not relevant for character literals
-			break;
 		default:
 			break;
 	}
@@ -659,87 +685,26 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 
 		const char c{*m_Current};
 
-		if (c == '\\' && !isEscaped) {
-			isEscaped = true;
-			continue;
-		}
-
-		// TODO: We can do away with isEscaped by committing to the escape sequence after the \ character
-		if (isEscaped) {
-			// TODO: move to helper function
-			isEscaped = false;
-			switch (c) {
-				case 'n':
-					literalContent += '\n';
-					continue;
-				case 't':
-					literalContent += '\t';
-					continue;
-				case 'v':
-					literalContent += '\v';
-					continue;
-				case 'b':
-					literalContent += '\b';
-					continue;
-				case 'f':
-					literalContent += '\f';
-					continue;
-				case 'r':
-					literalContent += '\r';
-					continue;
-				case 'a':
-					literalContent += '\a';
-					continue;
-				case '\\':
-					literalContent += '\\';
-					continue;
-				case '?':
-					literalContent += '?';
-					continue;
-				case '"':
-					literalContent += '"';
-					continue;
-				case '\'':
-					literalContent += '\'';
-					continue;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-					TokenizeNumericalEscapeSequence(
-					        m_Current, literalContent, diagnoses, charValueLimit, charValueMask, ValidEscapeBase::Octal
-					);
-					continue;
-				case 'x': {
-					if (!TokenizeNumericalEscapeSequence(
-					            m_Current, literalContent, diagnoses, charValueLimit, charValueMask,
-					            ValidEscapeBase::Hexadecimal
-					    ))
-						return false;
-					continue;
-				}
-				default:
-					const Span span{};// TODO: Get the span
-					diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnknownEscapeSequence, c);
-					return false;
+		if (c == '\\') {
+			if (++m_Current == m_Buffer.cend()) {
+				const Span span{};// TODO: Get the span
+				diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedEOF, *m_Current);
+				return false;
 			}
+
+			if (*m_Current == '\n') {
+				continue;
+			}
+
+			if (const auto escape{TokenizeEscapeSequence(diagnoses)}; escape.has_value()) {
+				literalContent += escape.value();
+				continue;
+			}
+
+			return false;
 		}
 
-		if (c > charValueLimit) {
-			const Span span{};// TODO: Get the span
-			diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::PP_CharOutOfRange);
-			literalContent += static_cast<CompilerDataTypes::Char>(c);
-			continue;
-		}
-
-		const auto terminator{type == ConstantType::String ? '"' : '\''};
-		const auto result{(c == terminator || c == '\n') && !isEscaped};
-
-		isEscaped = false;
+		const auto result{c == terminator};
 
 		if (result) {
 			break;

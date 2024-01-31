@@ -202,6 +202,7 @@ public:
 	using TokenList = std::vector<Token>;
 
 private:
+	// TODO: replace unordered_map with trie
 	std::unordered_map<CompilerDataTypes::StringView, Keyword> m_Keywords{
 	        {COMP_STRING("auto"), Keyword::Auto},
 	        {COMP_STRING("break"), Keyword::Break},
@@ -271,16 +272,18 @@ private:
 
 	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
 
-	bool TokenizeNumericalEscapeSequence(
-	        StringConstIter &current, CompilerDataTypes::String &literalContent, Diagnosis::Vec &diagnoses,
-	        unsigned long valueLimit, uint32_t valueMask, ValidEscapeBase base
-	);
+	std::optional<CompilerDataTypes::Char>
+	TokenizeNumericalEscapeSequence(ValidEscapeBase base, Diagnosis::Vec &diagnoses);
 
 	enum class ConstantType {
 		Character,
 		String,
 	};
 
+	[[nodiscard]]
+	std::optional<char> TokenizeEscapeSequence(Diagnosis::Vec &diagnoses);
+
+	[[nodiscard]]
 	bool TokenizeCharacterOrStringLiteral(
 	        ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses, Preprocessor::ConstantType type
 	);
