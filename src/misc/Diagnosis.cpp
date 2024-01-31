@@ -22,13 +22,13 @@ OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 			os << "String literal was not terminated";
 			break;
 		case Diagnosis::Kind::PP_CharUnterminated:
-			os << "Character literal was not terminated";
+			os << "CharStream literal was not terminated";
 			break;
 		case Diagnosis::Kind::PP_CharNoValue:
-			os << "Character literal has no value";
+			os << "CharStream literal has no value";
 			break;
 		case Diagnosis::Kind::PP_CharOutOfRange:
-			os << "Character literal is out of range, its value will be truncated";
+			os << "CharStream literal is out of range, its value will be truncated";
 			break;
 		case Diagnosis::Kind::PP_CharHexNoDigits:
 			os << "Hexadecimal character literal has no digits";
