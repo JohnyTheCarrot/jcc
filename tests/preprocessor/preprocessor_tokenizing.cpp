@@ -85,7 +85,9 @@ INSTANTIATE_TEST_SUITE_P(
                 ),
                 std::make_tuple("under_score", TokenList{Identifier{"under_score"}}, DiagnosisKindVec{}),
                 // Identifiers starting with a char or string constant prefix are still identifiers and should be tokenized as such
-                std::make_tuple("u8SomeIdent", TokenList{Identifier{"u8SomeIdent"}}, DiagnosisKindVec{})
+                std::make_tuple("u8SomeIdent", TokenList{Identifier{"u8SomeIdent"}}, DiagnosisKindVec{}),
+                // same for identifiers starting with a keyword
+                std::make_tuple("autoSomeIdent", TokenList{Identifier{"autoSomeIdent"}}, DiagnosisKindVec{})
         )
 );
 
