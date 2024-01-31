@@ -1,8 +1,8 @@
 #ifndef JCC_PREPROCESSOR_H
 #define JCC_PREPROCESSOR_H
 
-#include "CompilerDatatypes.h"
-#include "reporting.h"
+#include "Diagnosis.h"
+#include "compiler_data_types.h"
 #include <gtest/gtest-printers.h>
 #include <string>
 #include <unordered_map>
@@ -199,8 +199,7 @@ public:
 
 	using Token = std::variant<
 	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive>;
-	using TokenList             = std::vector<Token>;
-	using PunctuatorOrDirective = std::variant<Punctuator, Directive>;
+	using TokenList = std::vector<Token>;
 
 private:
 	std::unordered_map<CompilerDataTypes::StringView, Keyword> m_Keywords{

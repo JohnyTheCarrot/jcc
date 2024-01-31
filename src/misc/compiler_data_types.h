@@ -1,5 +1,5 @@
-#ifndef JCC_COMPILERDATATYPES_H
-#define JCC_COMPILERDATATYPES_H
+#ifndef JCC_COMPILER_DATA_TYPES_H
+#define JCC_COMPILER_DATA_TYPES_H
 
 #include <cstdint>
 #include <limits>
@@ -40,4 +40,4 @@ namespace CompilerDataTypes {
 #define COMP_STRING(str) reinterpret_cast<const CompilerDataTypeInfo::CHAR::TYPE *>(str)
 };// namespace CompilerDataTypes
 
-#endif//JCC_COMPILERDATATYPES_H
+#endif//JCC_COMPILER_DATA_TYPES_H

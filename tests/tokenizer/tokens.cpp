@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <misc/Config.h>
 #include <misc/Tokenizer.h>
+#include <misc/config.h>
 
 TEST(Tokenizer_Tokens, Simple) {
 	const String input{C("volatile")};
-	ISStream iStream{input};
+	ISStream     iStream{input};
 
 	TokenList tokens{};
 

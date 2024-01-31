@@ -1,9 +1,9 @@
-#ifndef JCC_REPORTING_H
-#define JCC_REPORTING_H
+#ifndef JCC_DIAGNOSIS_H
+#define JCC_DIAGNOSIS_H
 
-#include "Config.h"
 #include "Span.h"
 #include "SpanOld.h"
+#include "config.h"
 #include <optional>
 #include <string>
 #include <variant>
@@ -52,4 +52,4 @@ void Warn(const std::string &filePath, std::istream &inputStream, const SpanOld 
 [[noreturn]]
 void Error(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message);
 
-#endif//JCC_REPORTING_H
+#endif//JCC_DIAGNOSIS_H

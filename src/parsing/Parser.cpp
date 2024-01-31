@@ -4,7 +4,7 @@
 
 #include "Parser.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
-#include "../misc/reporting.h"
+#include "../misc/Diagnosis.h"
 #include "Ast/ExternalDefinitions/AstTranslationUnit.h"
 #include <iostream>
 #include <sstream>
@@ -13,9 +13,9 @@
 using namespace parsing;
 
 Parser::Parser(TokenList &&tokenList, std::string fileName, std::istream &inputStream)
-	: tokens{std::move(tokenList)}
-	, fileName{std::move(fileName)}
-	, inputStream{inputStream} {
+    : tokens{std::move(tokenList)}
+    , fileName{std::move(fileName)}
+    , inputStream{inputStream} {
 	inputStream.seekg(0, std::istream::beg);
 }
 
@@ -70,9 +70,13 @@ void Parser::Error(const std::string &message) const {
 	this->Error(span, message);
 }
 
-bool Parser::operator!() const { return this->cursor + 1ull == this->tokens.size(); }
+bool Parser::operator!() const {
+	return this->cursor + 1ull == this->tokens.size();
+}
 
-Parser::operator bool() const { return !!*this; }
+Parser::operator bool() const {
+	return !!*this;
+}
 
 bool Parser::AdvanceIfTokenIs(TokenType tokenType, Token &token) {
 	if (!*this)
