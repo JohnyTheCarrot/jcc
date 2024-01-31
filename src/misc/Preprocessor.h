@@ -1,7 +1,9 @@
 #ifndef JCC_PREPROCESSOR_H
 #define JCC_PREPROCESSOR_H
 
+#include "CharStream.h"
 #include "Diagnosis.h"
+#include "Trie.h"
 #include "compiler_data_types.h"
 #include <gtest/gtest-printers.h>
 #include <string>
@@ -197,73 +199,72 @@ public:
 
 	enum class Directive { Include, Define, Undef, Line, Error, Pragma, If, Ifdef, Ifndef, Elif, Else, Endif };
 
+	enum class SpecialPurpose {
+		EndOfFile,
+		Error,
+	};
+
 	using Token = std::variant<
-	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive>;
+	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive,
+	        SpecialPurpose>;
 	using TokenList = std::vector<Token>;
 
 private:
 	// TODO: replace unordered_map with trie
-	std::unordered_map<CompilerDataTypes::StringView, Keyword> m_Keywords{
-	        {COMP_STRING("auto"), Keyword::Auto},
-	        {COMP_STRING("break"), Keyword::Break},
-	        {COMP_STRING("case"), Keyword::Case},
-	        {COMP_STRING("char"), Keyword::Char},
-	        {COMP_STRING("const"), Keyword::Const},
-	        {COMP_STRING("continue"), Keyword::Continue},
-	        {COMP_STRING("default"), Keyword::Default},
-	        {COMP_STRING("do"), Keyword::Do},
-	        {COMP_STRING("double"), Keyword::Double},
-	        {COMP_STRING("else"), Keyword::Else},
-	        {COMP_STRING("enum"), Keyword::Enum},
-	        {COMP_STRING("extern"), Keyword::Extern},
-	        {COMP_STRING("float"), Keyword::Float},
-	        {COMP_STRING("for"), Keyword::For},
-	        {COMP_STRING("goto"), Keyword::Goto},
-	        {COMP_STRING("if"), Keyword::If},
-	        {COMP_STRING("inline"), Keyword::Inline},
-	        {COMP_STRING("int"), Keyword::Int},
-	        {COMP_STRING("long"), Keyword::Long},
-	        {COMP_STRING("register"), Keyword::Register},
-	        {COMP_STRING("restrict"), Keyword::Restrict},
-	        {COMP_STRING("return"), Keyword::Return},
-	        {COMP_STRING("short"), Keyword::Short},
-	        {COMP_STRING("signed"), Keyword::Signed},
-	        {COMP_STRING("sizeof"), Keyword::Sizeof},
-	        {COMP_STRING("static"), Keyword::Static},
-	        {COMP_STRING("struct"), Keyword::Struct},
-	        {COMP_STRING("switch"), Keyword::Switch},
-	        {COMP_STRING("typedef"), Keyword::Typedef},
-	        {COMP_STRING("union"), Keyword::Union},
-	        {COMP_STRING("unsigned"), Keyword::Unsigned},
-	        {COMP_STRING("void"), Keyword::Void},
-	        {COMP_STRING("volatile"), Keyword::Volatile},
-	        {COMP_STRING("while"), Keyword::While},
-	        {COMP_STRING("_Alignas"), Keyword::Alignas},
-	        {COMP_STRING("_Alignof"), Keyword::Alignof},
-	        {COMP_STRING("_Atomic"), Keyword::Atomic},
-	        {COMP_STRING("_Bool"), Keyword::Bool},
-	        {COMP_STRING("_Complex"), Keyword::Complex},
-	        {COMP_STRING("_Generic"), Keyword::Generic},
-	        {COMP_STRING("_Imaginary"), Keyword::Imaginary},
-	        {COMP_STRING("_Noreturn"), Keyword::Noreturn},
-	        {COMP_STRING("_Static_assert"), Keyword::StaticAssert},
-	        {COMP_STRING("_Thread_local"), Keyword::ThreadLocal},
+	using KeywordTrie = TrieNode<'A', 'z', Keyword>;
+	KeywordTrie m_KeywordTrie{
+	        {"auto", Keyword::Auto},
+	        {"break", Keyword::Break},
+	        {"case", Keyword::Case},
+	        {"char", Keyword::Char},
+	        {"const", Keyword::Const},
+	        {"continue", Keyword::Continue},
+	        {"default", Keyword::Default},
+	        {"do", Keyword::Do},
+	        {"double", Keyword::Double},
+	        {"else", Keyword::Else},
+	        {"enum", Keyword::Enum},
+	        {"extern", Keyword::Extern},
+	        {"float", Keyword::Float},
+	        {"for", Keyword::For},
+	        {"goto", Keyword::Goto},
+	        {"if", Keyword::If},
+	        {"inline", Keyword::Inline},
+	        {"int", Keyword::Int},
+	        {"long", Keyword::Long},
+	        {"register", Keyword::Register},
+	        {"restrict", Keyword::Restrict},
+	        {"return", Keyword::Return},
+	        {"short", Keyword::Short},
+	        {"signed", Keyword::Signed},
+	        {"sizeof", Keyword::Sizeof},
+	        {"static", Keyword::Static},
+	        {"struct", Keyword::Struct},
+	        {"switch", Keyword::Switch},
+	        {"typedef", Keyword::Typedef},
+	        {"union", Keyword::Union},
+	        {"unsigned", Keyword::Unsigned},
+	        {"void", Keyword::Void},
+	        {"volatile", Keyword::Volatile},
+	        {"while", Keyword::While},
+	        {"_Alignas", Keyword::Alignas},
+	        {"_Alignof", Keyword::Alignof},
+	        {"_Atomic", Keyword::Atomic},
+	        {"_Bool", Keyword::Bool},
+	        {"_Complex", Keyword::Complex},
+	        {"_Generic", Keyword::Generic},
+	        {"_Imaginary", Keyword::Imaginary},
+	        {"_Noreturn", Keyword::Noreturn},
+	        {"_Static_assert", Keyword::StaticAssert},
+	        {"_Thread_local", Keyword::ThreadLocal},
 	};
 
-	std::unordered_map<CompilerDataTypes::StringView, Directive> m_Directives{
-	        {COMP_STRING("include"), Directive::Include}, {COMP_STRING("define"), Directive::Define},
-	        {COMP_STRING("undef"), Directive::Undef},     {COMP_STRING("line"), Directive::Line},
-	        {COMP_STRING("error"), Directive::Error},     {COMP_STRING("pragma"), Directive::Pragma},
-	        {COMP_STRING("if"), Directive::If},           {COMP_STRING("ifdef"), Directive::Ifdef},
-	        {COMP_STRING("ifndef"), Directive::Ifndef},   {COMP_STRING("elif"), Directive::Elif},
-	        {COMP_STRING("else"), Directive::Else},       {COMP_STRING("endif"), Directive::Endif}
+	TrieNode<'a', 'z', Directive> m_DirectiveTrie{
+	        {"include", Directive::Include}, {"define", Directive::Define}, {"undef", Directive::Undef},
+	        {"line", Directive::Line},       {"error", Directive::Error},   {"pragma", Directive::Pragma},
+	        {"if", Directive::If},           {"ifdef", Directive::Ifdef},   {"ifndef", Directive::Ifndef},
+	        {"elif", Directive::Elif},       {"else", Directive::Else},     {"endif", Directive::Endif},
 	};
-
-	[[nodiscard]]
-	std::optional<Keyword> MatchKeyword(const CompilerDataTypes::StringView &view) const;
-
-	[[nodiscard]]
-	std::optional<Directive> MatchDirective(const CompilerDataTypes::StringView &view) const;
 
 	enum class ValidEscapeBase {
 		Octal,
@@ -272,8 +273,7 @@ private:
 
 	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
 
-	std::optional<CompilerDataTypes::Char>
-	TokenizeNumericalEscapeSequence(ValidEscapeBase base, Diagnosis::Vec &diagnoses);
+	std::optional<CompilerDataTypes::Char> TokenizeNumericalEscapeSequence(ValidEscapeBase base);
 
 	enum class ConstantType {
 		Character,
@@ -281,18 +281,16 @@ private:
 	};
 
 	[[nodiscard]]
-	std::optional<char> TokenizeEscapeSequence(Diagnosis::Vec &diagnoses);
+	std::optional<char> TokenizeEscapeSequence();
 
 	[[nodiscard]]
-	bool TokenizeCharacterOrStringLiteral(
-	        ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses, Preprocessor::ConstantType type
-	);
+	Preprocessor::Token TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocessor::ConstantType type);
 
-	std::string                 m_Buffer;
-	std::string::const_iterator m_Current;
+	CharStream      m_Current;
+	Diagnosis::Vec &m_Diagnoses;
 
 	[[nodiscard]]
-	Punctuator TokenizeDot(Diagnosis::Vec &diagnoses);
+	Preprocessor::Punctuator TokenizeDot();
 
 	[[nodiscard]]
 	Punctuator TokenizeDash();
@@ -328,10 +326,10 @@ private:
 	Punctuator TokenizeExclamationMark();
 
 	[[nodiscard]]
-	Punctuator TokenizePercent(Diagnosis::Vec &diagnoses);
+	Preprocessor::Token TokenizePercent();
 
 	[[nodiscard]]
-	Punctuator TokenizeHashHashDigraph(Diagnosis::Vec &diagnoses);
+	Preprocessor::Token TokenizeHashHashDigraph();
 
 	[[nodiscard]]
 	Punctuator TokenizeCaret();
@@ -346,31 +344,20 @@ private:
 	Preprocessor::Punctuator TokenizeHash();
 
 	[[nodiscard]]
-	Punctuator TokenizePunctuator(Diagnosis::Vec &diagnoses);
+	Preprocessor::Token TokenizePunctuator();
 
 	[[nodiscard]]
-	std::optional<Directive> TokenizeDirective(Diagnosis::Vec &diagnoses);
+	std::optional<Preprocessor::Token> TokenizeDirective();
+
+	Token TokenizeIdentifierOrKeyword();
 
 	[[nodiscard]]
-	bool TokenizeCharacterConstant(ConstantPrefix prefix, TokenList &tokens, Diagnosis::Vec &diagnoses);
-
-	[[nodiscard]]
-	bool TokenizeConstantPrefix(TokenList &tokens, Diagnosis::Vec &diagnoses);
-
-	void TokenizeIdentifierOrKeyword(TokenList &tokens);
-
-	[[nodiscard]]
-	TokenList Tokenize(Diagnosis::Vec &diagnoses);
+	Preprocessor::Token Tokenize();
 
 public:
-	explicit Preprocessor(const CompilerDataTypes::String &buffer)
-	    : m_Buffer{buffer}
-	    , m_Current{m_Buffer.cbegin()} {
-	}
-
-	explicit Preprocessor(CompilerDataTypes::String &&buffer)
-	    : m_Buffer{std::move(buffer)}
-	    , m_Current{m_Buffer.cbegin()} {
+	Preprocessor(std::istringstream &&iStream, Diagnosis::Vec &diagnoses)
+	    : m_Current{std::move(iStream)}
+	    , m_Diagnoses{diagnoses} {
 	}
 
 	Preprocessor(const Preprocessor &)            = delete;
@@ -378,9 +365,10 @@ public:
 	Preprocessor &operator=(const Preprocessor &) = delete;
 	Preprocessor &operator=(Preprocessor &&)      = delete;
 
-	[[nodiscard]]
-	TokenList Process(Diagnosis::Vec &diagnoses);
+	Token operator()();
 };
+
+std::ostream &operator<<(std::ostream &os, Preprocessor::SpecialPurpose specialPurpose);
 
 std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator);
 

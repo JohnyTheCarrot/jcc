@@ -8,7 +8,7 @@
 
 TEST(Trie, Insert) {
 	constexpr char charRangeStart{'!'};
-	using Trie = TrieNode<charRangeStart, '~', char, int>;
+	using Trie = TrieNode<charRangeStart, '~', int>;
 	Trie trie{};
 	trie.Insert("hoi", 0xdead);
 	trie.Insert("hi", 0xbeef);
@@ -29,15 +29,15 @@ TEST(Trie, Insert) {
 
 TEST(Trie, Find_IStreamExtraTrailingTokens) {
 	constexpr char charRangeStart{'!'};
-	using Trie = TrieNode<charRangeStart, '~', char, int>;
-	Trie trie{};
-	constexpr int value{0x1337};
+	using Trie = TrieNode<charRangeStart, '~', int>;
+	Trie              trie{};
+	constexpr int     value{0x1337};
 	const std::string key{"_Static_assert"};
 	trie.Insert(key, value);
 
 	std::istringstream iss{"_Static_assert extra tokens"};
-	std::size_t nCharsRead{};
-	const auto foundValue{trie.Find(iss, nCharsRead)};
+	std::size_t        nCharsRead{};
+	const auto         foundValue{trie.Find(iss, nCharsRead)};
 
 	ASSERT_TRUE(foundValue.has_value());
 	EXPECT_EQ(foundValue.value(), value);
@@ -50,15 +50,15 @@ TEST(Trie, Find_IStreamExtraTrailingTokens) {
 
 TEST(Trie, Find_IStreamSimple) {
 	constexpr char charRangeStart{'!'};
-	using Trie = TrieNode<charRangeStart, '~', char, int>;
-	Trie trie{};
-	constexpr int value{0x123};
+	using Trie = TrieNode<charRangeStart, '~', int>;
+	Trie              trie{};
+	constexpr int     value{0x123};
 	const std::string key{"_Static_assert"};
 	trie.Insert(key, value);
 
 	std::istringstream iss{key};
-	std::size_t nCharsRead{};
-	const auto foundValue{trie.Find(iss, nCharsRead)};
+	std::size_t        nCharsRead{};
+	const auto         foundValue{trie.Find(iss, nCharsRead)};
 
 	ASSERT_TRUE(foundValue.has_value());
 	EXPECT_EQ(foundValue.value(), value);

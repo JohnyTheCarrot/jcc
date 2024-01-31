@@ -1,234 +1,228 @@
 #include <gtest/gtest.h>
 #include <misc/Preprocessor.h>
 
-using Keyword           = Preprocessor::Keyword;
-using Punctuator        = Preprocessor::Punctuator;
-using Directive         = Preprocessor::Directive;
-using Identifier        = Preprocessor::Identifier;
-using CharacterConstant = Preprocessor::CharacterConstant;
-using StringConstant    = Preprocessor::StringConstant;
-using DiagnosisKindVec  = std::vector<Diagnosis::Kind>;
-using ConstantPrefix    = Preprocessor::ConstantPrefix;
-using TokenList         = Preprocessor::TokenList;
+using Keyword             = Preprocessor::Keyword;
+using Punctuator          = Preprocessor::Punctuator;
+using Directive           = Preprocessor::Directive;
+using Identifier          = Preprocessor::Identifier;
+using CharacterConstant   = Preprocessor::CharacterConstant;
+using StringConstant      = Preprocessor::StringConstant;
+using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
+using ConstantPrefix      = Preprocessor::ConstantPrefix;
+using SpecialPurposeToken = Preprocessor::SpecialPurpose;
+using TokenList           = Preprocessor::TokenList;
 
 class PpTokenizingTest
-    : public testing::TestWithParam<std::tuple<std::string, Preprocessor::TokenList, DiagnosisKindVec>> {};
+    : public testing::TestWithParam<std::tuple<std::string, Preprocessor::Token, DiagnosisKindVec>> {};
 
 TEST_P(PpTokenizingTest, PpTokenizing) {
-	Preprocessor preprocessor{std::get<0>(GetParam())};
+	std::istringstream iss{std::get<0>(GetParam())};
+	Diagnosis::Vec     diagnoses{};
+	Preprocessor       preprocessor{std::move(iss), diagnoses};
 
-	Diagnosis::Vec                diagnoses{};
-	const Preprocessor::TokenList tokenList{preprocessor.Process(diagnoses)};
-	const auto                    expectedTokens{std::get<1>(GetParam())};
-	const auto                    expectedDiagnoses{std::get<2>(GetParam())};
-	DiagnosisKindVec              actualDiagnosisKinds{};
+	const Preprocessor::Token token{preprocessor()};
+
+	const Preprocessor::Token expectedToken{std::get<1>(GetParam())};
+	const auto                expectedDiagnoses{std::get<2>(GetParam())};
+	DiagnosisKindVec          actualDiagnosisKinds{};
 	std::transform(
 	        diagnoses.begin(), diagnoses.end(), std::back_inserter(actualDiagnosisKinds),
 	        [](const auto &diagnosisKind) { return diagnosisKind.m_Kind; }
 	);
 
 	EXPECT_EQ(expectedDiagnoses, actualDiagnosisKinds);
-	EXPECT_EQ(expectedTokens, tokenList);
+	EXPECT_EQ(expectedToken, token);
 }
 
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_KeywordsIdents, PpTokenizingTest,
         testing::Values(
-                std::make_tuple("", TokenList{}, DiagnosisKindVec{}),
-                std::make_tuple("auto", TokenList{Keyword::Auto}, DiagnosisKindVec{}),
-                std::make_tuple("break", TokenList{Keyword::Break}, DiagnosisKindVec{}),
-                std::make_tuple("case", TokenList{Keyword::Case}, DiagnosisKindVec{}),
-                std::make_tuple("char", TokenList{Keyword::Char}, DiagnosisKindVec{}),
-                std::make_tuple("const", TokenList{Keyword::Const}, DiagnosisKindVec{}),
-                std::make_tuple("continue", TokenList{Keyword::Continue}, DiagnosisKindVec{}),
-                std::make_tuple("default", TokenList{Keyword::Default}, DiagnosisKindVec{}),
-                std::make_tuple("do", TokenList{Keyword::Do}, DiagnosisKindVec{}),
-                std::make_tuple("double", TokenList{Keyword::Double}, DiagnosisKindVec{}),
-                std::make_tuple("else", TokenList{Keyword::Else}, DiagnosisKindVec{}),
-                std::make_tuple("enum", TokenList{Keyword::Enum}, DiagnosisKindVec{}),
-                std::make_tuple("extern", TokenList{Keyword::Extern}, DiagnosisKindVec{}),
-                std::make_tuple("float", TokenList{Keyword::Float}, DiagnosisKindVec{}),
-                std::make_tuple("for", TokenList{Keyword::For}, DiagnosisKindVec{}),
-                std::make_tuple("goto", TokenList{Keyword::Goto}, DiagnosisKindVec{}),
-                std::make_tuple("if", TokenList{Keyword::If}, DiagnosisKindVec{}),
-                std::make_tuple("inline", TokenList{Keyword::Inline}, DiagnosisKindVec{}),
-                std::make_tuple("int", TokenList{Keyword::Int}, DiagnosisKindVec{}),
-                std::make_tuple("long", TokenList{Keyword::Long}, DiagnosisKindVec{}),
-                std::make_tuple("register", TokenList{Keyword::Register}, DiagnosisKindVec{}),
-                std::make_tuple("restrict", TokenList{Keyword::Restrict}, DiagnosisKindVec{}),
-                std::make_tuple("return", TokenList{Keyword::Return}, DiagnosisKindVec{}),
-                std::make_tuple("short", TokenList{Keyword::Short}, DiagnosisKindVec{}),
-                std::make_tuple("signed", TokenList{Keyword::Signed}, DiagnosisKindVec{}),
-                std::make_tuple("sizeof", TokenList{Keyword::Sizeof}, DiagnosisKindVec{}),
-                std::make_tuple("static", TokenList{Keyword::Static}, DiagnosisKindVec{}),
-                std::make_tuple("struct", TokenList{Keyword::Struct}, DiagnosisKindVec{}),
-                std::make_tuple("switch", TokenList{Keyword::Switch}, DiagnosisKindVec{}),
-                std::make_tuple("typedef", TokenList{Keyword::Typedef}, DiagnosisKindVec{}),
-                std::make_tuple("union", TokenList{Keyword::Union}, DiagnosisKindVec{}),
-                std::make_tuple("unsigned", TokenList{Keyword::Unsigned}, DiagnosisKindVec{}),
-                std::make_tuple("void", TokenList{Keyword::Void}, DiagnosisKindVec{}),
-                std::make_tuple("volatile", TokenList{Keyword::Volatile}, DiagnosisKindVec{}),
-                std::make_tuple("while", TokenList{Keyword::While}, DiagnosisKindVec{}),
-                std::make_tuple("_Alignas", TokenList{Keyword::Alignas}, DiagnosisKindVec{}),
-                std::make_tuple("_Alignof", TokenList{Keyword::Alignof}, DiagnosisKindVec{}),
-                std::make_tuple("_Atomic", TokenList{Keyword::Atomic}, DiagnosisKindVec{}),
-                std::make_tuple("_Bool", TokenList{Keyword::Bool}, DiagnosisKindVec{}),
-                std::make_tuple("_Complex", TokenList{Keyword::Complex}, DiagnosisKindVec{}),
-                std::make_tuple("_Generic", TokenList{Keyword::Generic}, DiagnosisKindVec{}),
-                std::make_tuple("_Imaginary", TokenList{Keyword::Imaginary}, DiagnosisKindVec{}),
-                std::make_tuple("_Noreturn", TokenList{Keyword::Noreturn}, DiagnosisKindVec{}),
-                std::make_tuple("_Static_assert", TokenList{Keyword::StaticAssert}, DiagnosisKindVec{}),
-                std::make_tuple("_Thread_local", TokenList{Keyword::ThreadLocal}, DiagnosisKindVec{}),
-                std::make_tuple("sizeof float", TokenList{Keyword::Sizeof, Keyword::Float}, DiagnosisKindVec{}),
-                std::make_tuple(
-                        "float variableName", TokenList{Keyword::Float, Identifier{"variableName"}}, DiagnosisKindVec{}
-                ),
-                std::make_tuple("under_score", TokenList{Identifier{"under_score"}}, DiagnosisKindVec{}),
+                std::make_tuple("", SpecialPurposeToken::EndOfFile, DiagnosisKindVec{}),
+                std::make_tuple("auto", Keyword::Auto, DiagnosisKindVec{}),
+                std::make_tuple("break", Keyword::Break, DiagnosisKindVec{}),
+                std::make_tuple("case", Keyword::Case, DiagnosisKindVec{}),
+                std::make_tuple("char", Keyword::Char, DiagnosisKindVec{}),
+                std::make_tuple("const", Keyword::Const, DiagnosisKindVec{}),
+                std::make_tuple("continue", Keyword::Continue, DiagnosisKindVec{}),
+                std::make_tuple("default", Keyword::Default, DiagnosisKindVec{}),
+                std::make_tuple("do", Keyword::Do, DiagnosisKindVec{}),
+                std::make_tuple("double", Keyword::Double, DiagnosisKindVec{}),
+                std::make_tuple("else", Keyword::Else, DiagnosisKindVec{}),
+                std::make_tuple("enum", Keyword::Enum, DiagnosisKindVec{}),
+                std::make_tuple("extern", Keyword::Extern, DiagnosisKindVec{}),
+                std::make_tuple("float", Keyword::Float, DiagnosisKindVec{}),
+                std::make_tuple("for", Keyword::For, DiagnosisKindVec{}),
+                std::make_tuple("goto", Keyword::Goto, DiagnosisKindVec{}),
+                std::make_tuple("if", Keyword::If, DiagnosisKindVec{}),
+                std::make_tuple("inline", Keyword::Inline, DiagnosisKindVec{}),
+                std::make_tuple("int", Keyword::Int, DiagnosisKindVec{}),
+                std::make_tuple("long", Keyword::Long, DiagnosisKindVec{}),
+                std::make_tuple("register", Keyword::Register, DiagnosisKindVec{}),
+                std::make_tuple("restrict", Keyword::Restrict, DiagnosisKindVec{}),
+                std::make_tuple("return", Keyword::Return, DiagnosisKindVec{}),
+                std::make_tuple("short", Keyword::Short, DiagnosisKindVec{}),
+                std::make_tuple("signed", Keyword::Signed, DiagnosisKindVec{}),
+                std::make_tuple("sizeof", Keyword::Sizeof, DiagnosisKindVec{}),
+                std::make_tuple("static", Keyword::Static, DiagnosisKindVec{}),
+                std::make_tuple("struct", Keyword::Struct, DiagnosisKindVec{}),
+                std::make_tuple("switch", Keyword::Switch, DiagnosisKindVec{}),
+                std::make_tuple("typedef", Keyword::Typedef, DiagnosisKindVec{}),
+                std::make_tuple("union", Keyword::Union, DiagnosisKindVec{}),
+                std::make_tuple("unsigned", Keyword::Unsigned, DiagnosisKindVec{}),
+                std::make_tuple("void", Keyword::Void, DiagnosisKindVec{}),
+                std::make_tuple("volatile", Keyword::Volatile, DiagnosisKindVec{}),
+                std::make_tuple("while", Keyword::While, DiagnosisKindVec{}),
+                std::make_tuple("_Alignas", Keyword::Alignas, DiagnosisKindVec{}),
+                std::make_tuple("_Alignof", Keyword::Alignof, DiagnosisKindVec{}),
+                std::make_tuple("_Atomic", Keyword::Atomic, DiagnosisKindVec{}),
+                std::make_tuple("_Bool", Keyword::Bool, DiagnosisKindVec{}),
+                std::make_tuple("_Complex", Keyword::Complex, DiagnosisKindVec{}),
+                std::make_tuple("_Generic", Keyword::Generic, DiagnosisKindVec{}),
+                std::make_tuple("_Imaginary", Keyword::Imaginary, DiagnosisKindVec{}),
+                std::make_tuple("_Noreturn", Keyword::Noreturn, DiagnosisKindVec{}),
+                std::make_tuple("_Static_assert", Keyword::StaticAssert, DiagnosisKindVec{}),
+                std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{}),
+                std::make_tuple("under_score", Identifier{"under_score"}, DiagnosisKindVec{}),
                 // Identifiers starting with a char or string constant prefix are still identifiers and should be tokenized as such
-                std::make_tuple("u8SomeIdent", TokenList{Identifier{"u8SomeIdent"}}, DiagnosisKindVec{}),
+                std::make_tuple("u8SomeIdent", Identifier{"u8SomeIdent"}, DiagnosisKindVec{}),
                 // same for identifiers starting with a keyword
-                std::make_tuple("autoSomeIdent", TokenList{Identifier{"autoSomeIdent"}}, DiagnosisKindVec{})
+                std::make_tuple("autoSomeIdent", Identifier{"autoSomeIdent"}, DiagnosisKindVec{})
         )
 );
 
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_Punctuators, PpTokenizingTest,
         testing::Values(
-                std::make_tuple("[", TokenList{Punctuator::LeftBracket}, DiagnosisKindVec{}),
-                std::make_tuple("]", TokenList{Punctuator::RightBracket}, DiagnosisKindVec{}),
-                std::make_tuple("(", TokenList{Punctuator::LeftParenthesis}, DiagnosisKindVec{}),
-                std::make_tuple(")", TokenList{Punctuator::RightParenthesis}, DiagnosisKindVec{}),
-                std::make_tuple("{", TokenList{Punctuator::LeftBrace}, DiagnosisKindVec{}),
-                std::make_tuple("}", TokenList{Punctuator::RightBrace}, DiagnosisKindVec{}),
-                std::make_tuple(".", TokenList{Punctuator::Dot}, DiagnosisKindVec{}),
-                std::make_tuple("->", TokenList{Punctuator::Arrow}, DiagnosisKindVec{}),
-                std::make_tuple("++", TokenList{Punctuator::PlusPlus}, DiagnosisKindVec{}),
-                std::make_tuple("--", TokenList{Punctuator::MinusMinus}, DiagnosisKindVec{}),
-                std::make_tuple("&", TokenList{Punctuator::Ampersand}, DiagnosisKindVec{}),
-                std::make_tuple("*", TokenList{Punctuator::Asterisk}, DiagnosisKindVec{}),
-                std::make_tuple("+", TokenList{Punctuator::Plus}, DiagnosisKindVec{}),
-                std::make_tuple("-", TokenList{Punctuator::Minus}, DiagnosisKindVec{}),
-                std::make_tuple("~", TokenList{Punctuator::Tilde}, DiagnosisKindVec{}),
-                std::make_tuple("!", TokenList{Punctuator::ExclamationMark}, DiagnosisKindVec{}),
-                std::make_tuple("/", TokenList{Punctuator::Slash}, DiagnosisKindVec{}),
-                std::make_tuple("%", TokenList{Punctuator::Percent}, DiagnosisKindVec{}),
-                std::make_tuple("<<", TokenList{Punctuator::LessThanLessThan}, DiagnosisKindVec{}),
-                std::make_tuple(">>", TokenList{Punctuator::GreaterThanGreaterThan}, DiagnosisKindVec{}),
-                std::make_tuple("<", TokenList{Punctuator::LessThan}, DiagnosisKindVec{}),
-                std::make_tuple(">", TokenList{Punctuator::GreaterThan}, DiagnosisKindVec{}),
-                std::make_tuple("<=", TokenList{Punctuator::LessThanEqual}, DiagnosisKindVec{}),
-                std::make_tuple(">=", TokenList{Punctuator::GreaterThanEqual}, DiagnosisKindVec{}),
-                std::make_tuple("==", TokenList{Punctuator::EqualEqual}, DiagnosisKindVec{}),
-                std::make_tuple("!=", TokenList{Punctuator::ExclamationMarkEqual}, DiagnosisKindVec{}),
-                std::make_tuple("^", TokenList{Punctuator::Caret}, DiagnosisKindVec{}),
-                std::make_tuple("|", TokenList{Punctuator::VerticalBar}, DiagnosisKindVec{}),
-                std::make_tuple("&&", TokenList{Punctuator::AmpersandAmpersand}, DiagnosisKindVec{}),
-                std::make_tuple("||", TokenList{Punctuator::VerticalBarVerticalBar}, DiagnosisKindVec{}),
-                std::make_tuple("?", TokenList{Punctuator::QuestionMark}, DiagnosisKindVec{}),
-                std::make_tuple(":", TokenList{Punctuator::Colon}, DiagnosisKindVec{}),
-                std::make_tuple(";", TokenList{Punctuator::Semicolon}, DiagnosisKindVec{}),
-                std::make_tuple("...", TokenList{Punctuator::Ellipsis}, DiagnosisKindVec{}),
-                std::make_tuple("=", TokenList{Punctuator::Equal}, DiagnosisKindVec{}),
-                std::make_tuple("+=", TokenList{Punctuator::PlusEqual}, DiagnosisKindVec{}),
-                std::make_tuple("-=", TokenList{Punctuator::MinusEqual}, DiagnosisKindVec{}),
-                std::make_tuple("*=", TokenList{Punctuator::AsteriskEqual}, DiagnosisKindVec{}),
-                std::make_tuple("/=", TokenList{Punctuator::SlashEqual}, DiagnosisKindVec{}),
-                std::make_tuple("%=", TokenList{Punctuator::PercentEqual}, DiagnosisKindVec{}),
-                std::make_tuple("<<=", TokenList{Punctuator::LessThanLessThanEqual}, DiagnosisKindVec{}),
-                std::make_tuple(">>=", TokenList{Punctuator::GreaterThanGreaterThanEqual}, DiagnosisKindVec{}),
-                std::make_tuple("&=", TokenList{Punctuator::AmpersandEqual}, DiagnosisKindVec{}),
-                std::make_tuple("^=", TokenList{Punctuator::CaretEqual}, DiagnosisKindVec{}),
-                std::make_tuple("|=", TokenList{Punctuator::VerticalBarEqual}, DiagnosisKindVec{}),
-                std::make_tuple(",", TokenList{Punctuator::Comma}, DiagnosisKindVec{}),
-                std::make_tuple("#", TokenList{Punctuator::Hash}, DiagnosisKindVec{}),
-                std::make_tuple("##", TokenList{Punctuator::HashHash}, DiagnosisKindVec{}),
-                std::make_tuple("<:", TokenList{Punctuator::LeftBracket}, DiagnosisKindVec{}),
-                std::make_tuple(":>", TokenList{Punctuator::RightBracket}, DiagnosisKindVec{}),
-                std::make_tuple("<%", TokenList{Punctuator::LeftBrace}, DiagnosisKindVec{}),
-                std::make_tuple("%>", TokenList{Punctuator::RightBrace}, DiagnosisKindVec{}),
-                std::make_tuple("%:", TokenList{Punctuator::Hash}, DiagnosisKindVec{}),
-                std::make_tuple("%:%:", TokenList{Punctuator::HashHash}, DiagnosisKindVec{}),
+                std::make_tuple("[", Punctuator::LeftBracket, DiagnosisKindVec{}),
+                std::make_tuple("]", Punctuator::RightBracket, DiagnosisKindVec{}),
+                std::make_tuple("(", Punctuator::LeftParenthesis, DiagnosisKindVec{}),
+                std::make_tuple(")", Punctuator::RightParenthesis, DiagnosisKindVec{}),
+                std::make_tuple("{", Punctuator::LeftBrace, DiagnosisKindVec{}),
+                std::make_tuple("}", Punctuator::RightBrace, DiagnosisKindVec{}),
+                std::make_tuple(".", Punctuator::Dot, DiagnosisKindVec{}),
+                std::make_tuple("->", Punctuator::Arrow, DiagnosisKindVec{}),
+                std::make_tuple("++", Punctuator::PlusPlus, DiagnosisKindVec{}),
+                std::make_tuple("--", Punctuator::MinusMinus, DiagnosisKindVec{}),
+                std::make_tuple("&", Punctuator::Ampersand, DiagnosisKindVec{}),
+                std::make_tuple("*", Punctuator::Asterisk, DiagnosisKindVec{}),
+                std::make_tuple("+", Punctuator::Plus, DiagnosisKindVec{}),
+                std::make_tuple("-", Punctuator::Minus, DiagnosisKindVec{}),
+                std::make_tuple("~", Punctuator::Tilde, DiagnosisKindVec{}),
+                std::make_tuple("!", Punctuator::ExclamationMark, DiagnosisKindVec{}),
+                std::make_tuple("/", Punctuator::Slash, DiagnosisKindVec{}),
+                std::make_tuple("%", Punctuator::Percent, DiagnosisKindVec{}),
+                std::make_tuple("<<", Punctuator::LessThanLessThan, DiagnosisKindVec{}),
+                std::make_tuple(">>", Punctuator::GreaterThanGreaterThan, DiagnosisKindVec{}),
+                std::make_tuple("<", Punctuator::LessThan, DiagnosisKindVec{}),
+                std::make_tuple(">", Punctuator::GreaterThan, DiagnosisKindVec{}),
+                std::make_tuple("<=", Punctuator::LessThanEqual, DiagnosisKindVec{}),
+                std::make_tuple(">=", Punctuator::GreaterThanEqual, DiagnosisKindVec{}),
+                std::make_tuple("==", Punctuator::EqualEqual, DiagnosisKindVec{}),
+                std::make_tuple("!=", Punctuator::ExclamationMarkEqual, DiagnosisKindVec{}),
+                std::make_tuple("^", Punctuator::Caret, DiagnosisKindVec{}),
+                std::make_tuple("|", Punctuator::VerticalBar, DiagnosisKindVec{}),
+                std::make_tuple("&&", Punctuator::AmpersandAmpersand, DiagnosisKindVec{}),
+                std::make_tuple("||", Punctuator::VerticalBarVerticalBar, DiagnosisKindVec{}),
+                std::make_tuple("?", Punctuator::QuestionMark, DiagnosisKindVec{}),
+                std::make_tuple(":", Punctuator::Colon, DiagnosisKindVec{}),
+                std::make_tuple(";", Punctuator::Semicolon, DiagnosisKindVec{}),
+                std::make_tuple("...", Punctuator::Ellipsis, DiagnosisKindVec{}),
+                std::make_tuple("=", Punctuator::Equal, DiagnosisKindVec{}),
+                std::make_tuple("+=", Punctuator::PlusEqual, DiagnosisKindVec{}),
+                std::make_tuple("-=", Punctuator::MinusEqual, DiagnosisKindVec{}),
+                std::make_tuple("*=", Punctuator::AsteriskEqual, DiagnosisKindVec{}),
+                std::make_tuple("/=", Punctuator::SlashEqual, DiagnosisKindVec{}),
+                std::make_tuple("%=", Punctuator::PercentEqual, DiagnosisKindVec{}),
+                std::make_tuple("<<=", Punctuator::LessThanLessThanEqual, DiagnosisKindVec{}),
+                std::make_tuple(">>=", Punctuator::GreaterThanGreaterThanEqual, DiagnosisKindVec{}),
+                std::make_tuple("&=", Punctuator::AmpersandEqual, DiagnosisKindVec{}),
+                std::make_tuple("^=", Punctuator::CaretEqual, DiagnosisKindVec{}),
+                std::make_tuple("|=", Punctuator::VerticalBarEqual, DiagnosisKindVec{}),
+                std::make_tuple(",", Punctuator::Comma, DiagnosisKindVec{}),
+                std::make_tuple("#", Punctuator::Hash, DiagnosisKindVec{}),
+                std::make_tuple("##", Punctuator::HashHash, DiagnosisKindVec{}),
+                std::make_tuple("<:", Punctuator::LeftBracket, DiagnosisKindVec{}),
+                std::make_tuple(":>", Punctuator::RightBracket, DiagnosisKindVec{}),
+                std::make_tuple("<%", Punctuator::LeftBrace, DiagnosisKindVec{}),
+                std::make_tuple("%>", Punctuator::RightBrace, DiagnosisKindVec{}),
+                std::make_tuple("%:", Punctuator::Hash, DiagnosisKindVec{}),
+                std::make_tuple("%:%:", Punctuator::HashHash, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "|| &&", TokenList{Punctuator::VerticalBarVerticalBar, Punctuator::AmpersandAmpersand},
-                        DiagnosisKindVec{}
-                ),
-                std::make_tuple("%:%", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_PartialTokenEncountered}),
-                std::make_tuple("-+", TokenList{Punctuator::Minus, Punctuator::Plus}, DiagnosisKindVec{}),
-                std::make_tuple("->*", TokenList{Punctuator::Arrow, Punctuator::Asterisk}, DiagnosisKindVec{}),
-                std::make_tuple("*...", TokenList{Punctuator::Asterisk, Punctuator::Ellipsis}, DiagnosisKindVec{}),
-                std::make_tuple("<^", TokenList{Punctuator::LessThan, Punctuator::Caret}, DiagnosisKindVec{})
+                        "%:%", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_PartialTokenEncountered}
+                )
         )
 );
-
+//
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_Directives, PpTokenizingTest,
         testing::Values(
-                std::make_tuple("#define", TokenList{Directive::Define}, DiagnosisKindVec{}),
-                std::make_tuple("#include", TokenList{Directive::Include}, DiagnosisKindVec{}),
-                std::make_tuple("#undef", TokenList{Directive::Undef}, DiagnosisKindVec{}),
-                std::make_tuple("#ifdef", TokenList{Directive::Ifdef}, DiagnosisKindVec{}),
-                std::make_tuple("#ifndef", TokenList{Directive::Ifndef}, DiagnosisKindVec{}),
-                std::make_tuple("#if", TokenList{Directive::If}, DiagnosisKindVec{}),
-                std::make_tuple("#elif", TokenList{Directive::Elif}, DiagnosisKindVec{}),
-                std::make_tuple("#else", TokenList{Directive::Else}, DiagnosisKindVec{}),
-                std::make_tuple("#endif", TokenList{Directive::Endif}, DiagnosisKindVec{}),
-                std::make_tuple("#line", TokenList{Directive::Line}, DiagnosisKindVec{}),
-                std::make_tuple("#error", TokenList{Directive::Error}, DiagnosisKindVec{}),
-                std::make_tuple("#pragma", TokenList{Directive::Pragma}, DiagnosisKindVec{}),
-                std::make_tuple("# define", TokenList{Directive::Define}, DiagnosisKindVec{}),
-                std::make_tuple("#\ninclude", TokenList{Punctuator::Hash, Identifier{"include"}}, DiagnosisKindVec{})
+                std::make_tuple("#define", Directive::Define, DiagnosisKindVec{}),
+                std::make_tuple("#include", Directive::Include, DiagnosisKindVec{}),
+                std::make_tuple("#undef", Directive::Undef, DiagnosisKindVec{}),
+                std::make_tuple("#ifdef", Directive::Ifdef, DiagnosisKindVec{}),
+                std::make_tuple("#ifndef", Directive::Ifndef, DiagnosisKindVec{}),
+                std::make_tuple("#if", Directive::If, DiagnosisKindVec{}),
+                std::make_tuple("#elif", Directive::Elif, DiagnosisKindVec{}),
+                std::make_tuple("#else", Directive::Else, DiagnosisKindVec{}),
+                std::make_tuple("#endif", Directive::Endif, DiagnosisKindVec{}),
+                std::make_tuple("#line", Directive::Line, DiagnosisKindVec{}),
+                std::make_tuple("#error", Directive::Error, DiagnosisKindVec{}),
+                std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{}),
+                std::make_tuple("# define", Directive::Define, DiagnosisKindVec{})
         )
 );
 
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_CharacterConstants, PpTokenizingTest,
         testing::Values(
-                std::make_tuple("'a'", TokenList{CharacterConstant{'a'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\0')", TokenList{CharacterConstant{'\0'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\1')", TokenList{CharacterConstant{'\1'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\2')", TokenList{CharacterConstant{'\2'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\3')", TokenList{CharacterConstant{'\3'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\4')", TokenList{CharacterConstant{'\4'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\5')", TokenList{CharacterConstant{'\5'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\6')", TokenList{CharacterConstant{'\6'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\7')", TokenList{CharacterConstant{'\7'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\10')", TokenList{CharacterConstant{'\10'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\8')", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_UnknownEscapeSequence}),
-                std::make_tuple(R"('\x0')", TokenList{CharacterConstant{'\0'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\x00')", TokenList{CharacterConstant{'\0'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\x7B')", TokenList{CharacterConstant{'\x7B'}}, DiagnosisKindVec{}),
+                std::make_tuple("'a'", CharacterConstant{'a'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\0')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\1')", CharacterConstant{'\1'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\2')", CharacterConstant{'\2'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\3')", CharacterConstant{'\3'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\4')", CharacterConstant{'\4'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\5')", CharacterConstant{'\5'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\6')", CharacterConstant{'\6'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\7')", CharacterConstant{'\7'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\10')", CharacterConstant{'\10'}, DiagnosisKindVec{}),
                 std::make_tuple(
-                        R"(u'\1234')", TokenList{CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}},
-                        DiagnosisKindVec{}
+                        R"('\8')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::PP_UnknownEscapeSequence}
                 ),
-                std::make_tuple(R"('h)", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}),
-                std::make_tuple(R"('\')", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}),
-                std::make_tuple(R"('\'')", TokenList{CharacterConstant{'\''}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\"')", TokenList{CharacterConstant{'\"'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\t')", TokenList{CharacterConstant{'\t'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\v')", TokenList{CharacterConstant{'\v'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\a')", TokenList{CharacterConstant{'\a'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\b')", TokenList{CharacterConstant{'\b'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\r')", TokenList{CharacterConstant{'\r'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\f')", TokenList{CharacterConstant{'\f'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\n')", TokenList{CharacterConstant{'\n'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\\')", TokenList{CharacterConstant{'\\'}}, DiagnosisKindVec{}),
-                std::make_tuple(R"('\?')", TokenList{CharacterConstant{'\?'}}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\x0')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\x00')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\x7B')", CharacterConstant{'\x7B'}, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "'¥'", TokenList{CharacterConstant{0xC2A5}},
-                        DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}
+                        R"(u'\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
                 ),
-                std::make_tuple("''", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_CharNoValue}),
-                std::make_tuple(R"('\x')", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_CharHexNoDigits}),
                 std::make_tuple(
-                        "'ab'", TokenList{CharacterConstant{'a' << 8 | 'b'}},
-                        DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}
+                        R"('h)", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}
+                ),
+                std::make_tuple(
+                        R"('\')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}
+                ),
+                std::make_tuple(R"('\'')", CharacterConstant{'\''}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\"')", CharacterConstant{'\"'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\t')", CharacterConstant{'\t'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\v')", CharacterConstant{'\v'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\a')", CharacterConstant{'\a'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\b')", CharacterConstant{'\b'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\r')", CharacterConstant{'\r'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\f')", CharacterConstant{'\f'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\n')", CharacterConstant{'\n'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\\')", CharacterConstant{'\\'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\?')", CharacterConstant{'\?'}, DiagnosisKindVec{}),
+                std::make_tuple("'¥'", CharacterConstant{0xC2A5}, DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}),
+                std::make_tuple("''", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharNoValue}),
+                std::make_tuple(
+                        R"('\x')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharHexNoDigits}
+                ),
+                std::make_tuple(
+                        "'ab'", CharacterConstant{'a' << 8 | 'b'}, DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}
                 ),
                 std::make_tuple(
                         "u'ab'",
-                        TokenList{CharacterConstant{
-                                ('a' << 8 | 'b') & CompilerDataTypeInfo::CHAR16_T::MASK, ConstantPrefix::u
-                        }},
+                        CharacterConstant{('a' << 8 | 'b') & CompilerDataTypeInfo::CHAR16_T::MASK, ConstantPrefix::u},
                         DiagnosisKindVec{}
                 )
         )
@@ -237,19 +231,21 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
         Preprocessor_StringConstants, PpTokenizingTest,
         testing::Values(
-                std::make_tuple(R"("")", TokenList{StringConstant{""}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("a")", TokenList{StringConstant{"a"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("ab")", TokenList{StringConstant{"ab"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("abc")", TokenList{StringConstant{"abc"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("hello world")", TokenList{StringConstant{"hello world"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("hello\nworld")", TokenList{StringConstant{"hello\nworld"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("hello\\nworld")", TokenList{StringConstant{R"(hello\nworld)"}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("hello world)", TokenList{}, DiagnosisKindVec{Diagnosis::Kind::PP_StrUnterminated}),
+                std::make_tuple(R"("")", StringConstant{""}, DiagnosisKindVec{}),
+                std::make_tuple(R"("a")", StringConstant{"a"}, DiagnosisKindVec{}),
+                std::make_tuple(R"("ab")", StringConstant{"ab"}, DiagnosisKindVec{}),
+                std::make_tuple(R"("abc")", StringConstant{"abc"}, DiagnosisKindVec{}),
+                std::make_tuple(R"("hello world")", StringConstant{"hello world"}, DiagnosisKindVec{}),
+                std::make_tuple(R"("hello\nworld")", StringConstant{"hello\nworld"}, DiagnosisKindVec{}),
+                std::make_tuple(R"("hello\\nworld")", StringConstant{R"(hello\nworld)"}, DiagnosisKindVec{}),
                 std::make_tuple(
-                        R"(L"hello world")", TokenList{StringConstant{"hello world", ConstantPrefix::L}},
-                        DiagnosisKindVec{}
+                        R"("hello world)", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::PP_StrUnterminated}
                 ),
-                std::make_tuple(R"(u8"ไทย")", TokenList{StringConstant{"ไทย", ConstantPrefix::u8}}, DiagnosisKindVec{}),
-                std::make_tuple(R"("\"")", TokenList{StringConstant{"\""}}, DiagnosisKindVec{})
+                std::make_tuple(
+                        R"(L"hello world")", StringConstant{"hello world", ConstantPrefix::L}, DiagnosisKindVec{}
+                ),
+                std::make_tuple(R"(u8"ไทย")", StringConstant{"ไทย", ConstantPrefix::u8}, DiagnosisKindVec{}),
+                std::make_tuple(R"("\"")", StringConstant{"\""}, DiagnosisKindVec{})
         )
 );
