@@ -1,5 +1,4 @@
 #include "../libs/magic_enum/magic_enum.hpp"
-#include "misc/Config.h"
 #include "misc/Tokenizer.h"
 // #include "misc/tokenizer_old.h"
 #include <cstring>

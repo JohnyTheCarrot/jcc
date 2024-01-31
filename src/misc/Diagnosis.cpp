@@ -2,7 +2,7 @@
 // Created by tuurm on 04/07/2023.
 //
 
-#include "reporting.h"
+#include "Diagnosis.h"
 #include "SpanOld.h"
 #include "magic_enum/magic_enum.hpp"
 #include <iostream>

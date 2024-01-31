@@ -1,6 +1,6 @@
 #include "Preprocessor.h"
-#include "CompilerDatatypes.h"
-#include "reporting.h"
+#include "Diagnosis.h"
+#include "compiler_data_types.h"
 #include <magic_enum/magic_enum.hpp>
 #include <regex>
 
@@ -291,7 +291,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeHash() {
 }
 
 Preprocessor::Punctuator Preprocessor::TokenizePunctuator(Diagnosis::Vec &diagnoses) {
-	Punctuator result{Punctuator::None};
+	Punctuator result;
 
 	switch (*m_Current) {
 		case '[':
@@ -486,10 +486,8 @@ Preprocessor::TokenList Preprocessor::Tokenize(Diagnosis::Vec &diagnoses) {
 	TokenList tokens{};
 
 	while (m_Current != m_Buffer.cend()) {
-		if (*m_Current != '\n' && isspace(*m_Current)) {
-			++m_Current;
-			continue;
-		}
+		// skip whitespace
+		while (m_Current != m_Buffer.cend() && isspace(*m_Current) && *m_Current != '\n') ++m_Current;
 
 		if (*m_Current == '\n') {
 			++m_Current;
@@ -666,6 +664,7 @@ bool Preprocessor::TokenizeCharacterOrStringLiteral(
 			continue;
 		}
 
+		// TODO: We can do away with isEscaped by committing to the escape sequence after the \ character
 		if (isEscaped) {
 			// TODO: move to helper function
 			isEscaped = false;

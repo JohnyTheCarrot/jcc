@@ -4,7 +4,7 @@
 
 #ifndef JCC_SPAN_H
 #define JCC_SPAN_H
-#include "Config.h"
+#include "config.h"
 
 struct Span final {
 	std::size_t m_LineNumberStart{}, m_LineNumberEnd{};

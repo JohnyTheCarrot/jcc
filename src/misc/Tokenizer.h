@@ -4,9 +4,9 @@
 
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
-#include "Config.h"
 #include "Span.h"
 #include "Trie.h"
+#include "config.h"
 
 
 #include <algorithm>
@@ -126,18 +126,18 @@ enum class IntegerLiteralType {
 	LongLong,
 };
 
-using IntegerTokenValue	 = int64_t;
+using IntegerTokenValue  = int64_t;
 using FloatingTokenValue = double;
 
 struct IntegerLiteralTokenValue {
-	IntegerTokenValue value{};
-	bool isUnsigned{};
+	IntegerTokenValue  value{};
+	bool               isUnsigned{};
 	IntegerLiteralType type{};
 };
 
 struct FloatingPointLiteralTokenValue {
 	FloatingTokenValue value;
-	bool isDouble;
+	bool               isDouble;
 };
 
 typedef std::variant<IntegerLiteralTokenValue, FloatingPointLiteralTokenValue, std::string> TokenValue;
@@ -159,15 +159,15 @@ public:
 
 private:
 	TrieNode<C('\n'), C('~'), Char, TokenType> m_TokenDefs{};
-	IStream &m_IStream;
-	std::vector<String> m_Lines{};
-	std::size_t m_LineNumber{FIRST_LINE_INDEX};
+	IStream                                   &m_IStream;
+	std::vector<String>                        m_Lines{};
+	std::size_t                                m_LineNumber{FIRST_LINE_INDEX};
 
 public:
 	void Tokenize(TokenList &tokens);
 
 	explicit Tokenizer(IStream &is)
-		: m_IStream{is} {
+	    : m_IStream{is} {
 #pragma region token initialisation
 		// TODO: should the difference between \r\n and \n be handled by the preprocessor?
 		m_TokenDefs.Insert(C("\r\n"), TokenType::Util_NewLine);

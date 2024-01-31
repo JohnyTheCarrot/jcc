@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <misc/Config.h>
 #include <misc/Tokenizer.h>
+#include <misc/config.h>
 
 TEST(Tokenizer_SpanCreation, Simple) {
 	const String input{C("int")};
-	ISStream iStream{input};
+	ISStream     iStream{input};
 
 	TokenList tokens{};
 
@@ -27,7 +27,7 @@ TEST_P(LeadingWhitespaceTest, LeadingSpaces) {
 	const String &token{std::get<1>(GetParam())};
 
 	const String input{leadingSpaces + token};
-	ISStream iStream{input};
+	ISStream     iStream{input};
 
 	TokenList tokens{};
 

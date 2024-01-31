@@ -4,8 +4,8 @@
 
 #include "tokenizer_old.h"
 #include "../../libs/magic_enum/magic_enum.hpp"
+#include "Diagnosis.h"
 #include "SpanOld.h"
-#include "reporting.h"
 #include <cassert>
 #include <fmt/format.h>
 #include <istream>
@@ -13,7 +13,7 @@
 size_t TokenizerOld::TokenizeNormalToken() {
 	// TODO: identifiers starting with a keyword are falsely detected as the keyword followed by an identifier
 	const std::streamoff inputStreamPos{this->inputStream.tellg()};
-	char tokenBuffer[MAX_TOKEN_LENGTH + 1]{this->currentChar};
+	char                 tokenBuffer[MAX_TOKEN_LENGTH + 1]{this->currentChar};
 	this->inputStream.readsome(tokenBuffer + 1, MAX_TOKEN_LENGTH);
 	tokenBuffer[MAX_TOKEN_LENGTH] = '\0';
 	this->inputStream.seekg(inputStreamPos - 1, std::istream::beg);
@@ -28,7 +28,7 @@ size_t TokenizerOld::TokenizeNormalToken() {
 
 		if (TOKEN_DEFINITIONS.contains(key)) {
 			TokenType token{TOKEN_DEFINITIONS.at(key)};
-			this->currentToken = token;
+			this->currentToken       = token;
 			optionalFoundTokenLength = index + 1;
 		}
 	}
@@ -39,7 +39,7 @@ size_t TokenizerOld::TokenizeNormalToken() {
 }
 
 void TokenizerOld::TokenizeIdentifier(TokenList &tokensOut) {
-	std::string identifierBuffer{this->currentChar};
+	std::string  identifierBuffer{this->currentChar};
 	const size_t currentLine{this->line};
 	const size_t currentLineStartIndex{this->lineStartIndex};
 	const size_t currentCharIndex{GetCharIndex()};
@@ -57,10 +57,11 @@ void TokenizerOld::TokenizeIdentifier(TokenList &tokensOut) {
 
 	if (identifierBuffer.length() > 0) {
 		const Token token{
-				TokenType::Identifier,
-				SpanOld(currentLine, currentLineStartIndex, currentCharIndex, identifierBuffer.length(),
-					 this->inputStream),
-				identifierBuffer};
+		        TokenType::Identifier,
+		        SpanOld(currentLine, currentLineStartIndex, currentCharIndex, identifierBuffer.length(),
+		                this->inputStream),
+		        identifierBuffer
+		};
 		tokensOut.push_back(token);
 
 		return;
@@ -71,8 +72,8 @@ void TokenizerOld::TokenizeIdentifier(TokenList &tokensOut) {
 
 void TokenizerOld::TokenizeString(TokenList &tokensOut) {
 	std::string stringLiteralBuffer;
-	bool isEscaped{false};
-	bool wasTerminated{false};
+	bool        isEscaped{false};
+	bool        wasTerminated{false};
 
 	while (GetNextChar()) {
 		if (this->currentChar == '\\') {
@@ -104,8 +105,8 @@ void TokenizerOld::TokenizeString(TokenList &tokensOut) {
 					break;
 				default:
 					Warn(this->filePath, this->inputStream,
-						 SpanOld(this->line, this->lineStartIndex, GetCharIndex() - 1, 2, this->inputStream),
-						 fmt::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
+					     SpanOld(this->line, this->lineStartIndex, GetCharIndex() - 1, 2, this->inputStream),
+					     fmt::format("Unrecognized escape sequence: '\\{}'", this->currentChar));
 					stringLiteralBuffer += this->currentChar;
 					break;
 			}
@@ -115,7 +116,8 @@ void TokenizerOld::TokenizeString(TokenList &tokensOut) {
 
 		if (this->currentChar == '\n') {
 			Error(this->filePath, this->inputStream,
-				  SpanOld(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream), "Unexpected newline.");
+			      SpanOld(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream),
+			      "Unexpected newline.");
 		}
 
 		if (this->currentChar == '"') {
@@ -128,11 +130,12 @@ void TokenizerOld::TokenizeString(TokenList &tokensOut) {
 
 	if (!wasTerminated) {
 		Error(this->filePath, this->inputStream,
-			  SpanOld(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream), "Unexpected end of input.");
+		      SpanOld(this->line, this->lineStartIndex, GetCharIndex(), 1, this->inputStream),
+		      "Unexpected end of input.");
 	}
 
 	tokensOut.emplace_back(
-			TokenType::StringLiteral, SpanFromCurrent(stringLiteralBuffer.length()), stringLiteralBuffer
+	        TokenType::StringLiteral, SpanFromCurrent(stringLiteralBuffer.length()), stringLiteralBuffer
 	);
 }
 
@@ -243,13 +246,13 @@ void TokenizerOld::TokenizeInteger(TokenList &tokensOut) {
 		integerLiteralDigits.push_back(firstDigit);
 	}
 
-	int digit{};
+	int               digit{};
 	BaseConvertResult convertResult;
 	while ((convertResult = GetDigit(base, digit)) == BaseConvertResult::Success) {
 		integerLiteralDigits.push_back(digit);
 	}
 
-	bool isUnsigned{false};
+	bool               isUnsigned{false};
 	IntegerLiteralType type{};
 
 	const IntLiteralSuffix suffixOne{GetIntLiteralSuffix(IntLiteralSuffix::None, isUnsigned, type)};
@@ -260,16 +263,16 @@ void TokenizerOld::TokenizeInteger(TokenList &tokensOut) {
 	const size_t amountOfDigits{integerLiteralDigits.size()};
 	if (convertResult == BaseConvertResult::DigitNotInBase) {
 		Error(this->filePath, this->inputStream,
-			  SpanOld(this->line, this->lineStartIndex, GetCharIndex() + 1, 1, this->inputStream),
-			  fmt::format("Invalid digit for base {}.", base));
+		      SpanOld(this->line, this->lineStartIndex, GetCharIndex() + 1, 1, this->inputStream),
+		      fmt::format("Invalid digit for base {}.", base));
 	}
 
 	IntegerTokenValue integerLiteralValue{0};
 	for (size_t index{0}; index < amountOfDigits; ++index) {
 		integerLiteralValue += integerLiteralDigits[index] *
-							   static_cast<IntegerTokenValue>(
-									   pow(base, static_cast<double>(amountOfDigits) - static_cast<double>(index) - 1)
-							   );
+		                       static_cast<IntegerTokenValue>(
+		                               pow(base, static_cast<double>(amountOfDigits) - static_cast<double>(index) - 1)
+		                       );
 	}
 
 	const IntegerLiteralTokenValue value{integerLiteralValue, isUnsigned, type};
@@ -303,7 +306,7 @@ void TokenizerOld::Tokenize(TokenList &tokensOut) {
 			this->inputStream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			++this->line;
 			this->lineStartIndex = GetCharIndex() + 1;
-			this->currentToken = std::nullopt;
+			this->currentToken   = std::nullopt;
 			continue;
 		}
 
@@ -384,7 +387,9 @@ size_t TokenizerOld::GetCharIndex() const {
 	return std::max(0, charIndex);
 }
 
-size_t TokenizerOld::GetColumnIndex() const { return GetCharIndex() - this->lineStartIndex; }
+size_t TokenizerOld::GetColumnIndex() const {
+	return GetCharIndex() - this->lineStartIndex;
+}
 
 SpanOld TokenizerOld::SpanFromCurrent(size_t length) const {
 	return {this->line, this->lineStartIndex, GetCharIndex(), length, this->inputStream};
