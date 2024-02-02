@@ -1,5 +1,5 @@
-#ifndef JCC_PREPROCESSOR_H
-#define JCC_PREPROCESSOR_H
+#ifndef JCC_TOKENIZER_H
+#define JCC_TOKENIZER_H
 
 #include "CharStream.h"
 #include "Diagnosis.h"
@@ -19,7 +19,7 @@
 // punctuator
 // each non-white-space character that cannot be one of the above
 
-class Preprocessor final {
+class Tokenizer final {
 public:
 	using StringConstIter = CompilerDataTypes::StringConstIter;
 
@@ -284,13 +284,13 @@ private:
 	std::optional<char> TokenizeEscapeSequence();
 
 	[[nodiscard]]
-	Preprocessor::Token TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocessor::ConstantType type);
+	Tokenizer::Token TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type);
 
 	CharStream      m_Current;
 	Diagnosis::Vec &m_Diagnoses;
 
 	[[nodiscard]]
-	Preprocessor::Punctuator TokenizeDot();
+	Tokenizer::Punctuator TokenizeDot();
 
 	[[nodiscard]]
 	Punctuator TokenizeDash();
@@ -326,10 +326,10 @@ private:
 	Punctuator TokenizeExclamationMark();
 
 	[[nodiscard]]
-	Preprocessor::Token TokenizePercent();
+	Tokenizer::Token TokenizePercent();
 
 	[[nodiscard]]
-	Preprocessor::Token TokenizeHashHashDigraph();
+	Tokenizer::Token TokenizeHashHashDigraph();
 
 	[[nodiscard]]
 	Punctuator TokenizeCaret();
@@ -341,39 +341,39 @@ private:
 	Punctuator TokenizeColon();
 
 	[[nodiscard]]
-	Preprocessor::Punctuator TokenizeHash();
+	Tokenizer::Punctuator TokenizeHash();
 
 	[[nodiscard]]
-	Preprocessor::Token TokenizePunctuator();
+	Tokenizer::Token TokenizePunctuator();
 
 	[[nodiscard]]
-	std::optional<Preprocessor::Token> TokenizeDirective();
+	std::optional<Tokenizer::Token> TokenizeDirective();
 
 	Token TokenizeIdentifierOrKeyword();
 
 	[[nodiscard]]
-	Preprocessor::Token Tokenize();
+	Tokenizer::Token Tokenize();
 
 public:
-	Preprocessor(std::istringstream &&iStream, Diagnosis::Vec &diagnoses)
+	Tokenizer(std::istringstream &&iStream, Diagnosis::Vec &diagnoses)
 	    : m_Current{std::move(iStream)}
 	    , m_Diagnoses{diagnoses} {
 	}
 
-	Preprocessor(const Preprocessor &)            = delete;
-	Preprocessor(Preprocessor &&)                 = delete;
-	Preprocessor &operator=(const Preprocessor &) = delete;
-	Preprocessor &operator=(Preprocessor &&)      = delete;
+	Tokenizer(const Tokenizer &)            = delete;
+	Tokenizer(Tokenizer &&)                 = delete;
+	Tokenizer &operator=(const Tokenizer &) = delete;
+	Tokenizer &operator=(Tokenizer &&)      = delete;
 
 	Token operator()();
 };
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::SpecialPurpose specialPurpose);
+std::ostream &operator<<(std::ostream &os, Tokenizer::SpecialPurpose specialPurpose);
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator);
+std::ostream &operator<<(std::ostream &os, Tokenizer::Punctuator punctuator);
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword);
+std::ostream &operator<<(std::ostream &os, Tokenizer::Keyword keyword);
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Directive directive);
+std::ostream &operator<<(std::ostream &os, Tokenizer::Directive directive);
 
-#endif//JCC_PREPROCESSOR_H
+#endif//JCC_TOKENIZER_H

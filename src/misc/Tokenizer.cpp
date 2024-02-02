@@ -1,10 +1,10 @@
-#include "Preprocessor.h"
+#include "Tokenizer.h"
 #include "Diagnosis.h"
 #include "compiler_data_types.h"
 #include <magic_enum/magic_enum.hpp>
 #include <regex>
 
-Preprocessor::Punctuator Preprocessor::TokenizeDot() {
+Tokenizer::Punctuator Tokenizer::TokenizeDot() {
 	if (!m_Current || *m_Current != '.') {
 		return Punctuator::Dot;
 	}
@@ -12,14 +12,14 @@ Preprocessor::Punctuator Preprocessor::TokenizeDot() {
 	m_Current.Next();
 	if (!m_Current || m_Current++ != '.') {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_PartialTokenEncountered, "...");
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "...");
 		return Punctuator::None;
 	}
 
 	return Punctuator::Ellipsis;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeDash() {
+Tokenizer::Punctuator Tokenizer::TokenizeDash() {
 	if (!m_Current) {
 		return Punctuator::Minus;
 	}
@@ -44,7 +44,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeDash() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizePlus() {
+Tokenizer::Punctuator Tokenizer::TokenizePlus() {
 	if (!m_Current) {
 		return Punctuator::Plus;
 	}
@@ -66,7 +66,7 @@ Preprocessor::Punctuator Preprocessor::TokenizePlus() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeAmpersand() {
+Tokenizer::Punctuator Tokenizer::TokenizeAmpersand() {
 	if (!m_Current) {
 		return Punctuator::Ampersand;
 	}
@@ -88,7 +88,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeAmpersand() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeVerticalBar() {
+Tokenizer::Punctuator Tokenizer::TokenizeVerticalBar() {
 	if (!m_Current) {
 		return Punctuator::VerticalBar;
 	}
@@ -110,7 +110,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeVerticalBar() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeAsterisk() {
+Tokenizer::Punctuator Tokenizer::TokenizeAsterisk() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::Asterisk;
 	}
@@ -119,7 +119,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeAsterisk() {
 	return Punctuator::AsteriskEqual;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeLessThan() {
+Tokenizer::Punctuator Tokenizer::TokenizeLessThan() {
 	if (!m_Current) {
 		return Punctuator::LessThan;
 	}
@@ -147,7 +147,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeLessThan() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeDoubleLessThan() {
+Tokenizer::Punctuator Tokenizer::TokenizeDoubleLessThan() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::LessThanLessThan;
 	}
@@ -156,7 +156,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeDoubleLessThan() {
 	return Punctuator::LessThanLessThanEqual;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeGreaterThan() {
+Tokenizer::Punctuator Tokenizer::TokenizeGreaterThan() {
 	if (!m_Current) {
 		return Punctuator::GreaterThan;
 	}
@@ -181,7 +181,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeGreaterThan() {
 	return result;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeDoubleGreaterThan() {
+Tokenizer::Punctuator Tokenizer::TokenizeDoubleGreaterThan() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::GreaterThanGreaterThan;
 	}
@@ -190,7 +190,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeDoubleGreaterThan() {
 	return Punctuator::GreaterThanGreaterThanEqual;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeEqual() {
+Tokenizer::Punctuator Tokenizer::TokenizeEqual() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::Equal;
 	}
@@ -199,7 +199,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeEqual() {
 	return Punctuator::EqualEqual;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeExclamationMark() {
+Tokenizer::Punctuator Tokenizer::TokenizeExclamationMark() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::ExclamationMark;
 	}
@@ -208,7 +208,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeExclamationMark() {
 	return Punctuator::ExclamationMarkEqual;
 }
 
-Preprocessor::Token Preprocessor::TokenizePercent() {
+Tokenizer::Token Tokenizer::TokenizePercent() {
 	if (!m_Current) {
 		return Punctuator::Percent;
 	}
@@ -233,7 +233,7 @@ Preprocessor::Token Preprocessor::TokenizePercent() {
 	return result;
 }
 
-Preprocessor::Token Preprocessor::TokenizeHashHashDigraph() {
+Tokenizer::Token Tokenizer::TokenizeHashHashDigraph() {
 	if (!m_Current || *m_Current != '%') {
 		return Punctuator::Hash;
 	}
@@ -241,14 +241,14 @@ Preprocessor::Token Preprocessor::TokenizeHashHashDigraph() {
 	m_Current.Next();
 	if (!m_Current || m_Current++ != ':') {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_PartialTokenEncountered, "%:%:");
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "%:%:");
 		return SpecialPurpose::Error;
 	}
 
 	return Punctuator::HashHash;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeCaret() {
+Tokenizer::Punctuator Tokenizer::TokenizeCaret() {
 	if (!m_Current || *m_Current != '=') {
 		return Punctuator::Caret;
 	}
@@ -257,7 +257,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeCaret() {
 	return Punctuator::CaretEqual;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeSlash() {
+Tokenizer::Punctuator Tokenizer::TokenizeSlash() {
 	if (!m_Current) {
 		return Punctuator::Slash;
 	}
@@ -274,7 +274,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeSlash() {
 	}
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeColon() {
+Tokenizer::Punctuator Tokenizer::TokenizeColon() {
 	if (!m_Current || *m_Current != '>') {
 		return Punctuator::Colon;
 	}
@@ -283,7 +283,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeColon() {
 	return Punctuator::RightBracket;
 }
 
-Preprocessor::Punctuator Preprocessor::TokenizeHash() {
+Tokenizer::Punctuator Tokenizer::TokenizeHash() {
 	if (!m_Current || *m_Current != '#') {
 		return Punctuator::Hash;
 	}
@@ -292,7 +292,7 @@ Preprocessor::Punctuator Preprocessor::TokenizeHash() {
 	return Punctuator::HashHash;
 }
 
-Preprocessor::Token Preprocessor::TokenizePunctuator() {
+Tokenizer::Token Tokenizer::TokenizePunctuator() {
 	Punctuator result;
 
 	switch (*m_Current) {
@@ -380,7 +380,7 @@ Preprocessor::Token Preprocessor::TokenizePunctuator() {
 	return result;
 }
 
-std::optional<Preprocessor::Token> Preprocessor::TokenizeDirective() {
+std::optional<Tokenizer::Token> Tokenizer::TokenizeDirective() {
 	if (!m_Current)
 		return Punctuator::Hash;
 
@@ -407,7 +407,7 @@ std::optional<Preprocessor::Token> Preprocessor::TokenizeDirective() {
 	return std::nullopt;
 }
 
-Preprocessor::Token Preprocessor::TokenizeIdentifierOrKeyword() {
+Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 	std::string        identifierContents{*m_Current};
 	ConstantPrefix     prefix{ConstantPrefix::None};
 	const KeywordTrie *trieNode{nullptr};
@@ -469,7 +469,7 @@ Preprocessor::Token Preprocessor::TokenizeIdentifierOrKeyword() {
 	return Identifier{identifierContents};
 }
 
-Preprocessor::Token Preprocessor::Tokenize() {
+Tokenizer::Token Tokenizer::Tokenize() {
 	// skip whitespace
 	while (m_Current.Good() && isspace(*m_Current)) ++m_Current;
 
@@ -501,7 +501,7 @@ Preprocessor::Token Preprocessor::Tokenize() {
 	return TokenizeIdentifierOrKeyword();
 }
 
-std::optional<CompilerDataTypes::Char> Preprocessor::TokenizeNumericalEscapeSequence(ValidEscapeBase base) {
+std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequence(ValidEscapeBase base) {
 	if (base == ValidEscapeBase::Octal) {
 		// *m_Current is the first digit of the escape sequence
 		int value{};
@@ -523,14 +523,14 @@ std::optional<CompilerDataTypes::Char> Preprocessor::TokenizeNumericalEscapeSequ
 
 	if (!m_Current) {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedEOF, *m_Current);
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current);
 		return std::nullopt;
 	}
 
 	if (!isxdigit(*m_Current)) {
 		const Span span{};// TODO: Get the span
 		m_Diagnoses.emplace_back(
-		        span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharHexNoDigits, static_cast<char>(*m_Current)
+		        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharHexNoDigits, static_cast<char>(*m_Current)
 		);
 		return std::nullopt;
 	}
@@ -556,7 +556,7 @@ std::optional<CompilerDataTypes::Char> Preprocessor::TokenizeNumericalEscapeSequ
 	return static_cast<char>(value);
 }
 
-std::optional<char> Preprocessor::TokenizeEscapeSequence() {
+std::optional<char> Tokenizer::TokenizeEscapeSequence() {
 	switch (*m_Current) {
 		case 'n':
 			m_Current.Next();
@@ -605,15 +605,14 @@ std::optional<char> Preprocessor::TokenizeEscapeSequence() {
 		default:
 			const Span span{};// TODO: Get the span
 			m_Diagnoses.emplace_back(
-			        span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnknownEscapeSequence,
+			        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnknownEscapeSequence,
 			        static_cast<char>(*m_Current)
 			);
 			return std::nullopt;
 	}
 }
 
-Preprocessor::Token
-Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocessor::ConstantType type) {
+Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type) {
 	if (!m_Current)
 		return SpecialPurpose::Error;
 
@@ -650,7 +649,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 			if (!m_Current) {
 				const Span span{};// TODO: Get the span
 				m_Diagnoses.emplace_back(
-				        span, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedEOF, static_cast<char>(*m_Current)
+				        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, static_cast<char>(*m_Current)
 				);
 				return SpecialPurpose::EndOfFile;
 			}
@@ -681,7 +680,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 	if (type == ConstantType::String) {
 		if (!m_Current || *m_Current != '"') {
 			const Span span{};// TODO: Get the span
-			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_StrUnterminated);
+			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_StrUnterminated);
 			return SpecialPurpose::Error;
 		}
 
@@ -691,7 +690,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 
 	if (m_Current != '\'') {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharUnterminated);
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharUnterminated);
 		return SpecialPurpose::Error;
 	}
 
@@ -714,7 +713,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 
 	if (willBeTruncated) {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::PP_CharOutOfRange);
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::TK_CharOutOfRange);
 	}
 
 	// The behavior for character literals with multiple characters is implementation defined.
@@ -746,7 +745,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 			break;
 		default:
 			const Span span{};// TODO: Get the span
-			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::PP_CharNoValue);
+			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharNoValue);
 			return SpecialPurpose::Error;
 	}
 	value &= charConstValueMask;
@@ -754,7 +753,7 @@ Preprocessor::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Preprocess
 	return CharacterConstant{value, prefix};
 }
 
-Preprocessor::Token Preprocessor::operator()() {
+Tokenizer::Token Tokenizer::operator()() {
 	if (!m_Current)
 		return SpecialPurpose::EndOfFile;
 
@@ -763,31 +762,31 @@ Preprocessor::Token Preprocessor::operator()() {
 	return Tokenize();
 }
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::SpecialPurpose specialPurpose) {
+std::ostream &operator<<(std::ostream &os, Tokenizer::SpecialPurpose specialPurpose) {
 	return os << magic_enum::enum_name(specialPurpose);
 }
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Punctuator punctuator) {
+std::ostream &operator<<(std::ostream &os, Tokenizer::Punctuator punctuator) {
 	return os << magic_enum::enum_name(punctuator);
 }
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Keyword keyword) {
+std::ostream &operator<<(std::ostream &os, Tokenizer::Keyword keyword) {
 	return os << magic_enum::enum_name(keyword);
 }
 
-std::ostream &operator<<(std::ostream &os, Preprocessor::Directive directive) {
+std::ostream &operator<<(std::ostream &os, Tokenizer::Directive directive) {
 	return os << magic_enum::enum_name(directive);
 }
 
-void PrintTo(const Preprocessor::StringConstant &stringConstant, std::ostream *os) {
-	if (stringConstant.m_Prefix != Preprocessor::ConstantPrefix::None)
+void PrintTo(const Tokenizer::StringConstant &stringConstant, std::ostream *os) {
+	if (stringConstant.m_Prefix != Tokenizer::ConstantPrefix::None)
 		*os << '(' << magic_enum::enum_name(stringConstant.m_Prefix) << ") ";
 
 	*os << testing::PrintToString(stringConstant.m_String);
 }
 
-void PrintTo(const Preprocessor::CharacterConstant &characterConstant, std::ostream *os) {
-	if (characterConstant.m_Prefix != Preprocessor::ConstantPrefix::None)
+void PrintTo(const Tokenizer::CharacterConstant &characterConstant, std::ostream *os) {
+	if (characterConstant.m_Prefix != Tokenizer::ConstantPrefix::None)
 		*os << '(' << magic_enum::enum_name(characterConstant.m_Prefix) << ") ";
 
 	if (characterConstant.m_Character <= CompilerDataTypeInfo::CHAR::max() && characterConstant.m_Character > ' ') {
