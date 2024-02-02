@@ -1,30 +1,29 @@
+#include "misc/Tokenizer.h"
 #include <gtest/gtest.h>
-#include <misc/Preprocessor.h>
 
-using Keyword             = Preprocessor::Keyword;
-using Punctuator          = Preprocessor::Punctuator;
-using Directive           = Preprocessor::Directive;
-using Identifier          = Preprocessor::Identifier;
-using CharacterConstant   = Preprocessor::CharacterConstant;
-using StringConstant      = Preprocessor::StringConstant;
+using Keyword             = Tokenizer::Keyword;
+using Punctuator          = Tokenizer::Punctuator;
+using Directive           = Tokenizer::Directive;
+using Identifier          = Tokenizer::Identifier;
+using CharacterConstant   = Tokenizer::CharacterConstant;
+using StringConstant      = Tokenizer::StringConstant;
 using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
-using ConstantPrefix      = Preprocessor::ConstantPrefix;
-using SpecialPurposeToken = Preprocessor::SpecialPurpose;
-using TokenList           = Preprocessor::TokenList;
+using ConstantPrefix      = Tokenizer::ConstantPrefix;
+using SpecialPurposeToken = Tokenizer::SpecialPurpose;
+using TokenList           = Tokenizer::TokenList;
 
-class PpTokenizingTest
-    : public testing::TestWithParam<std::tuple<std::string, Preprocessor::Token, DiagnosisKindVec>> {};
+class PpTokenizingTest : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token, DiagnosisKindVec>> {};
 
 TEST_P(PpTokenizingTest, PpTokenizing) {
 	std::istringstream iss{std::get<0>(GetParam())};
 	Diagnosis::Vec     diagnoses{};
-	Preprocessor       preprocessor{std::move(iss), diagnoses};
+	Tokenizer          preprocessor{std::move(iss), diagnoses};
 
-	const Preprocessor::Token token{preprocessor()};
+	const Tokenizer::Token token{preprocessor()};
 
-	const Preprocessor::Token expectedToken{std::get<1>(GetParam())};
-	const auto                expectedDiagnoses{std::get<2>(GetParam())};
-	DiagnosisKindVec          actualDiagnosisKinds{};
+	const Tokenizer::Token expectedToken{std::get<1>(GetParam())};
+	const auto             expectedDiagnoses{std::get<2>(GetParam())};
+	DiagnosisKindVec       actualDiagnosisKinds{};
 	std::transform(
 	        diagnoses.begin(), diagnoses.end(), std::back_inserter(actualDiagnosisKinds),
 	        [](const auto &diagnosisKind) { return diagnosisKind.m_Kind; }
@@ -148,7 +147,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("%:", Punctuator::Hash, DiagnosisKindVec{}),
                 std::make_tuple("%:%:", Punctuator::HashHash, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "%:%", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_PartialTokenEncountered}
+                        "%:%", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_PartialTokenEncountered}
                 )
         )
 );
@@ -187,7 +186,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\10')", CharacterConstant{'\10'}, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"('\8')", SpecialPurposeToken::Error,
-                        DiagnosisKindVec{Diagnosis::Kind::PP_UnknownEscapeSequence}
+                        DiagnosisKindVec{Diagnosis::Kind::TK_UnknownEscapeSequence}
                 ),
                 std::make_tuple(R"('\x0')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x00')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
@@ -196,10 +195,10 @@ INSTANTIATE_TEST_SUITE_P(
                         R"(u'\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
                 ),
                 std::make_tuple(
-                        R"('h)", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}
+                        R"('h)", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharUnterminated}
                 ),
                 std::make_tuple(
-                        R"('\')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharUnterminated}
+                        R"('\')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharUnterminated}
                 ),
                 std::make_tuple(R"('\'')", CharacterConstant{'\''}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\"')", CharacterConstant{'\"'}, DiagnosisKindVec{}),
@@ -212,13 +211,13 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\n')", CharacterConstant{'\n'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\\')", CharacterConstant{'\\'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\?')", CharacterConstant{'\?'}, DiagnosisKindVec{}),
-                std::make_tuple("'¥'", CharacterConstant{0xC2A5}, DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}),
-                std::make_tuple("''", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharNoValue}),
+                std::make_tuple("'¥'", CharacterConstant{0xC2A5}, DiagnosisKindVec{Diagnosis::Kind::TK_CharOutOfRange}),
+                std::make_tuple("''", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharNoValue}),
                 std::make_tuple(
-                        R"('\x')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::PP_CharHexNoDigits}
+                        R"('\x')", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharHexNoDigits}
                 ),
                 std::make_tuple(
-                        "'ab'", CharacterConstant{'a' << 8 | 'b'}, DiagnosisKindVec{Diagnosis::Kind::PP_CharOutOfRange}
+                        "'ab'", CharacterConstant{'a' << 8 | 'b'}, DiagnosisKindVec{Diagnosis::Kind::TK_CharOutOfRange}
                 ),
                 std::make_tuple(
                         "u'ab'",
@@ -240,7 +239,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"("hello\\nworld")", StringConstant{R"(hello\nworld)"}, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"("hello world)", SpecialPurposeToken::Error,
-                        DiagnosisKindVec{Diagnosis::Kind::PP_StrUnterminated}
+                        DiagnosisKindVec{Diagnosis::Kind::TK_StrUnterminated}
                 ),
                 std::make_tuple(
                         R"(L"hello world")", StringConstant{"hello world", ConstantPrefix::L}, DiagnosisKindVec{}

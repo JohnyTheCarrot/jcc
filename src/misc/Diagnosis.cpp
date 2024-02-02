@@ -18,35 +18,35 @@ String Diagnosis::ToString() const {
 
 OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 	switch (diagnosis.m_Kind) {
-		case Diagnosis::Kind::PP_StrUnterminated:
+		case Diagnosis::Kind::TK_StrUnterminated:
 			os << "String literal was not terminated";
 			break;
-		case Diagnosis::Kind::PP_CharUnterminated:
+		case Diagnosis::Kind::TK_CharUnterminated:
 			os << "CharStream literal was not terminated";
 			break;
-		case Diagnosis::Kind::PP_CharNoValue:
+		case Diagnosis::Kind::TK_CharNoValue:
 			os << "CharStream literal has no value";
 			break;
-		case Diagnosis::Kind::PP_CharOutOfRange:
+		case Diagnosis::Kind::TK_CharOutOfRange:
 			os << "CharStream literal is out of range, its value will be truncated";
 			break;
-		case Diagnosis::Kind::PP_CharHexNoDigits:
+		case Diagnosis::Kind::TK_CharHexNoDigits:
 			os << "Hexadecimal character literal has no digits";
 			break;
-		case Diagnosis::Kind::PP_UnknownEscapeSequence:
+		case Diagnosis::Kind::TK_UnknownEscapeSequence:
 			os << "Unknown escape sequence '\\" << std::get<char>(diagnosis.m_Data0.value()) << '\'';
 			break;
-		case Diagnosis::Kind::PP_UnexpectedEOF:
+		case Diagnosis::Kind::TK_UnexpectedEOF:
 			os << "Unexpected end of file";
 			break;
-		case Diagnosis::Kind::PP_PartialTokenEncountered:
+		case Diagnosis::Kind::TK_PartialTokenEncountered:
 			os << "Partial token encountered, did you mean '" << std::get<std::string>(diagnosis.m_Data0.value())
 			   << '\'';
 			break;
-		case Diagnosis::Kind::PP_UnknownDirective:
+		case Diagnosis::Kind::TK_UnknownDirective:
 			os << "Unknown directive '" << std::get<std::string>(diagnosis.m_Data0.value()) << '\'';
 			break;
-		case Diagnosis::Kind::PP_EscapeExpectedNewline:
+		case Diagnosis::Kind::TK_EscapeExpectedNewline:
 			os << "Expected newline after \\";
 			break;
 		case Diagnosis::Kind::TK_Unrecognized:
