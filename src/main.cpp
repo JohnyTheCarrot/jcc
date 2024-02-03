@@ -19,7 +19,8 @@ int main(int argCount, char *args[]) {
 		exit(1);
 	}
 
-	Tokenizer tokenizer{inputFileStream};
+	Diagnosis::Vec diagnoses;
+	Tokenizer      tokenizer{inputFileStream, diagnoses};
 
 	// TokenList tokens;
 	// TokenizerOld tokenizer{filePath, inputFileStream};
