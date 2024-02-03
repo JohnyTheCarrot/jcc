@@ -355,8 +355,8 @@ private:
 	Tokenizer::Token Tokenize();
 
 public:
-	Tokenizer(std::istringstream &&iStream, Diagnosis::Vec &diagnoses)
-	    : m_Current{std::move(iStream)}
+	Tokenizer(std::istream &iStream, Diagnosis::Vec &diagnoses)
+	    : m_Current{iStream}
 	    , m_Diagnoses{diagnoses} {
 	}
 

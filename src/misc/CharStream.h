@@ -10,12 +10,12 @@
 #include <variant>
 
 class CharStream final {
-	std::istringstream m_IStream;
-	char               m_Current{};
+	std::istream &m_IStream;
+	char          m_Current{};
 
 public:
-	explicit CharStream(std::istringstream &&iStream)
-	    : m_IStream{std::move(iStream)}
+	explicit CharStream(std::istream &iStream)
+	    : m_IStream{iStream}
 	    , m_Current{'\0'} {
 	}
 

@@ -17,7 +17,7 @@ class PpTokenizingTest : public testing::TestWithParam<std::tuple<std::string, T
 TEST_P(PpTokenizingTest, PpTokenizing) {
 	std::istringstream iss{std::get<0>(GetParam())};
 	Diagnosis::Vec     diagnoses{};
-	Tokenizer          preprocessor{std::move(iss), diagnoses};
+	Tokenizer          preprocessor{iss, diagnoses};
 
 	const Tokenizer::Token token{preprocessor()};
 
