@@ -58,6 +58,15 @@ OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 			os << "Unexpected character for integer literal suffix \'" << std::get<char>(diagnosis.m_Data0.value())
 			   << '\'';
 			break;
+		case Diagnosis::Kind::TK_InvalidUniversalCharacterName:
+			os << "Invalid universal character name";
+			break;
+		case Diagnosis::Kind::TK_IllegalUniversalCharacterName:
+			os << "Illegal universal character name";
+			break;
+		case Diagnosis::Kind::TK_IllegalBackslash:
+			os << "Illegal backslash";
+			break;
 	}
 
 	os << '\n';

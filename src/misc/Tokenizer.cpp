@@ -408,35 +408,36 @@ std::optional<Tokenizer::Token> Tokenizer::TokenizeDirective() {
 }
 
 Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
-	std::string        identifierContents{*m_Current};
-	ConstantPrefix     prefix{ConstantPrefix::None};
-	const KeywordTrie *trieNode{nullptr};
+	std::basic_string<char32_t> identifierContents{};
+	ConstantPrefix              prefix{ConstantPrefix::None};
+	const KeywordTrie          *trieNode{nullptr};
 
 	switch (*m_Current) {
 		case 'u':
 			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current.Next();
+			identifierContents += m_Current++;
 
 			prefix = ConstantPrefix::u;
 			if (m_Current == '8') {
 				// No keyword starts with u8, so it must either be a character literal or an identifier.
 				// No use checking the trie.
 
-				identifierContents += m_Current.Next();// could be EOF (std::nullopt) or '
+				identifierContents += m_Current++;
+
 				if (!m_Current)
-					return Identifier{"u8"};
+					return Identifier{U"u8"};
 
 				prefix = ConstantPrefix::u8;
 			}
 			break;
 		case 'U':
 			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current.Next();
+			identifierContents += m_Current++;
 			prefix = ConstantPrefix::U;
 			break;
 		case 'L':
 			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current.Next();
+			identifierContents += m_Current++;
 			prefix = ConstantPrefix::L;
 			break;
 	}
@@ -453,13 +454,39 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 	if (trieNode == nullptr)
 		trieNode = &m_KeywordTrie;
 
-	trieNode = trieNode->GetNode(m_Current);
+	while (m_Current.Good() && (isalnum(*m_Current) || *m_Current == '_' || *m_Current == '\\')) {
+		if (*m_Current == '\\') {
+			m_Current.Next();
+			if (!m_Current)
+				return SpecialPurpose::EndOfFile;
 
-	while (m_Current.Good() && (isalnum(*m_Current) || m_Current == '_')) {
-		identifierContents += m_Current.Next();
+			UniversalCharacterNameType type;
+
+			switch (*m_Current) {
+				case 'u':
+					type = UniversalCharacterNameType::u;
+					break;
+				case 'U':
+					type = UniversalCharacterNameType::U;
+					break;
+				default:
+					const Span span{};// TODO: Get the span
+					m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
+					return SpecialPurpose::Error;
+			}
+
+			m_Current.Next();
+			if (const auto universalChar{TokenizeUniversalCharacterName(type)}; universalChar.has_value()) {
+				identifierContents += universalChar.value();
+			}
+		} else {
+			identifierContents += *m_Current;
+		}
 
 		if (trieNode != nullptr && m_Current.Good())
 			trieNode = trieNode->GetNode(m_Current);
+
+		m_Current.Next();
 	}
 
 	if (trieNode != nullptr && trieNode->m_Leaf.has_value()) {
@@ -537,20 +564,12 @@ std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequenc
 
 	int value{};
 	while (m_Current.Good()) {
-		if (!isxdigit(*m_Current)) {
+		if (const auto optionalDigitValue{TokenizeHexDigit()}; optionalDigitValue.has_value()) {
+			value <<= 4u;
+			value |= optionalDigitValue.value();
+		} else {
 			break;
 		}
-
-		value <<= 4u;
-
-		if (isdigit(*m_Current))
-			value |= *m_Current - '0';
-		else if (isupper(*m_Current))
-			value |= *m_Current - 'A' + 10;
-		else
-			value |= *m_Current - 'a' + 10;
-
-		m_Current.Next();
 	}
 
 	return static_cast<char>(value);
@@ -602,6 +621,12 @@ std::optional<char> Tokenizer::TokenizeEscapeSequence() {
 			return TokenizeNumericalEscapeSequence(ValidEscapeBase::Octal);
 		case 'x':
 			return TokenizeNumericalEscapeSequence(ValidEscapeBase::Hexadecimal);
+		case 'u':
+			m_Current.Next();
+			return TokenizeUniversalCharacterName(UniversalCharacterNameType::u);
+		case 'U':
+			m_Current.Next();
+			return TokenizeUniversalCharacterName(UniversalCharacterNameType::U);
 		default:
 			const Span span{};// TODO: Get the span
 			m_Diagnoses.emplace_back(
@@ -610,6 +635,48 @@ std::optional<char> Tokenizer::TokenizeEscapeSequence() {
 			);
 			return std::nullopt;
 	}
+}
+
+[[nodiscard]]
+bool IsLegalUniversalCharacterName(char32_t value) {
+	constexpr char32_t minCodePoint{0x00A0};
+	constexpr char32_t illegalRangeStartIncl{0xD800}, illegalRangeEndIncl{0xDFFF};
+
+	if (value < minCodePoint && value != U'$' && value != U'@' && value != U'`')
+		return false;
+
+	return value < illegalRangeStartIncl || value > illegalRangeEndIncl;
+}
+
+std::optional<char32_t> Tokenizer::TokenizeUniversalCharacterName(UniversalCharacterNameType type) {
+	// *m_Current is the first digit of the escape sequence
+	char32_t     value{};
+	const size_t numDigits{type == UniversalCharacterNameType::u ? 4ull : 8ull};
+	size_t       digitIdx{0};
+
+	for (; digitIdx < numDigits && m_Current.Good(); ++digitIdx) {
+		if (const auto optionalDigitValue{TokenizeHexDigit()}; optionalDigitValue.has_value()) {
+			value <<= 4u;
+			value |= optionalDigitValue.value();
+			continue;
+		}
+
+		break;
+	}
+
+	if (digitIdx != numDigits) {
+		const Span span{};// TODO: Get the span
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidUniversalCharacterName);
+		return std::nullopt;
+	}
+
+	if (!IsLegalUniversalCharacterName(value)) {
+		const Span span{};//TODO: Get the span
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalUniversalCharacterName);
+		return std::nullopt;
+	}
+
+	return value;
 }
 
 Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type) {
@@ -795,4 +862,22 @@ void PrintTo(const Tokenizer::CharacterConstant &characterConstant, std::ostream
 	}
 
 	*os << "U+" << std::hex << characterConstant.m_Character;
+}
+
+std::optional<int> Tokenizer::TokenizeHexDigit() {
+	if (!isxdigit(*m_Current)) {
+		return std::nullopt;
+	}
+
+	int value;
+
+	if (isdigit(*m_Current))
+		value = *m_Current - '0';
+	else if (isupper(*m_Current))
+		value = *m_Current - 'A' + 10;
+	else
+		value = *m_Current - 'a' + 10;
+
+	m_Current.Next();
+	return value;
 }
