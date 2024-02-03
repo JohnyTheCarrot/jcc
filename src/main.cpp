@@ -1,9 +1,8 @@
-#include "../libs/magic_enum/magic_enum.hpp"
 #include "misc/Tokenizer.h"
-// #include "misc/tokenizer_old.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
 
 int main(int argCount, char *args[]) {
 	if (argCount < 2) {
@@ -21,28 +20,6 @@ int main(int argCount, char *args[]) {
 
 	Diagnosis::Vec diagnoses;
 	Tokenizer      tokenizer{inputFileStream, diagnoses};
-
-	// TokenList tokens;
-	// TokenizerOld tokenizer{filePath, inputFileStream};
-	// tokenizer.Tokenize(tokens);
-
-	// std::cout << "Tokens: [";
-	// for (const Token &token: tokens) { std::cout << magic_enum::enum_name(token.m_Type) << ", "; }
-	//
-	// std::cout << ']' << std::endl << std::endl;
-	//
-	// std::cout << "Parse result:" << std::endl;
-	//
-	// Parser parser{std::move(tokens), filePath, inputFileStream};
-	// parser.Parse();
-	//
-	// if (!parser.typeDefs_.empty()) {
-	// 	std::cout << std::endl << "Typedefs:" << std::endl;
-	// 	for (const auto &typeDef: parser.typeDefs_) {
-	// 		std::cout << typeDef.first << " maps to " << typeDef.second.specifierQualifierList_->ToString(0)
-	// 				  << std::endl;
-	// 	}
-	// }
 
 	return 0;
 }

@@ -5,8 +5,6 @@ project(jcc CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(libs/frozen)
-
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
@@ -33,8 +31,8 @@ file(GLOB_RECURSE TEST_SRC tests/*.cpp)
 file(GLOB_RECURSE SRC_NO_MAIN src/parsing/*.cpp src/misc/*.cpp)
 add_executable(jcc_tests ${TEST_SRC} ${SRC_NO_MAIN})
 
-target_link_libraries(jcc_tests GTest::gtest_main frozen fmt)
-target_link_libraries(${PROJECT_NAME} GTest::gtest_main frozen fmt)
+target_link_libraries(jcc_tests GTest::gtest_main fmt)
+target_link_libraries(${PROJECT_NAME} GTest::gtest_main fmt)
 target_include_directories(jcc_tests PRIVATE src libs)
 
 include(GoogleTest)
