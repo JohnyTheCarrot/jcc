@@ -694,7 +694,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		return SpecialPurpose::Error;
 	}
 
-	bool willBeTruncated;
+	bool willBeTruncated{false};
 	switch (prefix) {
 		case ConstantPrefix::L:
 		case ConstantPrefix::None:
