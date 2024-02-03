@@ -36,7 +36,7 @@ public:
 	};
 
 	struct Identifier final {
-		CompilerDataTypes::String m_Name;
+		std::basic_string<char32_t> m_Name;
 
 		bool operator==(const Identifier &other) const {
 			return m_Name == other.m_Name;
@@ -348,6 +348,17 @@ private:
 
 	[[nodiscard]]
 	std::optional<Tokenizer::Token> TokenizeDirective();
+
+	enum class UniversalCharacterNameType {
+		u,
+		U,
+	};
+
+	[[nodiscard]]
+	std::optional<int> TokenizeHexDigit();
+
+	[[nodiscard]]
+	std::optional<char32_t> TokenizeUniversalCharacterName(UniversalCharacterNameType type);
 
 	[[nodiscard]]
 	Token TokenizeIdentifierOrKeyword();

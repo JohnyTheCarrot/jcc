@@ -81,11 +81,18 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("_Noreturn", Keyword::Noreturn, DiagnosisKindVec{}),
                 std::make_tuple("_Static_assert", Keyword::StaticAssert, DiagnosisKindVec{}),
                 std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{}),
-                std::make_tuple("under_score", Identifier{"under_score"}, DiagnosisKindVec{}),
+                std::make_tuple("under_score", Identifier{U"under_score"}, DiagnosisKindVec{}),
                 // Identifiers starting with a char or string constant prefix are still identifiers and should be tokenized as such
-                std::make_tuple("u8SomeIdent", Identifier{"u8SomeIdent"}, DiagnosisKindVec{}),
+                std::make_tuple("u8SomeIdent", Identifier{U"u8SomeIdent"}, DiagnosisKindVec{}),
                 // same for identifiers starting with a keyword
-                std::make_tuple("autoSomeIdent", Identifier{"autoSomeIdent"}, DiagnosisKindVec{})
+                std::make_tuple("autoSomeIdent", Identifier{U"autoSomeIdent"}, DiagnosisKindVec{}),
+                std::make_tuple("L", Identifier{U"L"}, DiagnosisKindVec{}),
+                std::make_tuple("u", Identifier{U"u"}, DiagnosisKindVec{}),
+                std::make_tuple("U", Identifier{U"U"}, DiagnosisKindVec{}),
+                std::make_tuple("La", Identifier{U"La"}, DiagnosisKindVec{}),
+                std::make_tuple("ua", Identifier{U"ua"}, DiagnosisKindVec{}),
+                std::make_tuple("Ua", Identifier{U"Ua"}, DiagnosisKindVec{}),
+                std::make_tuple(R"(\u0D9E)", Identifier{U"\u0D9E"}, DiagnosisKindVec{})
         )
 );
 
@@ -223,6 +230,35 @@ INSTANTIATE_TEST_SUITE_P(
                         "u'ab'",
                         CharacterConstant{('a' << 8 | 'b') & CompilerDataTypeInfo::CHAR16_T::MASK, ConstantPrefix::u},
                         DiagnosisKindVec{}
+                ),
+                std::make_tuple("L'a'", CharacterConstant{'a', ConstantPrefix::L}, DiagnosisKindVec{}),
+                std::make_tuple(
+                        R"('\u0099')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_IllegalUniversalCharacterName}
+                ),
+                std::make_tuple(
+                        R"('\U00000099')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_IllegalUniversalCharacterName}
+                ),
+                std::make_tuple(
+                        R"('\u005A')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_IllegalUniversalCharacterName}
+                ),
+                std::make_tuple(R"('\u0024')", CharacterConstant{'$'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\u0040')", CharacterConstant{'@'}, DiagnosisKindVec{}),
+                std::make_tuple(R"('\u0060')", CharacterConstant{'`'}, DiagnosisKindVec{}),
+                // too few digits
+                std::make_tuple(
+                        R"('\u006')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_InvalidUniversalCharacterName}
+                ),
+                std::make_tuple(
+                        R"('\U0006')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_InvalidUniversalCharacterName}
+                ),
+                std::make_tuple(
+                        R"('\U000006')", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_InvalidUniversalCharacterName}
                 )
         )
 );

@@ -26,6 +26,9 @@ struct Diagnosis final {
 		TK_Unrecognized,
 		TK_InvalidBaseDigit,
 		TK_UnexpectedIntSuffixChar,
+		TK_InvalidUniversalCharacterName,
+		TK_IllegalUniversalCharacterName,
+		TK_IllegalBackslash,
 	};
 
 	enum class Class {
