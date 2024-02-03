@@ -3,9 +3,8 @@
 //
 
 #include "Diagnosis.h"
-#include "SpanOld.h"
-#include "magic_enum/magic_enum.hpp"
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
 #include <sstream>
 
 String Diagnosis::ToString() const {
@@ -66,25 +65,6 @@ OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 	// os << diagnosis.m_Span.GetTextVersion();
 
 	return os;
-}
-
-[[deprecated]]
-void Path(const std::string &filePath, const SpanOld &span) {
-	std::cout << filePath << "(" << span.GetLineNumber() << ':' << span.GetColumn() << "): ";
-}
-
-[[deprecated]]
-void Warn(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message) {
-	Path(filePath, span);
-	std::cout << "Warning: " << message << std::endl << span.GetTextVersion();
-}
-
-[[deprecated]] [[noreturn]]
-void Error(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message) {
-	Path(filePath, span);
-	std::cout << "Error: " << message << std::endl << span.GetTextVersion();
-
-	exit(1);
 }
 
 std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind) {

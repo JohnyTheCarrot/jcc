@@ -2,7 +2,6 @@
 #define JCC_DIAGNOSIS_H
 
 #include "Span.h"
-#include "SpanOld.h"
 #include "config.h"
 #include <optional>
 #include <string>
@@ -46,10 +45,5 @@ struct Diagnosis final {
 OStream &operator<<(OStream &os, const Diagnosis &diagnosis);
 
 std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind);
-
-void Warn(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message);
-
-[[noreturn]]
-void Error(const std::string &filePath, std::istream &inputStream, const SpanOld &span, const std::string &message);
 
 #endif//JCC_DIAGNOSIS_H
