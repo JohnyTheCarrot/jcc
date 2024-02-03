@@ -349,6 +349,7 @@ private:
 	[[nodiscard]]
 	std::optional<Tokenizer::Token> TokenizeDirective();
 
+	[[nodiscard]]
 	Token TokenizeIdentifierOrKeyword();
 
 	[[nodiscard]]
