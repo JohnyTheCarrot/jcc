@@ -412,51 +412,52 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 	ConstantPrefix              prefix{ConstantPrefix::None};
 	const KeywordTrie          *trieNode{nullptr};
 
-	switch (*m_Current) {
-		case 'u':
-			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current++;
-
-			prefix = ConstantPrefix::u;
-			if (m_Current == '8') {
-				// No keyword starts with u8, so it must either be a character literal or an identifier.
-				// No use checking the trie.
-
+	if (!m_Current.GetIsEscapeChar()) {
+		switch (*m_Current) {
+			case 'u':
+				trieNode = m_KeywordTrie.GetNode(m_Current);
 				identifierContents += m_Current++;
 
-				if (!m_Current)
-					return Identifier{U"u8"};
+				prefix = ConstantPrefix::u;
+				if (m_Current == '8') {
+					// No keyword starts with u8, so it must either be a character literal or an identifier.
+					// No use checking the trie.
 
-				prefix = ConstantPrefix::u8;
-			}
-			break;
-		case 'U':
-			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current++;
-			prefix = ConstantPrefix::U;
-			break;
-		case 'L':
-			trieNode = m_KeywordTrie.GetNode(m_Current);
-			identifierContents += m_Current++;
-			prefix = ConstantPrefix::L;
-			break;
-	}
+					identifierContents += m_Current++;
 
-	switch (*m_Current) {
-		case '\'':
-			m_Current.Next();
-			return TokenizeCharacterOrStringLiteral(prefix, ConstantType::Character);
-		case '"':
-			m_Current.Next();
-			return TokenizeCharacterOrStringLiteral(prefix, ConstantType::String);
+					if (!m_Current)
+						return Identifier{U"u8"};
+
+					prefix = ConstantPrefix::u8;
+				}
+				break;
+			case 'U':
+				trieNode = m_KeywordTrie.GetNode(m_Current);
+				identifierContents += m_Current++;
+				prefix = ConstantPrefix::U;
+				break;
+			case 'L':
+				trieNode = m_KeywordTrie.GetNode(m_Current);
+				identifierContents += m_Current++;
+				prefix = ConstantPrefix::L;
+				break;
+		}
+
+		switch (*m_Current) {
+			case '\'':
+				m_Current.SimpleNext();
+				return TokenizeCharacterOrStringLiteral(prefix, ConstantType::Character);
+			case '"':
+				m_Current.SimpleNext();
+				return TokenizeCharacterOrStringLiteral(prefix, ConstantType::String);
+		}
 	}
 
 	if (trieNode == nullptr)
 		trieNode = &m_KeywordTrie;
 
 	while (m_Current.Good() && (isalnum(*m_Current) || *m_Current == '_' || *m_Current == '\\')) {
-		if (*m_Current == '\\') {
-			m_Current.Next();
+		if (m_Current.GetIsEscapeChar()) {
 			if (!m_Current)
 				return SpecialPurpose::EndOfFile;
 
@@ -711,7 +712,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		// TODO: move to functor
 
 		if (*m_Current == '\\') {
-			m_Current.Next();
+			m_Current.SimpleNext();
 
 			if (!m_Current) {
 				const Span span{};// TODO: Get the span
@@ -722,7 +723,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 			}
 
 			if (m_Current == '\n') {
-				m_Current.Next();
+				m_Current.SimpleNext();
 				continue;
 			}
 
@@ -741,7 +742,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		}
 
 		literalContent += static_cast<char>(*m_Current);
-		m_Current.Next();
+		m_Current.SimpleNext();
 	}
 
 	if (type == ConstantType::String) {
@@ -826,7 +827,13 @@ Tokenizer::Token Tokenizer::operator()() {
 
 	m_Current.Next();
 
-	return Tokenize();
+	try {
+		return Tokenize();
+	} catch (InvalidBackslashException &) {
+		const Span span{};
+		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
+		return SpecialPurpose::Error;
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, Tokenizer::SpecialPurpose specialPurpose) {

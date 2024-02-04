@@ -9,11 +9,21 @@
 #include <sstream>
 #include <variant>
 
+class InvalidBackslashException final : public std::exception {
+public:
+	const char *what() {
+		return "Invalid backslash";
+	}
+};
+
 class CharStream final {
 	std::istream &m_IStream;
 	char          m_Current{};
+	bool          m_IsEscapeChar{false};
 
 public:
+	using NextChar = std::optional<char>;
+
 	explicit CharStream(std::istream &iStream)
 	    : m_IStream{iStream}
 	    , m_Current{'\0'} {
@@ -39,9 +49,14 @@ public:
 	[[nodiscard]]
 	char Get() const noexcept;
 
-	std::optional<char> Next();
+	[[nodiscard]]
+	bool GetIsEscapeChar() const noexcept;
 
-	std::optional<char> operator++();
+	std::optional<char> SimpleNext();
+
+	NextChar Next();
+
+	NextChar operator++();
 
 	char operator++(int);
 };
