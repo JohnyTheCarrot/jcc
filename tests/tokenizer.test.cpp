@@ -10,7 +10,6 @@ using StringConstant      = Tokenizer::StringConstant;
 using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
 using ConstantPrefix      = Tokenizer::ConstantPrefix;
 using SpecialPurposeToken = Tokenizer::SpecialPurpose;
-using TokenList           = Tokenizer::TokenList;
 
 class PpTokenizingTest : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token, DiagnosisKindVec>> {};
 
@@ -92,7 +91,10 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("La", Identifier{U"La"}, DiagnosisKindVec{}),
                 std::make_tuple("ua", Identifier{U"ua"}, DiagnosisKindVec{}),
                 std::make_tuple("Ua", Identifier{U"Ua"}, DiagnosisKindVec{}),
-                std::make_tuple(R"(\u0D9E)", Identifier{U"\u0D9E"}, DiagnosisKindVec{})
+                std::make_tuple(R"(\u0D9E)", Identifier{U"\u0D9E"}, DiagnosisKindVec{}),
+                // escaped newlines legally may appear mid-token, because of course.
+                std::make_tuple("ident\\\nifier", Identifier{U"identifier"}, DiagnosisKindVec{}),
+                std::make_tuple("ident\\\r\nifier", Identifier{U"identifier"}, DiagnosisKindVec{})
         )
 );
 
@@ -282,5 +284,22 @@ INSTANTIATE_TEST_SUITE_P(
                 ),
                 std::make_tuple(R"(u8"ไทย")", StringConstant{"ไทย", ConstantPrefix::u8}, DiagnosisKindVec{}),
                 std::make_tuple(R"("\"")", StringConstant{"\""}, DiagnosisKindVec{})
+        )
+);
+
+INSTANTIATE_TEST_SUITE_P(
+        Tokenizer_EscapedNewlines, PpTokenizingTest,
+        testing::Values(
+                std::make_tuple("conti\\\nnue", Keyword::Continue, DiagnosisKindVec{}),
+                std::make_tuple("+\\\n+", Punctuator::PlusPlus, DiagnosisKindVec{}),
+                std::make_tuple(
+                        "\"Why must you \\\nhurt me so?\"", StringConstant{"Why must you hurt me so?"},
+                        DiagnosisKindVec{}
+                ),
+                std::make_tuple("'\\\na'", CharacterConstant{'a'}, DiagnosisKindVec{}),
+                std::make_tuple(
+                        R"(invalidEs\cape)", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_IllegalBackslash}
+                )
         )
 );
