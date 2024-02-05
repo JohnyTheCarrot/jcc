@@ -498,8 +498,27 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 }
 
 Tokenizer::Token Tokenizer::Tokenize() {
+	if (!m_Current)
+		return SpecialPurpose::EndOfFile;
+
+	if (*m_Current == '\r') {
+		if (const auto next{m_Current.Next()}; !next.has_value() || next.value() != '\n') {
+			const Span span{};//TODO: Get the span
+			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_LoneCarriageReturn);
+			return SpecialPurpose::Error;
+		}
+
+		m_Current.Next();
+		return SpecialPurpose::NewLine;
+	}
+
+	if (*m_Current == '\n') {
+		m_Current.Next();
+		return SpecialPurpose::NewLine;
+	}
+
 	// skip whitespace
-	while (m_Current.Good() && isspace(*m_Current)) ++m_Current;
+	while (m_Current.Good() && isspace(*m_Current)) { m_Current.Next(); }
 
 	if (!m_Current)
 		return SpecialPurpose::EndOfFile;

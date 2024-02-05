@@ -309,3 +309,17 @@ INSTANTIATE_TEST_SUITE_P(
                 )
         )
 );
+
+INSTANTIATE_TEST_SUITE_P(
+        NewLine, TokenizingTest,
+        testing::Values(
+                std::make_tuple("\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{}),
+                std::make_tuple("\r\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{}),
+                std::make_tuple(
+                        "\r", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_LoneCarriageReturn}
+                ),
+                std::make_tuple(
+                        "\ra", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_LoneCarriageReturn}
+                )
+        )
+);

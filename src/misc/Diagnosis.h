@@ -29,6 +29,7 @@ struct Diagnosis final {
 		TK_InvalidUniversalCharacterName,
 		TK_IllegalUniversalCharacterName,
 		TK_IllegalBackslash,
+		TK_LoneCarriageReturn,
 	};
 
 	enum class Class {
