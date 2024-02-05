@@ -21,8 +21,6 @@
 
 class Tokenizer final {
 public:
-	using StringConstIter = CompilerDataTypes::StringConstIter;
-
 	struct HeaderName final {
 		CompilerDataTypes::String m_Name;
 
@@ -208,7 +206,6 @@ public:
 	using Token = std::variant<
 	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive,
 	        SpecialPurpose>;
-	using TokenList = std::vector<Token>;
 
 private:
 	// TODO: replace unordered_map with trie
