@@ -11,14 +11,14 @@ using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
 using ConstantPrefix      = Tokenizer::ConstantPrefix;
 using SpecialPurposeToken = Tokenizer::SpecialPurpose;
 
-class PpTokenizingTest : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token, DiagnosisKindVec>> {};
+class TokenizingTest : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token, DiagnosisKindVec>> {};
 
-TEST_P(PpTokenizingTest, PpTokenizing) {
+TEST_P(TokenizingTest, Tokenizing) {
 	std::istringstream iss{std::get<0>(GetParam())};
 	Diagnosis::Vec     diagnoses{};
-	Tokenizer          preprocessor{iss, diagnoses};
+	Tokenizer          tokenizer{iss, diagnoses};
 
-	const Tokenizer::Token token{preprocessor()};
+	const Tokenizer::Token token{tokenizer()};
 
 	const Tokenizer::Token expectedToken{std::get<1>(GetParam())};
 	const auto             expectedDiagnoses{std::get<2>(GetParam())};
@@ -33,7 +33,7 @@ TEST_P(PpTokenizingTest, PpTokenizing) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-        Preprocessor_KeywordsIdents, PpTokenizingTest,
+        Keywords, TokenizingTest,
         testing::Values(
                 std::make_tuple("", SpecialPurposeToken::EndOfFile, DiagnosisKindVec{}),
                 std::make_tuple("auto", Keyword::Auto, DiagnosisKindVec{}),
@@ -79,9 +79,15 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("_Imaginary", Keyword::Imaginary, DiagnosisKindVec{}),
                 std::make_tuple("_Noreturn", Keyword::Noreturn, DiagnosisKindVec{}),
                 std::make_tuple("_Static_assert", Keyword::StaticAssert, DiagnosisKindVec{}),
-                std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{}),
-                std::make_tuple("under_score", Identifier{U"under_score"}, DiagnosisKindVec{}),
+                std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{})
+        )
+);
+
+INSTANTIATE_TEST_SUITE_P(
+        Identifiers, TokenizingTest,
+        testing::Values(
                 // Identifiers starting with a char or string constant prefix are still identifiers and should be tokenized as such
+                std::make_tuple("under_score", Identifier{U"under_score"}, DiagnosisKindVec{}),
                 std::make_tuple("u8SomeIdent", Identifier{U"u8SomeIdent"}, DiagnosisKindVec{}),
                 // same for identifiers starting with a keyword
                 std::make_tuple("autoSomeIdent", Identifier{U"autoSomeIdent"}, DiagnosisKindVec{}),
@@ -99,7 +105,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 INSTANTIATE_TEST_SUITE_P(
-        Preprocessor_Punctuators, PpTokenizingTest,
+        Punctuators, TokenizingTest,
         testing::Values(
                 std::make_tuple("[", Punctuator::LeftBracket, DiagnosisKindVec{}),
                 std::make_tuple("]", Punctuator::RightBracket, DiagnosisKindVec{}),
@@ -162,7 +168,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 //
 INSTANTIATE_TEST_SUITE_P(
-        Preprocessor_Directives, PpTokenizingTest,
+        Directives, TokenizingTest,
         testing::Values(
                 std::make_tuple("#define", Directive::Define, DiagnosisKindVec{}),
                 std::make_tuple("#include", Directive::Include, DiagnosisKindVec{}),
@@ -181,7 +187,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 INSTANTIATE_TEST_SUITE_P(
-        Preprocessor_CharacterConstants, PpTokenizingTest,
+        CharacterConstants, TokenizingTest,
         testing::Values(
                 std::make_tuple("'a'", CharacterConstant{'a'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\0')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
@@ -266,7 +272,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 INSTANTIATE_TEST_SUITE_P(
-        Preprocessor_StringConstants, PpTokenizingTest,
+        StringConstants, TokenizingTest,
         testing::Values(
                 std::make_tuple(R"("")", StringConstant{""}, DiagnosisKindVec{}),
                 std::make_tuple(R"("a")", StringConstant{"a"}, DiagnosisKindVec{}),
@@ -288,7 +294,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 INSTANTIATE_TEST_SUITE_P(
-        Tokenizer_EscapedNewlines, PpTokenizingTest,
+        EscapedNewlines, TokenizingTest,
         testing::Values(
                 std::make_tuple("conti\\\nnue", Keyword::Continue, DiagnosisKindVec{}),
                 std::make_tuple("+\\\n+", Punctuator::PlusPlus, DiagnosisKindVec{}),
