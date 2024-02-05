@@ -264,6 +264,9 @@ private:
 	        {"elif", Directive::Elif},       {"else", Directive::Else},     {"endif", Directive::Endif},
 	};
 
+	CharStream      m_Current;
+	Diagnosis::Vec &m_Diagnoses;
+
 	enum class ValidEscapeBase {
 		Octal,
 		Hexadecimal,
@@ -283,9 +286,6 @@ private:
 
 	[[nodiscard]]
 	Tokenizer::Token TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type);
-
-	CharStream      m_Current;
-	Diagnosis::Vec &m_Diagnoses;
 
 	[[nodiscard]]
 	Tokenizer::Punctuator TokenizeDot();
