@@ -202,6 +202,7 @@ public:
 	enum class SpecialPurpose {
 		EndOfFile,
 		Error,
+		NewLine,
 	};
 
 	using Token = std::variant<

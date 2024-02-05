@@ -67,6 +67,9 @@ OStream &operator<<(OStream &os, const Diagnosis &diagnosis) {
 		case Diagnosis::Kind::TK_IllegalBackslash:
 			os << "Illegal backslash";
 			break;
+		case Diagnosis::Kind::TK_LoneCarriageReturn:
+			os << "Lone carriage return";
+			break;
 	}
 
 	os << '\n';
