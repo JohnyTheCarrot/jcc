@@ -572,7 +572,9 @@ std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequenc
 
 	if (!m_Current) {
 		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current);
+		m_Diagnoses.emplace_back(
+		        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current, std::nullopt
+		);
 		return std::nullopt;
 	}
 

@@ -13,6 +13,10 @@ add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
 set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
 
+#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+#endif ()
+
 target_include_directories(${PROJECT_NAME} PRIVATE libs)
 
 # GoogleTest
