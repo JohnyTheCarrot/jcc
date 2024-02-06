@@ -445,10 +445,10 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 
 		switch (*m_Current) {
 			case '\'':
-				m_Current.SimpleNext();
+				m_Current.Next();
 				return TokenizeCharacterOrStringLiteral(prefix, ConstantType::Character);
 			case '"':
-				m_Current.SimpleNext();
+				m_Current.Next();
 				return TokenizeCharacterOrStringLiteral(prefix, ConstantType::String);
 		}
 	}
@@ -457,7 +457,9 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 		trieNode = &m_KeywordTrie;
 
 	while (m_Current.Good() && (isalnum(*m_Current) || *m_Current == '_' || *m_Current == '\\')) {
-		if (m_Current.GetIsEscapeChar()) {
+		if (*m_Current == '\\') {
+			m_Current.Next();
+
 			if (!m_Current)
 				return SpecialPurpose::EndOfFile;
 
@@ -502,7 +504,7 @@ Tokenizer::Token Tokenizer::Tokenize() {
 		return SpecialPurpose::EndOfFile;
 
 	if (*m_Current == '\r') {
-		if (const auto next{m_Current.Next()}; !next.has_value() || next.value() != '\n') {
+		if (const auto next{m_Current.Next()}; next != '\n') {
 			const Span span{};//TODO: Get the span
 			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_LoneCarriageReturn);
 			return SpecialPurpose::Error;
@@ -731,7 +733,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		// TODO: move to functor
 
 		if (*m_Current == '\\') {
-			m_Current.SimpleNext();
+			m_Current.Next();
 
 			if (!m_Current) {
 				const Span span{};// TODO: Get the span
@@ -742,7 +744,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 			}
 
 			if (m_Current == '\n') {
-				m_Current.SimpleNext();
+				m_Current.Next();
 				continue;
 			}
 
@@ -761,7 +763,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		}
 
 		literalContent += static_cast<char>(*m_Current);
-		m_Current.SimpleNext();
+		m_Current.Next();
 	}
 
 	if (type == ConstantType::String) {

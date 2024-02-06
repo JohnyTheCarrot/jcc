@@ -24,48 +24,34 @@ char CharStream::Get() const noexcept {
 	return m_Current;
 }
 
-std::optional<char> CharStream::SimpleNext() {
-	m_IsEscapeChar = false;
-
-	if (!m_IStream.get(m_Current).good())
-		return std::nullopt;
-
-	return m_Current;
+void CharStream::InternalNext() {
+	if (!m_IStream.get(m_Current).good()) {
+		m_Current = END_OF_FILE;
+		return;
+	}
 }
 
-CharStream::NextChar CharStream::Next() {
-	if (!SimpleNext().has_value())
-		return std::nullopt;
+char CharStream::Next() {
+	while (true) {
+		InternalNext();
 
-	if (m_Current != '\\')
-		return m_Current;
+		if (m_Current != '\\') {
+			return m_Current;
+		}
 
-	const auto next{SimpleNext()};
-	if (!next.has_value())
-		throw InvalidBackslashException();
+		const auto next{m_IStream.peek()};
+		if (next == '\r') {
+			InternalNext();
+			InternalNext();
+			continue;
+		}
 
-	switch (*next) {
-		case '\r':
-			if (!SimpleNext().has_value() || m_Current != '\n')
-				throw InvalidBackslashException();
+		if (next == '\n') {
+			InternalNext();
+			continue;
+		}
 
-			if (const auto afterCr{SimpleNext()}; afterCr.has_value()) {
-				return afterCr.value();
-			}
-
-			throw InvalidBackslashException();
-		case '\n':
-			if (const auto afterNl{SimpleNext()}; afterNl.has_value()) {
-				return afterNl.value();
-			}
-
-			throw InvalidBackslashException();
-		case 'u':
-		case 'U':
-			m_IsEscapeChar = true;
-			return next;
-		default:
-			throw InvalidBackslashException();
+		return '\\';
 	}
 }
 
