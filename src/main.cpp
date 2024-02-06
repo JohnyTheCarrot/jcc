@@ -2,7 +2,9 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <magic_enum/magic_enum.hpp>
+#include <variant>
 
 int main(int argCount, char *args[]) {
 	if (argCount < 2) {
@@ -20,6 +22,22 @@ int main(int argCount, char *args[]) {
 
 	Diagnosis::Vec diagnoses;
 	Tokenizer      tokenizer{inputFileStream, diagnoses};
+
+	while (true) {
+		const Tokenizer::Token token{tokenizer()};
+		std::cout << token << '\n';
+
+		if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
+			if (const auto value{std::get<Tokenizer::SpecialPurpose>(token.m_Value)};
+			    value == Tokenizer::SpecialPurpose::Error || value == Tokenizer::SpecialPurpose::EndOfFile)
+				break;
+		}
+	}
+
+	std::transform(
+	        diagnoses.cbegin(), diagnoses.cend(), std::ostream_iterator<std::string>{std::cout, "\n"},
+	        [](const auto &el) { return el.ToString(); }
+	);
 
 	return 0;
 }

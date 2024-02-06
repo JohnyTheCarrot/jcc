@@ -3,6 +3,7 @@
 
 #include "Span.h"
 #include "config.h"
+#include <fmt/color.h>
 #include <optional>
 #include <string>
 #include <variant>
@@ -29,7 +30,6 @@ struct Diagnosis final {
 		TK_InvalidUniversalCharacterName,
 		TK_IllegalUniversalCharacterName,
 		TK_IllegalBackslash,
-		TK_LoneCarriageReturn,
 	};
 
 	enum class Class {
@@ -37,7 +37,7 @@ struct Diagnosis final {
 		Error,
 	};
 
-	Span  m_Span{};
+	Span  m_Span;
 	Class m_Class{};
 	Kind  m_Kind{};
 	Data  m_Data0{}, m_Data1{};
@@ -45,6 +45,27 @@ struct Diagnosis final {
 	[[nodiscard]]
 	String ToString() const;
 };
+
+namespace DiagnosticsUtils {
+	constexpr fmt::color COLOR_NEUTRAL{fmt::color::dim_gray};
+
+	constexpr fmt::color GetClassColor(Diagnosis::Class diagClass) noexcept {
+		switch (diagClass) {
+			case Diagnosis::Class::Warning:
+				return fmt::color::orange;
+			case Diagnosis::Class::Error:
+			default:
+				return fmt::color::red;
+		}
+	}
+
+	void OutputLine(OStream &os, int lineNum, const std::string &line);
+
+	void OutputHighlight(
+	        OStream &os, const std::optional<int> &startChar, const std::optional<int> &endChar, int lineLength,
+	        Diagnosis::Class diagClass
+	);
+}// namespace DiagnosticsUtils
 
 OStream &operator<<(OStream &os, const Diagnosis &diagnosis);
 

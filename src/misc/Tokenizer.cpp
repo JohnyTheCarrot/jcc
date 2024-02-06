@@ -4,17 +4,21 @@
 #include <magic_enum/magic_enum.hpp>
 #include <regex>
 
-Tokenizer::Punctuator Tokenizer::TokenizeDot() {
+Tokenizer::Token::Value Tokenizer::TokenizeDot() {
 	if (!m_Current || *m_Current != '.') {
 		return Punctuator::Dot;
 	}
 
+	const Span currentTokenSpan{GetCurrentTokenSpan()};
 	m_Current.Next();
-	if (!m_Current || m_Current++ != '.') {
-		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "...");
-		return Punctuator::None;
+	if (!m_Current || m_Current != '.') {
+		m_Diagnoses.emplace_back(
+		        currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "..."
+		);
+		return SpecialPurpose::Error;
 	}
+
+	m_Current.Next();
 
 	return Punctuator::Ellipsis;
 }
@@ -208,7 +212,7 @@ Tokenizer::Punctuator Tokenizer::TokenizeExclamationMark() {
 	return Punctuator::ExclamationMarkEqual;
 }
 
-Tokenizer::Token Tokenizer::TokenizePercent() {
+Tokenizer::Token::Value Tokenizer::TokenizePercent() {
 	if (!m_Current) {
 		return Punctuator::Percent;
 	}
@@ -233,17 +237,21 @@ Tokenizer::Token Tokenizer::TokenizePercent() {
 	return result;
 }
 
-Tokenizer::Token Tokenizer::TokenizeHashHashDigraph() {
+Tokenizer::Token::Value Tokenizer::TokenizeHashHashDigraph() {
 	if (!m_Current || *m_Current != '%') {
 		return Punctuator::Hash;
 	}
 
+	const Span currentTokenSpan{GetCurrentTokenSpan()};
 	m_Current.Next();
-	if (!m_Current || m_Current++ != ':') {
-		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "%:%:");
+	if (!m_Current || m_Current != ':') {
+		m_Diagnoses.emplace_back(
+		        currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "%:%:"
+		);
 		return SpecialPurpose::Error;
 	}
+
+	m_Current.Next();
 
 	return Punctuator::HashHash;
 }
@@ -292,7 +300,7 @@ Tokenizer::Punctuator Tokenizer::TokenizeHash() {
 	return Punctuator::HashHash;
 }
 
-Tokenizer::Token Tokenizer::TokenizePunctuator() {
+Tokenizer::Token::Value Tokenizer::TokenizePunctuator() {
 	Punctuator result;
 
 	switch (*m_Current) {
@@ -380,7 +388,7 @@ Tokenizer::Token Tokenizer::TokenizePunctuator() {
 	return result;
 }
 
-std::optional<Tokenizer::Token> Tokenizer::TokenizeDirective() {
+std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 	if (!m_Current)
 		return Punctuator::Hash;
 
@@ -397,8 +405,13 @@ std::optional<Tokenizer::Token> Tokenizer::TokenizeDirective() {
 	const auto *trieNode{&m_DirectiveTrie};
 
 	while (m_Current.Good() && trieNode != nullptr) {
-		trieNode = trieNode->GetNode(m_Current);
-		m_Current.Next();
+		if (const auto node{trieNode->GetNode(m_Current)}; node != nullptr) {
+			trieNode = node;
+			m_Current.Next();
+			continue;
+		}
+
+		break;
 	}
 
 	if (trieNode != nullptr && trieNode->m_Leaf.has_value())
@@ -407,12 +420,12 @@ std::optional<Tokenizer::Token> Tokenizer::TokenizeDirective() {
 	return std::nullopt;
 }
 
-Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
+Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
 	std::basic_string<char32_t> identifierContents{};
 	ConstantPrefix              prefix{ConstantPrefix::None};
 	const KeywordTrie          *trieNode{nullptr};
 
-	if (!m_Current.GetIsEscapeChar()) {
+	if (m_Current != '\\') {
 		switch (*m_Current) {
 			case 'u':
 				trieNode = m_KeywordTrie.GetNode(m_Current);
@@ -459,6 +472,7 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 	while (m_Current.Good() && (isalnum(*m_Current) || *m_Current == '_' || *m_Current == '\\')) {
 		if (*m_Current == '\\') {
 			m_Current.Next();
+			SaveSubTokenSpanMarker();
 
 			if (!m_Current)
 				return SpecialPurpose::EndOfFile;
@@ -473,14 +487,17 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 					type = UniversalCharacterNameType::U;
 					break;
 				default:
-					const Span span{};// TODO: Get the span
-					m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
+					m_Diagnoses.emplace_back(
+					        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash
+					);
 					return SpecialPurpose::Error;
 			}
 
 			m_Current.Next();
 			if (const auto universalChar{TokenizeUniversalCharacterName(type)}; universalChar.has_value()) {
 				identifierContents += universalChar.value();
+			} else {
+				return SpecialPurpose::Error;
 			}
 		} else {
 			identifierContents += *m_Current;
@@ -499,22 +516,13 @@ Tokenizer::Token Tokenizer::TokenizeIdentifierOrKeyword() {
 	return Identifier{identifierContents};
 }
 
-Tokenizer::Token Tokenizer::Tokenize() {
+Tokenizer::Token::Value Tokenizer::Tokenize() {
 	if (!m_Current)
 		return SpecialPurpose::EndOfFile;
 
-	if (*m_Current == '\r') {
-		if (const auto next{m_Current.Next()}; next != '\n') {
-			const Span span{};//TODO: Get the span
-			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_LoneCarriageReturn);
-			return SpecialPurpose::Error;
-		}
-
-		m_Current.Next();
-		return SpecialPurpose::NewLine;
-	}
-
 	if (*m_Current == '\n') {
+		SaveTokenSpanMarker();
+		m_CurrentTokenLineStart = m_IStream.tellg();
 		m_Current.Next();
 		return SpecialPurpose::NewLine;
 	}
@@ -524,6 +532,8 @@ Tokenizer::Token Tokenizer::Tokenize() {
 
 	if (!m_Current)
 		return SpecialPurpose::EndOfFile;
+
+	SaveTokenSpanMarker();
 
 	if (*m_Current == '#') {
 		m_Current.Next();
@@ -551,6 +561,8 @@ Tokenizer::Token Tokenizer::Tokenize() {
 }
 
 std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequence(ValidEscapeBase base) {
+	SaveSubTokenSpanMarker();
+
 	if (base == ValidEscapeBase::Octal) {
 		// *m_Current is the first digit of the escape sequence
 		int value{};
@@ -571,17 +583,16 @@ std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequenc
 	m_Current.Next();
 
 	if (!m_Current) {
-		const Span span{};// TODO: Get the span
 		m_Diagnoses.emplace_back(
-		        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current, std::nullopt
+		        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current,
+		        std::nullopt
 		);
 		return std::nullopt;
 	}
 
 	if (!isxdigit(*m_Current)) {
-		const Span span{};// TODO: Get the span
 		m_Diagnoses.emplace_back(
-		        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharHexNoDigits, static_cast<char>(*m_Current)
+		        GetCustomSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_CharHexNoDigits, *m_Current
 		);
 		return std::nullopt;
 	}
@@ -652,9 +663,8 @@ std::optional<char> Tokenizer::TokenizeEscapeSequence() {
 			m_Current.Next();
 			return TokenizeUniversalCharacterName(UniversalCharacterNameType::U);
 		default:
-			const Span span{};// TODO: Get the span
 			m_Diagnoses.emplace_back(
-			        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnknownEscapeSequence,
+			        GetCurrentCharSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_UnknownEscapeSequence,
 			        static_cast<char>(*m_Current)
 			);
 			return std::nullopt;
@@ -689,24 +699,28 @@ std::optional<char32_t> Tokenizer::TokenizeUniversalCharacterName(UniversalChara
 	}
 
 	if (digitIdx != numDigits) {
-		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidUniversalCharacterName);
+		m_Diagnoses.emplace_back(
+		        GetCustomSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_InvalidUniversalCharacterName
+		);
 		return std::nullopt;
 	}
 
 	if (!IsLegalUniversalCharacterName(value)) {
-		const Span span{};//TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalUniversalCharacterName);
+		m_Diagnoses.emplace_back(
+		        GetCustomSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalUniversalCharacterName
+		);
 		return std::nullopt;
 	}
 
 	return value;
 }
 
-Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type) {
+Tokenizer::Token::Value
+Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type) {
 	if (!m_Current)
 		return SpecialPurpose::Error;
 
+	SpanMarker                spanEnd;
 	CompilerDataTypes::String literalContent{};
 	const auto                terminator{type == ConstantType::String ? '"' : '\''};
 
@@ -735,12 +749,13 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		// TODO: move to functor
 
 		if (*m_Current == '\\') {
+			SaveSubTokenSpanMarker();
 			m_Current.Next();
 
 			if (!m_Current) {
-				const Span span{};// TODO: Get the span
 				m_Diagnoses.emplace_back(
-				        span, Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, static_cast<char>(*m_Current)
+				        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF,
+				        static_cast<char>(*m_Current)
 				);
 				return SpecialPurpose::EndOfFile;
 			}
@@ -758,6 +773,16 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 			return SpecialPurpose::Error;
 		}
 
+		if (*m_Current == '\r' || *m_Current == '\n') {
+			const auto errKind{
+			        type == ConstantType::String ? Diagnosis::Kind::TK_StrUnterminated
+			                                     : Diagnosis::Kind::TK_CharUnterminated
+			};
+
+			m_Diagnoses.emplace_back(GetCurrentTokenSpan(), Diagnosis::Class::Error, errKind);
+			return SpecialPurpose::Error;
+		}
+
 		const auto result{*m_Current == terminator};
 
 		if (result) {
@@ -768,22 +793,29 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 		m_Current.Next();
 	}
 
+	spanEnd = m_Current.m_PreviousSpanMarker;
+
 	if (type == ConstantType::String) {
 		if (!m_Current || *m_Current != '"') {
-			const Span span{};// TODO: Get the span
-			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_StrUnterminated);
+			m_Diagnoses.emplace_back(
+			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_StrUnterminated
+			);
 			return SpecialPurpose::Error;
 		}
+
+		m_Current.Next();
 
 		return StringConstant{literalContent, prefix};
 	}
 	// TODO: move to helper function
+	const auto currentTokenSpan{GetCurrentTokenSpan()};
 
 	if (m_Current != '\'') {
-		const Span span{};// TODO: Get the span
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharUnterminated);
+		m_Diagnoses.emplace_back(currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharUnterminated);
 		return SpecialPurpose::Error;
 	}
+
+	m_Current.Next();
 
 	bool willBeTruncated{false};
 	switch (prefix) {
@@ -803,7 +835,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 	}
 
 	if (willBeTruncated) {
-		const Span span{};// TODO: Get the span
+		const Span span{m_TokenSpanStart, spanEnd, m_CurrentTokenLineStart, m_IStream};
 		m_Diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::TK_CharOutOfRange);
 	}
 
@@ -835,8 +867,7 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 
 			break;
 		default:
-			const Span span{};// TODO: Get the span
-			m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharNoValue);
+			m_Diagnoses.emplace_back(currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_CharNoValue);
 			return SpecialPurpose::Error;
 	}
 	value &= charConstValueMask;
@@ -846,16 +877,13 @@ Tokenizer::Token Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix pref
 
 Tokenizer::Token Tokenizer::operator()() {
 	if (!m_Current)
-		return SpecialPurpose::EndOfFile;
-
-	m_Current.Next();
+		return MakeToken(SpecialPurpose::EndOfFile);
 
 	try {
-		return Tokenize();
-	} catch (InvalidBackslashException &) {
-		const Span span{};
-		m_Diagnoses.emplace_back(span, Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
-		return SpecialPurpose::Error;
+		return MakeToken(Tokenize());
+	} catch (const InvalidBackslashException &) {
+		m_Diagnoses.emplace_back(GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
+		return MakeToken(SpecialPurpose::Error);
 	}
 }
 
@@ -910,4 +938,56 @@ std::optional<int> Tokenizer::TokenizeHexDigit() {
 
 	m_Current.Next();
 	return value;
+}
+
+Tokenizer::Token Tokenizer::MakeToken(const Tokenizer::Token::Value &value) const {
+	return Token{value, GetCurrentTokenSpan()};
+}
+
+Span Tokenizer::GetCustomSpan() const noexcept {
+	return {m_SubTokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+}
+
+Span Tokenizer::GetCurrentCharSpan() const noexcept {
+	return {m_Current.m_PreviousSpanMarker, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+}
+
+Span Tokenizer::GetCurrentTokenSpan() const noexcept {
+	return {m_TokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+}
+
+void Tokenizer::SaveSubTokenSpanMarker() noexcept {
+	m_SubTokenSpanStart = m_Current.m_CurrentSpanMarker;
+}
+
+void Tokenizer::SaveTokenSpanMarker() noexcept {
+	m_TokenSpanStart = m_Current.m_CurrentSpanMarker;
+}
+
+std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
+	os << '[';
+	PrintTo(token.m_Span, &os);
+	os << "]: ";
+
+	if (std::holds_alternative<Tokenizer::HeaderName>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::HeaderName>(token.m_Value), &os);
+	} else if (std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::Identifier>(token.m_Value), &os);
+	} else if (std::holds_alternative<Tokenizer::CharacterConstant>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::CharacterConstant>(token.m_Value), &os);
+	} else if (std::holds_alternative<Tokenizer::StringConstant>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::StringConstant>(token.m_Value), &os);
+	} else if (std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
+		os << std::get<Tokenizer::Punctuator>(token.m_Value);
+	} else if (std::holds_alternative<Tokenizer::Keyword>(token.m_Value)) {
+		os << std::get<Tokenizer::Keyword>(token.m_Value);
+	} else if (std::holds_alternative<Tokenizer::Directive>(token.m_Value)) {
+		os << std::get<Tokenizer::Directive>(token.m_Value);
+	} else if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
+		os << std::get<Tokenizer::SpecialPurpose>(token.m_Value);
+	} else {
+		assert(false);
+	}
+
+	return os;
 }

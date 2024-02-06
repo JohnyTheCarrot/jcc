@@ -3,3 +3,23 @@
 //
 
 #include "Span.h"
+
+bool SpanMarker::operator==(const SpanMarker &other) const noexcept {
+	return m_LineNumber == other.m_LineNumber && m_CharacterIndex == other.m_CharacterIndex;
+}
+
+void SpanMarker::NextChar(bool shouldIncrementReal) noexcept {
+	++m_CharacterIndex;
+	if (shouldIncrementReal)
+		++m_RealCharacterIndex;
+}
+
+void SpanMarker::NextLine() noexcept {
+	++m_LineNumber;
+	m_CharacterIndex     = FIRST_CHAR - 1;
+	m_RealCharacterIndex = FIRST_CHAR - 2;
+}
+
+bool Span::operator==(const Span &other) const noexcept {
+	return m_Start == other.m_Start && m_End == other.m_End;
+}
