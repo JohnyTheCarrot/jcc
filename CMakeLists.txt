@@ -11,7 +11,7 @@ target_include_directories(fmt PRIVATE libs/fmt/include)
 file(GLOB_RECURSE DIR_SRC src/*.cpp)
 add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
-set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
+set(CMAKE_CXX_FLAGS "-Wall -funsigned-char -pedantic-errors")
 
 #if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")

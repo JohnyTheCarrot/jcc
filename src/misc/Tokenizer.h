@@ -41,7 +41,7 @@ public:
 		}
 
 		friend void PrintTo(const Identifier &identifier, std::ostream *os) {
-			*os << testing::PrintToString(identifier.m_Name);
+			*os << "Ident(" << testing::PrintToString(identifier.m_Name) << ')';
 		}
 	};
 
@@ -203,9 +203,16 @@ public:
 		NewLine,
 	};
 
-	using Token = std::variant<
-	        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive,
-	        SpecialPurpose>;
+	struct Token final {
+		using Value = std::variant<
+		        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive,
+		        SpecialPurpose>;
+
+		Value m_Value{SpecialPurpose::Error};
+		Span  m_Span;
+
+		friend std::ostream &operator<<(std::ostream &os, const Token &token);
+	};
 
 private:
 	// TODO: replace unordered_map with trie
@@ -264,15 +271,35 @@ private:
 	        {"elif", Directive::Elif},       {"else", Directive::Else},     {"endif", Directive::Endif},
 	};
 
+	std::istream   &m_IStream;
 	CharStream      m_Current;
 	Diagnosis::Vec &m_Diagnoses;
+	SpanMarker      m_SubTokenSpanStart{};
+	SpanMarker      m_TokenSpanStart{};
+	std::streamoff  m_CurrentTokenLineStart{};
+
+	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
 
 	enum class ValidEscapeBase {
 		Octal,
 		Hexadecimal,
 	};
 
-	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
+	void SaveSubTokenSpanMarker() noexcept;
+
+	void SaveTokenSpanMarker() noexcept;
+
+	[[nodiscard]]
+	Span GetCustomSpan() const noexcept;
+
+	[[nodiscard]]
+	Span GetCurrentCharSpan() const noexcept;
+
+	[[nodiscard]]
+	Span GetCurrentTokenSpan() const noexcept;
+
+	[[nodiscard]]
+	Token MakeToken(const Token::Value &value) const;
 
 	std::optional<CompilerDataTypes::Char> TokenizeNumericalEscapeSequence(ValidEscapeBase base);
 
@@ -285,10 +312,10 @@ private:
 	std::optional<char> TokenizeEscapeSequence();
 
 	[[nodiscard]]
-	Tokenizer::Token TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type);
+	Tokenizer::Token::Value TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::ConstantType type);
 
 	[[nodiscard]]
-	Tokenizer::Punctuator TokenizeDot();
+	Tokenizer::Token::Value TokenizeDot();
 
 	[[nodiscard]]
 	Punctuator TokenizeDash();
@@ -324,10 +351,10 @@ private:
 	Punctuator TokenizeExclamationMark();
 
 	[[nodiscard]]
-	Tokenizer::Token TokenizePercent();
+	Tokenizer::Token::Value TokenizePercent();
 
 	[[nodiscard]]
-	Tokenizer::Token TokenizeHashHashDigraph();
+	Tokenizer::Token::Value TokenizeHashHashDigraph();
 
 	[[nodiscard]]
 	Punctuator TokenizeCaret();
@@ -342,10 +369,10 @@ private:
 	Tokenizer::Punctuator TokenizeHash();
 
 	[[nodiscard]]
-	Tokenizer::Token TokenizePunctuator();
+	Tokenizer::Token::Value TokenizePunctuator();
 
 	[[nodiscard]]
-	std::optional<Tokenizer::Token> TokenizeDirective();
+	std::optional<Tokenizer::Token::Value> TokenizeDirective();
 
 	enum class UniversalCharacterNameType {
 		u,
@@ -359,15 +386,17 @@ private:
 	std::optional<char32_t> TokenizeUniversalCharacterName(UniversalCharacterNameType type);
 
 	[[nodiscard]]
-	Token TokenizeIdentifierOrKeyword();
+	Token::Value TokenizeIdentifierOrKeyword();
 
 	[[nodiscard]]
-	Tokenizer::Token Tokenize();
+	Tokenizer::Token::Value Tokenize();
 
 public:
 	Tokenizer(std::istream &iStream, Diagnosis::Vec &diagnoses)
-	    : m_Current{iStream}
+	    : m_IStream{iStream}
+	    , m_Current{iStream}
 	    , m_Diagnoses{diagnoses} {
+		m_Current.Next();
 	}
 
 	Tokenizer(const Tokenizer &)            = delete;

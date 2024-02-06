@@ -5,6 +5,7 @@
 #ifndef JCC_CHARSTREAM_H
 #define JCC_CHARSTREAM_H
 
+#include "Span.h"
 #include <optional>
 #include <sstream>
 #include <variant>
@@ -19,13 +20,18 @@ public:
 class CharStream final {
 	std::istream &m_IStream;
 	char          m_Current{};
-	bool          m_IsEscapeChar{false};
+	bool          m_WasLastCharNewLine{false};
 
 	void InternalNext();
 
+	void NextLine() noexcept;
+
 public:
 	using NextChar = std::optional<char>;
+
 	static constexpr char END_OF_FILE{0xFF};
+	SpanMarker            m_PreviousSpanMarker{};
+	SpanMarker            m_CurrentSpanMarker{};
 
 	explicit CharStream(std::istream &iStream)
 	    : m_IStream{iStream}
@@ -51,9 +57,6 @@ public:
 
 	[[nodiscard]]
 	char Get() const noexcept;
-
-	[[nodiscard]]
-	bool GetIsEscapeChar() const noexcept;
 
 	char Next();
 

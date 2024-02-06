@@ -29,11 +29,42 @@ void CharStream::InternalNext() {
 		m_Current = END_OF_FILE;
 		return;
 	}
+
+	m_CurrentSpanMarker.NextChar();
+}
+
+void CharStream::NextLine() noexcept {
+	m_CurrentSpanMarker.NextLine();
 }
 
 char CharStream::Next() {
+	m_PreviousSpanMarker = m_CurrentSpanMarker;
+
 	while (true) {
+		if (m_WasLastCharNewLine) {
+			NextLine();
+			m_WasLastCharNewLine = false;
+		}
+
 		InternalNext();
+
+		if (m_Current == '\r') {
+			InternalNext();
+			m_WasLastCharNewLine = true;
+			return '\n';
+		}
+
+		if (m_Current == '\n') {
+			m_WasLastCharNewLine = true;
+			return '\n';
+		}
+
+		if (m_Current == '\t') {
+			// See the following SO post for context. https://stackoverflow.com/a/13094734
+			// We're going up to 7 because the tab is already the first character
+			for (size_t idx{}; idx < 7; ++idx) m_CurrentSpanMarker.NextChar(false);
+			return '\t';
+		}
 
 		if (m_Current != '\\') {
 			return m_Current;
@@ -48,6 +79,7 @@ char CharStream::Next() {
 
 		if (next == '\n') {
 			InternalNext();
+			NextLine();
 			continue;
 		}
 
@@ -63,10 +95,6 @@ char CharStream::operator++(int) {
 	const char c{m_Current};
 	Next();
 	return c;
-}
-
-bool CharStream::GetIsEscapeChar() const noexcept {
-	return m_IsEscapeChar;
 }
 
 std::string &operator+=(std::string &str, std::optional<char> c) {

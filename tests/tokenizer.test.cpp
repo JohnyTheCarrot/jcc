@@ -11,7 +11,8 @@ using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
 using ConstantPrefix      = Tokenizer::ConstantPrefix;
 using SpecialPurposeToken = Tokenizer::SpecialPurpose;
 
-class TokenizingTest : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token, DiagnosisKindVec>> {};
+class TokenizingTest
+    : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token::Value, DiagnosisKindVec>> {};
 
 TEST_P(TokenizingTest, Tokenizing) {
 	std::istringstream iss{std::get<0>(GetParam())};
@@ -20,16 +21,16 @@ TEST_P(TokenizingTest, Tokenizing) {
 
 	const Tokenizer::Token token{tokenizer()};
 
-	const Tokenizer::Token expectedToken{std::get<1>(GetParam())};
-	const auto             expectedDiagnoses{std::get<2>(GetParam())};
-	DiagnosisKindVec       actualDiagnosisKinds{};
+	const Tokenizer::Token::Value expectedToken{std::get<1>(GetParam())};
+	const auto                    expectedDiagnoses{std::get<2>(GetParam())};
+	DiagnosisKindVec              actualDiagnosisKinds{};
 	std::transform(
 	        diagnoses.begin(), diagnoses.end(), std::back_inserter(actualDiagnosisKinds),
 	        [](const auto &diagnosisKind) { return diagnosisKind.m_Kind; }
 	);
 
 	EXPECT_EQ(expectedDiagnoses, actualDiagnosisKinds);
-	EXPECT_EQ(expectedToken, token);
+	EXPECT_EQ(expectedToken, token.m_Value);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -314,12 +315,34 @@ INSTANTIATE_TEST_SUITE_P(
         NewLine, TokenizingTest,
         testing::Values(
                 std::make_tuple("\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{}),
-                std::make_tuple("\r\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{}),
-                std::make_tuple(
-                        "\r", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_LoneCarriageReturn}
-                ),
-                std::make_tuple(
-                        "\ra", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_LoneCarriageReturn}
-                )
+                std::make_tuple("\r\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{})
+        )
+);
+
+class SpanGenerationTest : public testing::TestWithParam<std::tuple<std::string, SpanMarker, SpanMarker>> {};
+
+TEST_P(SpanGenerationTest, SpanGeneration) {
+	std::istringstream iss{std::get<0>(GetParam())};
+	Diagnosis::Vec     diagnoses{};
+	Tokenizer          tokenizer{iss, diagnoses};
+
+	const Tokenizer::Token token{tokenizer()};
+	const auto             expectedSpanStart{std::get<1>(GetParam())};
+	const auto             expectedSpanEnd{std::get<2>(GetParam())};
+
+	EXPECT_EQ(token.m_Span.m_Start, expectedSpanStart);
+	EXPECT_EQ(token.m_Span.m_End, expectedSpanEnd);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        SpanGeneration, SpanGenerationTest,
+        testing::Values(
+                std::make_tuple("int", SpanMarker{1, 1}, SpanMarker{1, 3}),
+                std::make_tuple("in\\\nt", SpanMarker{1, 1}, SpanMarker{2, 1}),
+                std::make_tuple("+", SpanMarker{1, 1}, SpanMarker{1, 1}),
+                std::make_tuple("\\\n+", SpanMarker{2, 1}, SpanMarker{2, 1}),
+                std::make_tuple("+\\\n+", SpanMarker{1, 1}, SpanMarker{2, 1}),
+                std::make_tuple(R"("hello world")", SpanMarker{1, 1}, SpanMarker{1, sizeof(R"("hello world")") - 1}),
+                std::make_tuple("\"hello\\\nworld\"", SpanMarker{1, 1}, SpanMarker{2, sizeof(R"(world")") - 1})
         )
 );
