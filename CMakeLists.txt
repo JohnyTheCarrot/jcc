@@ -11,7 +11,8 @@ target_include_directories(fmt PRIVATE libs/fmt/include)
 file(GLOB_RECURSE DIR_SRC src/*.cpp)
 add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
+set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
+
 target_include_directories(${PROJECT_NAME} PRIVATE libs)
 
 # GoogleTest

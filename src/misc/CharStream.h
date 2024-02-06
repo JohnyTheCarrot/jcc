@@ -21,8 +21,11 @@ class CharStream final {
 	char          m_Current{};
 	bool          m_IsEscapeChar{false};
 
+	void InternalNext();
+
 public:
 	using NextChar = std::optional<char>;
+	static constexpr char END_OF_FILE{0xFF};
 
 	explicit CharStream(std::istream &iStream)
 	    : m_IStream{iStream}
@@ -52,9 +55,7 @@ public:
 	[[nodiscard]]
 	bool GetIsEscapeChar() const noexcept;
 
-	std::optional<char> SimpleNext();
-
-	NextChar Next();
+	char Next();
 
 	NextChar operator++();
 
