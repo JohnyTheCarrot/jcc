@@ -42,8 +42,9 @@ struct Diagnosis final {
 	Kind  m_Kind{};
 	Data  m_Data0{}, m_Data1{};
 
-	[[nodiscard]]
-	String ToString() const;
+	void PrintDiagMessage() const;
+
+	void Print() const;
 };
 
 namespace DiagnosticsUtils {
@@ -59,16 +60,25 @@ namespace DiagnosticsUtils {
 		}
 	}
 
-	void OutputLine(OStream &os, int lineNum, const std::string &line);
+	constexpr const char *GetClassName(Diagnosis::Class diagClass) noexcept {
+		switch (diagClass) {
+			case Diagnosis::Class::Warning:
+				return "Warning";
+			case Diagnosis::Class::Error:
+			default:
+				return "Error";
+		}
+	}
+
+	void OutputLine(int lineNum, const std::string &line);
 
 	void OutputHighlight(
-	        OStream &os, const std::optional<int> &startChar, const std::optional<int> &endChar, int lineLength,
+	        const std::optional<int> &startChar, const std::optional<int> &endChar, int lineLength,
 	        Diagnosis::Class diagClass
 	);
 }// namespace DiagnosticsUtils
 
-OStream &operator<<(OStream &os, const Diagnosis &diagnosis);
-
 std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind);
+
 
 #endif//JCC_DIAGNOSIS_H

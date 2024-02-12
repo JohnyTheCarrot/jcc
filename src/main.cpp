@@ -2,9 +2,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <magic_enum/magic_enum.hpp>
-#include <variant>
 
 int main(int argCount, char *args[]) {
 	if (argCount < 2) {
@@ -34,10 +32,7 @@ int main(int argCount, char *args[]) {
 		}
 	}
 
-	std::transform(
-	        diagnoses.cbegin(), diagnoses.cend(), std::ostream_iterator<std::string>{std::cout, "\n"},
-	        [](const auto &el) { return el.ToString(); }
-	);
+	for (const auto &diagnosis: diagnoses) { diagnosis.Print(); }
 
 	return 0;
 }
