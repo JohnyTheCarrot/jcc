@@ -205,6 +205,7 @@ public:
 		EndOfFile,
 		Error,
 		NewLine,
+		Comment,
 	};
 
 	struct Token final {
@@ -302,7 +303,7 @@ private:
 	Span GetCurrentTokenSpan() const noexcept;
 
 	[[nodiscard]]
-	Token MakeToken(const Token::Value &value) const;
+	Token MakeToken(Token::Value &&value) const;
 
 	std::optional<CompilerDataTypes::Char> TokenizeNumericalEscapeSequence(ValidEscapeBase base);
 
@@ -363,7 +364,7 @@ private:
 	Punctuator TokenizeCaret();
 
 	[[nodiscard]]
-	Punctuator TokenizeSlash();
+	Tokenizer::Token::Value TokenizeSlash();
 
 	[[nodiscard]]
 	Punctuator TokenizeColon();

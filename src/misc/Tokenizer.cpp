@@ -265,15 +265,28 @@ Tokenizer::Punctuator Tokenizer::TokenizeCaret() {
 	return Punctuator::CaretEqual;
 }
 
-Tokenizer::Punctuator Tokenizer::TokenizeSlash() {
+Tokenizer::Token::Value Tokenizer::TokenizeSlash() {
 	if (!m_Current) {
 		return Punctuator::Slash;
 	}
 
+	bool wasLastAsterisk{false};
+
 	switch (*m_Current) {
+		case '*':
+			m_Current.Next();
+			while (m_Current.Good()) {
+				m_Current.Next();
+				if (wasLastAsterisk && *m_Current == '/') {
+					m_Current.Next();
+					break;
+				}
+				wasLastAsterisk = m_Current == '*';
+			}
+			return SpecialPurpose::Comment;
 		case '/':
-			while (*m_Current != '\n') ++m_Current;
-			return Punctuator::None;
+			while (*m_Current != '\n') m_Current.Next();
+			return SpecialPurpose::Comment;
 		case '=':
 			++m_Current;
 			return Punctuator::SlashEqual;
@@ -643,13 +656,14 @@ Tokenizer::Token::Value Tokenizer::Tokenize() {
 		return ppNumber.value();
 
 	// Punctuators
-	const auto punctuatorOrError{TokenizePunctuator()};
-	if (std::holds_alternative<Punctuator>(punctuatorOrError)) {
-		if (const Punctuator punctuator{std::get<Punctuator>(punctuatorOrError)}; punctuator != Punctuator::None) {
+	const auto punctuatorOrSpecialPurpose{TokenizePunctuator()};
+	if (std::holds_alternative<Punctuator>(punctuatorOrSpecialPurpose)) {
+		if (const Punctuator punctuator{std::get<Punctuator>(punctuatorOrSpecialPurpose)};
+		    punctuator != Punctuator::None) {
 			return punctuator;
 		}
-	} else if (std::holds_alternative<SpecialPurpose>(punctuatorOrError)) {
-		return SpecialPurpose::Error;
+	} else if (std::holds_alternative<SpecialPurpose>(punctuatorOrSpecialPurpose)) {
+		return std::get<SpecialPurpose>(punctuatorOrSpecialPurpose);
 	}
 
 	return TokenizeIdentifierOrKeyword();
@@ -974,12 +988,22 @@ Tokenizer::Token Tokenizer::operator()() {
 	if (!m_Current)
 		return MakeToken(SpecialPurpose::EndOfFile);
 
-	try {
-		return MakeToken(Tokenize());
-	} catch (const InvalidBackslashException &) {
-		m_Diagnoses.emplace_back(GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash);
-		return MakeToken(SpecialPurpose::Error);
-	}
+	while (true) {
+		auto tokenValue{Tokenize()};
+		if (std::holds_alternative<SpecialPurpose>(tokenValue) &&
+		    std::get<SpecialPurpose>(tokenValue) == SpecialPurpose::Comment) {
+			continue;
+		}
+
+		try {
+			return MakeToken(std::move(tokenValue));
+		} catch (const InvalidBackslashException &) {
+			m_Diagnoses.emplace_back(
+			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_IllegalBackslash
+			);
+			return MakeToken(SpecialPurpose::Error);
+		}
+	};
 }
 
 std::ostream &operator<<(std::ostream &os, Tokenizer::SpecialPurpose specialPurpose) {
@@ -1035,8 +1059,8 @@ std::optional<int> Tokenizer::TokenizeHexDigit() {
 	return value;
 }
 
-Tokenizer::Token Tokenizer::MakeToken(const Tokenizer::Token::Value &value) const {
-	return Token{value, GetCurrentTokenSpan()};
+Tokenizer::Token Tokenizer::MakeToken(Tokenizer::Token::Value &&value) const {
+	return Token{std::move(value), GetCurrentTokenSpan()};
 }
 
 Span Tokenizer::GetCustomSpan() const noexcept {
