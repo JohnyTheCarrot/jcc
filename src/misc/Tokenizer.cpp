@@ -388,6 +388,98 @@ Tokenizer::Token::Value Tokenizer::TokenizePunctuator() {
 	return result;
 }
 
+bool Tokenizer::IsNonDigit(char c) noexcept {
+	return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+bool Tokenizer::IsValidPpNumberCharacter(char c) noexcept {
+	if (isdigit(c) || IsNonDigit(c))
+		return true;
+
+	switch (c) {
+		case '.':
+		case '+':
+		case '-':
+			return true;
+		default:
+			return false;
+	}
+}
+
+// Even matches hexadecimal notation, for 0x1F2:
+// 0 -> digit
+// x -> identifier-nondigit
+// 1 -> digit
+// F -> identifier-nondigit
+// 2 -> digit
+std::optional<Tokenizer::Token::Value> Tokenizer::TokenizePpNumber() {
+	if (!m_Current)
+		return SpecialPurpose::EndOfFile;
+
+	// a pp-number has neither a type nor a value at this point
+	std::string ppNumber{};
+
+	if (*m_Current == '.') {
+		ppNumber += *m_Current;
+
+		m_Current.Next();
+
+		if (!isdigit(*m_Current)) {
+			return TokenizeDot();
+		}
+
+		if (!m_Current)
+			return SpecialPurpose::EndOfFile;
+
+		ppNumber += *m_Current;
+	} else {
+		// must be a digit
+		if (!isdigit(*m_Current)) {
+			return std::nullopt;
+		}
+
+		ppNumber += *m_Current;
+	}
+
+	m_Current.Next();
+	if (!m_Current) {
+		return PpNumber{std::move(ppNumber)};
+	}
+
+	while (m_Current.Good() && IsValidPpNumberCharacter(*m_Current)) {
+		if (IsNonDigit(*m_Current)) {
+			switch (*m_Current) {
+				case 'e':
+				case 'E':
+				case 'p':
+				case 'P':
+					ppNumber += *m_Current;
+					m_Current.Next();
+					if (!m_Current)
+						return PpNumber{std::move(ppNumber)};
+					ppNumber += *m_Current;
+					m_Current.Next();
+					continue;
+				default:
+					ppNumber += *m_Current;
+					m_Current.Next();
+
+					continue;
+			}
+		}
+
+		if (isdigit(*m_Current) || *m_Current == '.') {
+			ppNumber += *m_Current;
+			m_Current.Next();
+			continue;
+		}
+
+		break;
+	}
+
+	return PpNumber{std::move(ppNumber)};
+}
+
 std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 	if (!m_Current)
 		return Punctuator::Hash;
@@ -546,6 +638,9 @@ Tokenizer::Token::Value Tokenizer::Tokenize() {
 
 		return TokenizeHash();
 	}
+
+	if (const auto ppNumber{TokenizePpNumber()}; ppNumber.has_value())
+		return ppNumber.value();
 
 	// Punctuators
 	const auto punctuatorOrError{TokenizePunctuator()};
@@ -985,6 +1080,8 @@ std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
 		os << std::get<Tokenizer::Directive>(token.m_Value);
 	} else if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
 		os << std::get<Tokenizer::SpecialPurpose>(token.m_Value);
+	} else if (std::holds_alternative<Tokenizer::PpNumber>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::PpNumber>(token.m_Value), &os);
 	} else {
 		assert(false);
 	}

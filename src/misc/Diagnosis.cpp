@@ -106,7 +106,7 @@ void Diagnosis::Print() const {
 
 namespace DiagnosticsUtils {
 	void OutputLine(int lineNum, const std::string &line) {
-		fmt::print(fmt::fg(COLOR_NEUTRAL), "{:>4} \u2503", lineNum);
+		fmt::print(fmt::fg(COLOR_NEUTRAL), "{:>4} ┃", lineNum);
 
 		if (line.empty())
 			return;
