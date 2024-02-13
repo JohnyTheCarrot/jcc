@@ -10,6 +10,7 @@ using StringConstant      = Tokenizer::StringConstant;
 using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
 using ConstantPrefix      = Tokenizer::ConstantPrefix;
 using SpecialPurposeToken = Tokenizer::SpecialPurpose;
+using PpNumber            = Tokenizer::PpNumber;
 
 class TokenizingTest
     : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token::Value, DiagnosisKindVec>> {};
@@ -316,6 +317,20 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Values(
                 std::make_tuple("\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{}),
                 std::make_tuple("\r\n", SpecialPurposeToken::NewLine, DiagnosisKindVec{})
+        )
+);
+
+INSTANTIATE_TEST_SUITE_P(
+        PpNumbers, TokenizingTest,
+        testing::Values(
+                std::make_tuple("0", PpNumber{"0"}, DiagnosisKindVec{}),
+                std::make_tuple("1", PpNumber{"1"}, DiagnosisKindVec{}),
+                std::make_tuple("10", PpNumber{"10"}, DiagnosisKindVec{}),
+                std::make_tuple("10E+10", PpNumber{"10E+10"}, DiagnosisKindVec{}),
+                std::make_tuple("0xF00D", PpNumber{"0xF00D"}, DiagnosisKindVec{}),
+                std::make_tuple("10.0", PpNumber{"10.0"}, DiagnosisKindVec{}),
+                std::make_tuple("10Ex", PpNumber{"10Ex"}, DiagnosisKindVec{}),
+                std::make_tuple(".15", PpNumber{".15"}, DiagnosisKindVec{})
         )
 );
 

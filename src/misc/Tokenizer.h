@@ -48,10 +48,14 @@ public:
 	struct PpNumber final {
 		// A preprocessing number has neither a value nor a type at the time of preprocessing.
 		// It acquires both after a successful conversion to a number token.
-		CompilerDataTypes::String m_Number;
+		std::string m_Number;
 
 		bool operator==(const PpNumber &other) const {
 			return m_Number == other.m_Number;
+		}
+
+		friend void PrintTo(const PpNumber &ppNumber, std::ostream *os) {
+			*os << "PpNumber(" << ppNumber.m_Number << ')';
 		}
 	};
 
@@ -215,7 +219,6 @@ public:
 	};
 
 private:
-	// TODO: replace unordered_map with trie
 	using KeywordTrie = TrieNode<'A', 'z', Keyword>;
 	KeywordTrie m_KeywordTrie{
 	        {"auto", Keyword::Auto},
@@ -370,6 +373,15 @@ private:
 
 	[[nodiscard]]
 	Tokenizer::Token::Value TokenizePunctuator();
+
+	[[nodiscard]]
+	static bool IsNonDigit(char c) noexcept;
+
+	[[nodiscard]]
+	static bool IsValidPpNumberCharacter(char c) noexcept;
+
+	[[nodiscard]]
+	std::optional<Tokenizer::Token::Value> TokenizePpNumber();
 
 	[[nodiscard]]
 	std::optional<Tokenizer::Token::Value> TokenizeDirective();
