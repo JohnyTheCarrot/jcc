@@ -8,6 +8,10 @@ int main(void) {
 	float ppNumberExample = .10, bingus = 1.05E+11;
 	float value = a.b.c;
 
+	/* hello hi heya
+	 * schmooberdi dooberdo
+	 */
+
     char* unterminated = "oh no \
 this string is \
 not terminated
