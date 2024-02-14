@@ -11,6 +11,7 @@ using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
 using ConstantPrefix      = Tokenizer::ConstantPrefix;
 using SpecialPurposeToken = Tokenizer::SpecialPurpose;
 using PpNumber            = Tokenizer::PpNumber;
+using IncludeDirective    = Tokenizer::IncludeDirective;
 
 class TokenizingTest
     : public testing::TestWithParam<std::tuple<std::string, Tokenizer::Token::Value, DiagnosisKindVec>> {};
@@ -173,7 +174,9 @@ INSTANTIATE_TEST_SUITE_P(
         Directives, TokenizingTest,
         testing::Values(
                 std::make_tuple("#define", Directive::Define, DiagnosisKindVec{}),
-                std::make_tuple("#include", Directive::Include, DiagnosisKindVec{}),
+                std::make_tuple(
+                        "#include", SpecialPurposeToken::Error, DiagnosisKindVec{Diagnosis::Kind::TK_ExpectedHeaderName}
+                ),
                 std::make_tuple("#undef", Directive::Undef, DiagnosisKindVec{}),
                 std::make_tuple("#ifdef", Directive::Ifdef, DiagnosisKindVec{}),
                 std::make_tuple("#ifndef", Directive::Ifndef, DiagnosisKindVec{}),
@@ -184,7 +187,18 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("#line", Directive::Line, DiagnosisKindVec{}),
                 std::make_tuple("#error", Directive::Error, DiagnosisKindVec{}),
                 std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{}),
-                std::make_tuple("# define", Directive::Define, DiagnosisKindVec{})
+                std::make_tuple("# define", Directive::Define, DiagnosisKindVec{}),
+                std::make_tuple(
+                        "#include <hi>", IncludeDirective{"hi", IncludeDirective::HeaderType::HChar}, DiagnosisKindVec{}
+                ),
+                std::make_tuple(
+                        "#include \"hello\"", IncludeDirective{"hello", IncludeDirective::HeaderType::QChar},
+                        DiagnosisKindVec{}
+                ),
+                std::make_tuple(
+                        "#include \"hello\" ++", SpecialPurposeToken::Error,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_DirectiveNotAloneOnLine}
+                )
         )
 );
 

@@ -16,6 +16,7 @@ struct Diagnosis final {
 	enum class Kind {
 		TK_StrUnterminated,
 		TK_CharUnterminated,
+		TK_HeaderNameUnterminated,
 		TK_CharNoValue,
 		TK_CharOutOfRange,
 		TK_CharHexNoDigits,
@@ -30,6 +31,8 @@ struct Diagnosis final {
 		TK_InvalidUniversalCharacterName,
 		TK_IllegalUniversalCharacterName,
 		TK_IllegalBackslash,
+		TK_ExpectedHeaderName,
+		TK_DirectiveNotAloneOnLine
 	};
 
 	enum class Class {

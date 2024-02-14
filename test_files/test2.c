@@ -1,3 +1,6 @@
+#include <somefile.h>
+#include "some-other-file.h"
+
 int main(void) {
     printf("Hello, %s! \u09DE", "world");
     char warning = 'aa';

@@ -6,6 +6,7 @@
 #include "Trie.h"
 #include "compiler_data_types.h"
 #include <gtest/gtest-printers.h>
+#include <magic_enum/magic_enum.hpp>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -21,15 +22,20 @@
 
 class Tokenizer final {
 public:
-	struct HeaderName final {
-		CompilerDataTypes::String m_Name;
+	struct IncludeDirective final {
+		std::string m_Name;
+		enum class HeaderType {
+			HChar,
+			QChar,
+		} m_HeaderType;
 
-		bool operator==(const HeaderName &other) const {
+		bool operator==(const IncludeDirective &other) const {
 			return m_Name == other.m_Name;
 		}
 
-		friend void PrintTo(const HeaderName &headerName, std::ostream *os) {
-			*os << testing::PrintToString(headerName.m_Name);
+		friend void PrintTo(const IncludeDirective &headerName, std::ostream *os) {
+			*os << "IncludeDirective(" << magic_enum::enum_name(headerName.m_HeaderType) << ", "
+			    << testing::PrintToString(headerName.m_Name) << ')';
 		}
 	};
 
@@ -210,8 +216,8 @@ public:
 
 	struct Token final {
 		using Value = std::variant<
-		        HeaderName, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword, Directive,
-		        SpecialPurpose>;
+		        IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
+		        Directive, SpecialPurpose>;
 
 		Value m_Value{SpecialPurpose::Error};
 		Span  m_Span;
@@ -281,6 +287,7 @@ private:
 	SpanMarker      m_SubTokenSpanStart{};
 	SpanMarker      m_TokenSpanStart{};
 	std::streamoff  m_CurrentTokenLineStart{};
+	bool            m_IsPrecededByNewline{true};
 
 	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
 
@@ -383,6 +390,9 @@ private:
 
 	[[nodiscard]]
 	std::optional<Tokenizer::Token::Value> TokenizePpNumber();
+
+	[[nodiscard]]
+	Tokenizer::Token::Value TokenizeHeaderName();
 
 	[[nodiscard]]
 	std::optional<Tokenizer::Token::Value> TokenizeDirective();

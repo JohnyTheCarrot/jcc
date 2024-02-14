@@ -2,7 +2,6 @@
 #include "Diagnosis.h"
 #include "compiler_data_types.h"
 #include <magic_enum/magic_enum.hpp>
-#include <regex>
 
 Tokenizer::Token::Value Tokenizer::TokenizeDot() {
 	if (!m_Current || *m_Current != '.') {
@@ -493,6 +492,93 @@ std::optional<Tokenizer::Token::Value> Tokenizer::TokenizePpNumber() {
 	return PpNumber{std::move(ppNumber)};
 }
 
+Tokenizer::Token::Value Tokenizer::TokenizeHeaderName() {
+	if (!m_Current) {
+		m_Diagnoses.emplace_back(GetCurrentCharSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_ExpectedHeaderName);
+		return SpecialPurpose::Error;
+	}
+
+	IncludeDirective::HeaderType headerType;
+
+	switch (*m_Current) {
+		case '<':
+			headerType = IncludeDirective::HeaderType::HChar;
+			break;
+		case '"':
+			headerType = IncludeDirective::HeaderType::QChar;
+			break;
+		default:
+			if (const auto identOrKeyword{TokenizeIdentifierOrKeyword()};
+			    std::holds_alternative<Identifier>(identOrKeyword))
+				return identOrKeyword;
+
+			m_Diagnoses.emplace_back(
+			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_ExpectedHeaderName
+			);
+			return SpecialPurpose::Error;
+	}
+
+	m_Current.Next();
+
+	std::string headerName{};
+	bool        newLineEscaped{false};
+
+	while (true) {
+		if (!m_Current) {
+			m_Diagnoses.emplace_back(
+			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_HeaderNameUnterminated
+			);
+			return SpecialPurpose::Error;
+		}
+
+		if (*m_Current == '\n') {
+			if (newLineEscaped) {
+				m_Current.Next();
+				continue;
+			}
+
+			m_Diagnoses.emplace_back(
+			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_HeaderNameUnterminated
+			);
+			return SpecialPurpose::Error;
+		}
+
+		const bool isCurrentBackslash{*m_Current == '\\'};
+		if (isCurrentBackslash && newLineEscaped) {
+			headerName += '\\';
+			newLineEscaped = false;
+			continue;
+		}
+
+		newLineEscaped = false;
+
+		if (*m_Current == '\\') {
+			newLineEscaped = true;
+		}
+
+		if ((headerType == IncludeDirective::HeaderType::HChar && *m_Current == '>') ||
+		    (headerType == IncludeDirective::HeaderType::QChar && *m_Current == '"')) {
+			m_Current.Next();
+			break;
+		}
+
+		headerName += *m_Current;
+		m_Current.Next();
+	}
+
+	// trailing whitespace is fine so long as it ends in a newline or EOF, so skip whitespace to prepare for newline or EOF check
+	while (m_Current.Good() && isblank(*m_Current)) m_Current.Next();
+
+	if (m_Current.Good() && *m_Current != '\n') {
+		m_Diagnoses.emplace_back(
+		        GetCurrentCharSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_DirectiveNotAloneOnLine
+		);
+		return SpecialPurpose::Error;
+	}
+
+	return IncludeDirective{std::move(headerName), headerType};
+}
+
 std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 	if (!m_Current)
 		return Punctuator::Hash;
@@ -507,6 +593,13 @@ std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 	if (!m_Current || *m_Current == '\n')
 		return Punctuator::Hash;
 
+	if (!m_IsPrecededByNewline) {
+		m_Diagnoses.emplace_back(
+		        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_DirectiveNotAloneOnLine
+		);
+		return SpecialPurpose::Error;
+	}
+
 	const auto *trieNode{&m_DirectiveTrie};
 
 	while (m_Current.Good() && trieNode != nullptr) {
@@ -519,10 +612,17 @@ std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 		break;
 	}
 
-	if (trieNode != nullptr && trieNode->m_Leaf.has_value())
-		return trieNode->m_Leaf->m_Value;
+	if (trieNode == nullptr || !trieNode->m_Leaf.has_value())
+		return std::nullopt;
 
-	return std::nullopt;
+	const auto value{trieNode->m_Leaf->m_Value};
+
+	if (value == Directive::Include) {
+		m_Current.Next();
+		return TokenizeHeaderName();
+	}
+
+	return value;
 }
 
 Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
@@ -990,9 +1090,16 @@ Tokenizer::Token Tokenizer::operator()() {
 
 	while (true) {
 		auto tokenValue{Tokenize()};
-		if (std::holds_alternative<SpecialPurpose>(tokenValue) &&
-		    std::get<SpecialPurpose>(tokenValue) == SpecialPurpose::Comment) {
-			continue;
+		m_IsPrecededByNewline = false;
+
+		if (std::holds_alternative<SpecialPurpose>(tokenValue)) {
+			const auto specialPurposeValue{std::get<SpecialPurpose>(tokenValue)};
+			if (specialPurposeValue == SpecialPurpose::Comment) {
+				continue;
+			}
+			if (specialPurposeValue == SpecialPurpose::NewLine) {
+				m_IsPrecededByNewline = true;
+			}
 		}
 
 		try {
@@ -1088,8 +1195,8 @@ std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
 	PrintTo(token.m_Span, &os);
 	os << "]: ";
 
-	if (std::holds_alternative<Tokenizer::HeaderName>(token.m_Value)) {
-		PrintTo(std::get<Tokenizer::HeaderName>(token.m_Value), &os);
+	if (std::holds_alternative<Tokenizer::IncludeDirective>(token.m_Value)) {
+		PrintTo(std::get<Tokenizer::IncludeDirective>(token.m_Value), &os);
 	} else if (std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
 		PrintTo(std::get<Tokenizer::Identifier>(token.m_Value), &os);
 	} else if (std::holds_alternative<Tokenizer::CharacterConstant>(token.m_Value)) {
