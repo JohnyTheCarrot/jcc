@@ -5,63 +5,63 @@
 
 void Diagnosis::PrintDiagMessage() const {
 	switch (m_Kind) {
-		case Diagnosis::Kind::TK_StrUnterminated:
+		case Kind::TK_StrUnterminated:
 			fmt::print("String literal was not terminated.");
 			break;
-		case Diagnosis::Kind::TK_CharUnterminated:
+		case Kind::TK_CharUnterminated:
 			fmt::print("Character literal was not terminated.");
 			break;
-		case Diagnosis::Kind::TK_HeaderNameUnterminated:
+		case Kind::TK_HeaderNameUnterminated:
 			fmt::print("Header name was not terminated.");
 			break;
-		case Diagnosis::Kind::TK_CharNoValue:
+		case Kind::TK_CharNoValue:
 			fmt::print("Character literal has no value.");
 			break;
-		case Diagnosis::Kind::TK_CharOutOfRange:
+		case Kind::TK_CharOutOfRange:
 			fmt::print("Character literal is out of range, its value will be truncated.");
 			break;
-		case Diagnosis::Kind::TK_CharHexNoDigits:
+		case Kind::TK_CharHexNoDigits:
 			fmt::print("Hexadecimal character literal has no digits.");
 			break;
-		case Diagnosis::Kind::TK_UnknownEscapeSequence:
+		case Kind::TK_UnknownEscapeSequence:
 			fmt::print("Unknown escape sequence '\\{}'.", std::get<char>(m_Data0.value()));
-		case Diagnosis::Kind::TK_UnexpectedEOF:
+		case Kind::TK_UnexpectedEOF:
 			fmt::print("Unexpected end of file.");
 			break;
-		case Diagnosis::Kind::TK_PartialTokenEncountered:
+		case Kind::TK_PartialTokenEncountered:
 			fmt::print(
 			        fmt::emphasis::bold, "Partial token encountered, did you mean {}?",
 			        fmt::styled(std::get<std::string>(m_Data0.value()), fmt::fg(fmt::color::cyan))
 			);
 			break;
-		case Diagnosis::Kind::TK_UnknownDirective:
+		case Kind::TK_UnknownDirective:
 			fmt::print("Unknown directive '{}'.", std::get<std::string>(m_Data0.value()));
 			break;
-		case Diagnosis::Kind::TK_EscapeExpectedNewline:
+		case Kind::TK_EscapeExpectedNewline:
 			fmt::print("Expected newline after \\.");
 			break;
-		case Diagnosis::Kind::TK_Unrecognized:
+		case Kind::TK_Unrecognized:
 			fmt::print("Unrecognized token '{}'.", std::get<char>(m_Data0.value()));
 			break;
-		case Diagnosis::Kind::TK_InvalidBaseDigit:
+		case Kind::TK_InvalidBaseDigit:
 			fmt::print("Invalid base digit \'{}\'.", std::get<char>(m_Data0.value()));
 			break;
-		case Diagnosis::Kind::TK_UnexpectedIntSuffixChar:
+		case Kind::TK_UnexpectedIntSuffixChar:
 			fmt::print("Unexpected character for integer literal suffix \'{}\'.", std::get<char>(m_Data0.value()));
 			break;
-		case Diagnosis::Kind::TK_InvalidUniversalCharacterName:
+		case Kind::TK_InvalidUniversalCharacterName:
 			fmt::print("Invalid universal character name.");
 			break;
-		case Diagnosis::Kind::TK_IllegalUniversalCharacterName:
+		case Kind::TK_IllegalUniversalCharacterName:
 			fmt::print("Illegal universal character name.");
 			break;
-		case Diagnosis::Kind::TK_IllegalBackslash:
+		case Kind::TK_IllegalBackslash:
 			fmt::print("Illegal backslash.");
 			break;
-		case Diagnosis::Kind::TK_ExpectedHeaderName:
+		case Kind::TK_ExpectedHeaderName:
 			fmt::print("Expected header-name.");
 			break;
-		case Diagnosis::Kind::TK_DirectiveNotAloneOnLine:
+		case Kind::TK_DirectiveNotAloneOnLine:
 			fmt::print("A preprocessor directive must be the only item on a line.");
 			break;
 	}
