@@ -190,11 +190,11 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{}),
                 std::make_tuple("# define", Directive::Define, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "#include <hi>", IncludeDirective{U"hi", IncludeDirective::HeaderType::HChar},
+                        "#include <hi>", IncludeDirective{"hi", IncludeDirective::HeaderType::HChar},
                         DiagnosisKindVec{}
                 ),
                 std::make_tuple(
-                        "#include \"hello\"", IncludeDirective{U"hello", IncludeDirective::HeaderType::QChar},
+                        "#include \"hello\"", IncludeDirective{"hello", IncludeDirective::HeaderType::QChar},
                         DiagnosisKindVec{}
                 ),
                 std::make_tuple(
