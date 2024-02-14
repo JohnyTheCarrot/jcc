@@ -23,11 +23,8 @@
 class Tokenizer final {
 public:
 	struct IncludeDirective final {
-		std::string m_Name;
-		enum class HeaderType {
-			HChar,
-			QChar,
-		} m_HeaderType;
+		std::basic_string<char32_t> m_Name;
+		enum class HeaderType { HChar, QChar, MacroName } m_HeaderType;
 
 		bool operator==(const IncludeDirective &other) const {
 			return m_Name == other.m_Name;
@@ -138,6 +135,7 @@ public:
 		Comma,
 		Hash,
 		HashHash,
+		PpLeftParenthesis,
 
 		// used to separate normal tokens from partial/special purpose ones, don't just move willy nilly
 		None,
