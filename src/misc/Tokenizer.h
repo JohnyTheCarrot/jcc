@@ -138,24 +138,9 @@ public:
 		Comma,
 		Hash,
 		HashHash,
-		LessThanColon,
-		ColonGreaterThan,
-		LessThanPercent,
-		PercentGreaterThan,
-		PercentColon,
-		PercentColonPercentColon,
 
 		// used to separate normal tokens from partial/special purpose ones, don't just move willy nilly
 		None,
-
-		// Partial
-		PartialEllipsis,
-		PartialLeftShift,
-		PartialRightShift,
-		PartialHashHashDigraph,
-		PartialHashHashDigraphStage2,
-		HashHashDigraphFailure,
-		EllipsisFailure,
 	};
 
 	enum class Keyword {
