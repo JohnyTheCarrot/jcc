@@ -23,7 +23,7 @@
 class Tokenizer final {
 public:
 	struct IncludeDirective final {
-		std::basic_string<char32_t> m_Name;
+		std::variant<std::string, std::basic_string<char32_t>> m_Name;
 		enum class HeaderType { HChar, QChar, MacroName } m_HeaderType;
 
 		bool operator==(const IncludeDirective &other) const {

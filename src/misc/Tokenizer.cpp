@@ -520,8 +520,8 @@ Tokenizer::Token::Value Tokenizer::TokenizeHeaderName() {
 
 	m_Current.Next();
 
-	std::basic_string<char32_t> headerName{};
-	bool                        newLineEscaped{false};
+	std::string headerName{};
+	bool        newLineEscaped{false};
 
 	while (true) {
 		if (!m_Current) {
