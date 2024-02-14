@@ -341,7 +341,6 @@ Tokenizer::Token::Value Tokenizer::TokenizePunctuator() {
 			result = Punctuator::Tilde;
 			break;
 		case '?':
-			// trigraphs are replaced with their corresponding character before tokenization
 			result = Punctuator::QuestionMark;
 			break;
 		case ',':
