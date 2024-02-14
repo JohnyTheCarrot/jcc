@@ -112,7 +112,8 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Values(
                 std::make_tuple("[", Punctuator::LeftBracket, DiagnosisKindVec{}),
                 std::make_tuple("]", Punctuator::RightBracket, DiagnosisKindVec{}),
-                std::make_tuple("(", Punctuator::LeftParenthesis, DiagnosisKindVec{}),
+                std::make_tuple(" (", Punctuator::LeftParenthesis, DiagnosisKindVec{}),
+                std::make_tuple("(", Punctuator::PpLeftParenthesis, DiagnosisKindVec{}),
                 std::make_tuple(")", Punctuator::RightParenthesis, DiagnosisKindVec{}),
                 std::make_tuple("{", Punctuator::LeftBrace, DiagnosisKindVec{}),
                 std::make_tuple("}", Punctuator::RightBrace, DiagnosisKindVec{}),
@@ -189,15 +190,20 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{}),
                 std::make_tuple("# define", Directive::Define, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "#include <hi>", IncludeDirective{"hi", IncludeDirective::HeaderType::HChar}, DiagnosisKindVec{}
+                        "#include <hi>", IncludeDirective{U"hi", IncludeDirective::HeaderType::HChar},
+                        DiagnosisKindVec{}
                 ),
                 std::make_tuple(
-                        "#include \"hello\"", IncludeDirective{"hello", IncludeDirective::HeaderType::QChar},
+                        "#include \"hello\"", IncludeDirective{U"hello", IncludeDirective::HeaderType::QChar},
                         DiagnosisKindVec{}
                 ),
                 std::make_tuple(
                         "#include \"hello\" ++", SpecialPurposeToken::Error,
                         DiagnosisKindVec{Diagnosis::Kind::TK_DirectiveNotAloneOnLine}
+                ),
+                std::make_tuple(
+                        "#include MACRO", IncludeDirective{U"MACRO", IncludeDirective::HeaderType::MacroName},
+                        DiagnosisKindVec{}
                 )
         )
 );

@@ -508,9 +508,10 @@ Tokenizer::Token::Value Tokenizer::TokenizeHeaderName() {
 			headerType = IncludeDirective::HeaderType::QChar;
 			break;
 		default:
-			if (const auto identOrKeyword{TokenizeIdentifierOrKeyword()};
-			    std::holds_alternative<Identifier>(identOrKeyword))
-				return identOrKeyword;
+			if (auto identOrKeyword{TokenizeIdentifierOrKeyword()}; std::holds_alternative<Identifier>(identOrKeyword))
+				return IncludeDirective{
+				        std::move(std::get<Identifier>(identOrKeyword).m_Name), IncludeDirective::HeaderType::MacroName
+				};
 
 			m_Diagnoses.emplace_back(
 			        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_ExpectedHeaderName
@@ -520,8 +521,8 @@ Tokenizer::Token::Value Tokenizer::TokenizeHeaderName() {
 
 	m_Current.Next();
 
-	std::string headerName{};
-	bool        newLineEscaped{false};
+	std::basic_string<char32_t> headerName{};
+	bool                        newLineEscaped{false};
 
 	while (true) {
 		if (!m_Current) {
@@ -732,8 +733,13 @@ Tokenizer::Token::Value Tokenizer::Tokenize() {
 		return SpecialPurpose::NewLine;
 	}
 
+	bool didSkipWhitespace{false};
+
 	// skip whitespace
-	while (m_Current.Good() && isspace(*m_Current)) { m_Current.Next(); }
+	while (m_Current.Good() && isspace(*m_Current)) {
+		m_Current.Next();
+		didSkipWhitespace = true;
+	}
 
 	if (!m_Current)
 		return SpecialPurpose::EndOfFile;
@@ -760,6 +766,8 @@ Tokenizer::Token::Value Tokenizer::Tokenize() {
 	if (std::holds_alternative<Punctuator>(punctuatorOrSpecialPurpose)) {
 		if (const Punctuator punctuator{std::get<Punctuator>(punctuatorOrSpecialPurpose)};
 		    punctuator != Punctuator::None) {
+			if (!didSkipWhitespace && punctuator == Punctuator::LeftParenthesis)
+				return Punctuator::PpLeftParenthesis;
 			return punctuator;
 		}
 	} else if (std::holds_alternative<SpecialPurpose>(punctuatorOrSpecialPurpose)) {
