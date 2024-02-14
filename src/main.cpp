@@ -1,3 +1,4 @@
+#include "misc/Preprocessor.h"
 #include "misc/Tokenizer.h"
 #include <cstring>
 #include <fstream>
@@ -19,10 +20,10 @@ int main(int argCount, char *args[]) {
 	}
 
 	Diagnosis::Vec diagnoses;
-	Tokenizer      tokenizer{inputFileStream, diagnoses};
+	Preprocessor   preprocessor{inputFileStream, diagnoses};
 
 	while (true) {
-		const Tokenizer::Token token{tokenizer()};
+		const Tokenizer::Token token{preprocessor()};
 		std::cout << token << '\n';
 
 		if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
