@@ -11,6 +11,9 @@ void Diagnosis::PrintDiagMessage() const {
 		case Diagnosis::Kind::TK_CharUnterminated:
 			fmt::print("Character literal was not terminated.");
 			break;
+		case Diagnosis::Kind::TK_HeaderNameUnterminated:
+			fmt::print("Header name was not terminated.");
+			break;
 		case Diagnosis::Kind::TK_CharNoValue:
 			fmt::print("Character literal has no value.");
 			break;
@@ -54,6 +57,12 @@ void Diagnosis::PrintDiagMessage() const {
 			break;
 		case Diagnosis::Kind::TK_IllegalBackslash:
 			fmt::print("Illegal backslash.");
+			break;
+		case Diagnosis::Kind::TK_ExpectedHeaderName:
+			fmt::print("Expected header-name.");
+			break;
+		case Diagnosis::Kind::TK_DirectiveNotAloneOnLine:
+			fmt::print("A preprocessor directive must be the only item on a line.");
 			break;
 	}
 }
