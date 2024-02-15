@@ -25,7 +25,8 @@ void Diagnosis::PrintDiagMessage() const {
 			break;
 		case Kind::TK_UnknownEscapeSequence:
 			fmt::print("Unknown escape sequence '\\{}'.", std::get<char>(m_Data0.value()));
-		case Kind::TK_UnexpectedEOF:
+			break;
+		case Kind::UnexpectedEOF:
 			fmt::print("Unexpected end of file.");
 			break;
 		case Kind::TK_PartialTokenEncountered:
@@ -70,6 +71,31 @@ void Diagnosis::PrintDiagMessage() const {
 		case Kind::PP_InclDirectiveFileOpenFailed:
 			fmt::print("Couldn't open include file.");
 			break;
+		case Kind::PP_MacroExpectedIdentifier:
+			fmt::print("Expected identifier in macro definition.");
+			break;
+		case Kind::PP_IllegalMacroRedefinition:
+			fmt::print("A macro may not be redefined.");
+			break;
+		case Kind::PP_IllegalMacroParameterToken:
+			fmt::print("Illegal token in macro parameter definitions.");
+			break;
+		case Kind::PP_UnterminatedMacroParameterList:
+			fmt::print("Macro parameter list was not terminated.");
+			break;
+		case Kind::PP_ExpectedLParen:
+			fmt::print("Expected left parenthesis for function-like macro invocation.");
+			break;
+		case Kind::PP_UnterminatedMacroInvocation:
+			fmt::print("Function-like macro invocation was not terminated.");
+			break;
+		case Kind::PP_UnexpectedMacroInvocationArgumentCount:
+			fmt::print("Invalid amount of arguments passed to function-like macro.");
+			break;
+		case Kind::PP_MacroDefinedInTermsOfItself:
+			fmt::print("Macros may not be defined in terms of themselves, therefore, this will become an identifier "
+			           "upon expansion. Was this intended?");
+			break;
 	}
 }
 
@@ -85,13 +111,13 @@ void Diagnosis::Print() const {
 	fmt::print("\n\n");
 
 
-	m_Span.m_IStream.clear();
-	m_Span.m_IStream.seekg(m_Span.m_StartPos);
+	m_Span.m_IStream->clear();
+	m_Span.m_IStream->seekg(m_Span.m_StartPos);
 
 	std::string line;
 
 	if (m_Span.m_Start.m_LineNumber == m_Span.m_End.m_LineNumber) {
-		std::getline(m_Span.m_IStream, line);
+		std::getline(*m_Span.m_IStream, line);
 
 		OutputLine(m_Span.m_Start.m_LineNumber, line);
 		OutputHighlight(
@@ -102,19 +128,19 @@ void Diagnosis::Print() const {
 		return;
 	}
 
-	std::getline(m_Span.m_IStream, line);
+	std::getline(*m_Span.m_IStream, line);
 
 	OutputLine(m_Span.m_Start.m_LineNumber, line);
 	OutputHighlight(m_Span.m_Start.m_RealCharacterIndex, std::nullopt, static_cast<int>(line.size()), m_Class);
 
 	for (int lineNum{m_Span.m_Start.m_LineNumber + 1}; lineNum < m_Span.m_End.m_LineNumber; ++lineNum) {
-		std::getline(m_Span.m_IStream, line);
+		std::getline(*m_Span.m_IStream, line);
 
 		OutputLine(lineNum, line);
 		OutputHighlight(std::nullopt, std::nullopt, static_cast<int>(line.size()), m_Class);
 	}
 
-	std::getline(m_Span.m_IStream, line);
+	std::getline(*m_Span.m_IStream, line);
 
 	OutputLine(m_Span.m_End.m_LineNumber, line);
 	OutputHighlight(std::nullopt, m_Span.m_End.m_RealCharacterIndex, static_cast<int>(line.size()), m_Class);

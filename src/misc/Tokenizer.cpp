@@ -800,8 +800,7 @@ std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequenc
 
 	if (!m_Current) {
 		m_Diagnoses.emplace_back(
-		        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF, *m_Current,
-		        std::nullopt
+		        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::UnexpectedEOF, *m_Current, std::nullopt
 		);
 		return std::nullopt;
 	}
@@ -970,7 +969,7 @@ Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::Co
 
 			if (!m_Current) {
 				m_Diagnoses.emplace_back(
-				        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_UnexpectedEOF,
+				        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::UnexpectedEOF,
 				        static_cast<char>(*m_Current)
 				);
 				return SpecialPurpose::EndOfFile;
@@ -1051,7 +1050,7 @@ Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::Co
 	}
 
 	if (willBeTruncated) {
-		const Span span{m_FileName, m_TokenSpanStart, spanEnd, m_CurrentTokenLineStart, m_IStream};
+		const Span span{m_FileName, m_TokenSpanStart, spanEnd, m_CurrentTokenLineStart, &m_IStream};
 		m_Diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::TK_CharOutOfRange);
 	}
 
@@ -1178,16 +1177,16 @@ Tokenizer::Token Tokenizer::MakeToken(Tokenizer::Token::Value &&value) const {
 }
 
 Span Tokenizer::GetCustomSpan() const noexcept {
-	return {m_FileName, m_SubTokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+	return {m_FileName, m_SubTokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, &m_IStream};
 }
 
 Span Tokenizer::GetCurrentCharSpan() const noexcept {
 	return {m_FileName, m_Current.m_PreviousSpanMarker, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart,
-	        m_IStream};
+	        &m_IStream};
 }
 
 Span Tokenizer::GetCurrentTokenSpan() const noexcept {
-	return {m_FileName, m_TokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+	return {m_FileName, m_TokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, &m_IStream};
 }
 
 void Tokenizer::SaveSubTokenSpanMarker() noexcept {
@@ -1226,4 +1225,107 @@ std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
 	}
 
 	return os;
+}
+
+Tokenizer::Identifier::IdentString Tokenizer::KeywordAsIdentString(Keyword keyword) noexcept {
+	switch (keyword) {
+		case Keyword::Auto:
+			return U"auto";
+		case Keyword::Break:
+			return U"break";
+		case Keyword::Case:
+			return U"case";
+		case Keyword::Char:
+			return U"char";
+		case Keyword::Const:
+			return U"const";
+		case Keyword::Continue:
+			return U"continue";
+		case Keyword::Default:
+			return U"default";
+		case Keyword::Do:
+			return U"do";
+		case Keyword::Double:
+			return U"double";
+		case Keyword::Else:
+			return U"else";
+		case Keyword::Enum:
+			return U"enum";
+		case Keyword::Extern:
+			return U"extern";
+		case Keyword::Float:
+			return U"float";
+		case Keyword::For:
+			return U"for";
+		case Keyword::Goto:
+			return U"goto";
+		case Keyword::If:
+			return U"if";
+		case Keyword::Inline:
+			return U"inline";
+		case Keyword::Int:
+			return U"int";
+		case Keyword::Long:
+			return U"long";
+		case Keyword::Register:
+			return U"register";
+		case Keyword::Restrict:
+			return U"restrict";
+		case Keyword::Return:
+			return U"return";
+		case Keyword::Short:
+			return U"short";
+		case Keyword::Signed:
+			return U"signed";
+		case Keyword::Sizeof:
+			return U"sizeof";
+		case Keyword::Static:
+			return U"static";
+		case Keyword::Struct:
+			return U"struct";
+		case Keyword::Switch:
+			return U"switch";
+		case Keyword::Typedef:
+			return U"typedef";
+		case Keyword::Union:
+			return U"union";
+		case Keyword::Unsigned:
+			return U"unsigned";
+		case Keyword::Void:
+			return U"void";
+		case Keyword::Volatile:
+			return U"volatile";
+		case Keyword::While:
+			return U"while";
+		case Keyword::Alignas:
+			return U"_Alignas";
+		case Keyword::Alignof:
+			return U"_Alignof";
+		case Keyword::Atomic:
+			return U"_Atomic";
+		case Keyword::Bool:
+			return U"_Bool";
+		case Keyword::Complex:
+			return U"_Complex";
+		case Keyword::Generic:
+			return U"_Generic";
+		case Keyword::Imaginary:
+			return U"_Imaginary";
+		case Keyword::Noreturn:
+			return U"_Noreturn";
+		case Keyword::StaticAssert:
+			return U"_Static_assert";
+		case Keyword::ThreadLocal:
+			return U"_Thread_local";
+		default:
+			return U"";// Empty string for unknown keywords
+	}
+}
+
+bool Tokenizer::Token::IsSpecialPurposeKind(SpecialPurpose specialPurpose) const noexcept {
+	return std::holds_alternative<SpecialPurpose>(m_Value) && std::get<SpecialPurpose>(m_Value) == specialPurpose;
+}
+
+bool Tokenizer::Token::IsPunctuatorKind(Tokenizer::Punctuator punctuator) const noexcept {
+	return std::holds_alternative<Punctuator>(m_Value) && std::get<Punctuator>(m_Value) == punctuator;
 }

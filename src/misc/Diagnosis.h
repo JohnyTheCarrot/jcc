@@ -21,7 +21,7 @@ struct Diagnosis final {
 		TK_CharOutOfRange,
 		TK_CharHexNoDigits,
 		TK_UnknownEscapeSequence,
-		TK_UnexpectedEOF,
+		UnexpectedEOF,
 		TK_PartialTokenEncountered,
 		TK_UnknownDirective,
 		TK_EscapeExpectedNewline,
@@ -34,6 +34,14 @@ struct Diagnosis final {
 		TK_ExpectedHeaderName,
 		TK_DirectiveNotAloneOnLine,
 		PP_InclDirectiveFileOpenFailed,
+		PP_MacroExpectedIdentifier,
+		PP_IllegalMacroRedefinition,
+		PP_IllegalMacroParameterToken,
+		PP_UnterminatedMacroParameterList,
+		PP_ExpectedLParen,
+		PP_UnterminatedMacroInvocation,
+		PP_UnexpectedMacroInvocationArgumentCount,
+		PP_MacroDefinedInTermsOfItself,
 		TODO,
 	};
 

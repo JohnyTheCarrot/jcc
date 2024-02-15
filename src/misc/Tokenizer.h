@@ -38,7 +38,8 @@ public:
 	};
 
 	struct Identifier final {
-		std::basic_string<char32_t> m_Name;
+		using IdentString = std::basic_string<char32_t>;
+		IdentString m_Name;
 
 		bool operator==(const Identifier &other) const {
 			return m_Name == other.m_Name;
@@ -207,6 +208,12 @@ public:
 		Span  m_Span;
 
 		friend std::ostream &operator<<(std::ostream &os, const Token &token);
+
+		[[nodiscard]]
+		bool IsSpecialPurposeKind(SpecialPurpose specialPurpose) const noexcept;
+
+		[[nodiscard]]
+		bool IsPunctuatorKind(Punctuator punctuator) const noexcept;
 	};
 
 private:
@@ -412,6 +419,9 @@ public:
 	const std::string &GetFileName() const noexcept {
 		return *m_FileName;
 	}
+
+	[[nodiscard]]
+	static Identifier::IdentString KeywordAsIdentString(Keyword keyword) noexcept;
 
 	Tokenizer(const Tokenizer &)            = delete;
 	Tokenizer(Tokenizer &&)                 = delete;
