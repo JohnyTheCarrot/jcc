@@ -9,6 +9,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 
 // Preprocessing tokens:
@@ -264,13 +265,14 @@ private:
 	        {"elif", Directive::Elif},       {"else", Directive::Else},     {"endif", Directive::Endif},
 	};
 
-	std::istream   &m_IStream;
-	CharStream      m_Current;
-	Diagnosis::Vec &m_Diagnoses;
-	SpanMarker      m_SubTokenSpanStart{};
-	SpanMarker      m_TokenSpanStart{};
-	std::streamoff  m_CurrentTokenLineStart{};
-	bool            m_IsPrecededByNewline{true};
+	std::istream                &m_IStream;
+	CharStream                   m_Current;
+	Diagnosis::Vec              &m_Diagnoses;
+	SpanMarker                   m_SubTokenSpanStart{};
+	SpanMarker                   m_TokenSpanStart{};
+	std::streamoff               m_CurrentTokenLineStart{};
+	bool                         m_IsPrecededByNewline{true};
+	std::shared_ptr<std::string> m_FileName;
 
 	static constexpr size_t NUM_DIGITS_OCTAL_ESCAPE{3};
 
@@ -398,11 +400,17 @@ private:
 	Tokenizer::Token::Value Tokenize();
 
 public:
-	Tokenizer(std::istream &iStream, Diagnosis::Vec &diagnoses)
+	Tokenizer(const std::string &fileName, std::istream &iStream, Diagnosis::Vec &diagnoses)
 	    : m_IStream{iStream}
 	    , m_Current{iStream}
-	    , m_Diagnoses{diagnoses} {
+	    , m_Diagnoses{diagnoses}
+	    , m_FileName{std::make_shared<std::string>(fileName)} {
 		m_Current.Next();
+	}
+
+	[[nodiscard]]
+	const std::string &GetFileName() const noexcept {
+		return *m_FileName;
 	}
 
 	Tokenizer(const Tokenizer &)            = delete;

@@ -33,21 +33,27 @@ struct SpanMarker final {
 };
 
 struct Span final {
-	// TODO: source of span, i.e. a filename
-	SpanMarker     m_Start{}, m_End{};
-	std::streampos m_StartPos{};
-	std::istream  &m_IStream;
+	// TODO: see if we can't avoid the use of shared_ptr here
+	std::shared_ptr<std::string> m_FileName;
+	SpanMarker                   m_Start{}, m_End{};
+	std::streampos               m_StartPos{};
+	std::istream                &m_IStream;
 
-	explicit Span(const SpanMarker &marker, const std::streampos &startPos, std::istream &inputStream) noexcept
-	    : m_Start{marker}
+	explicit Span(
+	        const std::shared_ptr<std::string> &fileName, const SpanMarker &marker, const std::streampos &startPos,
+	        std::istream &inputStream
+	) noexcept
+	    : m_FileName{fileName}
+	    , m_Start{marker}
 	    , m_End{marker}
 	    , m_StartPos{startPos}
 	    , m_IStream{inputStream} {
 	}
 
-	Span(const SpanMarker &start, const SpanMarker &end, const std::streampos &startPos,
-	     std::istream &inputStream) noexcept
-	    : m_Start{start}
+	Span(const std::shared_ptr<std::string> &fileName, const SpanMarker &start, const SpanMarker &end,
+	     const std::streampos &startPos, std::istream &inputStream) noexcept
+	    : m_FileName{fileName}
+	    , m_Start{start}
 	    , m_End{end}
 	    , m_StartPos{startPos}
 	    , m_IStream{inputStream} {

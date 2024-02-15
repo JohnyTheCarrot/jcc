@@ -23,7 +23,8 @@ void Preprocessor::ExecuteIncludeDirective(const Tokenizer::IncludeDirective &in
 		exit(1);
 	}
 
-	m_CurrentTokenizer = m_TokenizerStack.emplace(std::make_unique<Tokenizer>(*ifStream, m_Diagnoses)).get();
+	m_CurrentTokenizer =
+	        m_TokenizerStack.emplace(std::make_unique<Tokenizer>(std::move(fileName), *ifStream, m_Diagnoses)).get();
 }
 
 Tokenizer::Token Preprocessor::operator()() {
@@ -44,6 +45,8 @@ Tokenizer::Token Preprocessor::operator()() {
 					m_CurrentTokenizer = m_TokenizerStack.top().get();
 				continue;
 			}
+
+			return token;
 		}
 
 		if (std::holds_alternative<Tokenizer::IncludeDirective>(token.m_Value)) {
