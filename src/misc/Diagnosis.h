@@ -32,7 +32,9 @@ struct Diagnosis final {
 		TK_IllegalUniversalCharacterName,
 		TK_IllegalBackslash,
 		TK_ExpectedHeaderName,
-		TK_DirectiveNotAloneOnLine
+		TK_DirectiveNotAloneOnLine,
+		PP_InclDirectiveFileOpenFailed,
+		TODO,
 	};
 
 	enum class Class {
