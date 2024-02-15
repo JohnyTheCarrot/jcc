@@ -73,6 +73,7 @@ void Diagnosis::Print() const {
 	const fmt::color color{GetClassColor(m_Class)};
 	const char      *name{GetClassName(m_Class)};
 
+	fmt::print(fmt::fg(COLOR_NEUTRAL), "In file {}\n", fmt::styled(*m_Span.m_FileName, fmt::fg(fmt::color::cyan)));
 	fmt::print(fmt::fg(color), "{}: ", name);
 	PrintDiagMessage();
 	fmt::print("\n\n");

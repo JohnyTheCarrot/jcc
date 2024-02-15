@@ -1051,7 +1051,7 @@ Tokenizer::TokenizeCharacterOrStringLiteral(ConstantPrefix prefix, Tokenizer::Co
 	}
 
 	if (willBeTruncated) {
-		const Span span{m_TokenSpanStart, spanEnd, m_CurrentTokenLineStart, m_IStream};
+		const Span span{m_FileName, m_TokenSpanStart, spanEnd, m_CurrentTokenLineStart, m_IStream};
 		m_Diagnoses.emplace_back(span, Diagnosis::Class::Warning, Diagnosis::Kind::TK_CharOutOfRange);
 	}
 
@@ -1117,7 +1117,7 @@ Tokenizer::Token Tokenizer::operator()() {
 			);
 			return MakeToken(SpecialPurpose::Error);
 		}
-	};
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, Tokenizer::SpecialPurpose specialPurpose) {
@@ -1178,15 +1178,16 @@ Tokenizer::Token Tokenizer::MakeToken(Tokenizer::Token::Value &&value) const {
 }
 
 Span Tokenizer::GetCustomSpan() const noexcept {
-	return {m_SubTokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+	return {m_FileName, m_SubTokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
 }
 
 Span Tokenizer::GetCurrentCharSpan() const noexcept {
-	return {m_Current.m_PreviousSpanMarker, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+	return {m_FileName, m_Current.m_PreviousSpanMarker, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart,
+	        m_IStream};
 }
 
 Span Tokenizer::GetCurrentTokenSpan() const noexcept {
-	return {m_TokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
+	return {m_FileName, m_TokenSpanStart, m_Current.m_PreviousSpanMarker, m_CurrentTokenLineStart, m_IStream};
 }
 
 void Tokenizer::SaveSubTokenSpanMarker() noexcept {

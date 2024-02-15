@@ -11,7 +11,7 @@ int main(int argCount, char *args[]) {
 		exit(1);
 	}
 
-	const std::string filePath{args[1]};
+	std::string filePath{args[1]};
 
 	IFStream inputFileStream{filePath};
 	if (!inputFileStream) {
@@ -20,7 +20,7 @@ int main(int argCount, char *args[]) {
 	}
 
 	Diagnosis::Vec diagnoses;
-	Preprocessor   preprocessor{inputFileStream, diagnoses};
+	Preprocessor   preprocessor{std::move(filePath), inputFileStream, diagnoses};
 
 	while (true) {
 		const Tokenizer::Token token{preprocessor()};
@@ -33,7 +33,10 @@ int main(int argCount, char *args[]) {
 		}
 	}
 
-	for (const auto &diagnosis: diagnoses) { diagnosis.Print(); }
+	for (const auto &diagnosis: diagnoses) {
+		diagnosis.Print();
+		std::cout << '\n';
+	}
 
 	return 0;
 }

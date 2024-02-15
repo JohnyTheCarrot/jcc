@@ -19,7 +19,7 @@ class TokenizingTest
 TEST_P(TokenizingTest, Tokenizing) {
 	std::istringstream iss{std::get<0>(GetParam())};
 	Diagnosis::Vec     diagnoses{};
-	Tokenizer          tokenizer{iss, diagnoses};
+	Tokenizer          tokenizer{"test", iss, diagnoses};
 
 	const Tokenizer::Token token{tokenizer()};
 
@@ -190,8 +190,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{}),
                 std::make_tuple("# define", Directive::Define, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "#include <hi>", IncludeDirective{"hi", IncludeDirective::HeaderType::HChar},
-                        DiagnosisKindVec{}
+                        "#include <hi>", IncludeDirective{"hi", IncludeDirective::HeaderType::HChar}, DiagnosisKindVec{}
                 ),
                 std::make_tuple(
                         "#include \"hello\"", IncludeDirective{"hello", IncludeDirective::HeaderType::QChar},
@@ -359,7 +358,7 @@ class SpanGenerationTest : public testing::TestWithParam<std::tuple<std::string,
 TEST_P(SpanGenerationTest, SpanGeneration) {
 	std::istringstream iss{std::get<0>(GetParam())};
 	Diagnosis::Vec     diagnoses{};
-	Tokenizer          tokenizer{iss, diagnoses};
+	Tokenizer          tokenizer{"test", iss, diagnoses};
 
 	const Tokenizer::Token token{tokenizer()};
 	const auto             expectedSpanStart{std::get<1>(GetParam())};
