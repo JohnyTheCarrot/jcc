@@ -64,6 +64,12 @@ void Diagnosis::PrintDiagMessage() const {
 		case Kind::TK_DirectiveNotAloneOnLine:
 			fmt::print("A preprocessor directive must be the only item on a line.");
 			break;
+		case Kind::TODO:
+			fmt::print("Compiler feature unimplemented.");
+			break;
+		case Kind::PP_InclDirectiveFileOpenFailed:
+			fmt::print("Couldn't open include file.");
+			break;
 	}
 }
 

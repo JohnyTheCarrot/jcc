@@ -12,11 +12,12 @@ class Preprocessor final {
 	Tokenizer                                  *m_CurrentTokenizer;
 	Diagnosis::Vec                             &m_Diagnoses;
 
-	void ExecuteIncludeDirective(const Tokenizer::IncludeDirective &includeDirective);
+	[[nodiscard]]
+	bool ExecuteIncludeDirective(const Tokenizer::Token &includeDirectiveToken);
 
 public:
 	Preprocessor(std::string &&fileName, std::istream &iStream, Diagnosis::Vec &diagnoses)
-	    : m_MainTokenizer{std::move(fileName), iStream, diagnoses}
+	    : m_MainTokenizer{fileName, iStream, diagnoses}
 	    , m_IStreams{}
 	    , m_TokenizerStack{}
 	    , m_CurrentTokenizer{&m_MainTokenizer}
