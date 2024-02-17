@@ -1,4 +1,5 @@
 #include "Preprocessor.h"
+#include <numeric>
 
 bool Preprocessor::MacroReplacementStackData::IsFinished() const noexcept {
 	if (std::holds_alternative<ObjectLikeMacro>(m_Macro)) {
@@ -6,6 +7,13 @@ bool Preprocessor::MacroReplacementStackData::IsFinished() const noexcept {
 	}
 
 	return m_Progress == std::get<FunctionLikeMacro>(m_Macro).m_ReplacementList.m_ReplacementList.cend();
+}
+
+const Tokenizer::Identifier::IdentString &Preprocessor::MacroReplacementStackData::GetMacroName() const noexcept {
+	if (std::holds_alternative<FunctionLikeMacro>(m_Macro))
+		return std::get<FunctionLikeMacro>(m_Macro).m_MacroName;
+
+	return std::get<ObjectLikeMacro>(m_Macro).m_MacroName;
 }
 
 bool Preprocessor::ReplacementList::operator==(const Preprocessor::ReplacementList &other) const noexcept {
@@ -83,7 +91,7 @@ bool Preprocessor::ExecuteMacroDefinition() {
 	        isIdent ? std::get<Tokenizer::Identifier>(firstToken.m_Value).m_Name
 	                : Tokenizer::KeywordAsIdentString(std::get<Tokenizer::Keyword>(firstToken.m_Value))
 	};
-	if (m_Definitions.find(macroName) != m_Definitions.end()) {
+	if (m_MacroDefinitions.find(macroName) != m_MacroDefinitions.end()) {
 		m_Diagnoses.emplace_back(
 		        firstToken.m_Span, Diagnosis::Class::Error, Diagnosis::Kind::PP_IllegalMacroRedefinition
 		);
@@ -153,16 +161,41 @@ bool Preprocessor::ExecuteMacroDefinition() {
 
 	if (isFunctionLike) {
 		FunctionLikeMacro macro{macroName, std::move(replacementList), std::move(parameterList), isVA};
-		m_Definitions.insert({std::move(macroName), std::move(macro)});
+		m_MacroDefinitions.insert({std::move(macroName), std::move(macro)});
 		return true;
 	}
 
 	ObjectLikeMacro macro{macroName, std::move(replacementList)};
-	m_Definitions.insert({std::move(macroName), std::move(macro)});
+	m_MacroDefinitions.insert({std::move(macroName), std::move(macro)});
 	return true;
 }
 
 Tokenizer::Token Preprocessor::GetNextToken() {
+	while (!m_MacroStack.empty() && m_MacroStack.top().IsFinished()) {
+		Tokenizer::Identifier::IdentString macroName{m_MacroStack.top().GetMacroName()};
+		m_MacroStack.pop();
+
+		if (macroName == VA_ARGS_MACRO_NAME) {
+			continue;
+		}
+
+		if (m_MacroStack.empty()) {
+			m_MacroDefinitions.erase(VA_ARGS_MACRO_NAME);
+			break;
+		}
+
+		if (!std::holds_alternative<FunctionLikeMacro>(m_MacroStack.top().m_Macro)) {
+			m_MacroDefinitions.erase(VA_ARGS_MACRO_NAME);
+			continue;
+		}
+
+		const ObjectLikeMacro &vaMacro = m_MacroStack.top().m_VaArgsMacro.value();
+		if (const auto vaArgsIt{m_MacroDefinitions.find(VA_ARGS_MACRO_NAME)}; vaArgsIt != m_MacroDefinitions.cend())
+			m_MacroDefinitions.find(VA_ARGS_MACRO_NAME)->second = vaMacro;
+		else
+			m_MacroDefinitions.emplace(VA_ARGS_MACRO_NAME, vaMacro);
+	}
+
 	if (m_MacroStack.empty())
 		return (*m_CurrentTokenizer)();
 
@@ -182,8 +215,6 @@ Tokenizer::Token Preprocessor::GetNextToken() {
 
 Tokenizer::Token Preprocessor::operator()() {
 	while (true) {
-		while (!m_MacroStack.empty() && m_MacroStack.top().IsFinished()) { m_MacroStack.pop(); }
-
 		Tokenizer::Token token{GetNextToken()};
 
 		if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
@@ -232,8 +263,9 @@ Tokenizer::Token Preprocessor::operator()() {
 			if (MacroRecursionCheck(token.m_Span, identifier))
 				return token;
 
-			if (const auto &definitionIt{m_Definitions.find(identifier)}; definitionIt != m_Definitions.end()) {
-				if (!StartMacroExpansion(token.m_Span, definitionIt->second))
+			if (const auto &definitionIt{m_MacroDefinitions.find(identifier)};
+			    definitionIt != m_MacroDefinitions.end()) {
+				if (!StartMacroExpansion(definitionIt->second))
 					return Tokenizer::Token{Tokenizer::SpecialPurpose::Error, token.m_Span};
 
 				continue;
@@ -257,11 +289,21 @@ Tokenizer::Token Preprocessor::operator()() {
 	}
 }
 
-bool Preprocessor::GatherArgumentList(Preprocessor::MacroReplacementStackData::ArgumentList &list) {
+bool Preprocessor::CheckArgumentCountValidity(bool isVA, size_t paramCount, size_t argCount) const noexcept {
+	if (isVA || m_MacroDefinitions.find(VA_ARGS_MACRO_NAME) != m_MacroDefinitions.cend()) {
+		return true;
+	}
+
+	return argCount == paramCount;
+}
+
+bool Preprocessor::GatherArgumentList(
+        bool isVA, size_t numParameters, Preprocessor::MacroReplacementStackData &replacementData
+) {
 	using Punctuator = Tokenizer::Punctuator;
 
 	Tokenizer::Token token{GetNextToken()};
-	list = Preprocessor::MacroReplacementStackData::ArgumentList::value_type{};
+	replacementData.m_Arguments = Preprocessor::MacroReplacementStackData::ArgumentList::value_type{};
 
 	if (!token.IsPunctuatorKind(Punctuator::LeftParenthesis) &&
 	    !token.IsPunctuatorKind(Punctuator::PpLeftParenthesis)) {
@@ -274,8 +316,18 @@ bool Preprocessor::GatherArgumentList(Preprocessor::MacroReplacementStackData::A
 	ReplacementList currentArgument{};
 	int             leftParenthesesSeen{0};
 	while (true) {
-		if (std::holds_alternative<Punctuator>(token.m_Value)) {
-			const auto punctuator{std::get<Punctuator>(token.m_Value)};
+		if (std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
+			const auto &identifier{std::get<Tokenizer::Identifier>(token.m_Value).m_Name};
+
+			if (const auto &vaArgs{m_MacroDefinitions.find(identifier)}; vaArgs != m_MacroDefinitions.cend()) {
+				if (!StartMacroExpansion(vaArgs->second))
+					return false;
+
+				token = GetNextToken();
+				continue;
+			}
+		} else if (std::holds_alternative<Punctuator>(token.m_Value)) {
+			const auto &punctuator{std::get<Punctuator>(token.m_Value)};
 
 			switch (punctuator) {
 				case Punctuator::PpLeftParenthesis:
@@ -283,15 +335,42 @@ bool Preprocessor::GatherArgumentList(Preprocessor::MacroReplacementStackData::A
 					++leftParenthesesSeen;
 					break;
 				case Punctuator::RightParenthesis:
-					if (leftParenthesesSeen-- <= 0 && !currentArgument.m_ReplacementList.empty()) {
-						list->emplace_back(std::move(currentArgument));
+					// On the last right parenthesis
+					if (leftParenthesesSeen-- <= 0) {
+						if (!currentArgument.m_ReplacementList.empty()) {
+							replacementData.m_Arguments->emplace_back(std::move(currentArgument));
+						}
+
+						if (isVA) {
+							const ReplacementList::TokenList &replacementList =
+							        (replacementData.m_Arguments->cend() - 1)->m_ReplacementList;
+
+							ObjectLikeMacro vaArgs{VA_ARGS_MACRO_NAME, {replacementList}};
+							replacementData.m_VaArgsMacro = std::move(vaArgs);
+						}
+
+						if (!CheckArgumentCountValidity(isVA, numParameters, replacementData.m_Arguments->size())) {
+							m_Diagnoses.emplace_back(
+							        token.m_Span, Diagnosis::Class::Error,
+							        Diagnosis::Kind::PP_UnexpectedMacroInvocationArgumentCount
+							);
+							return false;
+						}
+
+
 						return true;
 					}
 
 					break;
 				case Punctuator::Comma:
+					if (isVA && replacementData.m_Arguments->size() >= numParameters) {
+						currentArgument.m_ReplacementList.emplace_back(std::move(token));
+						token = GetNextToken();
+						continue;
+					}
+
 					if (leftParenthesesSeen == 0) {
-						list->emplace_back(std::move(currentArgument));
+						replacementData.m_Arguments->emplace_back(std::move(currentArgument));
 						token = GetNextToken();
 						continue;
 					}
@@ -313,39 +392,36 @@ bool Preprocessor::GatherArgumentList(Preprocessor::MacroReplacementStackData::A
 	}
 }
 
-bool Preprocessor::StartMacroExpansion(const Span &currentTokenSpan, const Macro &macro) {
+bool Preprocessor::StartMacroExpansion(const Macro &macro) {
 	if (std::holds_alternative<ObjectLikeMacro>(macro)) {
 		const auto &objMacro{std::get<ObjectLikeMacro>(macro)};
 		m_MacroStack.emplace(objMacro);
+		m_MacroDefinitions.erase(VA_ARGS_MACRO_NAME);
 		return true;
 	}
 
-	const auto &fnMacro{std::get<FunctionLikeMacro>(macro)};
+	const FunctionLikeMacro &fnMacro{std::get<FunctionLikeMacro>(macro)};
 
-	MacroReplacementStackData::ArgumentList argList{};
-	if (!GatherArgumentList(argList))
+	MacroReplacementStackData replacementStackData{fnMacro, {}};
+	if (!GatherArgumentList(fnMacro.m_IsVA, fnMacro.m_ParameterList.size(), replacementStackData))
 		return false;
 
-	//TODO: VarArg function-like macros
-	if (argList->size() != fnMacro.m_ParameterList.size()) {
-		m_Diagnoses.emplace_back(
-		        currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::PP_UnexpectedMacroInvocationArgumentCount
-		);
-		return false;
+	if (fnMacro.m_IsVA) {
+		m_MacroDefinitions.emplace(VA_ARGS_MACRO_NAME, replacementStackData.m_VaArgsMacro.value());
 	}
 
-	ExpandMacroArguments(argList);
+	ExpandMacroArguments(replacementStackData.m_Arguments);
 
-	m_MacroStack.emplace(fnMacro, std::move(argList));
+	m_MacroStack.emplace(std::move(replacementStackData));
 	return true;
 }
 
 std::optional<int> Preprocessor::FindParameterIndexByName(
-        const Preprocessor::FunctionLikeMacro::ParameterList &fnLikeMacro,
+        const Preprocessor::FunctionLikeMacro::ParameterList &parameterList,
         const Tokenizer::Identifier::IdentString             &identifier
 ) noexcept {
-	for (size_t idx{}; idx < fnLikeMacro.size(); ++idx) {
-		if (fnLikeMacro[idx].m_Name == identifier) {
+	for (size_t idx{}; idx < parameterList.size(); ++idx) {
+		if (parameterList[idx].m_Name == identifier) {
 			return idx;
 		}
 	}
