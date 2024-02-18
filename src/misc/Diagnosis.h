@@ -38,7 +38,6 @@ struct Diagnosis final {
 		PP_IllegalMacroRedefinition,
 		PP_IllegalMacroParameterToken,
 		PP_UnterminatedMacroParameterList,
-		PP_ExpectedLParen,
 		PP_UnterminatedMacroInvocation,
 		PP_UnexpectedMacroInvocationArgumentCount,
 		PP_MacroDefinedInTermsOfItself,

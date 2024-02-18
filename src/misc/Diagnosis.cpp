@@ -83,9 +83,6 @@ void Diagnosis::PrintDiagMessage() const {
 		case Kind::PP_UnterminatedMacroParameterList:
 			fmt::print("Macro parameter list was not terminated.");
 			break;
-		case Kind::PP_ExpectedLParen:
-			fmt::print("Expected left parenthesis for function-like macro invocation.");
-			break;
 		case Kind::PP_UnterminatedMacroInvocation:
 			fmt::print("Function-like macro invocation was not terminated.");
 			break;
@@ -93,8 +90,8 @@ void Diagnosis::PrintDiagMessage() const {
 			fmt::print("Invalid amount of arguments passed to function-like macro.");
 			break;
 		case Kind::PP_MacroDefinedInTermsOfItself:
-			fmt::print("Macros may not be defined in terms of themselves, therefore, this will become an identifier "
-			           "upon expansion. Was this intended?");
+			fmt::print("Macros may not be defined in terms of themselves, therefore, this will become an identifier or "
+			           "keyword upon expansion. Was this intended?");
 			break;
 	}
 }

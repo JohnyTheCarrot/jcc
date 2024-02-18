@@ -200,9 +200,10 @@ public:
 	};
 
 	struct Token final {
-		using Value = std::variant<
-		        IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
-		        Directive, SpecialPurpose>;
+		using Miscellaneous = char;
+		using Value         = std::variant<
+		                IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
+		                Directive, SpecialPurpose, Miscellaneous>;
 
 		Value m_Value{SpecialPurpose::Error};
 		Span  m_Span;

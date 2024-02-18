@@ -75,6 +75,7 @@ class Preprocessor final {
 	Tokenizer                                  *m_CurrentTokenizer;
 	Diagnosis::Vec                             &m_Diagnoses;
 	std::stack<MacroReplacementStackData>       m_MacroStack{};
+	std::optional<Tokenizer::Token>             m_UnusedPeekResult{};
 
 	using MacroDefinitions = std::unordered_map<Tokenizer::Identifier::IdentString, Macro>;
 	MacroDefinitions m_MacroDefinitions{};
