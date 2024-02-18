@@ -590,15 +590,8 @@ std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 
 	while (m_Current.Good() && isspace(*m_Current) && m_Current != '\n') m_Current.Next();
 
-	if (!m_Current || *m_Current == '\n')
+	if (!m_Current || *m_Current == '\n' || !m_IsPrecededByNewline)
 		return Punctuator::Hash;
-
-	if (!m_IsPrecededByNewline) {
-		m_Diagnoses.emplace_back(
-		        GetCurrentTokenSpan(), Diagnosis::Class::Error, Diagnosis::Kind::TK_DirectiveNotAloneOnLine
-		);
-		return SpecialPurpose::Error;
-	}
 
 	const auto *trieNode{&m_DirectiveTrie};
 
@@ -712,6 +705,12 @@ Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
 			trieNode = trieNode->GetNode(m_Current);
 
 		m_Current.Next();
+	}
+
+	if (identifierContents.empty()) {
+		const char c{*m_Current};
+		m_Current.Next();
+		return Token::Miscellaneous{c};
 	}
 
 	if (trieNode != nullptr && trieNode->m_Leaf.has_value()) {
@@ -1173,7 +1172,11 @@ std::optional<int> Tokenizer::TokenizeHexDigit() {
 }
 
 Tokenizer::Token Tokenizer::MakeToken(Tokenizer::Token::Value &&value) const {
-	return Token{std::move(value), GetCurrentTokenSpan()};
+	const auto &token{Token{std::move(value), GetCurrentTokenSpan()}};
+
+	//	std::cout << "TK: " << token << std::endl;
+
+	return token;
 }
 
 Span Tokenizer::GetCustomSpan() const noexcept {
@@ -1198,9 +1201,9 @@ void Tokenizer::SaveTokenSpanMarker() noexcept {
 }
 
 std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
-	os << '[';
-	PrintTo(token.m_Span, &os);
-	os << "]: ";
+//	os << '[';
+//	PrintTo(token.m_Span, &os);
+//	os << "]: ";
 
 	if (std::holds_alternative<Tokenizer::IncludeDirective>(token.m_Value)) {
 		PrintTo(std::get<Tokenizer::IncludeDirective>(token.m_Value), &os);
@@ -1220,6 +1223,8 @@ std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
 		os << std::get<Tokenizer::SpecialPurpose>(token.m_Value);
 	} else if (std::holds_alternative<Tokenizer::PpNumber>(token.m_Value)) {
 		PrintTo(std::get<Tokenizer::PpNumber>(token.m_Value), &os);
+	} else if (std::holds_alternative<Tokenizer::Token::Miscellaneous>(token.m_Value)) {
+		os << "Misc(" << std::get<Tokenizer::Token::Miscellaneous>(token.m_Value) << ')';
 	} else {
 		assert(false);
 	}

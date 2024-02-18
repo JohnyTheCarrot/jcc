@@ -184,7 +184,8 @@ Tokenizer::Token Preprocessor::GetNextToken() {
 			break;
 		}
 
-		if (!std::holds_alternative<FunctionLikeMacro>(m_MacroStack.top().m_Macro)) {
+		if (!std::holds_alternative<FunctionLikeMacro>(m_MacroStack.top().m_Macro) ||
+		    !std::get<FunctionLikeMacro>(m_MacroStack.top().m_Macro).m_IsVA) {
 			m_MacroDefinitions.erase(VA_ARGS_MACRO_NAME);
 			continue;
 		}
@@ -194,6 +195,12 @@ Tokenizer::Token Preprocessor::GetNextToken() {
 			m_MacroDefinitions.find(VA_ARGS_MACRO_NAME)->second = vaMacro;
 		else
 			m_MacroDefinitions.emplace(VA_ARGS_MACRO_NAME, vaMacro);
+	}
+
+	if (m_UnusedPeekResult.has_value()) {
+		auto value{std::move(m_UnusedPeekResult.value())};
+		m_UnusedPeekResult = std::nullopt;
+		return value;
 	}
 
 	if (m_MacroStack.empty())
@@ -220,19 +227,23 @@ Tokenizer::Token Preprocessor::operator()() {
 		if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
 			const auto specialPurpose{std::get<Tokenizer::SpecialPurpose>(token.m_Value)};
 
-			if (specialPurpose == Tokenizer::SpecialPurpose::EndOfFile) {
-				if (m_TokenizerStack.empty())
-					return token;// eof
+			switch (specialPurpose) {
+				case Tokenizer::SpecialPurpose::EndOfFile:
+					if (m_TokenizerStack.empty())
+						return token;// eof
 
-				m_TokenizerStack.pop();
-				if (m_TokenizerStack.empty())
-					m_CurrentTokenizer = &m_MainTokenizer;
-				else
-					m_CurrentTokenizer = m_TokenizerStack.top().get();
-				continue;
+					m_TokenizerStack.pop();
+					if (m_TokenizerStack.empty())
+						m_CurrentTokenizer = &m_MainTokenizer;
+					else
+						m_CurrentTokenizer = m_TokenizerStack.top().get();
+					continue;
+				case Tokenizer::SpecialPurpose::NewLine:
+					// the preprocessor may not return newline as a token
+					continue;
+				default:
+					return token;
 			}
-
-			return token;
 		}
 
 		if (std::holds_alternative<Tokenizer::IncludeDirective>(token.m_Value)) {
@@ -257,14 +268,29 @@ Tokenizer::Token Preprocessor::operator()() {
 			}
 		}
 
-		if (std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
-			const auto identifier{std::get<Tokenizer::Identifier>(token.m_Value).m_Name};
+		const bool isIdentifier{std::holds_alternative<Tokenizer::Identifier>(token.m_Value)};
 
-			if (MacroRecursionCheck(token.m_Span, identifier))
+		if (isIdentifier || std::holds_alternative<Tokenizer::Keyword>(token.m_Value)) {
+			const auto identifierString{
+			        isIdentifier ? std::get<Tokenizer::Identifier>(token.m_Value).m_Name
+			                     : Tokenizer::KeywordAsIdentString(std::get<Tokenizer::Keyword>(token.m_Value))
+			};
+
+			if (MacroRecursionCheck(token.m_Span, identifierString))
 				return token;
 
-			if (const auto &definitionIt{m_MacroDefinitions.find(identifier)};
+			if (const auto &definitionIt{m_MacroDefinitions.find(identifierString)};
 			    definitionIt != m_MacroDefinitions.end()) {
+				if (std::holds_alternative<FunctionLikeMacro>(definitionIt->second)) {
+					auto identifierToken{token};
+					token = GetNextToken();
+					if (!token.IsPunctuatorKind(Tokenizer::Punctuator::PpLeftParenthesis) &&
+					    !token.IsPunctuatorKind(Tokenizer::Punctuator::LeftParenthesis)) {
+						m_UnusedPeekResult = token;
+						return identifierToken;
+					}
+				}
+
 				if (!StartMacroExpansion(definitionIt->second))
 					return Tokenizer::Token{Tokenizer::SpecialPurpose::Error, token.m_Span};
 
@@ -272,7 +298,7 @@ Tokenizer::Token Preprocessor::operator()() {
 			}
 
 			if (!m_MacroStack.empty()) {
-				if (!HandleMacroParameterUsage(identifier))
+				if (!HandleMacroParameterUsage(identifierString))
 					return token;
 
 				continue;
@@ -304,14 +330,6 @@ bool Preprocessor::GatherArgumentList(
 
 	Tokenizer::Token token{GetNextToken()};
 	replacementData.m_Arguments = Preprocessor::MacroReplacementStackData::ArgumentList::value_type{};
-
-	if (!token.IsPunctuatorKind(Punctuator::LeftParenthesis) &&
-	    !token.IsPunctuatorKind(Punctuator::PpLeftParenthesis)) {
-		m_Diagnoses.emplace_back(token.m_Span, Diagnosis::Class::Error, Diagnosis::Kind::PP_ExpectedLParen);
-		return false;
-	}
-
-	token = GetNextToken();
 
 	ReplacementList currentArgument{};
 	int             leftParenthesesSeen{0};
