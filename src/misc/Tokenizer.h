@@ -24,7 +24,7 @@
 class Tokenizer final {
 public:
 	struct IncludeDirective final {
-		std::variant<std::string, std::basic_string<char32_t>> m_Name;
+		std::string m_Name{};
 		enum class HeaderType { HChar, QChar, MacroName } m_HeaderType;
 
 		bool operator==(const IncludeDirective &other) const {
@@ -38,8 +38,8 @@ public:
 	};
 
 	struct Identifier final {
-		using IdentString = std::basic_string<char32_t>;
-		IdentString m_Name;
+		using IdentString = std::string;
+		IdentString m_Name{};
 
 		bool operator==(const Identifier &other) const {
 			return m_Name == other.m_Name;
@@ -48,12 +48,15 @@ public:
 		friend void PrintTo(const Identifier &identifier, std::ostream *os) {
 			*os << "Ident(" << testing::PrintToString(identifier.m_Name) << ')';
 		}
+
+		[[nodiscard]]
+		std::string ToString() const;
 	};
 
 	struct PpNumber final {
 		// A preprocessing number has neither a value nor a type at the time of preprocessing.
 		// It acquires both after a successful conversion to a number token.
-		std::string m_Number;
+		std::string m_Number{};
 
 		bool operator==(const PpNumber &other) const {
 			return m_Number == other.m_Number;
@@ -62,6 +65,9 @@ public:
 		friend void PrintTo(const PpNumber &ppNumber, std::ostream *os) {
 			*os << "PpNumber(" << ppNumber.m_Number << ')';
 		}
+
+		[[nodiscard]]
+		std::string ToString() const;
 	};
 
 	enum class ConstantPrefix { None, L, u, U, u8 };
@@ -75,17 +81,25 @@ public:
 		}
 
 		friend void PrintTo(const CharacterConstant &characterConstant, std::ostream *os);
+
+		[[nodiscard]]
+		std::string ToString() const;
 	};
 
 	struct StringConstant final {
-		CompilerDataTypes::String m_String;
-		ConstantPrefix            m_Prefix;
+		using String = CompilerDataTypes::String;
+
+		String         m_String;
+		ConstantPrefix m_Prefix;
 
 		bool operator==(const StringConstant &other) const {
 			return m_String == other.m_String && m_Prefix == other.m_Prefix;
 		}
 
 		friend void PrintTo(const StringConstant &stringConstant, std::ostream *os);
+
+		[[nodiscard]]
+		std::string ToString() const;
 	};
 
 	enum class Punctuator {
@@ -422,7 +436,106 @@ public:
 	}
 
 	[[nodiscard]]
-	static Identifier::IdentString KeywordAsIdentString(Keyword keyword) noexcept;
+	static constexpr std::string_view KeywordAsIdentString(Keyword keyword) noexcept {
+		switch (keyword) {
+			case Keyword::Auto:
+				return "auto";
+			case Keyword::Break:
+				return "break";
+			case Keyword::Case:
+				return "case";
+			case Keyword::Char:
+				return "char";
+			case Keyword::Const:
+				return "const";
+			case Keyword::Continue:
+				return "continue";
+			case Keyword::Default:
+				return "default";
+			case Keyword::Do:
+				return "do";
+			case Keyword::Double:
+				return "double";
+			case Keyword::Else:
+				return "else";
+			case Keyword::Enum:
+				return "enum";
+			case Keyword::Extern:
+				return "extern";
+			case Keyword::Float:
+				return "float";
+			case Keyword::For:
+				return "for";
+			case Keyword::Goto:
+				return "goto";
+			case Keyword::If:
+				return "if";
+			case Keyword::Inline:
+				return "inline";
+			case Keyword::Int:
+				return "int";
+			case Keyword::Long:
+				return "long";
+			case Keyword::Register:
+				return "register";
+			case Keyword::Restrict:
+				return "restrict";
+			case Keyword::Return:
+				return "return";
+			case Keyword::Short:
+				return "short";
+			case Keyword::Signed:
+				return "signed";
+			case Keyword::Sizeof:
+				return "sizeof";
+			case Keyword::Static:
+				return "static";
+			case Keyword::Struct:
+				return "struct";
+			case Keyword::Switch:
+				return "switch";
+			case Keyword::Typedef:
+				return "typedef";
+			case Keyword::Union:
+				return "union";
+			case Keyword::Unsigned:
+				return "unsigned";
+			case Keyword::Void:
+				return "void";
+			case Keyword::Volatile:
+				return "volatile";
+			case Keyword::While:
+				return "while";
+			case Keyword::Alignas:
+				return "_Alignas";
+			case Keyword::Alignof:
+				return "_Alignof";
+			case Keyword::Atomic:
+				return "_Atomic";
+			case Keyword::Bool:
+				return "_Bool";
+			case Keyword::Complex:
+				return "_Complex";
+			case Keyword::Generic:
+				return "_Generic";
+			case Keyword::Imaginary:
+				return "_Imaginary";
+			case Keyword::Noreturn:
+				return "_Noreturn";
+			case Keyword::StaticAssert:
+				return "_Static_assert";
+			case Keyword::ThreadLocal:
+				return "_Thread_local";
+			default:
+				return "";// Empty string for unknown keywords
+		}
+	}
+
+	[[nodiscard]]
+	static constexpr std::string_view PunctuatorToString(Tokenizer::Punctuator punctuator) noexcept;
+
+	[[nodiscard]]
+	static StringConstant::String TokenToString(const Tokenizer::Token::Value &tokenValue);
 
 	Tokenizer(const Tokenizer &)            = delete;
 	Tokenizer(Tokenizer &&)                 = delete;

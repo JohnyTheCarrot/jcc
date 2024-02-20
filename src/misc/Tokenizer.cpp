@@ -1,6 +1,7 @@
 #include "Tokenizer.h"
 #include "Diagnosis.h"
 #include "compiler_data_types.h"
+#include <cuchar>
 #include <magic_enum/magic_enum.hpp>
 
 Tokenizer::Token::Value Tokenizer::TokenizeDot() {
@@ -619,9 +620,9 @@ std::optional<Tokenizer::Token::Value> Tokenizer::TokenizeDirective() {
 }
 
 Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
-	std::basic_string<char32_t> identifierContents{};
-	ConstantPrefix              prefix{ConstantPrefix::None};
-	const KeywordTrie          *trieNode{nullptr};
+	Identifier::IdentString identifierContents{};
+	ConstantPrefix          prefix{ConstantPrefix::None};
+	const KeywordTrie      *trieNode{nullptr};
 
 	if (m_Current != '\\') {
 		switch (*m_Current) {
@@ -637,7 +638,7 @@ Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
 					identifierContents += m_Current++;
 
 					if (!m_Current)
-						return Identifier{U"u8"};
+						return Identifier{"u8"};
 
 					prefix = ConstantPrefix::u8;
 				}
@@ -693,7 +694,10 @@ Tokenizer::Token::Value Tokenizer::TokenizeIdentifierOrKeyword() {
 
 			m_Current.Next();
 			if (const auto universalChar{TokenizeUniversalCharacterName(type)}; universalChar.has_value()) {
-				identifierContents += universalChar.value();
+				std::mbstate_t state{};
+				char           mb[MB_LEN_MAX]{};
+				std::c32rtomb(mb, universalChar.value(), &state);
+				identifierContents += mb;
 			} else {
 				return SpecialPurpose::Error;
 			}
@@ -1201,9 +1205,9 @@ void Tokenizer::SaveTokenSpanMarker() noexcept {
 }
 
 std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
-//	os << '[';
-//	PrintTo(token.m_Span, &os);
-//	os << "]: ";
+	os << '[';
+	PrintTo(token.m_Span, &os);
+	os << "]: ";
 
 	if (std::holds_alternative<Tokenizer::IncludeDirective>(token.m_Value)) {
 		PrintTo(std::get<Tokenizer::IncludeDirective>(token.m_Value), &os);
@@ -1232,105 +1236,168 @@ std::ostream &operator<<(std::ostream &os, const Tokenizer::Token &token) {
 	return os;
 }
 
-Tokenizer::Identifier::IdentString Tokenizer::KeywordAsIdentString(Keyword keyword) noexcept {
-	switch (keyword) {
-		case Keyword::Auto:
-			return U"auto";
-		case Keyword::Break:
-			return U"break";
-		case Keyword::Case:
-			return U"case";
-		case Keyword::Char:
-			return U"char";
-		case Keyword::Const:
-			return U"const";
-		case Keyword::Continue:
-			return U"continue";
-		case Keyword::Default:
-			return U"default";
-		case Keyword::Do:
-			return U"do";
-		case Keyword::Double:
-			return U"double";
-		case Keyword::Else:
-			return U"else";
-		case Keyword::Enum:
-			return U"enum";
-		case Keyword::Extern:
-			return U"extern";
-		case Keyword::Float:
-			return U"float";
-		case Keyword::For:
-			return U"for";
-		case Keyword::Goto:
-			return U"goto";
-		case Keyword::If:
-			return U"if";
-		case Keyword::Inline:
-			return U"inline";
-		case Keyword::Int:
-			return U"int";
-		case Keyword::Long:
-			return U"long";
-		case Keyword::Register:
-			return U"register";
-		case Keyword::Restrict:
-			return U"restrict";
-		case Keyword::Return:
-			return U"return";
-		case Keyword::Short:
-			return U"short";
-		case Keyword::Signed:
-			return U"signed";
-		case Keyword::Sizeof:
-			return U"sizeof";
-		case Keyword::Static:
-			return U"static";
-		case Keyword::Struct:
-			return U"struct";
-		case Keyword::Switch:
-			return U"switch";
-		case Keyword::Typedef:
-			return U"typedef";
-		case Keyword::Union:
-			return U"union";
-		case Keyword::Unsigned:
-			return U"unsigned";
-		case Keyword::Void:
-			return U"void";
-		case Keyword::Volatile:
-			return U"volatile";
-		case Keyword::While:
-			return U"while";
-		case Keyword::Alignas:
-			return U"_Alignas";
-		case Keyword::Alignof:
-			return U"_Alignof";
-		case Keyword::Atomic:
-			return U"_Atomic";
-		case Keyword::Bool:
-			return U"_Bool";
-		case Keyword::Complex:
-			return U"_Complex";
-		case Keyword::Generic:
-			return U"_Generic";
-		case Keyword::Imaginary:
-			return U"_Imaginary";
-		case Keyword::Noreturn:
-			return U"_Noreturn";
-		case Keyword::StaticAssert:
-			return U"_Static_assert";
-		case Keyword::ThreadLocal:
-			return U"_Thread_local";
-		default:
-			return U"";// Empty string for unknown keywords
-	}
-}
-
 bool Tokenizer::Token::IsSpecialPurposeKind(SpecialPurpose specialPurpose) const noexcept {
 	return std::holds_alternative<SpecialPurpose>(m_Value) && std::get<SpecialPurpose>(m_Value) == specialPurpose;
 }
 
 bool Tokenizer::Token::IsPunctuatorKind(Tokenizer::Punctuator punctuator) const noexcept {
 	return std::holds_alternative<Punctuator>(m_Value) && std::get<Punctuator>(m_Value) == punctuator;
+}
+
+std::string Tokenizer::Identifier::ToString() const {
+	return m_Name;
+}
+
+std::string Tokenizer::PpNumber::ToString() const {
+	return m_Number;
+}
+
+std::string Tokenizer::CharacterConstant::ToString() const {
+	std::stringstream ss;
+	PrintTo(*this, &ss);
+	return ss.str();
+}
+
+std::string Tokenizer::StringConstant::ToString() const {
+	std::stringstream ss;
+	PrintTo(*this, &ss);
+	return ss.str();
+}
+
+Tokenizer::StringConstant::String Tokenizer::TokenToString(const Tokenizer::Token::Value &tokenValue) {
+	if (std::holds_alternative<Identifier>(tokenValue)) {
+		return std::get<Identifier>(tokenValue).ToString();
+	}
+
+	if (std::holds_alternative<PpNumber>(tokenValue)) {
+		return std::get<PpNumber>(tokenValue).ToString();
+	}
+
+	if (std::holds_alternative<CharacterConstant>(tokenValue)) {
+		return std::get<CharacterConstant>(tokenValue).ToString();
+	}
+
+	if (std::holds_alternative<StringConstant>(tokenValue)) {
+		return std::get<StringConstant>(tokenValue).ToString();
+	}
+
+	if (std::holds_alternative<Punctuator>(tokenValue)) {
+		return StringConstant::String{PunctuatorToString(std::get<Punctuator>(tokenValue))};
+	}
+
+	if (std::holds_alternative<Keyword>(tokenValue)) {
+		return StringConstant::String{KeywordAsIdentString(std::get<Keyword>(tokenValue))};
+	}
+
+	if (std::holds_alternative<Token::Miscellaneous>(tokenValue)) {
+		return StringConstant::String{std::get<Token::Miscellaneous>(tokenValue)};
+	}
+
+	assert(false);
+
+	return "invalid";
+}
+
+constexpr std::string_view Tokenizer::PunctuatorToString(Tokenizer::Punctuator punctuator) noexcept {
+	switch (punctuator) {
+		case Punctuator::LeftBracket:
+			return "[";
+		case Punctuator::RightBracket:
+			return "]";
+		case Punctuator::PpLeftParenthesis:
+		case Punctuator::LeftParenthesis:
+			return "(";
+		case Punctuator::RightParenthesis:
+			return ")";
+		case Punctuator::LeftBrace:
+			return "{";
+		case Punctuator::RightBrace:
+			return "}";
+		case Punctuator::Dot:
+			return ".";
+		case Punctuator::Arrow:
+			return "->";
+		case Punctuator::PlusPlus:
+			return "++";
+		case Punctuator::MinusMinus:
+			return "--";
+		case Punctuator::Ampersand:
+			return "&";
+		case Punctuator::Asterisk:
+			return "*";
+		case Punctuator::Plus:
+			return "+";
+		case Punctuator::Minus:
+			return "-";
+		case Punctuator::Tilde:
+			return "~";
+		case Punctuator::ExclamationMark:
+			return "!";
+		case Punctuator::Slash:
+			return "/";
+		case Punctuator::Percent:
+			return "%";
+		case Punctuator::LessThanLessThan:
+			return "<<";
+		case Punctuator::GreaterThanGreaterThan:
+			return ">>";
+		case Punctuator::LessThan:
+			return "<";
+		case Punctuator::GreaterThan:
+			return ">";
+		case Punctuator::LessThanEqual:
+			return "<=";
+		case Punctuator::GreaterThanEqual:
+			return ">=";
+		case Punctuator::EqualEqual:
+			return "==";
+		case Punctuator::ExclamationMarkEqual:
+			return "!=";
+		case Punctuator::Caret:
+			return "^";
+		case Punctuator::VerticalBar:
+			return "|";
+		case Punctuator::AmpersandAmpersand:
+			return "&&";
+		case Punctuator::VerticalBarVerticalBar:
+			return "||";
+		case Punctuator::QuestionMark:
+			return "?";
+		case Punctuator::Colon:
+			return ":";
+		case Punctuator::Semicolon:
+			return ";";
+		case Punctuator::Ellipsis:
+			return "...";
+		case Punctuator::Equal:
+			return "=";
+		case Punctuator::PlusEqual:
+			return "+=";
+		case Punctuator::MinusEqual:
+			return "-=";
+		case Punctuator::AsteriskEqual:
+			return "*=";
+		case Punctuator::SlashEqual:
+			return "/=";
+		case Punctuator::PercentEqual:
+			return "%=";
+		case Punctuator::LessThanLessThanEqual:
+			return "<<=";
+		case Punctuator::GreaterThanGreaterThanEqual:
+			return ">>=";
+		case Punctuator::AmpersandEqual:
+			return "&=";
+		case Punctuator::CaretEqual:
+			return "^=";
+		case Punctuator::VerticalBarEqual:
+			return "|=";
+		case Punctuator::Comma:
+			return ",";
+		case Punctuator::Hash:
+			return "#";
+		case Punctuator::HashHash:
+			return "##";
+		default:
+			return "";
+	}
 }
