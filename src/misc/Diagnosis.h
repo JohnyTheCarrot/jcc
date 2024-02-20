@@ -41,6 +41,7 @@ struct Diagnosis final {
 		PP_UnterminatedMacroInvocation,
 		PP_UnexpectedMacroInvocationArgumentCount,
 		PP_MacroDefinedInTermsOfItself,
+		PP_HashNotFollowedByParameter,
 		TODO,
 	};
 

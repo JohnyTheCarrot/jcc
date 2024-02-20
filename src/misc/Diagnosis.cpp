@@ -93,6 +93,9 @@ void Diagnosis::PrintDiagMessage() const {
 			fmt::print("Macros may not be defined in terms of themselves, therefore, this will become an identifier or "
 			           "keyword upon expansion. Was this intended?");
 			break;
+		case Kind::PP_HashNotFollowedByParameter:
+			fmt::print("'#' not followed by a macro parameter.");
+			break;
 	}
 }
 

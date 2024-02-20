@@ -52,7 +52,7 @@ bool Preprocessor::ExecuteIncludeDirective(const Tokenizer::Token &includeDirect
 			m_Diagnoses.emplace_back(includeDirectiveToken.m_Span, Diagnosis::Class::Warning, Diagnosis::Kind::TODO);
 			return true;
 		case HeaderType::QChar:
-			fileName = std::get<std::string>(directive.m_Name);
+			fileName = directive.m_Name;
 			break;
 	}
 
@@ -220,6 +220,52 @@ Tokenizer::Token Preprocessor::GetNextToken() {
 	return *(macroStackTop.m_Progress++);
 }
 
+Tokenizer::Token Preprocessor::ExecuteHashOperator() {
+	auto token{GetNextToken()};
+	if (!std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
+		m_Diagnoses.emplace_back(token.m_Span, Diagnosis::Class::Error, Diagnosis::Kind::PP_HashNotFollowedByParameter);
+		return Tokenizer::Token{Tokenizer::SpecialPurpose::Error, token.m_Span};
+	}
+
+	const auto &parameterName{std::get<Tokenizer::Identifier>(token.m_Value).m_Name};
+
+	const MacroReplacementStackData &replacementStackData = m_MacroStack.top();
+	const auto                      &fnLikeMacro{std::get<FunctionLikeMacro>(replacementStackData.m_Macro)};
+	const auto argumentIndex{FindParameterIndexByName(fnLikeMacro.m_ParameterList, parameterName)};
+	const bool isVaArgsParam{
+	        fnLikeMacro.m_IsVA && parameterName == VA_ARGS_MACRO_NAME && replacementStackData.m_VaArgsMacro.has_value()
+	};
+
+	if (!argumentIndex.has_value() && !isVaArgsParam) {
+		m_Diagnoses.emplace_back(token.m_Span, Diagnosis::Class::Error, Diagnosis::Kind::PP_HashNotFollowedByParameter);
+		return Tokenizer::Token{Tokenizer::SpecialPurpose::Error, token.m_Span};
+	}
+
+	const ReplacementList::TokenList &replacementList{
+	        isVaArgsParam ? replacementStackData.m_VaArgsMacro->m_ReplacementList.m_ReplacementList
+	                      : replacementStackData.m_Arguments.value()[*argumentIndex].m_ReplacementList
+	};
+	std::optional<SpanMarker> lastTokenEndMarker{};
+
+	std::string replacementListAsString{std::accumulate(
+	        replacementList.cbegin(), replacementList.cend(), std::string{""},
+	        [&](auto acc, const auto &token) {
+		        auto str{std::move(acc)};
+
+		        if (lastTokenEndMarker.has_value() &&
+		            (lastTokenEndMarker->m_LineNumber != token.m_Span.m_Start.m_LineNumber ||
+		             lastTokenEndMarker->m_CharacterIndex + 1 != token.m_Span.m_Start.m_CharacterIndex))
+			        str += ' ';
+		        lastTokenEndMarker = token.m_Span.m_End;
+
+		        str += Tokenizer::TokenToString(token.m_Value);
+		        return str;
+	        }
+	)};
+
+	return Tokenizer::Token{Tokenizer::StringConstant{std::move(replacementListAsString)}, token.m_Span};
+}
+
 Tokenizer::Token Preprocessor::operator()() {
 	while (true) {
 		Tokenizer::Token token{GetNextToken()};
@@ -273,7 +319,9 @@ Tokenizer::Token Preprocessor::operator()() {
 		if (isIdentifier || std::holds_alternative<Tokenizer::Keyword>(token.m_Value)) {
 			const auto identifierString{
 			        isIdentifier ? std::get<Tokenizer::Identifier>(token.m_Value).m_Name
-			                     : Tokenizer::KeywordAsIdentString(std::get<Tokenizer::Keyword>(token.m_Value))
+			                     : Tokenizer::Identifier::IdentString{Tokenizer::KeywordAsIdentString(
+			                               std::get<Tokenizer::Keyword>(token.m_Value)
+			                       )}
 			};
 
 			if (MacroRecursionCheck(token.m_Span, identifierString))
@@ -307,17 +355,28 @@ Tokenizer::Token Preprocessor::operator()() {
 			return token;
 		}
 
-		if (token.IsPunctuatorKind(Tokenizer::Punctuator::PpLeftParenthesis))
-			return Tokenizer::Token{Tokenizer::Punctuator::LeftParenthesis, token.m_Span};
-
+		if (std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
+			switch (std::get<Tokenizer::Punctuator>(token.m_Value)) {
+				case Tokenizer::Punctuator::PpLeftParenthesis:
+					return Tokenizer::Token{Tokenizer::Punctuator::LeftParenthesis, token.m_Span};
+				case Tokenizer::Punctuator::Hash: {
+					if (!m_MacroStack.empty() &&
+					    std::holds_alternative<FunctionLikeMacro>(m_MacroStack.top().m_Macro)) {
+						return ExecuteHashOperator();
+					}
+				}
+				default:
+					break;
+			}
+		}
 
 		return token;
 	}
 }
 
-bool Preprocessor::CheckArgumentCountValidity(bool isVA, size_t paramCount, size_t argCount) const noexcept {
-	if (isVA || m_MacroDefinitions.find(VA_ARGS_MACRO_NAME) != m_MacroDefinitions.cend()) {
-		return true;
+bool Preprocessor::CheckArgumentCountValidity(bool isVA, size_t paramCount, size_t argCount) noexcept {
+	if (isVA) {
+		return argCount >= paramCount;
 	}
 
 	return argCount == paramCount;
@@ -359,7 +418,7 @@ bool Preprocessor::GatherArgumentList(
 							replacementData.m_Arguments->emplace_back(std::move(currentArgument));
 						}
 
-						if (isVA) {
+						if (isVA && replacementData.m_Arguments->size() > numParameters) {
 							const ReplacementList::TokenList &replacementList =
 							        (replacementData.m_Arguments->cend() - 1)->m_ReplacementList;
 
@@ -424,7 +483,7 @@ bool Preprocessor::StartMacroExpansion(const Macro &macro) {
 	if (!GatherArgumentList(fnMacro.m_IsVA, fnMacro.m_ParameterList.size(), replacementStackData))
 		return false;
 
-	if (fnMacro.m_IsVA) {
+	if (fnMacro.m_IsVA && replacementStackData.m_VaArgsMacro.has_value()) {
 		m_MacroDefinitions.emplace(VA_ARGS_MACRO_NAME, replacementStackData.m_VaArgsMacro.value());
 	}
 
@@ -438,7 +497,7 @@ std::optional<int> Preprocessor::FindParameterIndexByName(
         const Preprocessor::FunctionLikeMacro::ParameterList &parameterList,
         const Tokenizer::Identifier::IdentString             &identifier
 ) noexcept {
-	for (size_t idx{}; idx < parameterList.size(); ++idx) {
+	for (int idx{}; idx < parameterList.size(); ++idx) {
 		if (parameterList[idx].m_Name == identifier) {
 			return idx;
 		}

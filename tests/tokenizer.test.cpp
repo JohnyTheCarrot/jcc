@@ -90,20 +90,20 @@ INSTANTIATE_TEST_SUITE_P(
         Identifiers, TokenizingTest,
         testing::Values(
                 // Identifiers starting with a char or string constant prefix are still identifiers and should be tokenized as such
-                std::make_tuple("under_score", Identifier{U"under_score"}, DiagnosisKindVec{}),
-                std::make_tuple("u8SomeIdent", Identifier{U"u8SomeIdent"}, DiagnosisKindVec{}),
+                std::make_tuple("under_score", Identifier{"under_score"}, DiagnosisKindVec{}),
+                std::make_tuple("u8SomeIdent", Identifier{"u8SomeIdent"}, DiagnosisKindVec{}),
                 // same for identifiers starting with a keyword
-                std::make_tuple("autoSomeIdent", Identifier{U"autoSomeIdent"}, DiagnosisKindVec{}),
-                std::make_tuple("L", Identifier{U"L"}, DiagnosisKindVec{}),
-                std::make_tuple("u", Identifier{U"u"}, DiagnosisKindVec{}),
-                std::make_tuple("U", Identifier{U"U"}, DiagnosisKindVec{}),
-                std::make_tuple("La", Identifier{U"La"}, DiagnosisKindVec{}),
-                std::make_tuple("ua", Identifier{U"ua"}, DiagnosisKindVec{}),
-                std::make_tuple("Ua", Identifier{U"Ua"}, DiagnosisKindVec{}),
-                std::make_tuple(R"(\u0D9E)", Identifier{U"\u0D9E"}, DiagnosisKindVec{}),
+                std::make_tuple("autoSomeIdent", Identifier{"autoSomeIdent"}, DiagnosisKindVec{}),
+                std::make_tuple("L", Identifier{"L"}, DiagnosisKindVec{}),
+                std::make_tuple("u", Identifier{"u"}, DiagnosisKindVec{}),
+                std::make_tuple("U", Identifier{"U"}, DiagnosisKindVec{}),
+                std::make_tuple("La", Identifier{"La"}, DiagnosisKindVec{}),
+                std::make_tuple("ua", Identifier{"ua"}, DiagnosisKindVec{}),
+                std::make_tuple("Ua", Identifier{"Ua"}, DiagnosisKindVec{}),
+                std::make_tuple(R"(\u0D9E)", Identifier{"\u0D9E"}, DiagnosisKindVec{}),
                 // escaped newlines legally may appear mid-token, because of course.
-                std::make_tuple("ident\\\nifier", Identifier{U"identifier"}, DiagnosisKindVec{}),
-                std::make_tuple("ident\\\r\nifier", Identifier{U"identifier"}, DiagnosisKindVec{})
+                std::make_tuple("ident\\\nifier", Identifier{"identifier"}, DiagnosisKindVec{}),
+                std::make_tuple("ident\\\r\nifier", Identifier{"identifier"}, DiagnosisKindVec{})
         )
 );
 
@@ -201,7 +201,7 @@ INSTANTIATE_TEST_SUITE_P(
                         DiagnosisKindVec{Diagnosis::Kind::TK_DirectiveNotAloneOnLine}
                 ),
                 std::make_tuple(
-                        "#include MACRO", IncludeDirective{U"MACRO", IncludeDirective::HeaderType::MacroName},
+                        "#include MACRO", IncludeDirective{"MACRO", IncludeDirective::HeaderType::MacroName},
                         DiagnosisKindVec{}
                 )
         )

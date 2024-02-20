@@ -15,22 +15,22 @@ class Preprocessor final {
 		operator==(const ReplacementList &other) const noexcept;
 	};
 
-	struct MacroBase {
+	struct ObjectLikeMacro final {
 		Tokenizer::Identifier::IdentString m_MacroName{};
 		ReplacementList                    m_ReplacementList{};
-	};
 
-	struct ObjectLikeMacro final : MacroBase {
 		[[nodiscard]]
 		bool
 		operator==(const ObjectLikeMacro &other) const noexcept;
 	};
 
-	struct FunctionLikeMacro final : MacroBase {
+	struct FunctionLikeMacro final {
 		using ParameterList = std::vector<Tokenizer::Identifier>;
 
-		ParameterList m_ParameterList{};
-		bool          m_IsVA{};
+		Tokenizer::Identifier::IdentString m_MacroName{};
+		ReplacementList                    m_ReplacementList{};
+		ParameterList                      m_ParameterList{};
+		bool                               m_IsVA{};
 
 		[[nodiscard]]
 		bool
@@ -80,13 +80,13 @@ class Preprocessor final {
 	using MacroDefinitions = std::unordered_map<Tokenizer::Identifier::IdentString, Macro>;
 	MacroDefinitions m_MacroDefinitions{};
 
-	static constexpr char32_t VA_ARGS_MACRO_NAME[12]{U"__VA_ARGS__"};
+	static constexpr char VA_ARGS_MACRO_NAME[12]{"__VA_ARGS__"};
 
 	[[nodiscard]]
 	Tokenizer::Token GetNextToken();
 
 	[[nodiscard]]
-	inline bool CheckArgumentCountValidity(bool isVA, size_t paramCount, size_t argCount) const noexcept;
+	static inline bool CheckArgumentCountValidity(bool isVA, size_t paramCount, size_t argCount) noexcept;
 
 	[[nodiscard]]
 	bool GatherArgumentList(bool isVA, size_t numParameters, Preprocessor::MacroReplacementStackData &replacementData);
@@ -119,6 +119,9 @@ class Preprocessor final {
 	        const Preprocessor::FunctionLikeMacro::ParameterList &parameterList,
 	        const Tokenizer::Identifier::IdentString             &identifier
 	) noexcept;
+
+	[[nodiscard]]
+	Tokenizer::Token ExecuteHashOperator();
 
 public:
 	Preprocessor(std::string &&fileName, std::istream &iStream, Diagnosis::Vec &diagnoses)
