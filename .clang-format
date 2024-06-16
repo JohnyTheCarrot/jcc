@@ -1,4 +1,3 @@
-# Generated from CLion C/C++ Code Style settings
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: BlockIndent
@@ -53,7 +52,7 @@ NamespaceIndentation: All
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
 PointerAlignment: Right
-QualifierAlignment: Left
+QualifierAlignment: Right
 ReferenceAlignment: Right
 ReflowComments: false
 SeparateDefinitionBlocks: Always

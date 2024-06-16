@@ -1,15 +1,26 @@
 cmake_minimum_required(VERSION 3.22)
 project(jcc CXX)
 
-# GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
-file(GLOB_RECURSE DIR_SRC src/*.cpp)
-add_executable("${PROJECT_NAME}" ${DIR_SRC})
+add_executable("${PROJECT_NAME}"
+    src/main.cpp
+    src/misc/CharStream.h
+    src/misc/CharStream.cpp
+    src/misc/Diagnosis.h
+    src/misc/Diagnosis.cpp
+    src/misc/Preprocessor.h
+    src/misc/Preprocessor.cpp
+    src/misc/Span.h
+    src/misc/Span.cpp
+    src/misc/Tokenizer.h
+    src/misc/Tokenizer.cpp
+    src/misc/Trie.h
+)
 
 set(TEST_PROJECT_NAME "jcc-tests")
 
