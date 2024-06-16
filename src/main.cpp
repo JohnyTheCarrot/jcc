@@ -19,6 +19,8 @@ int main(int argCount, char *args[]) {
 		exit(1);
 	}
 
+	using namespace jcc;
+
 	Diagnosis::Vec diagnoses;
 	Preprocessor   preprocessor{std::move(filePath), inputFileStream, diagnoses};
 

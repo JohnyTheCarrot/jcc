@@ -4,3 +4,4 @@
 *.kdev4
 /.cache
 /CMakeFiles
+CMakeLists.txt.user

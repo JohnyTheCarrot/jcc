@@ -1,6 +1,8 @@
 #include "misc/Tokenizer.h"
 #include <gtest/gtest.h>
 
+using namespace jcc;
+
 using Keyword             = Tokenizer::Keyword;
 using Punctuator          = Tokenizer::Punctuator;
 using Directive           = Tokenizer::Directive;
@@ -21,14 +23,14 @@ TEST_P(TokenizingTest, Tokenizing) {
 	Diagnosis::Vec     diagnoses{};
 	Tokenizer          tokenizer{"test", iss, diagnoses};
 
-	const Tokenizer::Token token{tokenizer()};
+	Tokenizer::Token const token{tokenizer()};
 
-	const Tokenizer::Token::Value expectedToken{std::get<1>(GetParam())};
-	const auto                    expectedDiagnoses{std::get<2>(GetParam())};
+	Tokenizer::Token::Value const expectedToken{std::get<1>(GetParam())};
+	auto const                    expectedDiagnoses{std::get<2>(GetParam())};
 	DiagnosisKindVec              actualDiagnosisKinds{};
 	std::transform(
 	        diagnoses.begin(), diagnoses.end(), std::back_inserter(actualDiagnosisKinds),
-	        [](const auto &diagnosisKind) { return diagnosisKind.m_Kind; }
+	        [](auto const &diagnosisKind) { return diagnosisKind.m_Kind; }
 	);
 
 	EXPECT_EQ(expectedDiagnoses, actualDiagnosisKinds);
@@ -360,9 +362,9 @@ TEST_P(SpanGenerationTest, SpanGeneration) {
 	Diagnosis::Vec     diagnoses{};
 	Tokenizer          tokenizer{"test", iss, diagnoses};
 
-	const Tokenizer::Token token{tokenizer()};
-	const auto             expectedSpanStart{std::get<1>(GetParam())};
-	const auto             expectedSpanEnd{std::get<2>(GetParam())};
+	Tokenizer::Token const token{tokenizer()};
+	auto const             expectedSpanStart{std::get<1>(GetParam())};
+	auto const             expectedSpanEnd{std::get<2>(GetParam())};
 
 	EXPECT_EQ(token.m_Span.m_Start, expectedSpanStart);
 	EXPECT_EQ(token.m_Span.m_End, expectedSpanEnd);
