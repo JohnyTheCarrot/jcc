@@ -8,8 +8,6 @@
 #include <gtest/gtest-printers.h>
 #include <magic_enum/magic_enum.hpp>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <variant>
 
 // Preprocessing tokens:
@@ -230,6 +228,9 @@ namespace jcc {
 
 			[[nodiscard]]
 			bool IsPunctuatorKind(Punctuator punctuator) const noexcept;
+
+			[[nodiscard]]
+			bool IsTerminating() const noexcept;
 		};
 
 	private:

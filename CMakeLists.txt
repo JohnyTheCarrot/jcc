@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
-add_executable("${PROJECT_NAME}"
-    src/main.cpp
+set(
+    SRC
     src/misc/CharStream.h
     src/misc/CharStream.cpp
     src/misc/Diagnosis.h
@@ -20,6 +20,11 @@ add_executable("${PROJECT_NAME}"
     src/misc/Tokenizer.h
     src/misc/Tokenizer.cpp
     src/misc/Trie.h
+)
+
+add_executable("${PROJECT_NAME}"
+    src/main.cpp
+    ${SRC}
 )
 
 set(TEST_PROJECT_NAME "jcc-tests")
@@ -43,9 +48,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-file(GLOB_RECURSE TEST_SRC tests/*.cpp)
-file(GLOB_RECURSE SRC_NO_MAIN src/parsing/*.cpp src/misc/*.cpp)
-add_executable(${TEST_PROJECT_NAME} ${TEST_SRC} ${SRC_NO_MAIN})
+add_executable(${TEST_PROJECT_NAME} ${SRC}
+    tests/preprocessor.test.cpp
+    tests/tokenizer.test.cpp
+    tests/trie.test.cpp
+)
 
 target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt)
 target_link_libraries(${PROJECT_NAME} GTest::gtest_main fmt)

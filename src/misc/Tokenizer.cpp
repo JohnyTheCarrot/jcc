@@ -5,7 +5,6 @@
 #include <magic_enum/magic_enum.hpp>
 
 namespace jcc {
-
 	Tokenizer::Token::Value Tokenizer::TokenizeDot() {
 		if (!m_Current || *m_Current != '.') {
 			return Punctuator::Dot;
@@ -1249,6 +1248,15 @@ namespace jcc {
 
 	bool Tokenizer::Token::IsPunctuatorKind(Tokenizer::Punctuator punctuator) const noexcept {
 		return std::holds_alternative<Punctuator>(m_Value) && std::get<Punctuator>(m_Value) == punctuator;
+	}
+
+	bool Tokenizer::Token::IsTerminating() const noexcept {
+		if (!std::holds_alternative<SpecialPurpose>(m_Value))
+			return false;
+
+		auto const token{std::get<SpecialPurpose>(m_Value)};
+
+		return token == SpecialPurpose::EndOfFile || token == SpecialPurpose::Error;
 	}
 
 	std::string Tokenizer::Identifier::ToString() const {
