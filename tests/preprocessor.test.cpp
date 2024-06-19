@@ -1,4 +1,4 @@
-#include "misc/Preprocessor.h"
+#include "misc/preprocessor/preprocessor.h"
 #include "misc/Tokenizer.h"
 
 #include <gtest/gtest.h>
@@ -22,27 +22,15 @@ using TokenList = std::vector<Tokenizer::Token::Value>;
 class PreproTest : public testing::TestWithParam<std::tuple<std::string, TokenList>> {};
 
 TEST_P(PreproTest, Preprocessing) {
-	std::istringstream iss{std::get<0>(GetParam())};
-	Diagnosis::Vec     diagnoses{};
-	Preprocessor       preprocessor{"test", iss, diagnoses};
+	std::istringstream         iss{std::get<0>(GetParam())};
+	Diagnosis::Vec             diagnoses{};
+	preprocessor::Preprocessor preprocessor{"test", iss, diagnoses};
 
 	TokenList tokens{};
-	while (true) {
-		auto currentToken{preprocessor()};
 
-		if (currentToken.IsTerminating()) {
-			if (currentToken.IsSpecialPurposeKind(SpecialPurposeToken::Error)) {
-				std::for_each(std::begin(diagnoses), std::end(diagnoses), [](Diagnosis const &diagnosis) {
-					if (diagnosis.m_Class == Diagnosis::Class::Error)
-						diagnosis.Print();
-				});
-				FAIL();
-			}
-			break;
-		}
-
-		tokens.emplace_back(std::move(currentToken.m_Value));
-	}
+	std::transform(preprocessor.Current(), preprocessor.EndOfFile(), std::back_inserter(tokens), [](auto tokenValue) {
+		return tokenValue.m_Value;
+	});
 
 	TokenList const expectedTokens{std::get<1>(GetParam())};
 
@@ -90,8 +78,8 @@ SOME_MACRO * 2
                 ),
                 std::make_tuple(
                         R"(
-#define FN_MACRO(a) a 
-FN_MACRO(90) 
+#define FN_MACRO(a) a
+FN_MACRO(90)
 )",
                         TokenList{PpNumber{"90"}}
                 ),
@@ -104,7 +92,7 @@ FN_MACRO(9)
                 ),
                 std::make_tuple(
                         R"(
-#define FN_MACRO(a) a 
+#define FN_MACRO(a) a
 FN_MACRO(68) + FN_MACRO(12)
 )",
                         TokenList{PpNumber{"68"}, Punctuator::Plus, PpNumber{"12"}}
