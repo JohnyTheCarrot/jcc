@@ -8,23 +8,31 @@ add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
 set(
-    SRC
-    src/misc/CharStream.h
-    src/misc/CharStream.cpp
-    src/misc/Diagnosis.h
-    src/misc/Diagnosis.cpp
-    src/misc/Preprocessor.h
-    src/misc/Preprocessor.cpp
-    src/misc/Span.h
-    src/misc/Span.cpp
-    src/misc/Tokenizer.h
-    src/misc/Tokenizer.cpp
-    src/misc/Trie.h
+        SRC
+        src/misc/CharStream.h
+        src/misc/CharStream.cpp
+        src/misc/Diagnosis.h
+        src/misc/Diagnosis.cpp
+        src/misc/Preprocessor.h
+        src/misc/Preprocessor.cpp
+        src/misc/Span.h
+        src/misc/Span.cpp
+        src/misc/Tokenizer.h
+        src/misc/Tokenizer.cpp
+        src/misc/Trie.h
+        src/misc/preprocessor/preprocessor.h
+        src/misc/preprocessor/preprocessor.cpp
+        src/misc/preprocessor/command.h
+        src/misc/preprocessor/command.cpp
+        src/misc/preprocessor/macro.h
+        src/misc/preprocessor/preprocessor_iterator.h
+        src/misc/preprocessor/define_command.cpp
+        src/misc/preprocessor/preprocessor_iterator.cpp
 )
 
 add_executable("${PROJECT_NAME}"
-    src/main.cpp
-    ${SRC}
+        src/main.cpp
+        ${SRC}
 )
 
 set(TEST_PROJECT_NAME "jcc-tests")
@@ -49,9 +57,9 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(${TEST_PROJECT_NAME} ${SRC}
-    tests/preprocessor.test.cpp
-    tests/tokenizer.test.cpp
-    tests/trie.test.cpp
+        tests/preprocessor.test.cpp
+        tests/tokenizer.test.cpp
+        tests/trie.test.cpp
 )
 
 target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt)

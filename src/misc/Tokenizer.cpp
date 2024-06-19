@@ -1259,6 +1259,10 @@ namespace jcc {
 		return token == SpecialPurpose::EndOfFile || token == SpecialPurpose::Error;
 	}
 
+	bool Tokenizer::Token::operator==(Token const &other) const {
+		return m_Value == other.m_Value && m_Span == other.m_Span;
+	}
+
 	std::string Tokenizer::Identifier::ToString() const {
 		return m_Name;
 	}
@@ -1277,6 +1281,38 @@ namespace jcc {
 		std::stringstream ss;
 		PrintTo(*this, &ss);
 		return ss.str();
+	}
+
+	Tokenizer::Token::Type Tokenizer::Token::GetValueType() const {
+		if (std::holds_alternative<Identifier>(m_Value))
+			return GenericType::Identifier;
+
+		if (std::holds_alternative<PpNumber>(m_Value))
+			return GenericType::PpNumber;
+
+		if (std::holds_alternative<CharacterConstant>(m_Value))
+			return GenericType::ChararacterConstant;
+
+		if (std::holds_alternative<StringConstant>(m_Value))
+			return GenericType::StringConstant;
+
+		if (std::holds_alternative<Punctuator>(m_Value))
+			return std::get<Punctuator>(m_Value);
+
+		if (std::holds_alternative<Keyword>(m_Value))
+			return std::get<Keyword>(m_Value);
+
+		if (std::holds_alternative<Directive>(m_Value))
+			return std::get<Directive>(m_Value);
+
+		if (std::holds_alternative<SpecialPurpose>(m_Value))
+			return std::get<SpecialPurpose>(m_Value);
+
+		if (std::holds_alternative<Miscellaneous>(m_Value))
+			return std::get<Miscellaneous>(m_Value);
+
+		assert(false);
+		return SpecialPurpose::Error;
 	}
 
 	Tokenizer::StringConstant::String Tokenizer::TokenToString(Tokenizer::Token::Value const &tokenValue) {

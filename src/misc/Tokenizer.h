@@ -24,6 +24,7 @@ namespace jcc {
 	public:
 		struct IncludeDirective final {
 			std::string m_Name{};
+
 			enum class HeaderType { HChar, QChar, MacroName } m_HeaderType;
 
 			bool operator==(IncludeDirective const &other) const {
@@ -214,9 +215,17 @@ namespace jcc {
 
 		struct Token final {
 			using Miscellaneous = char;
-			using Value         = std::variant<
-                    IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
-                    Directive, SpecialPurpose, Miscellaneous>;
+
+			enum class GenericType { Identifier, PpNumber, ChararacterConstant, StringConstant, Miscellaneous };
+
+			using Type = std::variant<GenericType, Punctuator, Keyword, Directive, SpecialPurpose, Miscellaneous>;
+
+			using Value = std::variant<
+			        IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
+			        Directive, SpecialPurpose, Miscellaneous>;
+
+			[[nodiscard]]
+			Type GetValueType() const;
 
 			Value m_Value{SpecialPurpose::Error};
 			Span  m_Span;
@@ -231,6 +240,10 @@ namespace jcc {
 
 			[[nodiscard]]
 			bool IsTerminating() const noexcept;
+
+			[[nodiscard]]
+			bool
+			operator==(Token const &) const;
 		};
 
 	private:
@@ -539,8 +552,8 @@ namespace jcc {
 		[[nodiscard]]
 		static StringConstant::String TokenToString(Tokenizer::Token::Value const &tokenValue);
 
-		Tokenizer(Tokenizer const &)            = delete;
-		Tokenizer(Tokenizer &&)                 = delete;
+		           Tokenizer(Tokenizer const &) = delete;
+		           Tokenizer(Tokenizer &&)      = delete;
 		Tokenizer &operator=(Tokenizer const &) = delete;
 		Tokenizer &operator=(Tokenizer &&)      = delete;
 
