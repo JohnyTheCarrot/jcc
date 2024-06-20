@@ -1,8 +1,9 @@
 #ifndef MACRO_H
 #define MACRO_H
 
-#include <vector>
 #include "../Tokenizer.h"
+#include <unordered_map>
+#include <vector>
 
 namespace jcc::preprocessor::macro {
 	struct ReplacementList {
@@ -15,7 +16,7 @@ namespace jcc::preprocessor::macro {
 	};
 
 	struct ObjectLikeMacro final {
-		std::string m_MacroName{};
+		std::string     m_MacroName{};
 		ReplacementList m_ReplacementList{};
 
 		[[nodiscard]]
@@ -26,10 +27,10 @@ namespace jcc::preprocessor::macro {
 	struct FunctionLikeMacro final {
 		using ParameterList = std::vector<Tokenizer::Identifier>;
 
-		std::string m_MacroName{};
+		std::string     m_MacroName{};
 		ReplacementList m_ReplacementList{};
-		ParameterList m_ParameterList{};
-		bool m_IsVA{};
+		ParameterList   m_ParameterList{};
+		bool            m_IsVA{};
 
 		[[nodiscard]]
 		bool
@@ -37,6 +38,20 @@ namespace jcc::preprocessor::macro {
 	};
 
 	using Macro = std::variant<ObjectLikeMacro, FunctionLikeMacro>;
-}
 
-#endif //MACRO_H
+	using FnMacroArguments = std::unordered_map<std::string, std::vector<Tokenizer::Token>>;
+
+	struct MacroArgumentReader final {
+		std::vector<Tokenizer::Token> m_Args{};
+		int                           m_CurrentTokenIndex{-1};
+	};
+
+	struct MacroInvocation final {
+		std::string                        m_MacroName{};
+		int                                m_CurrentToken{-1};
+		std::optional<FnMacroArguments>    m_Args{};
+		std::optional<MacroArgumentReader> m_CurrentArgReader{};
+	};
+}// namespace jcc::preprocessor::macro
+
+#endif//MACRO_H

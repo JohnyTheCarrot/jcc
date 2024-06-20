@@ -9,4 +9,4 @@ namespace jcc::preprocessor {
 	Tokenizer::Token InternalPreprocessorIterator::GetNextToken() const {
 		return m_pPreprocessor->GetNextFromTokenizer();
 	}
-}
+}// namespace jcc::preprocessor

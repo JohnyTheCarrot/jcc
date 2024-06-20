@@ -1,6 +1,5 @@
 #include "Diagnosis.h"
 #include <fmt/color.h>
-#include <iostream>
 #include <magic_enum/magic_enum.hpp>
 #include <utility>
 
@@ -33,8 +32,8 @@ namespace jcc {
 				break;
 			case Kind::TK_PartialTokenEncountered:
 				fmt::print(
-					fmt::emphasis::bold, "Partial token encountered, did you mean {}?",
-					fmt::styled(std::get<std::string>(m_Data0.value()), fmt::fg(fmt::color::cyan))
+				        fmt::emphasis::bold, "Partial token encountered, did you mean {}?",
+				        fmt::styled(std::get<std::string>(m_Data0.value()), fmt::fg(fmt::color::cyan))
 				);
 				break;
 			case Kind::TK_UnknownDirective:
@@ -82,6 +81,15 @@ namespace jcc {
 			case Kind::PP_MacroEllipsisNotLast:
 				fmt::print("Variadic macro parameter must be the last parameter.");
 				break;
+			case Kind::PP_MacroExpectedLParen:
+				fmt::print("Expected left parenthesis as part of macro invocation.");
+				break;
+			case Kind::PP_MacroTooFewArgs:
+				fmt::print("Too few arguments passed to function-like macro.");
+				break;
+			case Kind::PP_MacroTooManyArgs:
+				fmt::print("Too many arguments passed to non-variadic function-like macro.");
+				break;
 			case Kind::PP_IllegalMacroRedefinition:
 				fmt::print("A macro may not be redefined.");
 				break;
@@ -99,8 +107,8 @@ namespace jcc {
 				break;
 			case Kind::PP_MacroDefinedInTermsOfItself:
 				fmt::print("Macros may not be defined in terms of themselves, therefore, this will become an "
-					"identifier or "
-					"keyword upon expansion. Was this intended?");
+				           "identifier or "
+				           "keyword upon expansion. Was this intended?");
 				break;
 			case Kind::PP_HashNotFollowedByParameter:
 				fmt::print("'#' not followed by a macro parameter.");
@@ -112,7 +120,7 @@ namespace jcc {
 		using namespace DiagnosticsUtils;
 
 		fmt::color const color{GetClassColor(m_Class)};
-		char const *name{GetClassName(m_Class)};
+		char const      *name{GetClassName(m_Class)};
 
 		fmt::print(fmt::fg(COLOR_NEUTRAL), "In file {}\n", fmt::styled(*m_Span.m_FileName, fmt::fg(fmt::color::cyan)));
 		fmt::print(fmt::fg(color), "{}: ", name);
@@ -130,8 +138,8 @@ namespace jcc {
 
 			OutputLine(m_Span.m_Start.m_LineNumber, line);
 			OutputHighlight(
-				m_Span.m_Start.m_RealCharacterIndex, m_Span.m_End.m_RealCharacterIndex,
-				static_cast<int>(line.size()), m_Class
+			        m_Span.m_Start.m_RealCharacterIndex, m_Span.m_End.m_RealCharacterIndex,
+			        static_cast<int>(line.size()), m_Class
 			);
 
 			return;
@@ -166,11 +174,11 @@ namespace jcc {
 		}
 
 		void OutputHighlight(
-			std::optional<int> const &startChar, std::optional<int> const &endChar, int lineLength,
-			Diagnosis::Class diagClass
+		        std::optional<int> const &startChar, std::optional<int> const &endChar, int lineLength,
+		        Diagnosis::Class diagClass
 		) {
-			int const actualStartChar{startChar.value_or(0)};
-			int const actualEndChar{endChar.value_or(lineLength)};
+			int const        actualStartChar{startChar.value_or(0)};
+			int const        actualEndChar{endChar.value_or(lineLength)};
 			fmt::color const color{GetClassColor(diagClass)};
 
 			if (startChar.has_value()) {
@@ -192,8 +200,9 @@ namespace jcc {
 		}
 	}// namespace DiagnosticsUtils
 
-	FatalCompilerError::FatalCompilerError(Diagnosis::Kind kind, Span span) noexcept : m_Kind{kind},
-		m_Span{std::move(span)} {
+	FatalCompilerError::FatalCompilerError(Diagnosis::Kind kind, Span span) noexcept
+	    : m_Kind{kind}
+	    , m_Span{std::move(span)} {
 	}
 
 	Span const &FatalCompilerError::GetSpan() const noexcept {

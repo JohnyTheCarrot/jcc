@@ -10,15 +10,19 @@ namespace jcc::preprocessor {
 
 	template<class Super>
 	class BasePreprocessorIterator {
-		struct Sentinel final {};
+		using UntilCondition = std::function<bool(Tokenizer::Token const &)>;
 
-		mutable std::variant<Tokenizer::Token::Type, Tokenizer::Token> m_Token{};
+		mutable std::variant<Tokenizer::Token::Type, Tokenizer::Token, UntilCondition> m_Token;
 
 	protected:
 		mutable Preprocessor *m_pPreprocessor{};
 
 		explicit BasePreprocessorIterator(Tokenizer::Token::Type untilType)
 		    : m_Token{untilType} {
+		}
+
+		explicit BasePreprocessorIterator(UntilCondition const &untilCondition)
+		    : m_Token{untilCondition} {
 		}
 
 	public:
@@ -77,33 +81,36 @@ namespace jcc::preprocessor {
 			return Super{untilType};
 		}
 
+		static Super Until(UntilCondition const &untilCondition) {
+			return Super{untilCondition};
+		}
+
 		[[nodiscard]]
 		bool
 		operator==(Super const &other) const noexcept {
-			if (std::holds_alternative<Tokenizer::Token::Type>(m_Token)) {
-				auto const currentTokenType{std::get<Tokenizer::Token::Type>(m_Token)};
+			if (std::holds_alternative<UntilCondition>(other.m_Token)) {
+				if (!std::holds_alternative<Tokenizer::Token>(m_Token))
+					return true;// both are special purpose
+
+				auto const condition{std::get<UntilCondition>(other.m_Token)};
+
+				return condition(std::get<Tokenizer::Token>(m_Token));
+			}
+
+			if (std::holds_alternative<Tokenizer::Token::Type>(other.m_Token)) {
+				if (!std::holds_alternative<Tokenizer::Token>(m_Token))
+					return true;// both are special purpose
+
+				auto const currentTokenType{std::get<Tokenizer::Token>(m_Token).GetValueType()};
 				auto const isCurrentEOF{
 				        std::holds_alternative<Tokenizer::SpecialPurpose>(currentTokenType) &&
 				        std::get<Tokenizer::SpecialPurpose>(currentTokenType) == Tokenizer::SpecialPurpose::EndOfFile
 				};
 
-				if (std::holds_alternative<Tokenizer::Token::Type>(other.m_Token)) {
-					auto const otherTokenType{std::get<Tokenizer::Token::Type>(other.m_Token)};
-
-					return isCurrentEOF || currentTokenType == otherTokenType;
-				}
-
-				return std::get<Tokenizer::Token::Type>(m_Token) ==
-				       std::get<Tokenizer::Token>(other.m_Token).GetValueType();
+				return isCurrentEOF || currentTokenType == std::get<Tokenizer::Token::Type>(other.m_Token);
 			}
 
-			if (std::holds_alternative<Tokenizer::Token::Type>(other.m_Token)) {
-				auto const currentTokenType{std::get<Tokenizer::Token>(m_Token).GetValueType()};
-
-				return currentTokenType == std::get<Tokenizer::Token::Type>(other.m_Token);
-			}
-
-			return m_Token == other.m_Token;
+			return std::get<Tokenizer::Token>(m_Token) == std::get<Tokenizer::Token>(other.m_Token);
 		}
 
 		[[nodiscard]]
@@ -118,6 +125,9 @@ namespace jcc::preprocessor {
 		requires std::input_iterator<T> and std::default_initializable<T>;
 		{ T::end() } -> std::same_as<T>;
 		{ T::Until(Tokenizer::SpecialPurpose::EndOfFile) } -> std::same_as<T>;
+		{
+			T::Until([](Tokenizer::Token const &) { return false; })
+		} -> std::same_as<T>;
 		{ t.GetNextToken() } -> std::same_as<Tokenizer::Token>;
 	};
 
@@ -127,11 +137,9 @@ namespace jcc::preprocessor {
 
 		[[nodiscard]]
 		Tokenizer::Token GetNextToken() const;
-
-		explicit PreprocessorIterator(Preprocessor &preprocessor)
-		    : BasePreprocessorIterator{preprocessor} {
-		}
 	};
+
+	static_assert(std::input_iterator<PreprocessorIterator>);
 
 	class InternalPreprocessorIterator final : public BasePreprocessorIterator<InternalPreprocessorIterator> {
 	public:
@@ -140,6 +148,8 @@ namespace jcc::preprocessor {
 		[[nodiscard]]
 		Tokenizer::Token GetNextToken() const;
 	};
+
+	static_assert(std::input_iterator<InternalPreprocessorIterator>);
 }// namespace jcc::preprocessor
 
 #endif//PREPROCESSOR_ITERATOR_H

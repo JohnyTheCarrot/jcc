@@ -12,7 +12,7 @@
 
 namespace jcc {
 	struct Diagnosis final {
-		using Vec = std::vector<Diagnosis>;
+		using Vec  = std::vector<Diagnosis>;
 		using Data = std::optional<std::variant<char, std::string>>;
 
 		enum class Kind {
@@ -39,6 +39,9 @@ namespace jcc {
 			PP_MacroExpectedIdentifier,
 			PP_MacroExpectedCommaOrRParen,
 			PP_MacroEllipsisNotLast,
+			PP_MacroExpectedLParen,
+			PP_MacroTooFewArgs,
+			PP_MacroTooManyArgs,
 			PP_IllegalMacroRedefinition,
 			PP_IllegalMacroParameterToken,
 			PP_UnterminatedMacroParameterList,
@@ -54,10 +57,10 @@ namespace jcc {
 			Error,
 		};
 
-		Span m_Span;
+		Span  m_Span;
 		Class m_Class{};
-		Kind m_Kind{};
-		Data m_Data0{}, m_Data1{};
+		Kind  m_Kind{};
+		Data  m_Data0{}, m_Data1{};
 
 		void PrintDiagMessage() const;
 
@@ -90,14 +93,14 @@ namespace jcc {
 		void OutputLine(int lineNum, std::string const &line);
 
 		void OutputHighlight(
-			std::optional<int> const &startChar, std::optional<int> const &endChar, int lineLength,
-			Diagnosis::Class diagClass
+		        std::optional<int> const &startChar, std::optional<int> const &endChar, int lineLength,
+		        Diagnosis::Class diagClass
 		);
 	}// namespace DiagnosticsUtils
 
 	class FatalCompilerError final : public std::exception {
 		Diagnosis::Kind m_Kind;
-		Span m_Span;
+		Span            m_Span;
 
 	public:
 		FatalCompilerError(Diagnosis::Kind kind, Span span) noexcept;

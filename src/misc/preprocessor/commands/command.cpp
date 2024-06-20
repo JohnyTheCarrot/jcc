@@ -1,15 +1,23 @@
 #include "command.h"
+#include "define_command.h"
+#include "identifier_command.h"
 
-namespace jcc::preprocessor {
+namespace jcc::preprocessor::commands {
 	Command::Command(CommandMap &map, Tokenizer::Token::Type tokenType) {
 		map.emplace(tokenType, this);
 	}
 
 	PreprocessorCommandSingleton::PreprocessorCommandSingleton() {
 		m_Commands.emplace_back(std::make_unique<DefineCommand>(m_CommandMap));
+		m_Commands.emplace_back(std::make_unique<IdentifierCommand>(m_CommandMap));
 	}
 
 	CommandMap const &PreprocessorCommandSingleton::GetCommandMap() const noexcept {
 		return m_CommandMap;
 	}
-}// namespace jcc::preprocessor
+
+	PreprocessorCommandSingleton &PreprocessorCommandSingleton::GetInstance() {
+		static PreprocessorCommandSingleton instance{};
+		return instance;
+	}
+}// namespace jcc::preprocessor::commands

@@ -22,12 +22,15 @@ set(
         src/misc/Trie.h
         src/misc/preprocessor/preprocessor.h
         src/misc/preprocessor/preprocessor.cpp
-        src/misc/preprocessor/command.h
-        src/misc/preprocessor/command.cpp
+        src/misc/preprocessor/commands/command.h
+        src/misc/preprocessor/commands/command.cpp
         src/misc/preprocessor/macro.h
         src/misc/preprocessor/preprocessor_iterator.h
-        src/misc/preprocessor/define_command.cpp
+        src/misc/preprocessor/commands/define_command.cpp
         src/misc/preprocessor/preprocessor_iterator.cpp
+        src/misc/preprocessor/commands/identifier_command.h
+        src/misc/preprocessor/commands/define_command.h
+        src/misc/preprocessor/commands/identifier_command.cpp
 )
 
 add_executable("${PROJECT_NAME}"
