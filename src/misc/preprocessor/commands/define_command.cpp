@@ -1,15 +1,14 @@
-#include "command.h"
-#include "preprocessor.h"
+#include "define_command.h"
+#include "../preprocessor.h"
 
-namespace jcc::preprocessor {
+namespace jcc::preprocessor::commands {
 	macro::ReplacementList DefineCommand::GatherReplacementList(Preprocessor &preprocessor) {
 		macro::ReplacementList replacementList{};
 
-		std::copy(
-		        preprocessor.Current<InternalPreprocessorIterator>(),
-		        preprocessor.Until<InternalPreprocessorIterator>(Tokenizer::SpecialPurpose::NewLine),
-		        std::back_inserter(replacementList.m_ReplacementList)
-		);
+		auto const currentPos{preprocessor.Current<InternalPreprocessorIterator>()};
+		auto const untilNewLine{preprocessor.Until<InternalPreprocessorIterator>(Tokenizer::SpecialPurpose::NewLine)};
+
+		std::copy(currentPos, untilNewLine, std::back_inserter(replacementList.m_ReplacementList));
 
 		return replacementList;
 	}
@@ -18,7 +17,7 @@ namespace jcc::preprocessor {
 	DefineCommand::GatherParameterList(Preprocessor &preprocessor) {
 		macro::FunctionLikeMacro::ParameterList parameterList{};
 
-		Tokenizer::Token token{preprocessor.GetNextFromTokenizer(false)};
+		auto token{preprocessor.GetNextFromTokenizer(false)};
 
 		while (true) {
 			if (!std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
@@ -76,22 +75,20 @@ namespace jcc::preprocessor {
 	    : Command(map, Tokenizer::Directive::Define) {
 	}
 
-	std::optional<Tokenizer::Token> DefineCommand::Execute(Preprocessor &preprocessor) const {
+	DefineCommand::~DefineCommand() = default;
+
+	std::optional<Tokenizer::Token> DefineCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const {
 		auto nextToken{preprocessor()};
 
 		if (nextToken.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::Error)) {
-			preprocessor.Diagnose(Diagnosis::Class::Error, Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span);
-			return nextToken;
+			throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span};
 		}
 
 		auto const isIdent{std::holds_alternative<Tokenizer::Identifier>(nextToken.m_Value)};
 		auto const isKeyword{std::holds_alternative<Tokenizer::Keyword>(nextToken.m_Value)};
 
 		if (!isIdent && !isKeyword) {
-			preprocessor.Diagnose(
-			        Diagnosis::Class::Error, Diagnosis::Kind::PP_MacroExpectedIdentifier, nextToken.m_Span
-			);
-			return Tokenizer::Token{Tokenizer::SpecialPurpose::Error, nextToken.m_Span};
+			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedIdentifier, nextToken.m_Span};
 		}
 
 		std::string macroName{
@@ -109,9 +106,4 @@ namespace jcc::preprocessor {
 
 		return std::nullopt;
 	}
-
-	PreprocessorCommandSingleton &PreprocessorCommandSingleton::GetInstance() {
-		static PreprocessorCommandSingleton instance{};
-		return instance;
-	}
-}// namespace jcc::preprocessor
+}// namespace jcc::preprocessor::commands

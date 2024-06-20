@@ -1,5 +1,5 @@
-#include "misc/Preprocessor.h"
 #include "misc/Tokenizer.h"
+#include "misc/preprocessor/preprocessor.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -21,21 +21,12 @@ int main(int argCount, char *args[]) {
 
 	using namespace jcc;
 
-	Diagnosis::Vec diagnoses;
-	Preprocessor   preprocessor{std::move(filePath), inputFileStream, diagnoses};
+	Diagnosis::Vec             diagnoses;
+	preprocessor::Preprocessor preprocessor{filePath, inputFileStream, diagnoses};
 
-	while (true) {
-		const Tokenizer::Token token{preprocessor()};
-		std::cout << token << '\n';
+	std::ranges::copy(preprocessor, std::ostream_iterator<Tokenizer::Token>{std::cout, "\n"});
 
-		if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
-			if (const auto value{std::get<Tokenizer::SpecialPurpose>(token.m_Value)};
-			    value == Tokenizer::SpecialPurpose::Error || value == Tokenizer::SpecialPurpose::EndOfFile)
-				break;
-		}
-	}
-
-	for (const auto &diagnosis: diagnoses) {
+	for (auto const &diagnosis: diagnoses) {
 		diagnosis.Print();
 		std::cout << '\n';
 	}
