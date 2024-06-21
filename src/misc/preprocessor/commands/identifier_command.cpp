@@ -30,11 +30,13 @@ namespace jcc::preprocessor::commands {
 			if (!hasNext)
 				break;
 		}
-
+		auto const vaArgsIter{arguments.find(std::string{VaArgs})};
 		// if we've got variadic arguments AND the macro is not variadic, it means we've got too many arguments
-		if (auto const vaArgsIter{arguments.find(std::string{VaArgs})};
-		    vaArgsIter != arguments.end() && !fnMacro.m_IsVA)
+		if (vaArgsIter != arguments.end() && !fnMacro.m_IsVA)
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooManyArgs, span};
+
+		if (vaArgsIter == arguments.end() && fnMacro.m_IsVA)
+			arguments.emplace(VaArgs, std::vector<Tokenizer::Token>{});// add empty variadic arguments
 
 		if (arguments.size() < fnMacro.m_ParameterList.size())
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooFewArgs, span};
