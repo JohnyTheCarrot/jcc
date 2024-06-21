@@ -91,7 +91,7 @@ FN_MACRO(90)
                         TokenList{PpNumber{"90"}}
                 ),
                 std::make_tuple(
-                        "COMMA_DEF_MACRO_NOT_A_DELIMITER",
+                        "COMMA_MACRO_NOT_A_DELIMITER",
                         R"(
 #define COMMA ,
 #define FN_MACRO(a) a
@@ -199,7 +199,7 @@ VA(9, 1)
 )",
                         TokenList{
                                 Punctuator::LeftBrace, PpNumber{"9"}, Punctuator::Comma, Identifier{"someFn"},
-                                Punctuator::LeftParenthesis, PpNumber{"17"}, Punctuator::Comma, PpNumber{"1"},
+                                Punctuator::PpLeftParenthesis, PpNumber{"17"}, Punctuator::Comma, PpNumber{"1"},
                                 Punctuator::RightParenthesis, Punctuator::RightBrace
                         }
                 ),
@@ -213,7 +213,7 @@ VA(9, 1)
 )",
                         TokenList{
                                 Punctuator::LeftBrace, PpNumber{"9"}, Punctuator::Comma, Identifier{"someFn"},
-                                Punctuator::LeftParenthesis, PpNumber{"17"}, Punctuator::Comma, PpNumber{"1"},
+                                Punctuator::PpLeftParenthesis, PpNumber{"17"}, Punctuator::Comma, PpNumber{"1"},
                                 Punctuator::RightParenthesis, Punctuator::Comma, PpNumber{"1"}, Punctuator::RightBrace
                         }
                 )
