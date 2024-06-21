@@ -7,6 +7,6 @@ namespace jcc::preprocessor {
 	}
 
 	Tokenizer::Token InternalPreprocessorIterator::GetNextToken() const {
-		return m_pPreprocessor->GetNextFromTokenizer();
+		return m_pPreprocessor->GetNextFromTokenizer(false);
 	}
 }// namespace jcc::preprocessor
