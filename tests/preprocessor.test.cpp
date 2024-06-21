@@ -100,6 +100,17 @@ FN_MACRO(90 COMMA 1)
                         TokenList{PpNumber{"90"}, Punctuator::Comma, PpNumber{"1"}}
                 ),
                 std::make_tuple(
+                        "FN_MACRO_PARAM_LOCALLY_DEFINED",
+                        // test that the macro parameter is only defined within the macro
+                        // e.g. the `a` in `M1` is not the same as the `a` in `M2`
+                        R"(
+#define M1 a
+#define M2(a) M1
+M2(5)
+)",
+                        TokenList{Identifier{"a"}}
+                ),
+                std::make_tuple(
                         "MULTI_TOKEN_FN_MACRO",
                         R"(
 #define FN_MACRO(a) a + 8
@@ -152,7 +163,7 @@ NESTED(NESTED(5))
 #define VA(a, ...) {a, __VA_ARGS__}
 VA(0)
 )",
-                        TokenList{Punctuator::LeftBrace, PpNumber{"0"}, Punctuator::RightBrace}
+                        TokenList{Punctuator::LeftBrace, PpNumber{"0"}, Punctuator::Comma, Punctuator::RightBrace}
                 ),
                 std::make_tuple(
                         "VARIADIC_MACRO_WITH_MULTIPLE_ARGS",
