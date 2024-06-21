@@ -16,7 +16,7 @@ namespace jcc::preprocessor::commands {
 
 		[[nodiscard]]
 		static std::pair<bool, std::vector<Tokenizer::Token>>
-		GatherArgumentTokens(Preprocessor &preprocessor, macro::FunctionLikeMacro const &fnMacro);
+		GatherArgumentTokens(Preprocessor &preprocessor);
 
 	public:
 		explicit IdentifierCommand(CommandMap &map);
