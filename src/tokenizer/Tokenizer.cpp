@@ -1,6 +1,6 @@
 #include "Tokenizer.h"
-#include "Diagnosis.h"
-#include "compiler_data_types.h"
+#include "misc/Diagnosis.h"
+#include "misc/compiler_data_types.h"
 #include <cuchar>
 #include <magic_enum/magic_enum.hpp>
 

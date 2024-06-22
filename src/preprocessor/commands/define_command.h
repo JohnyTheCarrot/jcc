@@ -1,8 +1,8 @@
 #ifndef DEFINE_COMMAND_H
 #define DEFINE_COMMAND_H
 
-#include "../macro.h"
 #include "command.h"
+#include "preprocessor/macro.h"
 
 namespace jcc::preprocessor::commands {
 	class DefineCommand final : public Command {

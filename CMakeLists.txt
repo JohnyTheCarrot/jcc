@@ -17,22 +17,22 @@ set(
         src/misc/Preprocessor.cpp
         src/misc/Span.h
         src/misc/Span.cpp
-        src/misc/Tokenizer.h
-        src/misc/Tokenizer.cpp
+        src/tokenizer/Tokenizer.h
+        src/tokenizer/Tokenizer.cpp
         src/misc/Trie.h
-        src/misc/preprocessor/preprocessor.h
-        src/misc/preprocessor/preprocessor.cpp
-        src/misc/preprocessor/commands/command.h
-        src/misc/preprocessor/commands/command.cpp
-        src/misc/preprocessor/macro.h
-        src/misc/preprocessor/preprocessor_iterator.h
-        src/misc/preprocessor/commands/define_command.cpp
-        src/misc/preprocessor/preprocessor_iterator.cpp
-        src/misc/preprocessor/commands/identifier_command.h
-        src/misc/preprocessor/commands/define_command.h
-        src/misc/preprocessor/commands/identifier_command.cpp
-        src/misc/preprocessor/preprocessor_token.h
-        src/misc/preprocessor/preprocessor_token.cpp
+        src/preprocessor/preprocessor.h
+        src/preprocessor/preprocessor.cpp
+        src/preprocessor/commands/command.h
+        src/preprocessor/commands/command.cpp
+        src/preprocessor/macro.h
+        src/preprocessor/preprocessor_iterator.h
+        src/preprocessor/commands/define_command.cpp
+        src/preprocessor/preprocessor_iterator.cpp
+        src/preprocessor/commands/identifier_command.h
+        src/preprocessor/commands/define_command.h
+        src/preprocessor/commands/identifier_command.cpp
+        src/preprocessor/preprocessor_token.h
+        src/preprocessor/preprocessor_token.cpp
 )
 
 add_executable("${PROJECT_NAME}"

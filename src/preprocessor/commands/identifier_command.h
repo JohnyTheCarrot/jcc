@@ -1,8 +1,8 @@
 #ifndef IDENTIFIER_COMMAND_H
 #define IDENTIFIER_COMMAND_H
 
-#include "../macro.h"
 #include "command.h"
+#include "preprocessor/macro.h"
 
 namespace jcc::preprocessor {
 	class Preprocessor;

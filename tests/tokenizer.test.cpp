@@ -1,4 +1,5 @@
-#include "misc/Tokenizer.h"
+#include "tokenizer/Tokenizer.h"
+#include "misc/Diagnosis.h"
 #include <gtest/gtest.h>
 
 using namespace jcc;

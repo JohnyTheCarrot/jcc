@@ -1,10 +1,10 @@
 #ifndef JCC_TOKENIZER_H
 #define JCC_TOKENIZER_H
 
-#include "CharStream.h"
-#include "Diagnosis.h"
-#include "Trie.h"
-#include "compiler_data_types.h"
+#include "misc/CharStream.h"
+#include "misc/Diagnosis.h"
+#include "misc/Trie.h"
+#include "misc/compiler_data_types.h"
 #include <gtest/gtest-printers.h>
 #include <magic_enum/magic_enum.hpp>
 #include <string>

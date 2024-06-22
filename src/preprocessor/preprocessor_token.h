@@ -1,7 +1,7 @@
 #ifndef PREPROCESSOR_TOKEN_H
 #define PREPROCESSOR_TOKEN_H
 
-#include "../Tokenizer.h"
+#include "tokenizer/Tokenizer.h"
 
 namespace jcc::preprocessor {
 	struct PreprocessorToken final {
