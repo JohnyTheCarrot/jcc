@@ -1,8 +1,8 @@
 #ifndef PREPROCESSOR_ITERATOR_H
 #define PREPROCESSOR_ITERATOR_H
 
-#include "../Tokenizer.h"
 #include "preprocessor_token.h"
+#include "tokenizer/Tokenizer.h"
 #include <iterator>
 #include <variant>
 

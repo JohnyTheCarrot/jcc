@@ -1,5 +1,5 @@
 #include "identifier_command.h"
-#include "../preprocessor.h"
+#include "preprocessor/preprocessor.h"
 
 namespace jcc::preprocessor::commands {
 	macro::FnMacroArguments

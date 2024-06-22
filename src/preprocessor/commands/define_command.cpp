@@ -1,5 +1,5 @@
 #include "define_command.h"
-#include "../preprocessor.h"
+#include "preprocessor//preprocessor.h"
 
 namespace jcc::preprocessor::commands {
 	macro::ReplacementList DefineCommand::GatherReplacementList(Preprocessor &preprocessor) {

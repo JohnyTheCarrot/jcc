@@ -1,8 +1,8 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "../../Tokenizer.h"
-#include "../preprocessor_token.h"
+#include "preprocessor/preprocessor_token.h"
+#include "tokenizer/Tokenizer.h"
 #include <optional>
 #include <unordered_map>
 

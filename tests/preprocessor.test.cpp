@@ -1,5 +1,5 @@
-#include "misc/preprocessor/preprocessor.h"
-#include "misc/Tokenizer.h"
+#include "preprocessor/preprocessor.h"
+#include "tokenizer/Tokenizer.h"
 
 #include <gtest/gtest.h>
 

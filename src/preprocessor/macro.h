@@ -1,7 +1,7 @@
 #ifndef MACRO_H
 #define MACRO_H
 
-#include "../Tokenizer.h"
+#include "tokenizer/Tokenizer.h"
 #include <unordered_map>
 #include <vector>
 

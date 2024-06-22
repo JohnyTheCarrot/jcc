@@ -1,11 +1,12 @@
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
-#include "../Tokenizer.h"
 #include "commands/command.h"
 #include "macro.h"
+#include "misc/Diagnosis.h"
 #include "preprocessor_iterator.h"
 #include "preprocessor_token.h"
+#include "tokenizer/Tokenizer.h"
 #include <optional>
 
 namespace jcc::preprocessor {

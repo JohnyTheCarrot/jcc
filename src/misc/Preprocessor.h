@@ -1,7 +1,7 @@
 #ifndef JCC_PREPROCESSOR_H
 #define JCC_PREPROCESSOR_H
 
-#include "Tokenizer.h"
+#include "tokenizer/Tokenizer.h"
 #include <fstream>
 #include <stack>
 
@@ -132,10 +132,10 @@ namespace jcc {
 		    , m_Diagnoses{diagnoses} {
 		}
 
-		Preprocessor(Preprocessor const &)            = delete;
-		Preprocessor(Preprocessor &&)                 = delete;
-		Preprocessor &operator=(Preprocessor const &) = delete;
-		Preprocessor &operator=(Preprocessor &&)      = delete;
+		              Preprocessor(Preprocessor const &) = delete;
+		              Preprocessor(Preprocessor &&)      = delete;
+		Preprocessor &operator=(Preprocessor const &)    = delete;
+		Preprocessor &operator=(Preprocessor &&)         = delete;
 
 		Tokenizer::Token operator()();
 	};
