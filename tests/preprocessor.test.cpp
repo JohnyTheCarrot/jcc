@@ -58,6 +58,15 @@ NAME
                         TokenList{PpNumber{"1"}}
                 ),
                 std::make_tuple(
+                        "MACRO_EVALUATED_AT_INVOCATION",
+                        R"(
+#define A B
+#define B 1
+A
+)",
+                        TokenList{PpNumber{"1"}}
+                ),
+                std::make_tuple(
                         "RECURSIVE_OBJECT_LIKE_MACRO",
                         R"(
 #define NAME NAME
