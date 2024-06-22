@@ -5,8 +5,8 @@ namespace jcc::preprocessor::commands {
 	macro::ReplacementList DefineCommand::GatherReplacementList(Preprocessor &preprocessor) {
 		macro::ReplacementList replacementList{};
 
-		auto const currentPos{preprocessor.Current<InternalPreprocessorIterator>()};
-		auto const untilNewLine{preprocessor.Until<InternalPreprocessorIterator>(Tokenizer::SpecialPurpose::NewLine)};
+		auto const currentPos{preprocessor.Current<PreprocessorIteratorNoCommands>()};
+		auto const untilNewLine{preprocessor.Until<PreprocessorIteratorNoCommands>(Tokenizer::SpecialPurpose::NewLine)};
 
 		std::copy(currentPos, untilNewLine, std::back_inserter(replacementList.m_ReplacementList));
 
@@ -17,14 +17,14 @@ namespace jcc::preprocessor::commands {
 	DefineCommand::GatherParameterList(Preprocessor &preprocessor) {
 		macro::FunctionLikeMacro::ParameterList parameterList{};
 
-		auto token{preprocessor.GetNextFromTokenizer(false)};
+		auto [token, isFromMacro]{preprocessor.GetNextFromTokenizer(false)};
 
 		while (true) {
 			if (!std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
 				if (!token.IsPunctuatorKind(Tokenizer::Punctuator::Ellipsis))
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedIdentifier, token.m_Span};
 
-				token = preprocessor();
+				token = preprocessor.GetNextPreprocessorToken().m_Token;
 				if (!token.IsPunctuatorKind(Tokenizer::Punctuator::RightParenthesis)) {
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroEllipsisNotLast, token.m_Span};
 				}
@@ -34,7 +34,7 @@ namespace jcc::preprocessor::commands {
 			auto &identifier{std::get<Tokenizer::Identifier>(token.m_Value)};
 			parameterList.push_back(std::move(identifier));
 
-			token = preprocessor();
+			token = preprocessor.GetNextPreprocessorToken().m_Token;
 			if (!std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
 				throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedCommaOrRParen, token.m_Span};
 			}
@@ -49,7 +49,7 @@ namespace jcc::preprocessor::commands {
 				throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedCommaOrRParen, token.m_Span};
 			}
 
-			token = preprocessor();
+			token = preprocessor.GetNextPreprocessorToken().m_Token;
 		}
 	}
 
@@ -77,8 +77,8 @@ namespace jcc::preprocessor::commands {
 
 	DefineCommand::~DefineCommand() = default;
 
-	std::optional<Tokenizer::Token> DefineCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const {
-		auto nextToken{preprocessor()};
+	std::optional<PreprocessorToken> DefineCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const {
+		auto nextToken{preprocessor.GetNextPreprocessorToken().m_Token};
 
 		if (nextToken.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::Error)) {
 			throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span};
@@ -96,7 +96,7 @@ namespace jcc::preprocessor::commands {
 		                : Tokenizer::KeywordAsIdentString(std::get<Tokenizer::Keyword>(nextToken.m_Value))
 		};
 
-		nextToken = preprocessor();
+		nextToken = preprocessor.GetNextPreprocessorToken().m_Token;
 
 		if (nextToken.IsPunctuatorKind(Tokenizer::Punctuator::PpLeftParenthesis)) {
 			DefineFunctionLikeMacro(preprocessor, std::move(macroName));

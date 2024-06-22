@@ -2,6 +2,7 @@
 #define PREPROCESSOR_ITERATOR_H
 
 #include "../Tokenizer.h"
+#include "preprocessor_token.h"
 #include <iterator>
 #include <variant>
 
@@ -12,7 +13,9 @@ namespace jcc::preprocessor {
 	class BasePreprocessorIterator {
 		using UntilCondition = std::function<bool(Tokenizer::Token const &)>;
 
-		mutable std::variant<Tokenizer::Token::Type, Tokenizer::Token, UntilCondition> m_Token;
+		mutable std::variant<Tokenizer::Token::Type, Tokenizer::Token, UntilCondition> m_Token{
+		        Tokenizer::SpecialPurpose::EndOfFile
+		};
 
 	protected:
 		mutable Preprocessor *m_pPreprocessor{};
@@ -33,14 +36,11 @@ namespace jcc::preprocessor {
 		using difference_type   = int;
 
 		explicit BasePreprocessorIterator(Preprocessor &preprocessor)
-		    : m_Token{Tokenizer::SpecialPurpose::EndOfFile}
-		    , m_pPreprocessor{&preprocessor} {
+		    : m_pPreprocessor{&preprocessor} {
 			++(*this);
 		}
 
-		BasePreprocessorIterator()
-		    : m_Token{Tokenizer::SpecialPurpose::EndOfFile} {
-		}
+		BasePreprocessorIterator() = default;
 
 		reference operator*() const {
 			return std::get<Tokenizer::Token>(m_Token);
@@ -141,12 +141,52 @@ namespace jcc::preprocessor {
 
 	static_assert(std::input_iterator<PreprocessorIterator>);
 
-	class InternalPreprocessorIterator final : public BasePreprocessorIterator<InternalPreprocessorIterator> {
+	class PreprocessorIteratorNoCommands final : public BasePreprocessorIterator<PreprocessorIteratorNoCommands> {
 	public:
 		using BasePreprocessorIterator::BasePreprocessorIterator;
 
 		[[nodiscard]]
 		Tokenizer::Token GetNextToken() const;
+	};
+
+	static_assert(std::input_iterator<PreprocessorIteratorNoCommands>);
+
+	class InternalPreprocessorIterator final {
+		mutable Preprocessor                                           *m_pPreprocessor{};
+		mutable std::variant<Tokenizer::Token::Type, PreprocessorToken> m_Token{Tokenizer::SpecialPurpose::EndOfFile};
+
+	public:
+		using iterator_category = std::input_iterator_tag;
+		using value_type        = PreprocessorToken;
+		using reference         = value_type &;
+		using pointer           = value_type *;
+		using difference_type   = int;
+
+		InternalPreprocessorIterator();
+
+		explicit InternalPreprocessorIterator(Preprocessor &preprocessor);
+
+		reference operator*() const;
+
+		pointer operator->() const;
+
+		InternalPreprocessorIterator &operator++();
+
+		[[nodiscard]]
+		InternalPreprocessorIterator
+		operator++(int);
+
+		InternalPreprocessorIterator begin() const;
+
+		static InternalPreprocessorIterator end();
+
+		[[nodiscard]]
+		bool
+		operator==(InternalPreprocessorIterator const &other) const noexcept;
+
+		[[nodiscard]]
+		bool
+		operator!=(InternalPreprocessorIterator const &other) const noexcept;
 	};
 
 	static_assert(std::input_iterator<InternalPreprocessorIterator>);

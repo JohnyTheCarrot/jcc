@@ -31,6 +31,8 @@ set(
         src/misc/preprocessor/commands/identifier_command.h
         src/misc/preprocessor/commands/define_command.h
         src/misc/preprocessor/commands/identifier_command.cpp
+        src/misc/preprocessor/preprocessor_token.h
+        src/misc/preprocessor/preprocessor_token.cpp
 )
 
 add_executable("${PROJECT_NAME}"

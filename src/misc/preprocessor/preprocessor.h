@@ -5,6 +5,7 @@
 #include "commands/command.h"
 #include "macro.h"
 #include "preprocessor_iterator.h"
+#include "preprocessor_token.h"
 #include <optional>
 
 namespace jcc::preprocessor {
@@ -30,7 +31,7 @@ namespace jcc::preprocessor {
 		Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses);
 
 		[[nodiscard]]
-		Tokenizer::Token GetNextFromTokenizer(bool executeCommands = true);
+		PreprocessorToken GetNextFromTokenizer(bool executeCommands = true);
 
 		void RegisterMacro(std::string const &name, macro::Macro macro);
 
@@ -48,32 +49,31 @@ namespace jcc::preprocessor {
 		std::optional<std::vector<Tokenizer::Token>> GetMacroArgument(std::string const &argumentName) const;
 
 		[[nodiscard]]
-		Tokenizer::Token
-		operator()();
+		PreprocessorToken GetNextPreprocessorToken();
 
 		template<class It = PreprocessorIterator>
-		    requires IsPreprocessorIterator<It>
+		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
 		It Current() {
 			return It{*this};
 		}
 
 		template<class It = PreprocessorIterator>
-		    requires IsPreprocessorIterator<It>
+		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
 		It EndOfFile() {
 			return It::end();
 		}
 
 		template<class It = PreprocessorIterator>
-		    requires IsPreprocessorIterator<It>
+		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
 		It Until(Tokenizer::Token::Type untilType) {
 			return It::Until(untilType);
 		}
 
 		template<class It = PreprocessorIterator>
-		    requires IsPreprocessorIterator<It>
+		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
 		It Until(std::function<bool(Tokenizer::Token const &)> const &untilCondition) {
 			return It::Until(untilCondition);
