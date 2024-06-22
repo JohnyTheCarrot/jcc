@@ -1,6 +1,7 @@
 #ifndef DEFINE_COMMAND_H
 #define DEFINE_COMMAND_H
 
+#include "../macro.h"
 #include "command.h"
 
 namespace jcc::preprocessor::commands {
@@ -23,7 +24,7 @@ namespace jcc::preprocessor::commands {
 		~DefineCommand() override;
 
 		[[nodiscard]]
-		std::optional<Tokenizer::Token> Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const override;
+		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const override;
 	};
 }// namespace jcc::preprocessor::commands
 

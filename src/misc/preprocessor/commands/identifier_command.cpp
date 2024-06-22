@@ -4,7 +4,7 @@
 namespace jcc::preprocessor::commands {
 	macro::FnMacroArguments
 	IdentifierCommand::GatherArguments(Preprocessor &preprocessor, macro::FunctionLikeMacro const &fnMacro) {
-		auto const [value, span]{preprocessor()};
+		auto const [value, span]{preprocessor.GetNextPreprocessorToken().m_Token};
 		if (!std::holds_alternative<Tokenizer::Punctuator>(value))
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedLParen, span};
 
@@ -62,9 +62,13 @@ namespace jcc::preprocessor::commands {
 	std::pair<bool, std::vector<Tokenizer::Token>> IdentifierCommand::GatherArgumentTokens(Preprocessor &preprocessor) {
 		std::vector<Tokenizer::Token> argumentTokens{};
 		int                           numLeftParentheses{1};
+		auto const                    ppItStart{preprocessor.Current<InternalPreprocessorIterator>()};
+		auto const                    ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>()};
 
-		for (auto token: preprocessor) {
-			if (std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
+		for (auto &ppToken: std::ranges::subrange(ppItStart, ppItEnd)) {
+			auto &[token, isFromMacro]{ppToken};
+
+			if (!isFromMacro && std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
 				switch (std::get<Tokenizer::Punctuator>(token.m_Value)) {
 					case Tokenizer::Punctuator::LeftParenthesis:
 					case Tokenizer::Punctuator::PpLeftParenthesis:
@@ -96,7 +100,7 @@ namespace jcc::preprocessor::commands {
 
 	IdentifierCommand::~IdentifierCommand() = default;
 
-	std::optional<Tokenizer::Token>
+	std::optional<PreprocessorToken>
 	IdentifierCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&ident) const {
 		auto identifierContent{std::get<Tokenizer::Identifier>(ident.m_Value).m_Name};
 
@@ -115,14 +119,14 @@ namespace jcc::preprocessor::commands {
 
 			preprocessor.InvokeMacro(std::move(macroInvocation));
 
-			return preprocessor();// return the first token of the macro
+			return preprocessor.GetNextPreprocessorToken();// return the first token of the macro
 		}
 
 		if (auto arg{preprocessor.GetMacroArgument(identifierContent)}; arg.has_value()) {
 			preprocessor.UseMacroArguments(std::move(arg.value()));
-			return preprocessor();
+			return preprocessor.GetNextPreprocessorToken();
 		}
 
-		return ident;
+		return PreprocessorToken{ident, false};
 	}
 }// namespace jcc::preprocessor::commands

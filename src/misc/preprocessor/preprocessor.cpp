@@ -1,11 +1,11 @@
 #include "preprocessor.h"
 
 namespace jcc::preprocessor {
-	Tokenizer::Token Preprocessor::operator()() {
+	PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
 		while (true) {
-			if (auto const token{GetNextFromTokenizer()};
-			    !token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::NewLine)) {
-				return token;
+			if (auto const ppToken{GetNextFromTokenizer()};
+			    !ppToken.m_Token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::NewLine)) {
+				return ppToken;
 			}
 		}
 	}
@@ -22,42 +22,43 @@ namespace jcc::preprocessor {
 		return m_CurrentSpan;
 	}
 
-	Tokenizer::Token Preprocessor::GetNextFromTokenizer(bool executeCommands) {
+	PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
 		while (true) {
-			auto token{[this]() -> Tokenizer::Token {
+			auto ppToken{[this]() -> PreprocessorToken {
 				if (auto const token{GetTokenFromMacroArgumentReader()}; token.has_value())
-					return token.value();
+					return {token.value(), true};
 
 				if (auto const token{GetTokenFromMacroStack()}; token.has_value())
-					return token.value();
+					return {token.value(), true};
 
-				return m_Tokenizer();
+				return {m_Tokenizer(), false};
 			}()};
+			auto const &[token, span]{ppToken.m_Token};
 
-			m_CurrentSpan = token.m_Span;
+			m_CurrentSpan = span;
 
-			if (std::holds_alternative<Tokenizer::SpecialPurpose>(token.m_Value)) {
-				switch (std::get<Tokenizer::SpecialPurpose>(token.m_Value)) {
+			if (std::holds_alternative<Tokenizer::SpecialPurpose>(token)) {
+				switch (std::get<Tokenizer::SpecialPurpose>(token)) {
 					case Tokenizer::SpecialPurpose::EndOfFile:
 					case Tokenizer::SpecialPurpose::Error:
-						return token;
+						return ppToken;
 					default:
 						break;
 				}
 			}
 
 			if (!executeCommands)
-				return token;
+				return ppToken;
 
-			auto const valueType{token.GetValueType()};
+			auto const valueType{ppToken.m_Token.GetValueType()};
 			auto const commandMap{commands::PreprocessorCommandSingleton::GetInstance().GetCommandMap()};
 
 			if (auto const command{commandMap.find(valueType)}; command != commandMap.end()) {
-				if (auto const result{command->second->Execute(*this, std::move(token))}; result.has_value())
+				if (auto const result{command->second->Execute(*this, std::move(ppToken.m_Token))}; result.has_value())
 					// If the command does not return a token, it means it was a directive.
 					return result.value();
 			} else {
-				return token;
+				return ppToken;
 			}
 		}
 	}
