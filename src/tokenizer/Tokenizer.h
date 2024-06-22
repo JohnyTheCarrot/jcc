@@ -3,8 +3,8 @@
 
 #include "misc/CharStream.h"
 #include "misc/Diagnosis.h"
-#include "misc/Trie.h"
 #include "misc/compiler_data_types.h"
+#include "misc/trie.h"
 #include <gtest/gtest-printers.h>
 #include <magic_enum/magic_enum.hpp>
 #include <string>
@@ -242,8 +242,7 @@ namespace jcc {
 			bool IsTerminating() const noexcept;
 
 			[[nodiscard]]
-			bool
-			operator==(Token const &) const;
+			bool operator==(Token const &) const;
 		};
 
 	private:
@@ -552,8 +551,8 @@ namespace jcc {
 		[[nodiscard]]
 		static StringConstant::String TokenToString(Tokenizer::Token::Value const &tokenValue);
 
-		           Tokenizer(Tokenizer const &) = delete;
-		           Tokenizer(Tokenizer &&)      = delete;
+		Tokenizer(Tokenizer const &)            = delete;
+		Tokenizer(Tokenizer &&)                 = delete;
 		Tokenizer &operator=(Tokenizer const &) = delete;
 		Tokenizer &operator=(Tokenizer &&)      = delete;
 

@@ -8,6 +8,7 @@
 #include "preprocessor_token.h"
 #include "tokenizer/Tokenizer.h"
 #include <optional>
+#include <stack>
 
 namespace jcc::preprocessor {
 	constexpr std::string_view VaArgs{"__VA_ARGS__"};

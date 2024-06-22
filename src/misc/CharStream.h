@@ -1,7 +1,3 @@
-//
-// Created by tuurm on 1/31/2024.
-//
-
 #ifndef JCC_CHARSTREAM_H
 #define JCC_CHARSTREAM_H
 
@@ -11,6 +7,7 @@
 namespace jcc {
 	class InvalidBackslashException final : public std::exception {
 	public:
+		[[nodiscard]]
 		char const *what() const noexcept override {
 			return "Invalid backslash";
 		}
@@ -43,16 +40,13 @@ namespace jcc {
 		explicit operator bool() const noexcept;
 
 		[[nodiscard]]
-		bool
-		operator!() const noexcept;
+		bool operator!() const noexcept;
 
 		[[nodiscard]]
-		char
-		operator*() const noexcept;
+		char operator*() const noexcept;
 
 		[[nodiscard]]
-		bool
-		operator==(char c) const noexcept;
+		bool operator==(char c) const noexcept;
 
 		[[nodiscard]]
 		char Get() const noexcept;

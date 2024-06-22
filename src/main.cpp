@@ -1,5 +1,5 @@
-#include "misc/Tokenizer.h"
-#include "misc/preprocessor/preprocessor.h"
+#include "preprocessor/preprocessor.h"
+#include "tokenizer/Tokenizer.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>

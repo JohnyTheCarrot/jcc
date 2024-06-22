@@ -2,7 +2,7 @@
 // Created by Tuur Martens on 14/01/2024.
 //
 
-#include "misc/Trie.h"
+#include "misc/trie.h"
 #include <gtest/gtest.h>
 #include <sstream>
 

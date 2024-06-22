@@ -19,7 +19,7 @@ set(
         src/misc/Span.cpp
         src/tokenizer/Tokenizer.h
         src/tokenizer/Tokenizer.cpp
-        src/misc/Trie.h
+        src/misc/trie.h
         src/preprocessor/preprocessor.h
         src/preprocessor/preprocessor.cpp
         src/preprocessor/commands/command.h
@@ -39,6 +39,8 @@ add_executable("${PROJECT_NAME}"
         src/main.cpp
         ${SRC}
 )
+
+target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 set(TEST_PROJECT_NAME "jcc-tests")
 
