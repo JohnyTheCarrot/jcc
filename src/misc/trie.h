@@ -1,7 +1,3 @@
-//
-// Created by Tuur Martens on 12/01/2024.
-//
-
 #ifndef TRIE_H
 #define TRIE_H
 #include <algorithm>
@@ -26,7 +22,7 @@ namespace jcc {
 				std::copy_n(str, N, value);
 			}
 
-			char value[N];
+			char value[N]{};
 		};
 
 		static constexpr bool IsStringViewValid(std::basic_string_view<char> key) {
@@ -51,7 +47,7 @@ namespace jcc {
 
 		TrieNode() = default;
 
-		TrieNode(std::initializer_list<std::pair<std::basic_string_view<char>, TValue>> initList) {
+		TrieNode(std::initializer_list<std::pair<std::string_view, TValue>> initList) {
 			for (auto const &[key, value]: initList) Insert(key, value);
 		}
 
@@ -62,7 +58,7 @@ namespace jcc {
 			Insert(Key.value, value);
 		}
 
-		void Insert(std::basic_string_view<char> const &key, TValue const &value) {
+		void Insert(std::string_view key, TValue const &value) {
 			TrieNode *node{this};
 
 			for (size_t keyIdx{}; keyIdx < key.size(); ++keyIdx) {
@@ -127,7 +123,7 @@ namespace jcc {
 		}
 
 		void Clear() {
-			std::fill(m_Children.begin(), m_Children.end(), nullptr);
+			std::ranges::fill(m_Children, nullptr);
 		}
 	};
 }// namespace jcc
