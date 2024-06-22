@@ -14,7 +14,7 @@ namespace jcc::preprocessor::commands {
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedLParen, span};
 
 		macro::FnMacroArguments arguments{};
-		auto const              collectVaArgs{[&](std::vector<Tokenizer::Token> const &priorTokens) {
+		auto const              collectVaArgs{[&] {
             auto const        startIt{preprocessor.Current()};
             auto const        endIt{preprocessor.Until(Tokenizer::Punctuator::RightParenthesis)};
             std::string const vaArgsStr{VaArgs};
@@ -25,7 +25,7 @@ namespace jcc::preprocessor::commands {
         }};
 
 		if (fnMacro.m_ParameterList.empty() && fnMacro.m_IsVA) {
-			collectVaArgs(std::vector<Tokenizer::Token>{});
+			collectVaArgs();
 		} else {
 			while (true) {
 				auto [hasNext, argumentTokens]{GatherArgumentTokens(preprocessor)};
@@ -37,7 +37,7 @@ namespace jcc::preprocessor::commands {
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooManyArgs, span};
 
 				if (arguments.size() + 1 >= fnMacro.m_ParameterList.size() && fnMacro.m_IsVA) {
-					collectVaArgs(argumentTokens);
+					collectVaArgs();
 					break;
 				}
 
