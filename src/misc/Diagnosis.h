@@ -35,6 +35,7 @@ namespace jcc {
 			TK_IllegalBackslash,
 			TK_ExpectedHeaderName,
 			TK_DirectiveNotAloneOnLine,
+			TK_UnexpectedChar,
 			PP_InclDirectiveFileOpenFailed,
 			PP_MacroExpectedIdentifier,
 			PP_MacroExpectedCommaOrRParen,
@@ -99,11 +100,18 @@ namespace jcc {
 	}// namespace DiagnosticsUtils
 
 	class FatalCompilerError final : public std::exception {
+		using OptionalData = std::optional<Diagnosis::Data>;
+
 		Diagnosis::Kind m_Kind;
 		Span            m_Span;
+		OptionalData    m_Data1;
+		OptionalData    m_Data2;
 
 	public:
-		FatalCompilerError(Diagnosis::Kind kind, Span span) noexcept;
+		FatalCompilerError(
+		        Diagnosis::Kind kind, Span span, OptionalData &&data1 = std::nullopt,
+		        OptionalData &&data2 = std::nullopt
+		) noexcept;
 
 		[[nodiscard]]
 		Span const &GetSpan() const noexcept;

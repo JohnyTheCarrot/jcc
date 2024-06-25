@@ -1,7 +1,7 @@
 #ifndef JCC_PREPROCESSOR_H
 #define JCC_PREPROCESSOR_H
 
-#include "tokenizer/Tokenizer.h"
+#include "tokenizer/TokenizerOld.h"
 #include <fstream>
 #include <stack>
 
@@ -12,8 +12,7 @@ namespace jcc {
 			TokenList m_ReplacementList{};
 
 			[[nodiscard]]
-			bool
-			operator==(ReplacementList const &other) const noexcept;
+			bool operator==(ReplacementList const &other) const noexcept;
 		};
 
 		struct ObjectLikeMacro final {
@@ -21,8 +20,7 @@ namespace jcc {
 			ReplacementList                    m_ReplacementList{};
 
 			[[nodiscard]]
-			bool
-			operator==(ObjectLikeMacro const &other) const noexcept;
+			bool operator==(ObjectLikeMacro const &other) const noexcept;
 		};
 
 		struct FunctionLikeMacro final {
@@ -34,8 +32,7 @@ namespace jcc {
 			bool                               m_IsVA{};
 
 			[[nodiscard]]
-			bool
-			operator==(FunctionLikeMacro const &other) const noexcept;
+			bool operator==(FunctionLikeMacro const &other) const noexcept;
 		};
 
 		using Macro = std::variant<ObjectLikeMacro, FunctionLikeMacro>;
@@ -132,10 +129,10 @@ namespace jcc {
 		    , m_Diagnoses{diagnoses} {
 		}
 
-		              Preprocessor(Preprocessor const &) = delete;
-		              Preprocessor(Preprocessor &&)      = delete;
-		Preprocessor &operator=(Preprocessor const &)    = delete;
-		Preprocessor &operator=(Preprocessor &&)         = delete;
+		Preprocessor(Preprocessor const &)            = delete;
+		Preprocessor(Preprocessor &&)                 = delete;
+		Preprocessor &operator=(Preprocessor const &) = delete;
+		Preprocessor &operator=(Preprocessor &&)      = delete;
 
 		Tokenizer::Token operator()();
 	};

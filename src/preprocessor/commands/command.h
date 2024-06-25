@@ -2,7 +2,7 @@
 #define COMMAND_H
 
 #include "preprocessor/preprocessor_token.h"
-#include "tokenizer/Tokenizer.h"
+#include "tokenizer/TokenizerOld.h"
 #include <optional>
 #include <unordered_map>
 

@@ -9,23 +9,25 @@
 #include <fmt/core.h>
 #include <gtest/gtest-printers.h>
 
+#include <utility>
+
 namespace jcc {
 	struct SpanMarker final {
 		static constexpr int FIRST_LINE{1}, FIRST_CHAR{1};
 
 		int m_LineNumber{FIRST_LINE};
-		// FIRST_CHAR is reduced by one because the initial position of the stream is one before the first char
-		int m_CharacterIndex{FIRST_CHAR - 1};
-		int m_RealCharacterIndex{-1};
+		int m_CharacterIndex{FIRST_CHAR};
+		int m_RealCharacterIndex{0};
 
-		void NextChar(bool shouldIncrementReal = true) noexcept;
+		void NextChar(bool shouldIncrementReal = true, int number = 1) noexcept;
 
 		void NextLine() noexcept;
 
 		bool operator==(SpanMarker const &other) const noexcept;
 
 		friend void PrintTo(SpanMarker const &spanMarker, std::ostream *os) {
-			*os << spanMarker.m_LineNumber << ':' << spanMarker.m_CharacterIndex;
+			*os << spanMarker.m_LineNumber << ':' << spanMarker.m_CharacterIndex
+			    << " (real: " << spanMarker.m_RealCharacterIndex << ')';
 		}
 
 		friend std::ostream &operator<<(std::ostream &os, SpanMarker const &spanMarker) {
@@ -40,9 +42,9 @@ namespace jcc {
 		std::streampos               m_StartPos{};
 		std::istream                *m_IStream;
 
-		Span(std::shared_ptr<std::string> const &fileName, SpanMarker const &start, SpanMarker const &end,
+		Span(std::shared_ptr<std::string> fileName, SpanMarker const &start, SpanMarker const &end,
 		     std::streampos const &startPos, std::istream *inputStream) noexcept
-		    : m_FileName{fileName}
+		    : m_FileName{std::move(fileName)}
 		    , m_Start{start}
 		    , m_End{end}
 		    , m_StartPos{startPos}

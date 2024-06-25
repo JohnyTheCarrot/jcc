@@ -89,6 +89,52 @@ namespace jcc {
 			return m_Children[childIndex].get();
 		}
 
+		// [[nodiscard]]
+		// std::optional<TValue> Find(tokenizer::CharIter &charIter) const {
+		// 	TrieNode const       *node{this};
+		// 	std::optional<TValue> result{std::nullopt};
+		//
+		// 	while (node != nullptr) {
+		// 		if (charIter == tokenizer::CharIter::end())
+		// 			return result;
+		//
+		// 		auto const [spanMarker, character, isSentinel]{*charIter};
+		// 		char const charIdx{static_cast<char>(static_cast<size_t>(character) - charRangeStart)};
+		//
+		// 		if (charIdx < 0 || charIdx > m_Children.size() - 1)
+		// 			return result;
+		//
+		// 		auto const &child{node->m_Children[charIdx].get()};
+		//
+		// 		if (child == nullptr)
+		// 			return result;
+		//
+		// 		if (child->m_Leaf.has_value()) {
+		// 			result = child->m_Leaf->m_Value;
+		// 		}
+		//
+		// 		node = child;
+		// 		++charIter;
+		// 	}
+		//
+		// 	return result;
+		// }
+
+		[[nodiscard]]
+		std::pair<TrieNode const *, std::optional<Leaf>> Find(char character) const {
+			char const charIdx{static_cast<char>(static_cast<size_t>(character) - charRangeStart)};
+
+			if (charIdx < 0 || charIdx > m_Children.size() - 1)
+				return {nullptr, std::nullopt};
+
+			auto const &child{m_Children[charIdx].get()};
+
+			if (child == nullptr)
+				return {nullptr, std::nullopt};
+
+			return {child, child->m_Leaf};
+		}
+
 		[[nodiscard]]
 		std::optional<TValue> Find(std::istringstream &is, std::size_t &nCharsRead) const {
 			TrieNode const       *node{this};

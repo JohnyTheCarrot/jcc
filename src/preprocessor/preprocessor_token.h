@@ -1,7 +1,7 @@
 #ifndef PREPROCESSOR_TOKEN_H
 #define PREPROCESSOR_TOKEN_H
 
-#include "tokenizer/Tokenizer.h"
+#include "tokenizer/TokenizerOld.h"
 
 namespace jcc::preprocessor {
 	struct PreprocessorToken final {
@@ -9,8 +9,7 @@ namespace jcc::preprocessor {
 		bool             m_IsFromMacro{false};
 
 		[[nodiscard]]
-		bool
-		operator==(PreprocessorToken const &other) const noexcept;
+		bool operator==(PreprocessorToken const &other) const noexcept;
 	};
 }// namespace jcc::preprocessor
 

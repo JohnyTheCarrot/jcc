@@ -6,13 +6,14 @@
 
 namespace jcc {
 	bool SpanMarker::operator==(SpanMarker const &other) const noexcept {
-		return m_LineNumber == other.m_LineNumber && m_CharacterIndex == other.m_CharacterIndex;
+		return m_LineNumber == other.m_LineNumber && m_CharacterIndex == other.m_CharacterIndex &&
+		       m_RealCharacterIndex == other.m_RealCharacterIndex;
 	}
 
-	void SpanMarker::NextChar(bool shouldIncrementReal) noexcept {
-		++m_CharacterIndex;
+	void SpanMarker::NextChar(bool shouldIncrementReal, int number) noexcept {
+		m_CharacterIndex += number;
 		if (shouldIncrementReal)
-			++m_RealCharacterIndex;
+			m_RealCharacterIndex += number;
 	}
 
 	void SpanMarker::NextLine() noexcept {
