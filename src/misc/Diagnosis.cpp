@@ -66,6 +66,9 @@ namespace jcc {
 			case Kind::TK_DirectiveNotAloneOnLine:
 				fmt::print("A preprocessor directive must be the only item on a line.");
 				break;
+			case Kind::TK_UnexpectedChar:
+				fmt::print("Unexpected character '{}'.", std::get<char>(m_Data0.value()));
+				break;
 			case Kind::TODO:
 				fmt::print("Compiler feature unimplemented.");
 				break;
@@ -200,9 +203,13 @@ namespace jcc {
 		}
 	}// namespace DiagnosticsUtils
 
-	FatalCompilerError::FatalCompilerError(Diagnosis::Kind kind, Span span) noexcept
+	FatalCompilerError::FatalCompilerError(
+	        Diagnosis::Kind kind, Span span, OptionalData &&data1, OptionalData &&data2
+	) noexcept
 	    : m_Kind{kind}
-	    , m_Span{std::move(span)} {
+	    , m_Span{std::move(span)}
+	    , m_Data1{std::move(data1)}
+	    , m_Data2{std::move(data2)} {
 	}
 
 	Span const &FatalCompilerError::GetSpan() const noexcept {

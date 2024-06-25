@@ -6,7 +6,7 @@
 #include "misc/Diagnosis.h"
 #include "preprocessor_iterator.h"
 #include "preprocessor_token.h"
-#include "tokenizer/Tokenizer.h"
+#include "tokenizer/TokenizerOld.h"
 #include <optional>
 #include <stack>
 

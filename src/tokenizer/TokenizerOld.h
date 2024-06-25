@@ -1,5 +1,5 @@
-#ifndef JCC_TOKENIZER_H
-#define JCC_TOKENIZER_H
+#ifndef JCC_TOKENIZEROLD_H
+#define JCC_TOKENIZEROLD_H
 
 #include "misc/CharStream.h"
 #include "misc/Diagnosis.h"
@@ -568,4 +568,4 @@ namespace jcc {
 	std::ostream &operator<<(std::ostream &os, Tokenizer::Directive directive);
 }// namespace jcc
 
-#endif//JCC_TOKENIZER_H
+#endif//JCC_TOKENIZEROLD_H

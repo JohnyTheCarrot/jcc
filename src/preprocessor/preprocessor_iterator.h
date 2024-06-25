@@ -2,7 +2,7 @@
 #define PREPROCESSOR_ITERATOR_H
 
 #include "preprocessor_token.h"
-#include "tokenizer/Tokenizer.h"
+#include "tokenizer/TokenizerOld.h"
 #include <iterator>
 #include <variant>
 
@@ -86,8 +86,7 @@ namespace jcc::preprocessor {
 		}
 
 		[[nodiscard]]
-		bool
-		operator==(Super const &other) const noexcept {
+		bool operator==(Super const &other) const noexcept {
 			if (std::holds_alternative<UntilCondition>(other.m_Token)) {
 				if (!std::holds_alternative<Tokenizer::Token>(m_Token))
 					return true;// both are special purpose
@@ -114,8 +113,7 @@ namespace jcc::preprocessor {
 		}
 
 		[[nodiscard]]
-		bool
-		operator!=(Super const &other) const noexcept {
+		bool operator!=(Super const &other) const noexcept {
 			return !(*this == other);
 		}
 	};
@@ -173,20 +171,17 @@ namespace jcc::preprocessor {
 		InternalPreprocessorIterator &operator++();
 
 		[[nodiscard]]
-		InternalPreprocessorIterator
-		operator++(int);
+		InternalPreprocessorIterator operator++(int);
 
 		InternalPreprocessorIterator begin() const;
 
 		static InternalPreprocessorIterator end();
 
 		[[nodiscard]]
-		bool
-		operator==(InternalPreprocessorIterator const &other) const noexcept;
+		bool operator==(InternalPreprocessorIterator const &other) const noexcept;
 
 		[[nodiscard]]
-		bool
-		operator!=(InternalPreprocessorIterator const &other) const noexcept;
+		bool operator!=(InternalPreprocessorIterator const &other) const noexcept;
 	};
 
 	static_assert(std::input_iterator<InternalPreprocessorIterator>);

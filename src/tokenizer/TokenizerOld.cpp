@@ -1,4 +1,4 @@
-#include "Tokenizer.h"
+#include "TokenizerOld.h"
 #include "misc/Diagnosis.h"
 #include "misc/compiler_data_types.h"
 #include <cuchar>
@@ -10,11 +10,12 @@ namespace jcc {
 			return Punctuator::Dot;
 		}
 
-		Span const currentTokenSpan{GetCurrentTokenSpan()};
+		Span currentTokenSpan{GetCurrentTokenSpan()};
 		m_Current.Next();
 		if (!m_Current || m_Current != '.') {
 			m_Diagnoses.emplace_back(
-			        currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "..."
+			        std::move(currentTokenSpan), Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered,
+			        "..."
 			);
 			return SpecialPurpose::Error;
 		}
@@ -243,11 +244,12 @@ namespace jcc {
 			return Punctuator::Hash;
 		}
 
-		Span const currentTokenSpan{GetCurrentTokenSpan()};
+		Span currentTokenSpan{GetCurrentTokenSpan()};
 		m_Current.Next();
 		if (!m_Current || m_Current != ':') {
 			m_Diagnoses.emplace_back(
-			        currentTokenSpan, Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered, "%:%:"
+			        std::move(currentTokenSpan), Diagnosis::Class::Error, Diagnosis::Kind::TK_PartialTokenEncountered,
+			        "%:%:"
 			);
 			return SpecialPurpose::Error;
 		}
@@ -1182,11 +1184,7 @@ namespace jcc {
 	}
 
 	Tokenizer::Token Tokenizer::MakeToken(Tokenizer::Token::Value &&value) const {
-		auto const &token{Token{std::move(value), GetCurrentTokenSpan()}};
-
-		//	std::cout << "TK: " << token << std::endl;
-
-		return token;
+		return Token{std::move(value), GetCurrentTokenSpan()};
 	}
 
 	Span Tokenizer::GetCustomSpan() const noexcept {

@@ -3,7 +3,7 @@
 namespace jcc::preprocessor {
 	PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
 		while (true) {
-			if (auto const ppToken{GetNextFromTokenizer()};
+			if (auto ppToken{GetNextFromTokenizer()};
 			    !ppToken.m_Token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::NewLine)) {
 				return ppToken;
 			}
@@ -25,17 +25,17 @@ namespace jcc::preprocessor {
 	PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
 		while (true) {
 			auto ppToken{[this]() -> PreprocessorToken {
-				if (auto const token{GetTokenFromMacroArgumentReader()}; token.has_value())
-					return {token.value(), true};
+				if (auto token{GetTokenFromMacroArgumentReader()}; token.has_value())
+					return {std::move(token.value()), true};
 
-				if (auto const token{GetTokenFromMacroStack()}; token.has_value())
-					return {token.value(), true};
+				if (auto token{GetTokenFromMacroStack()}; token.has_value())
+					return {std::move(token.value()), true};
 
 				return {m_Tokenizer(), false};
 			}()};
-			auto const &[token, span]{ppToken.m_Token};
+			auto &[token, span]{ppToken.m_Token};
 
-			m_CurrentSpan = span;
+			m_CurrentSpan = std::move(span);
 
 			if (std::holds_alternative<Tokenizer::SpecialPurpose>(token)) {
 				switch (std::get<Tokenizer::SpecialPurpose>(token)) {
@@ -54,9 +54,9 @@ namespace jcc::preprocessor {
 			auto const commandMap{commands::PreprocessorCommandSingleton::GetInstance().GetCommandMap()};
 
 			if (auto const command{commandMap.find(valueType)}; command != commandMap.end()) {
-				if (auto const result{command->second->Execute(*this, std::move(ppToken.m_Token))}; result.has_value())
+				if (auto result{command->second->Execute(*this, std::move(ppToken.m_Token))}; result.has_value())
 					// If the command does not return a token, it means it was a directive.
-					return result.value();
+					return std::move(result.value());
 			} else {
 				return ppToken;
 			}

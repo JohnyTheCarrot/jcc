@@ -24,7 +24,7 @@ namespace jcc::preprocessor {
 	}
 
 	InternalPreprocessorIterator &InternalPreprocessorIterator::operator++() {
-		auto const ppToken{m_pPreprocessor->GetNextFromTokenizer(true)};
+		auto ppToken{m_pPreprocessor->GetNextFromTokenizer(true)};
 
 		if (auto const &[token, isFromMacro]{ppToken};
 		    token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::EndOfFile) ||
@@ -32,7 +32,7 @@ namespace jcc::preprocessor {
 		     std::get<Tokenizer::Token::Type>(m_Token) == token.GetValueType()))
 			m_Token = token.GetValueType();
 		else
-			m_Token = ppToken;
+			m_Token = std::move(ppToken);
 
 		return *this;
 	}

@@ -17,8 +17,8 @@ set(
         src/misc/Preprocessor.cpp
         src/misc/Span.h
         src/misc/Span.cpp
-        src/tokenizer/Tokenizer.h
-        src/tokenizer/Tokenizer.cpp
+        src/tokenizer/TokenizerOld.h
+        src/tokenizer/TokenizerOld.cpp
         src/misc/trie.h
         src/preprocessor/preprocessor.h
         src/preprocessor/preprocessor.cpp
@@ -33,6 +33,14 @@ set(
         src/preprocessor/commands/identifier_command.cpp
         src/preprocessor/preprocessor_token.h
         src/preprocessor/preprocessor_token.cpp
+        src/tokenizer/tokenizer.h
+        src/tokenizer/tokenizer.cpp
+        src/tokenizer/token.h
+        src/tokenizer/token.cpp
+        src/tokenizer/char_iter.h
+        src/tokenizer/char_iter.cpp
+        src/tokenizer/tokenizer_iterator.cpp
+        src/tokenizer/tokenizer_iterator.h
 )
 
 add_executable("${PROJECT_NAME}"
@@ -65,8 +73,10 @@ enable_testing()
 
 add_executable(${TEST_PROJECT_NAME} ${SRC}
         tests/preprocessor.test.cpp
-        tests/tokenizer.test.cpp
+        #        tests/tokenizer.old.test.cpp
         tests/trie.test.cpp
+        tests/char_iter.cpp
+        tests/tokenizer.test.cpp
 )
 
 target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt)
