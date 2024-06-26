@@ -49,6 +49,15 @@ namespace jcc::tokenizer {
 		explicit CharIter(char until);
 
 		[[nodiscard]]
+		std::istream *GetInput() const;
+
+		[[nodiscard]]
+		std::shared_ptr<std::string> const &GetFileName() const;
+
+		[[nodiscard]]
+		Sentinel const &GetSentinel() const;
+
+		[[nodiscard]]
 		value_type
 		operator*() const;
 

@@ -41,6 +41,10 @@ set(
         src/tokenizer/char_iter.cpp
         src/tokenizer/tokenizer_iterator.cpp
         src/tokenizer/tokenizer_iterator.h
+        src/tokenizer/tokens/static_tokens.h
+        src/tokenizer/tokens/static_tokens.cpp
+        src/tokenizer/tokens/identifiers.h
+        src/tokenizer/tokens/identifiers.cpp
 )
 
 add_executable("${PROJECT_NAME}"

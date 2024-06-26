@@ -64,6 +64,18 @@ namespace jcc::tokenizer {
 	    : m_CurrentChar{CharInfo{.m_Char = until, .m_IsSentinel = true}} {
 	}
 
+	std::istream *CharIter::GetInput() const {
+		return m_Input;
+	}
+
+	std::shared_ptr<std::string> const &CharIter::GetFileName() const {
+		return m_FileName;
+	}
+
+	CharIter::Sentinel const &CharIter::GetSentinel() const {
+		return std::get<Sentinel>(m_CurrentChar);
+	}
+
 	CharIter::value_type CharIter::operator*() const {
 		return std::get<value_type>(m_CurrentChar);
 	}
