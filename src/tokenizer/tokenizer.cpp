@@ -12,15 +12,14 @@ namespace jcc::tokenizer {
 	}
 
 	bool Tokenizer::SkipWhitespace() {
-		CharIter const untilNewline{'\n'};
-		bool           skippedWhitespace{false};
+		auto const newIt{std::find_if_not(m_CharIter, CharIter::c_UntilNewline, [](CharInfo const &charInfo) {
+			return std::isspace(charInfo.m_Char);
+		})};
 
-		while (m_CharIter != untilNewline && std::isspace(m_CharIter->m_Char)) {
-			++m_CharIter;
-			skippedWhitespace = true;
-		}
+		bool const didSkipWhitespace{m_CharIter != newIt};
+		m_CharIter = newIt;
 
-		return skippedWhitespace;
+		return didSkipWhitespace;
 	}
 
 	Tokenizer::Tokenizer(std::istream &input, std::string_view fileName)

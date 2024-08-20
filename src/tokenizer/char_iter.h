@@ -81,6 +81,8 @@ namespace jcc::tokenizer {
 		[[nodiscard]]
 		bool
 		operator!=(CharIter const &other) const;
+
+		static CharIter const c_UntilNewline;
 	};
 
 	static_assert(std::input_iterator<CharIter>);
