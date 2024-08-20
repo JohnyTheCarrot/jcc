@@ -6,7 +6,7 @@ namespace jcc::tokenizer::identifiers {
 	std::optional<SpanMarker> CollectRestOfIdentifier(CharIter &charIter, std::string &identifier) {
 		std::optional<SpanMarker> lastSpanMarker{};
 
-		for (CharIter const untilNewline{'\n'}; charIter != untilNewline; ++charIter) {
+		while (charIter != CharIter::c_UntilNewline) {
 			auto const [spanMarker, character, isSentinel]{*charIter};
 
 			if (!Identifier::IsValidChar(character))
@@ -14,6 +14,7 @@ namespace jcc::tokenizer::identifiers {
 
 			identifier.push_back(character);
 			lastSpanMarker = spanMarker;
+			++charIter;
 		}
 
 		return lastSpanMarker;
@@ -52,4 +53,4 @@ namespace jcc::tokenizer::identifiers {
 
 		return Token{.m_Value = std::move(identToken), .m_Span = std::move(span)};
 	}
-}// namespace jcc::tokenizer::identifier_tokenizer
+}// namespace jcc::tokenizer::identifiers

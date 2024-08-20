@@ -134,12 +134,11 @@ namespace jcc::tokenizer::static_tokens {
 		        charIter.GetFileName(), charIter->m_SpanMarker, charIter->m_SpanMarker, charIter.GetInput()->tellg(),
 		        charIter.GetInput()
 		};
-		CharIter const                untilNewline{'\n'};
 		std::string                   identifier{};
 		TokenTrie const              *currentNode{&m_TokenTrie};
 		std::optional<TokenTrieValue> trieResult{};
 
-		while (charIter != untilNewline) {
+		while (charIter != CharIter::c_UntilNewline) {
 			auto [spanMarker, character, isSentinel]{*charIter};
 			identifier.push_back(character);
 

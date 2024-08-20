@@ -4,6 +4,8 @@
 #include <format>
 
 namespace jcc::tokenizer {
+	CharIter const CharIter::c_UntilNewline{'\n'};
+
 	bool CharInfo::operator==(CharInfo const &other) const {
 		return m_Char == other.m_Char && m_SpanMarker == other.m_SpanMarker;
 	}
