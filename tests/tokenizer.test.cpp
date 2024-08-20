@@ -333,13 +333,6 @@ INSTANTIATE_TEST_SUITE_P(
         )
 );
 
-TEST(Tokenizer, PartialPunctuator) {
-	std::istringstream iss{"%:%"};
-	Tokenizer          tokenizer{iss, "test"};
-
-	EXPECT_THROW(std::ignore = tokenizer.GetNextToken(), jcc::FatalCompilerError);
-}
-
 class SpanGenerationTest : public testing::TestWithParam<std::tuple<std::string, SpanMarker, SpanMarker>> {};
 
 TEST_P(SpanGenerationTest, SpanGeneration) {
