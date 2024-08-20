@@ -1,5 +1,7 @@
 #include "Diagnosis.h"
+
 #include <fmt/color.h>
+#include <format>
 #include <magic_enum/magic_enum.hpp>
 #include <utility>
 
@@ -206,7 +208,8 @@ namespace jcc {
 	FatalCompilerError::FatalCompilerError(
 	        Diagnosis::Kind kind, Span span, OptionalData &&data1, OptionalData &&data2
 	) noexcept
-	    : m_Kind{kind}
+	    : m_Message{std::format("Fatal compiler error: {}", magic_enum::enum_name(kind))}
+	    , m_Kind{kind}
 	    , m_Span{std::move(span)}
 	    , m_Data1{std::move(data1)}
 	    , m_Data2{std::move(data2)} {
@@ -221,7 +224,7 @@ namespace jcc {
 	}
 
 	char const *FatalCompilerError::what() const noexcept {
-		return "Fatal compiler error.";
+		return m_Message.c_str();
 	}
 
 	std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind) {
