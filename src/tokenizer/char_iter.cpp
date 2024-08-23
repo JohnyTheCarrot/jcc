@@ -78,6 +78,14 @@ namespace jcc::tokenizer {
 		return std::get<Sentinel>(m_CurrentChar);
 	}
 
+	SpanMarker const &CharIter::GetCurrentSpanMarker() const {
+		if (std::holds_alternative<CharInfo>(m_CurrentChar)) {
+			return std::get<CharInfo>(m_CurrentChar).m_SpanMarker;
+		}
+
+		return std::get<Sentinel>(m_CurrentChar).m_LastSpanMarker;
+	}
+
 	CharIter::value_type CharIter::operator*() const {
 		return std::get<value_type>(m_CurrentChar);
 	}

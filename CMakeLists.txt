@@ -13,8 +13,8 @@ set(
         src/misc/CharStream.cpp
         src/misc/Diagnosis.h
         src/misc/Diagnosis.cpp
-        src/misc/Preprocessor.h
-        src/misc/Preprocessor.cpp
+        #        src/misc/Preprocessor.h
+        #        src/misc/Preprocessor.cpp
         src/misc/Span.h
         src/misc/Span.cpp
         src/tokenizer/TokenizerOld.h
@@ -45,6 +45,10 @@ set(
         src/tokenizer/tokens/static_tokens.cpp
         src/tokenizer/tokens/identifiers.h
         src/tokenizer/tokens/identifiers.cpp
+        src/tokenizer/tokens/character_constants.h
+        src/tokenizer/tokens/character_constants.cpp
+        src/tokenizer/tokens/escape_sequences.h
+        src/tokenizer/tokens/escape_sequences.cpp
 )
 
 add_executable("${PROJECT_NAME}"
@@ -95,7 +99,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(COMP_FLAGS --pedantic-errors)
     target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})
     target_compile_options(${TEST_PROJECT_NAME} PRIVATE ${COMP_FLAGS})
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
     set(COMP_FLAGS --pedantic-errors)
     target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})

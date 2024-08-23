@@ -26,6 +26,18 @@ namespace jcc {
 			case Kind::TK_CharHexNoDigits:
 				fmt::print("Hexadecimal character literal has no digits.");
 				break;
+			case Kind::TK_UTFCharMoreThanOneChar:
+				fmt::print("A UTF-8, UTF-16, or UTF-32 character literal must contain exactly one character.");
+				break;
+			case Kind::TK_EscapeSequenceValueTooLarge:
+				fmt::print("Escape sequence value is too large.");
+				break;
+			case Kind::TK_IntegerCharMoreThanMaxChars:
+				fmt::print("Character literal has too many characters.");
+				break;
+			case Kind::TK_OctalEscapeSequenceTooLarge:
+				fmt::print("Octal escape sequence is too large.");
+				break;
 			case Kind::TK_UnknownEscapeSequence:
 				fmt::print("Unknown escape sequence '\\{}'.", std::get<char>(m_Data0.value()));
 				break;

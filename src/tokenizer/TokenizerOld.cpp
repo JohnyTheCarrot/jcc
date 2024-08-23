@@ -786,7 +786,7 @@ namespace jcc {
 		return TokenizeIdentifierOrKeyword();
 	}
 
-	std::optional<CompilerDataTypes::Char> Tokenizer::TokenizeNumericalEscapeSequence(ValidEscapeBase base) {
+	std::optional<compiler_data_types::Char::type> Tokenizer::TokenizeNumericalEscapeSequence(ValidEscapeBase base) {
 		SaveSubTokenSpanMarker();
 
 		if (base == ValidEscapeBase::Octal) {
@@ -802,7 +802,7 @@ namespace jcc {
 				m_Current.Next();
 			}
 			value &= 0xFF;
-			return static_cast<char>(value);
+			return static_cast<compiler_data_types::Char::type>(value);
 		}
 
 		// hex, first character is 'x'
@@ -946,24 +946,24 @@ namespace jcc {
 		if (!m_Current)
 			return SpecialPurpose::Error;
 
-		SpanMarker                spanEnd;
-		CompilerDataTypes::String literalContent{};
-		auto const                terminator{type == ConstantType::String ? '"' : '\''};
+		SpanMarker  spanEnd;
+		std::string literalContent{};
+		auto const  terminator{type == ConstantType::String ? '"' : '\''};
 
 		uint32_t charConstValueMask{};
 
 		switch (prefix) {
 			case ConstantPrefix::None:
-				charConstValueMask = CompilerDataTypeInfo::INT::MASK;
+				charConstValueMask = compiler_data_types::Int::mask;
 				break;
 			case ConstantPrefix::L:
-				charConstValueMask = CompilerDataTypeInfo::WCHAR_T::MASK;
+				charConstValueMask = compiler_data_types::WChar::mask;
 				break;
 			case ConstantPrefix::u:
-				charConstValueMask = CompilerDataTypeInfo::CHAR16_T::MASK;
+				charConstValueMask = compiler_data_types::Char16::mask;
 				break;
 			case ConstantPrefix::U:
-				charConstValueMask = CompilerDataTypeInfo::CHAR32_T::MASK;
+				charConstValueMask = compiler_data_types::Char32::mask;
 				break;
 			case ConstantPrefix::u8:
 				// charConstValueMask is not relevant for character literals
@@ -1071,25 +1071,25 @@ namespace jcc {
 		uint32_t value{};
 		switch (literalContent.size()) {
 			case 4:
-				value |= (literalContent[3] & CompilerDataTypeInfo::CHAR::MASK);
-				value |= (literalContent[2] & CompilerDataTypeInfo::CHAR::MASK) << 8u;
-				value |= (literalContent[1] & CompilerDataTypeInfo::CHAR::MASK) << 16u;
-				value |= (literalContent[0] & CompilerDataTypeInfo::CHAR::MASK) << 24u;
+				value |= (literalContent[3] & compiler_data_types::Char::mask);
+				value |= (literalContent[2] & compiler_data_types::Char::mask) << 8u;
+				value |= (literalContent[1] & compiler_data_types::Char::mask) << 16u;
+				value |= (literalContent[0] & compiler_data_types::Char::mask) << 24u;
 
 				break;
 			case 3:
-				value |= literalContent[2] & CompilerDataTypeInfo::CHAR::MASK;
-				value |= (literalContent[1] & CompilerDataTypeInfo::CHAR::MASK) << 8u;
-				value |= (literalContent[0] & CompilerDataTypeInfo::CHAR::MASK) << 16u;
+				value |= literalContent[2] & compiler_data_types::Char::mask;
+				value |= (literalContent[1] & compiler_data_types::Char::mask) << 8u;
+				value |= (literalContent[0] & compiler_data_types::Char::mask) << 16u;
 
 				break;
 			case 2:
-				value |= literalContent[1] & CompilerDataTypeInfo::CHAR::MASK;
-				value |= (literalContent[0] & CompilerDataTypeInfo::CHAR::MASK) << 8u;
+				value |= literalContent[1] & compiler_data_types::Char::mask;
+				value |= (literalContent[0] & compiler_data_types::Char::mask) << 8u;
 
 				break;
 			case 1:
-				value |= literalContent[0] & CompilerDataTypeInfo::CHAR::MASK;
+				value |= literalContent[0] & compiler_data_types::Char::mask;
 
 				break;
 			default:
@@ -1157,7 +1157,7 @@ namespace jcc {
 		if (characterConstant.m_Prefix != Tokenizer::ConstantPrefix::None)
 			*os << '(' << magic_enum::enum_name(characterConstant.m_Prefix) << ") ";
 
-		if (characterConstant.m_Character <= CompilerDataTypeInfo::CHAR::max() && characterConstant.m_Character > ' ') {
+		if (characterConstant.m_Character <= compiler_data_types::Char::max() && characterConstant.m_Character > ' ') {
 			*os << '\'' << static_cast<char>(characterConstant.m_Character) << '\'';
 			return;
 		}
@@ -1313,7 +1313,7 @@ namespace jcc {
 		return SpecialPurpose::Error;
 	}
 
-	Tokenizer::StringConstant::String Tokenizer::TokenToString(Tokenizer::Token::Value const &tokenValue) {
+	std::string Tokenizer::TokenToString(Tokenizer::Token::Value const &tokenValue) {
 		if (std::holds_alternative<Identifier>(tokenValue)) {
 			return std::get<Identifier>(tokenValue).ToString();
 		}
@@ -1331,15 +1331,15 @@ namespace jcc {
 		}
 
 		if (std::holds_alternative<Punctuator>(tokenValue)) {
-			return StringConstant::String{PunctuatorToString(std::get<Punctuator>(tokenValue))};
+			return std::string{PunctuatorToString(std::get<Punctuator>(tokenValue))};
 		}
 
 		if (std::holds_alternative<Keyword>(tokenValue)) {
-			return StringConstant::String{KeywordAsIdentString(std::get<Keyword>(tokenValue))};
+			return std::string{KeywordAsIdentString(std::get<Keyword>(tokenValue))};
 		}
 
 		if (std::holds_alternative<Token::Miscellaneous>(tokenValue)) {
-			return StringConstant::String{std::get<Token::Miscellaneous>(tokenValue)};
+			return std::string{std::get<Token::Miscellaneous>(tokenValue)};
 		}
 
 		assert(false);
