@@ -134,13 +134,13 @@ namespace jcc::tokenizer::static_tokens {
 		        charIter.GetFileName(), charIter.GetCurrentSpanMarker(), charIter.GetCurrentSpanMarker(),
 		        charIter.GetInput()->tellg(), charIter.GetInput()
 		};
-		std::string                   identifier{};
+		std::string                   unrecognizedTokenBuff{};
 		TokenTrie const              *currentNode{&m_TokenTrie};
 		std::optional<TokenTrieValue> trieResult{};
 
 		while (charIter != CharIter::c_UntilNewline) {
 			auto [spanMarker, character, isSentinel]{*charIter};
-			identifier.push_back(character);
+			unrecognizedTokenBuff.push_back(character);
 
 			auto [node, leaf]{currentNode->Find(character)};
 
@@ -163,7 +163,7 @@ namespace jcc::tokenizer::static_tokens {
 
 		if (currentNode == nullptr ||
 		    !trieResult.has_value())// if we haven't reached the end of the trie or there's no trie result
-			return {.valueOrString = std::move(identifier), .endMarker = span.m_End};
+			return {.valueOrString = std::move(unrecognizedTokenBuff), .endMarker = span.m_End};
 
 		return {.valueOrString = TrieResultToTokenValue(trieResult.value()), .endMarker = span.m_End};
 	}

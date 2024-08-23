@@ -74,14 +74,14 @@ namespace jcc::tokenizer {
 			if (!std::holds_alternative<Token::Value>(valueOrString))
 				throw FatalCompilerError{Diagnosis::Kind::TK_UnexpectedChar, std::move(span)};
 
-			auto tokenValue{std::get<Token::Value>(valueOrString)};
-			if (std::holds_alternative<Punctuator>(tokenValue)) {
-				if (auto const punctuator{std::get<Punctuator>(tokenValue)};
+			auto value{std::get<Token::Value>(valueOrString)};
+			if (std::holds_alternative<Punctuator>(value)) {
+				if (auto const punctuator{std::get<Punctuator>(value)};
 				    punctuator == Punctuator::PpLeftParenthesis && skippedWhitespace)
-					tokenValue = Punctuator::LeftParenthesis;
+					value = Punctuator::LeftParenthesis;
 			}
 
-			return tokenValue;
+			return value;
 		}()};
 
 		return Token{.m_Value = tokenValue, .m_Span = std::move(span)};
