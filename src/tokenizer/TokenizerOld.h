@@ -87,9 +87,7 @@ namespace jcc {
 		};
 
 		struct StringConstant final {
-			using String = CompilerDataTypes::String;
-
-			String         m_String;
+			std::string    m_String;
 			ConstantPrefix m_Prefix;
 
 			bool operator==(StringConstant const &other) const {
@@ -242,7 +240,8 @@ namespace jcc {
 			bool IsTerminating() const noexcept;
 
 			[[nodiscard]]
-			bool operator==(Token const &) const;
+			bool
+			operator==(Token const &) const;
 		};
 
 	private:
@@ -333,7 +332,7 @@ namespace jcc {
 		[[nodiscard]]
 		Token MakeToken(Token::Value &&value) const;
 
-		std::optional<CompilerDataTypes::Char> TokenizeNumericalEscapeSequence(ValidEscapeBase base);
+		std::optional<compiler_data_types::Char::type> TokenizeNumericalEscapeSequence(ValidEscapeBase base);
 
 		enum class ConstantType {
 			Character,
@@ -549,10 +548,10 @@ namespace jcc {
 		static constexpr std::string_view PunctuatorToString(Tokenizer::Punctuator punctuator) noexcept;
 
 		[[nodiscard]]
-		static StringConstant::String TokenToString(Tokenizer::Token::Value const &tokenValue);
+		static std::string TokenToString(Tokenizer::Token::Value const &tokenValue);
 
-		Tokenizer(Tokenizer const &)            = delete;
-		Tokenizer(Tokenizer &&)                 = delete;
+		           Tokenizer(Tokenizer const &) = delete;
+		           Tokenizer(Tokenizer &&)      = delete;
 		Tokenizer &operator=(Tokenizer const &) = delete;
 		Tokenizer &operator=(Tokenizer &&)      = delete;
 

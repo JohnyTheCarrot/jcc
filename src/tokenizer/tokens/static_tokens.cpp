@@ -131,8 +131,8 @@ namespace jcc::tokenizer::static_tokens {
 
 	StaticTokenTokenizationResult Tokenize(CharIter &charIter) {
 		Span span{
-		        charIter.GetFileName(), charIter->m_SpanMarker, charIter->m_SpanMarker, charIter.GetInput()->tellg(),
-		        charIter.GetInput()
+		        charIter.GetFileName(), charIter.GetCurrentSpanMarker(), charIter.GetCurrentSpanMarker(),
+		        charIter.GetInput()->tellg(), charIter.GetInput()
 		};
 		std::string                   identifier{};
 		TokenTrie const              *currentNode{&m_TokenTrie};

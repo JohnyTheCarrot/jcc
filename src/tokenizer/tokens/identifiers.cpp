@@ -20,7 +20,7 @@ namespace jcc::tokenizer::identifiers {
 		return lastSpanMarker;
 	}
 
-	Token Tokenize(CharIter &charIter, IdentifierTokenStart const &tokenStart) {
+	Token Tokenize(CharIter const &charIter, IdentifierTokenStart const &tokenStart) {
 		if (charIter == CharIter::end()) {
 			Span span{
 			        charIter.GetFileName(), tokenStart.m_Start, charIter.GetSentinel().m_LastSpanMarker,
@@ -41,9 +41,6 @@ namespace jcc::tokenizer::identifiers {
 		identifier.reserve(partialIdentifier.length());
 		std::ranges::move(partialIdentifier, std::back_inserter(identifier));
 
-		if (auto const optSpanMarker{CollectRestOfIdentifier(charIter, identifier)}; optSpanMarker.has_value()) {
-			span.m_End = optSpanMarker.value();
-		}
 		// check if identifier contains a backslash
 		if (identifier.find('\\') != std::string::npos)
 			// TODO: Universal character names

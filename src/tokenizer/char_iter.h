@@ -58,6 +58,9 @@ namespace jcc::tokenizer {
 		Sentinel const &GetSentinel() const;
 
 		[[nodiscard]]
+		SpanMarker const &GetCurrentSpanMarker() const;
+
+		[[nodiscard]]
 		value_type
 		operator*() const;
 

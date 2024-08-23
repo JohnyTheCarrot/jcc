@@ -3,6 +3,7 @@
 
 #include "misc/Span.h"
 
+#include <misc/compiler_data_types.h>
 #include <string>
 #include <variant>
 
@@ -50,9 +51,15 @@ namespace jcc::tokenizer {
 
 	enum class ConstantPrefix { None, L, u, U, u8 };
 
+	[[nodiscard]]
+	std::pair<compiler_data_types::Char32::type, compiler_data_types::Char32::type>
+	GetConstantPrefixRange(ConstantPrefix prefix);
+
+	ConstantPrefix ToConstantPrefix(std::string_view prefix);
+
 	struct CharacterConstant final {
-		std::uint32_t  m_Character;
-		ConstantPrefix m_Prefix;
+		compiler_data_types::Char32::type m_Character;
+		ConstantPrefix                    m_Prefix;
 
 		[[nodiscard]]
 		bool
@@ -218,6 +225,8 @@ namespace jcc::tokenizer {
 	void PrintTo(Directive directive, std::ostream *os);
 
 	void PrintTo(SpecialPurpose specialPurpose, std::ostream *os);
+
+	void PrintTo(ConstantPrefix constantPrefix, std::ostream *os);
 }// namespace jcc::tokenizer
 
 #endif//JCC_TOKEN_H

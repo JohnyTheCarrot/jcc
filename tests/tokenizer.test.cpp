@@ -1,26 +1,48 @@
 #include "tokenizer/tokenizer.h"
 #include "misc/Diagnosis.h"
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <misc/compiler_data_types.h>
 
 using namespace jcc::tokenizer;
 
-using SpanMarker       = jcc::SpanMarker;
-using Diagnosis        = jcc::Diagnosis;
-using TokenList        = std::optional<Token::Value>;
-using DiagnosisKindVec = std::vector<jcc::Diagnosis::Kind>;
+using SpanMarker           = jcc::SpanMarker;
+using Diagnosis            = jcc::Diagnosis;
+using TokenList            = std::optional<Token::Value>;
+using DiagnosisKindVec     = std::vector<jcc::Diagnosis::Kind>;
+using TokenListOrException = std::variant<TokenList, jcc::Diagnosis::Kind>;
 
-using TestData = std::tuple<std::string, TokenList, DiagnosisKindVec>;
+using TestData = std::tuple<std::string, TokenListOrException, DiagnosisKindVec>;
 
 class TokenizerTest : public testing::TestWithParam<TestData> {};
 
 TEST_P(TokenizerTest, Tokenizing) {
-	std::istringstream iss{std::get<0>(GetParam())};
-	Diagnosis::Vec     diagnoses{};
-	Tokenizer          tokenizer{iss, "test"};
+	auto const expectedTokenOrException{std::get<1>(GetParam())};
 
-	auto const token{tokenizer.GetNextToken()};
-	auto const expectedToken{std::get<1>(GetParam())};
+	auto const tokenize{[] {
+		std::istringstream iss{std::get<0>(GetParam())};
+		Diagnosis::Vec     diagnoses{};
+		Tokenizer          tokenizer{iss, "test"};
+
+		return tokenizer.GetNextToken();
+	}};
+
+	if (std::holds_alternative<Diagnosis::Kind>(expectedTokenOrException)) {
+		auto const exceptionDiagKind{std::get<Diagnosis::Kind>(expectedTokenOrException)};
+		try {
+			auto const token{tokenize()};
+			FAIL() << "Expected jcc::FatalCompilerError with kind " << magic_enum::enum_name(exceptionDiagKind)
+			       << " but got no exception, got token instead: " << testing::PrintToString(token.value().m_Value);
+		} catch (jcc::FatalCompilerError const &ex) {
+			// clang-format off
+			EXPECT_EQ(exceptionDiagKind, ex.GetKind());
+			// clang-format on
+		} catch (...) { FAIL() << "Expected jcc::FatalCompilerError but got a different exception"; }
+		return;
+	}
+
+	auto const token{tokenize()};
+	auto const expectedToken{std::get<TokenList>(expectedTokenOrException)};
 
 	ASSERT_EQ(token.has_value(), expectedToken.has_value());
 
@@ -204,18 +226,17 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\6')", CharacterConstant{'\6'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\7')", CharacterConstant{'\7'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\10')", CharacterConstant{'\10'}, DiagnosisKindVec{}),
-                std::make_tuple(
-                        R"('\8')", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_UnknownEscapeSequence}
-                ),
+                std::make_tuple(R"('\8')", Diagnosis::Kind::TK_UnknownEscapeSequence, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x0')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x00')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x7B')", CharacterConstant{'\x7B'}, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"(u'\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
                 ),
-                std::make_tuple(R"('h)", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharUnterminated}),
+                std::make_tuple(R"('h)", Diagnosis::Kind::TK_CharUnterminated, DiagnosisKindVec{}),
                 std::make_tuple(
-                        R"('\')", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharUnterminated}
+                        R"('\')", Diagnosis::Kind::TK_CharUnterminated,
+                        DiagnosisKindVec{Diagnosis::Kind::TK_CharUnterminated}
                 ),
                 std::make_tuple(R"('\'')", CharacterConstant{'\''}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\"')", CharacterConstant{'\"'}, DiagnosisKindVec{}),
@@ -229,23 +250,18 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\\')", CharacterConstant{'\\'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\?')", CharacterConstant{'\?'}, DiagnosisKindVec{}),
                 std::make_tuple("'¥'", CharacterConstant{0xC2A5}, DiagnosisKindVec{Diagnosis::Kind::TK_CharOutOfRange}),
-                std::make_tuple("''", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharNoValue}),
-                std::make_tuple(
-                        R"('\x')", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_CharHexNoDigits}
-                ),
+                std::make_tuple("''", Diagnosis::Kind::TK_CharNoValue, DiagnosisKindVec{}),
+                std::make_tuple(R"('\x')", Diagnosis::Kind::TK_CharHexNoDigits, DiagnosisKindVec{}),
                 std::make_tuple(
                         "'ab'", CharacterConstant{'a' << 8 | 'b'}, DiagnosisKindVec{Diagnosis::Kind::TK_CharOutOfRange}
                 ),
                 std::make_tuple(
                         "u'ab'",
-                        CharacterConstant{('a' << 8 | 'b') & CompilerDataTypeInfo::CHAR16_T::MASK, ConstantPrefix::u},
+                        CharacterConstant{('a' << 8 | 'b') & jcc::compiler_data_types::Char16::mask, ConstantPrefix::u},
                         DiagnosisKindVec{}
                 ),
                 std::make_tuple("L'a'", CharacterConstant{'a', ConstantPrefix::L}, DiagnosisKindVec{}),
-                std::make_tuple(
-                        R"('\u0099')", SpecialPurpose::Error,
-                        DiagnosisKindVec{Diagnosis::Kind::TK_IllegalUniversalCharacterName}
-                ),
+                std::make_tuple(R"('\u0099')", Diagnosis::Kind::TK_IllegalUniversalCharacterName, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"('\U00000099')", SpecialPurpose::Error,
                         DiagnosisKindVec{Diagnosis::Kind::TK_IllegalUniversalCharacterName}

@@ -5,6 +5,9 @@
 #include "tokenizer/token.h"
 
 namespace jcc::tokenizer::identifiers {
+	[[nodiscard]]
+	std::optional<SpanMarker> CollectRestOfIdentifier(CharIter &charIter, std::string &identifier);
+
 	struct IdentifierTokenStart final {
 		std::string    m_Identifier{};
 		SpanMarker     m_Start{};
@@ -12,7 +15,7 @@ namespace jcc::tokenizer::identifiers {
 	};
 
 	[[nodiscard]]
-	Token Tokenize(CharIter &charIter, IdentifierTokenStart const &tokenStart);
-}// namespace jcc::tokenizer::identifier_tokenizer
+	Token Tokenize(CharIter const &charIter, IdentifierTokenStart const &tokenStart);
+}// namespace jcc::tokenizer::identifiers
 
 #endif//IDENTIFIER_TOKENIZER_H

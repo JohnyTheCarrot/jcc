@@ -1,5 +1,6 @@
 #include "tokenizer/tokenizer.h"
 #include "misc/Diagnosis.h"
+#include "tokens/character_constants.h"
 #include "tokens/identifiers.h"
 #include "tokens/static_tokens.h"
 
@@ -36,7 +37,7 @@ namespace jcc::tokenizer {
 			return std::nullopt;
 
 		Span span{
-		        m_CharIter.GetFileName(), m_CharIter->m_SpanMarker, m_CharIter->m_SpanMarker,
+		        m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetCurrentSpanMarker(),
 		        m_CharIter.GetInput()->tellg(), m_CharIter.GetInput()
 		};
 		if (m_CharIter->m_Char == '\n') {
@@ -47,17 +48,26 @@ namespace jcc::tokenizer {
 		auto [valueOrString, trieResultEndMarker]{static_tokens::Tokenize(m_CharIter)};
 		span.m_End = trieResultEndMarker;
 
-		if (couldBeIdentifier && std::holds_alternative<std::string>(valueOrString)) {
-			auto &partialIdentifier{std::get<std::string>(valueOrString)};
+		if (std::holds_alternative<std::string>(valueOrString)) {
+			auto identifier{std::get<std::string>(valueOrString)};
 
-			return identifiers::Tokenize(
-			        m_CharIter,
-			        identifiers::IdentifierTokenStart{
-			                .m_Identifier = std::move(partialIdentifier),
-			                .m_Start      = span.m_Start,
-			                .m_StartPos   = span.m_StartPos,
-			        }
-			);
+			if (identifier == "'") {
+				return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+			}
+			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);
+
+			// ConstantPrefix const prefix{ToConstantPrefix(identifier)};
+			if (identifier == "'") {}
+
+			if (couldBeIdentifier)
+				return identifiers::Tokenize(
+				        m_CharIter,
+				        identifiers::IdentifierTokenStart{
+				                .m_Identifier = std::move(identifier),
+				                .m_Start      = span.m_Start,
+				                .m_StartPos   = span.m_StartPos,
+				        }
+				);
 		}
 
 		auto const tokenValue{[&]() -> Token::Value {

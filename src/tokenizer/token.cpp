@@ -33,6 +33,40 @@ namespace jcc::tokenizer {
 		return m_Number == other.m_Number;
 	}
 
+	std::pair<compiler_data_types::Char32::type, compiler_data_types::Char32::type>
+	GetConstantPrefixRange(ConstantPrefix prefix) {
+		switch (prefix) {
+			case ConstantPrefix::None:
+			case ConstantPrefix::u8:
+				return std::pair{compiler_data_types::Char::min(), compiler_data_types::Char::max()};
+			case ConstantPrefix::L:
+				return std::pair{compiler_data_types::WChar::min(), compiler_data_types::WChar::max()};
+			case ConstantPrefix::u:
+				return std::pair{compiler_data_types::Char16::min(), compiler_data_types::Char16::max()};
+			case ConstantPrefix::U:
+				return std::pair{compiler_data_types::Char32::min(), compiler_data_types::Char32::max()};
+			default:
+				assert(false);
+				return {};
+		}
+	}
+
+	ConstantPrefix ToConstantPrefix(std::string_view prefix) {
+		if (prefix == "L")
+			return ConstantPrefix::L;
+
+		if (prefix == "u")
+			return ConstantPrefix::u;
+
+		if (prefix == "U")
+			return ConstantPrefix::U;
+
+		if (prefix == "u8")
+			return ConstantPrefix::u8;
+
+		return ConstantPrefix::None;
+	}
+
 	void PrintTo(PpNumber const &ppNumber, std::ostream *os) {
 		*os << "PpNumber(" << ppNumber.m_Number << ')';
 	}
@@ -45,7 +79,7 @@ namespace jcc::tokenizer {
 		if (characterConstant.m_Prefix != ConstantPrefix::None)
 			*os << '(' << magic_enum::enum_name(characterConstant.m_Prefix) << ") ";
 
-		if (characterConstant.m_Character <= static_cast<std::uint32_t>(CompilerDataTypeInfo::CHAR::max()) &&
+		if (characterConstant.m_Character <= static_cast<std::uint32_t>(compiler_data_types::Char::max()) &&
 		    characterConstant.m_Character > ' ') {
 			*os << '\'' << static_cast<char>(characterConstant.m_Character) << '\'';
 			return;
@@ -97,6 +131,10 @@ namespace jcc::tokenizer {
 
 	void PrintTo(SpecialPurpose specialPurpose, std::ostream *os) {
 		*os << "SpecialPurpose::" << magic_enum::enum_name(specialPurpose);
+	}
+
+	void PrintTo(ConstantPrefix constantPrefix, std::ostream *os) {
+		*os << "CharacterConstant::" << magic_enum::enum_name(constantPrefix);
 	}
 
 	void PrintTo(StringConstant const &stringConstant, std::ostream *os) {
