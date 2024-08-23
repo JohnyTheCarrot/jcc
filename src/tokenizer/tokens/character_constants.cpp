@@ -76,7 +76,7 @@ namespace jcc::tokenizer::character_constants {
 
 		auto const result{std::accumulate(
 		        characters.begin(), characters.end(), compiler_data_types::Char32::type{0},
-		        [](auto acc, auto ch) { return (acc << sizeof(char)) | ch; }
+		        [](auto acc, auto ch) { return (acc << (sizeof(char) * 8)) | ch; }
 		)};
 
 		return Token{
