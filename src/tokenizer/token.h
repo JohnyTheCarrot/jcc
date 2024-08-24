@@ -186,6 +186,9 @@ namespace jcc::tokenizer {
 		Noreturn,
 		StaticAssert,
 		ThreadLocal,
+		False,
+		True,
+		Nullptr,
 	};
 
 	enum class Directive { Include, Define, Undef, Line, Error, Pragma, If, Ifdef, Ifndef, Elif, Else, Endif };

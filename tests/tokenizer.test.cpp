@@ -109,7 +109,10 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("_Imaginary", Keyword::Imaginary, DiagnosisKindVec{}),
                 std::make_tuple("_Noreturn", Keyword::Noreturn, DiagnosisKindVec{}),
                 std::make_tuple("_Static_assert", Keyword::StaticAssert, DiagnosisKindVec{}),
-                std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{})
+                std::make_tuple("_Thread_local", Keyword::ThreadLocal, DiagnosisKindVec{}),
+                std::make_tuple("false", Keyword::False, DiagnosisKindVec{}),
+                std::make_tuple("true", Keyword::True, DiagnosisKindVec{}),
+                std::make_tuple("nullptr", Keyword::Nullptr, DiagnosisKindVec{})
         )
 );
 
