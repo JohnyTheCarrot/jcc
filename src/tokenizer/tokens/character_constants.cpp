@@ -64,7 +64,8 @@ namespace jcc::tokenizer::character_constants {
 		}
 
 		// A UTF-8, UTF-16, or UTF-32 character constant shall not contain more than one character.
-		if (characters.size() > 1 && prefix != ConstantPrefix::None) {
+		// Notably, this requirement excludes wide character constants.
+		if (characters.size() > 1 && prefix != ConstantPrefix::None && prefix != ConstantPrefix::L) {
 			throw FatalCompilerError{Diagnosis::Kind::TK_UTFCharMoreThanOneChar, std::move(span)};
 		}
 
