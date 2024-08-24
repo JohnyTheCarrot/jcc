@@ -262,7 +262,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("u'a'", CharacterConstant{'a', ConstantPrefix::u}, DiagnosisKindVec{}),
                 std::make_tuple("u8'b'", CharacterConstant{'b', ConstantPrefix::u8}, DiagnosisKindVec{}),
                 std::make_tuple("U'c'", CharacterConstant{'c', ConstantPrefix::U}, DiagnosisKindVec{}),
-                std::make_tuple("L'd'", CharacterConstant{'b', ConstantPrefix::L}, DiagnosisKindVec{}),
+                std::make_tuple("L'd'", CharacterConstant{'d', ConstantPrefix::L}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\u0099')", Diagnosis::Kind::TK_IllegalUniversalCharacterName, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"('\U00000099')", SpecialPurpose::Error,
