@@ -258,7 +258,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple("u'ab'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
                 std::make_tuple("u8'cd'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
                 std::make_tuple("U'ef'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
-                std::make_tuple("L'gh'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
+                std::make_tuple("L'gh'", CharacterConstant{'g' << 8 | 'h', ConstantPrefix::L}, DiagnosisKindVec{}),
                 std::make_tuple("u'a'", CharacterConstant{'a', ConstantPrefix::u}, DiagnosisKindVec{}),
                 std::make_tuple("u8'b'", CharacterConstant{'b', ConstantPrefix::u8}, DiagnosisKindVec{}),
                 std::make_tuple("U'c'", CharacterConstant{'c', ConstantPrefix::U}, DiagnosisKindVec{}),
