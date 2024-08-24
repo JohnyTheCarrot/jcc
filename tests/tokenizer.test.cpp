@@ -304,9 +304,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"("hello world")", StringConstant{"hello world"}, DiagnosisKindVec{}),
                 std::make_tuple(R"("hello\nworld")", StringConstant{"hello\nworld"}, DiagnosisKindVec{}),
                 std::make_tuple(R"("hello\\nworld")", StringConstant{R"(hello\nworld)"}, DiagnosisKindVec{}),
-                std::make_tuple(
-                        R"("hello world)", SpecialPurpose::Error, DiagnosisKindVec{Diagnosis::Kind::TK_StrUnterminated}
-                ),
+                std::make_tuple(R"("hello world)", Diagnosis::Kind::TK_StrUnterminated, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"(L"hello world")", StringConstant{"hello world", ConstantPrefix::L}, DiagnosisKindVec{}
                 ),

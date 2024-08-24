@@ -1,8 +1,11 @@
 #ifndef CHARACTER_CONSTANTS_H
 #define CHARACTER_CONSTANTS_H
 
-#include "tokenizer/char_iter.h"
 #include "tokenizer/token.h"
+
+namespace jcc::tokenizer {
+	class CharIter;
+}
 
 namespace jcc::tokenizer::character_constants {
 	[[nodiscard]]
