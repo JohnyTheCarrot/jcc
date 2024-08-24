@@ -24,6 +24,33 @@ namespace jcc::tokenizer {
 		return didSkipWhitespace;
 	}
 
+	void Tokenizer::SkipLineComment() {
+		while (m_CharIter != CharIter::c_UntilNewline) ++m_CharIter;
+	}
+
+	void Tokenizer::SkipBlockComment(Span &span) {
+		while (true) {
+			if (m_CharIter == CharIter::end()) {
+				span.m_End = m_CharIter.GetSentinel().m_LastSpanMarker;
+				throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, std::move(span)};
+			}
+			if (m_CharIter->m_Char == '*') {
+				++m_CharIter;
+				if (m_CharIter == CharIter::end()) {
+					span.m_End = m_CharIter.GetSentinel().m_LastSpanMarker;
+					throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, std::move(span)};
+				}
+
+				if (m_CharIter->m_Char == '/') {
+					++m_CharIter;
+					return;
+				}
+			}
+
+			++m_CharIter;
+		}
+	}
+
 	Tokenizer::Tokenizer(std::istream &input, std::string_view fileName)
 	    : m_CharIter{input, fileName} {
 	}
@@ -41,18 +68,18 @@ namespace jcc::tokenizer {
 		        m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetCurrentSpanMarker(),
 		        m_CharIter.GetInput()->tellg(), m_CharIter.GetInput()
 		};
-		if (m_CharIter->m_Char == '\n') {
-			return Token{SpecialPurpose::NewLine, std::move(span)};
-		}
 
-		if (m_CharIter->m_Char == '\'') {
-			++m_CharIter;
-			return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
-		}
-
-		if (m_CharIter->m_Char == '"') {
-			++m_CharIter;
-			return string_literals::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+		switch (m_CharIter->m_Char) {
+			case '\n':
+				return Token{SpecialPurpose::NewLine, std::move(span)};
+			case '\'':
+				++m_CharIter;
+				return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+			case '"':
+				++m_CharIter;
+				return string_literals::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+			default:
+				break;
 		}
 
 		bool const couldBeIdentifier{Identifier::IsValidFirstChar(m_CharIter->m_Char)};
@@ -102,6 +129,20 @@ namespace jcc::tokenizer {
 
 			return value;
 		}()};
+
+		if (std::holds_alternative<SpecialPurpose>(tokenValue)) {
+			auto const specialPurpose{std::get<SpecialPurpose>(tokenValue)};
+
+			if (specialPurpose == SpecialPurpose::LineComment) {
+				SkipLineComment();
+				return GetNextToken();
+			}
+
+			if (specialPurpose == SpecialPurpose::BlockComment) {
+				SkipBlockComment(span);
+				return GetNextToken();
+			}
+		}
 
 		return Token{.m_Value = tokenValue, .m_Span = std::move(span)};
 	}

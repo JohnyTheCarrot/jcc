@@ -2,7 +2,7 @@
 #include "misc/trie.h"
 
 namespace jcc::tokenizer::static_tokens {
-	using TokenTrieValue = std::variant<Keyword, Directive, Punctuator>;
+	using TokenTrieValue = std::variant<Keyword, Directive, Punctuator, SpecialPurpose>;
 
 	using TokenTrie = TrieNode<'!', '~', TokenTrieValue>;
 	TokenTrie const m_TokenTrie{
@@ -119,6 +119,8 @@ namespace jcc::tokenizer::static_tokens {
 	        {"%:%:", Punctuator::HashHash},
 	        {"!", Punctuator::ExclamationMark},
 	        {"!=", Punctuator::ExclamationMarkEqual},
+	        {"//", SpecialPurpose::LineComment},
+	        {"/*", SpecialPurpose::BlockComment},
 	};
 
 	[[nodiscard]]
@@ -128,6 +130,9 @@ namespace jcc::tokenizer::static_tokens {
 
 		if (std::holds_alternative<Directive>(value))
 			return std::get<Directive>(value);
+
+		if (std::holds_alternative<SpecialPurpose>(value))
+			return std::get<SpecialPurpose>(value);
 
 		return std::get<Punctuator>(value);
 	}
@@ -158,7 +163,8 @@ namespace jcc::tokenizer::static_tokens {
 
 			span.m_End = spanMarker;
 
-			currentNode = node;
+			if (!std::isspace(character))
+				currentNode = node;
 
 			if (node == nullptr) {
 				if (charIter != CharIter::end())

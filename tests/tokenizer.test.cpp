@@ -2,7 +2,6 @@
 #include "misc/Diagnosis.h"
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
-#include <misc/compiler_data_types.h>
 
 using namespace jcc::tokenizer;
 
@@ -324,6 +323,21 @@ INSTANTIATE_TEST_SUITE_P(
                 ),
                 std::make_tuple("'\\\na'", CharacterConstant{'a'}, DiagnosisKindVec{}),
                 std::make_tuple(R"(invalidEs\cape)", Diagnosis::Kind::TK_IllegalBackslash, DiagnosisKindVec{})
+        )
+);
+
+INSTANTIATE_TEST_SUITE_P(
+        Comments, TokenizerTest,
+        testing::Values(
+                std::make_tuple("// float", std::nullopt, DiagnosisKindVec{}),
+                std::make_tuple("/* int */ float", Keyword::Float, DiagnosisKindVec{}),
+                std::make_tuple(
+                        R"(/*
+this is supposed to be skipped
+*/ true
+			)",
+                        Keyword::True, DiagnosisKindVec{}
+                )
         )
 );
 

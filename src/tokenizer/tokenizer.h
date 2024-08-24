@@ -22,6 +22,10 @@ namespace jcc::tokenizer {
 		[[nodiscard]]
 		bool SkipWhitespace();
 
+		void SkipLineComment();
+
+		void SkipBlockComment(Span &span);
+
 	public:
 		explicit Tokenizer(std::istream &input, std::string_view fileName);
 
