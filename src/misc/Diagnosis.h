@@ -106,7 +106,7 @@ namespace jcc {
 	class FatalCompilerError final : public std::exception {
 		using OptionalData = std::optional<Diagnosis::Data>;
 
-		std::string    m_Message;
+		std::string     m_Message;
 		Diagnosis::Kind m_Kind;
 		Span            m_Span;
 		OptionalData    m_Data1;

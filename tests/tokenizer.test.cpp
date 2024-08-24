@@ -231,7 +231,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\x00')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x7B')", CharacterConstant{'\x7B'}, DiagnosisKindVec{}),
                 std::make_tuple(
-                        R"(u'\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
+                        R"('\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
                 ),
                 std::make_tuple(R"('h)", Diagnosis::Kind::TK_CharUnterminated, DiagnosisKindVec{}),
                 std::make_tuple(
@@ -255,12 +255,14 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(
                         "'ab'", CharacterConstant{'a' << 8 | 'b'}, DiagnosisKindVec{Diagnosis::Kind::TK_CharOutOfRange}
                 ),
-                std::make_tuple(
-                        "u'ab'",
-                        CharacterConstant{('a' << 8 | 'b') & jcc::compiler_data_types::Char16::mask, ConstantPrefix::u},
-                        DiagnosisKindVec{}
-                ),
-                std::make_tuple("L'a'", CharacterConstant{'a', ConstantPrefix::L}, DiagnosisKindVec{}),
+                std::make_tuple("u'ab'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
+                std::make_tuple("u8'cd'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
+                std::make_tuple("U'ef'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
+                std::make_tuple("L'gh'", Diagnosis::Kind::TK_UTFCharMoreThanOneChar, DiagnosisKindVec{}),
+                std::make_tuple("u'a'", CharacterConstant{'a', ConstantPrefix::u}, DiagnosisKindVec{}),
+                std::make_tuple("u8'b'", CharacterConstant{'b', ConstantPrefix::u8}, DiagnosisKindVec{}),
+                std::make_tuple("U'c'", CharacterConstant{'c', ConstantPrefix::U}, DiagnosisKindVec{}),
+                std::make_tuple("L'd'", CharacterConstant{'b', ConstantPrefix::L}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\u0099')", Diagnosis::Kind::TK_IllegalUniversalCharacterName, DiagnosisKindVec{}),
                 std::make_tuple(
                         R"('\U00000099')", SpecialPurpose::Error,
