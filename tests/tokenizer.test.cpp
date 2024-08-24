@@ -231,7 +231,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(R"('\x00')", CharacterConstant{'\0'}, DiagnosisKindVec{}),
                 std::make_tuple(R"('\x7B')", CharacterConstant{'\x7B'}, DiagnosisKindVec{}),
                 std::make_tuple(
-                        R"('\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::u}, DiagnosisKindVec{}
+                        R"('\1234')", CharacterConstant{('\123' << 8) | '4', ConstantPrefix::None}, DiagnosisKindVec{}
                 ),
                 std::make_tuple(R"('h)", Diagnosis::Kind::TK_CharUnterminated, DiagnosisKindVec{}),
                 std::make_tuple(
