@@ -55,6 +55,7 @@ namespace jcc::tokenizer {
 	std::pair<compiler_data_types::Char32::type, compiler_data_types::Char32::type>
 	GetConstantPrefixRange(ConstantPrefix prefix);
 
+	[[nodiscard]]
 	ConstantPrefix ToConstantPrefix(std::string_view prefix);
 
 	struct CharacterConstant final {

@@ -44,6 +44,10 @@ namespace jcc::tokenizer {
 			return Token{SpecialPurpose::NewLine, std::move(span)};
 		}
 
+		if (m_CharIter->m_Char == '\'') {
+			++m_CharIter;
+			return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+		}
 		bool const couldBeIdentifier{Identifier::IsValidFirstChar(m_CharIter->m_Char)};
 		auto [valueOrString, trieResultEndMarker]{static_tokens::Tokenize(m_CharIter)};
 		span.m_End = trieResultEndMarker;
@@ -51,13 +55,13 @@ namespace jcc::tokenizer {
 		if (std::holds_alternative<std::string>(valueOrString)) {
 			auto identifier{std::get<std::string>(valueOrString)};
 
-			if (identifier == "'") {
-				return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+			if (m_CharIter != CharIter::end() && m_CharIter->m_Char == '\'') {
+				++m_CharIter;
+				ConstantPrefix const prefix{ToConstantPrefix(identifier)};
+				return character_constants::Tokenize(m_CharIter, prefix, span.m_Start);
 			}
-			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);
 
-			// ConstantPrefix const prefix{ToConstantPrefix(identifier)};
-			if (identifier == "'") {}
+			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);
 
 			if (couldBeIdentifier)
 				return identifiers::Tokenize(

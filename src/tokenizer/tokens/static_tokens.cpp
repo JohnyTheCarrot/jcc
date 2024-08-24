@@ -140,6 +140,11 @@ namespace jcc::tokenizer::static_tokens {
 
 		while (charIter != CharIter::c_UntilNewline) {
 			auto [spanMarker, character, isSentinel]{*charIter};
+
+			// TODO: this feels like a hack, but basically we don't want to add the quote to the unrecognized token buffer because we want to handle it separately
+			if (character == '\'' || character == '"')
+				break;
+
 			unrecognizedTokenBuff.push_back(character);
 
 			auto [node, leaf]{currentNode->Find(character)};
