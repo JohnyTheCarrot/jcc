@@ -27,6 +27,7 @@ namespace jcc {
 			TK_OctalEscapeSequenceTooLarge,
 			TK_EscapeSequenceValueTooLarge,
 			TK_UnknownEscapeSequence,
+			TK_PreprocessingNumberInvalid,
 			UnexpectedEOF,
 			TK_PartialTokenEncountered,
 			TK_UnknownDirective,

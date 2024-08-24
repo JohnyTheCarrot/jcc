@@ -53,6 +53,8 @@ set(
         src/tokenizer/tokens/string_literals.cpp
         src/tokenizer/tokens/utils.h
         src/tokenizer/tokens/utils.cpp
+        src/tokenizer/tokens/pp_numbers.h
+        src/tokenizer/tokens/pp_numbers.cpp
 )
 
 add_executable("${PROJECT_NAME}"

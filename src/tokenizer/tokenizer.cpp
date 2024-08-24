@@ -2,6 +2,7 @@
 #include "misc/Diagnosis.h"
 #include "tokens/character_constants.h"
 #include "tokens/identifiers.h"
+#include "tokens/pp_numbers.h"
 #include "tokens/static_tokens.h"
 #include "tokens/string_literals.h"
 
@@ -82,6 +83,10 @@ namespace jcc::tokenizer {
 				break;
 		}
 
+		if (m_CharIter != CharIter::end() && std::isdigit(m_CharIter->m_Char)) {
+			return pp_numbers::Tokenize(m_CharIter, span.m_Start, false);
+		}
+
 		bool const couldBeIdentifier{Identifier::IsValidFirstChar(m_CharIter->m_Char)};
 		auto [valueOrString, trieResultEndMarker]{static_tokens::Tokenize(m_CharIter)};
 		span.m_End = trieResultEndMarker;
@@ -129,6 +134,13 @@ namespace jcc::tokenizer {
 
 			return value;
 		}()};
+
+		if (std::holds_alternative<Punctuator>(tokenValue)) {
+			if (auto const punctuator{std::get<Punctuator>(tokenValue)};
+			    punctuator == Punctuator::Dot && m_CharIter != CharIter::end() && std::isdigit(m_CharIter->m_Char)) {
+				return pp_numbers::Tokenize(m_CharIter, span.m_Start, true);
+			}
+		}
 
 		if (std::holds_alternative<SpecialPurpose>(tokenValue)) {
 			auto const specialPurpose{std::get<SpecialPurpose>(tokenValue)};
