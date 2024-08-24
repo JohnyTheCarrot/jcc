@@ -197,7 +197,8 @@ namespace jcc::tokenizer {
 		EndOfFile,
 		Error,
 		NewLine,
-		Comment,
+		LineComment,
+		BlockComment,
 	};
 
 	struct Token {
