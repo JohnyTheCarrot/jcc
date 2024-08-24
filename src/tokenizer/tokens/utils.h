@@ -24,6 +24,9 @@ namespace jcc::tokenizer::utils {
 	std::optional<compiler_data_types::Char32::type> ReadSingleCharacter(
 	        CharIter &charIter, ConstantPrefix prefix, SpanMarker const &startMarker, ConstantType constantType
 	);
+
+	[[nodiscard]]
+	bool IsNonDigit(char c);
 }// namespace jcc::tokenizer::utils
 
 #endif//UTILS_H

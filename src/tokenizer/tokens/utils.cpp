@@ -39,4 +39,8 @@ namespace jcc::tokenizer::utils {
 
 		return static_cast<compiler_data_types::Char32::type>(c);
 	}
+
+	bool IsNonDigit(char c) {
+		return std::isalpha(c) || c == '_';
+	}
 }// namespace jcc::tokenizer::utils

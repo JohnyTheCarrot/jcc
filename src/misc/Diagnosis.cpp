@@ -130,6 +130,9 @@ namespace jcc {
 			case Kind::PP_HashNotFollowedByParameter:
 				fmt::print("'#' not followed by a macro parameter.");
 				break;
+			case Kind::TK_PreprocessingNumberInvalid:
+				fmt::print("Invalid preprocessing number.");
+				break;
 		}
 	}
 
