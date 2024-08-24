@@ -322,11 +322,8 @@ INSTANTIATE_TEST_SUITE_P(
                         "\"Why must you \\\nhurt me so?\"", StringConstant{"Why must you hurt me so?"},
                         DiagnosisKindVec{}
                 ),
-                std::make_tuple("'\\\na'", CharacterConstant{'a'}, DiagnosisKindVec{})
-                // std::make_tuple(
-                //         R"(invalidEs\cape)", SpecialPurpose::Error,
-                //         DiagnosisKindVec{Diagnosis::Kind::TK_IllegalBackslash}
-                // )
+                std::make_tuple("'\\\na'", CharacterConstant{'a'}, DiagnosisKindVec{}),
+                std::make_tuple(R"(invalidEs\cape)", Diagnosis::Kind::TK_IllegalBackslash, DiagnosisKindVec{})
         )
 );
 

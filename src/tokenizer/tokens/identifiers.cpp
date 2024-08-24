@@ -27,6 +27,10 @@ namespace jcc::tokenizer::identifiers {
 			        charIter.GetInput()->tellg(), charIter.GetInput()
 			};
 
+			// check if identifier contains a backslash
+			if (tokenStart.m_Identifier.find('\\') != std::string::npos)
+				// TODO: Universal character names
+				throw FatalCompilerError{Diagnosis::Kind::TODO, std::move(span)};
 			return Token{.m_Value = Identifier{tokenStart.m_Identifier}, .m_Span = std::move(span)};
 		}
 
