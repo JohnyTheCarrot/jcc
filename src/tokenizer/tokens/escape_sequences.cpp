@@ -71,17 +71,18 @@ namespace jcc::tokenizer::escape_sequences {
 
 		if (auto const secondDigit{GetOctalDigit(charIter->m_Char)}; secondDigit.has_value()) {
 			addDigit(secondDigit.value());
+			++charIter;
 		} else {
 			return result;
 		}
 
-		++charIter;
 		if (charIter == CharIter::end()) {
 			return result;
 		}
 
 		if (auto const thirdDigit{GetOctalDigit(charIter->m_Char)}; thirdDigit.has_value()) {
 			addDigit(thirdDigit.value());
+			++charIter;
 		}
 
 		return result;
