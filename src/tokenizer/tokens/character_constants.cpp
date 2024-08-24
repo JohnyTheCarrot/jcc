@@ -1,39 +1,13 @@
 #include "character_constants.h"
 #include "escape_sequences.h"
 #include "misc/Diagnosis.h"
+#include "tokenizer/char_iter.h"
+#include "utils.h"
 
 #include <numeric>
 
 namespace jcc::tokenizer::character_constants {
 	constexpr int implMaxCharsInCharLiteral{sizeof(compiler_data_types::Int::type)};
-
-	[[nodiscard]]
-	std::optional<compiler_data_types::Char32::type>
-	ReadSingleCharacter(CharIter &charIter, ConstantPrefix prefix, SpanMarker const &startMarker) {
-		if (charIter == CharIter::end() || charIter->m_Char == '\n') {
-			Span span{
-			        charIter.GetFileName(), startMarker, charIter.GetSentinel().m_LastSpanMarker,
-			        charIter.GetInput()->tellg(), charIter.GetInput()
-			};
-
-			throw FatalCompilerError{Diagnosis::Kind::TK_CharUnterminated, std::move(span)};
-		}
-
-		auto const c{charIter->m_Char};
-		++charIter;
-
-		if (c == '\\') {
-			auto const backslashMarker{charIter.GetCurrentSpanMarker()};
-
-			return escape_sequences::Tokenize(charIter, backslashMarker, prefix);
-		}
-
-		if (c == '\'') {
-			return std::nullopt;
-		}
-
-		return static_cast<compiler_data_types::Char32::type>(c);
-	}
 
 	Token Tokenize(CharIter &charIter, ConstantPrefix prefix, SpanMarker const &startMarker) {
 		if (charIter == CharIter::end()) {
@@ -47,7 +21,9 @@ namespace jcc::tokenizer::character_constants {
 
 		std::vector<compiler_data_types::Char32::type> characters{};
 		while (true) {
-			auto const chOptional{ReadSingleCharacter(charIter, prefix, startMarker)};
+			auto const chOptional{
+			        utils::ReadSingleCharacter(charIter, prefix, startMarker, utils::ConstantType::Character)
+			};
 			if (!chOptional.has_value())
 				break;
 

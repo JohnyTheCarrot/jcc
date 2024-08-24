@@ -49,6 +49,10 @@ set(
         src/tokenizer/tokens/character_constants.cpp
         src/tokenizer/tokens/escape_sequences.h
         src/tokenizer/tokens/escape_sequences.cpp
+        src/tokenizer/tokens/string_literals.h
+        src/tokenizer/tokens/string_literals.cpp
+        src/tokenizer/tokens/utils.h
+        src/tokenizer/tokens/utils.cpp
 )
 
 add_executable("${PROJECT_NAME}"

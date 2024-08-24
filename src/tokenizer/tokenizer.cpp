@@ -3,6 +3,7 @@
 #include "tokens/character_constants.h"
 #include "tokens/identifiers.h"
 #include "tokens/static_tokens.h"
+#include "tokens/string_literals.h"
 
 namespace jcc::tokenizer {
 	void Tokenizer::ExpectNoEof(Span &span) const {
@@ -48,6 +49,12 @@ namespace jcc::tokenizer {
 			++m_CharIter;
 			return character_constants::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
 		}
+
+		if (m_CharIter->m_Char == '"') {
+			++m_CharIter;
+			return string_literals::Tokenize(m_CharIter, ConstantPrefix::None, span.m_Start);
+		}
+
 		bool const couldBeIdentifier{Identifier::IsValidFirstChar(m_CharIter->m_Char)};
 		auto [valueOrString, trieResultEndMarker]{static_tokens::Tokenize(m_CharIter)};
 		span.m_End = trieResultEndMarker;
@@ -55,10 +62,18 @@ namespace jcc::tokenizer {
 		if (std::holds_alternative<std::string>(valueOrString)) {
 			auto identifier{std::get<std::string>(valueOrString)};
 
-			if (m_CharIter != CharIter::end() && m_CharIter->m_Char == '\'') {
-				++m_CharIter;
-				ConstantPrefix const prefix{ToConstantPrefix(identifier)};
-				return character_constants::Tokenize(m_CharIter, prefix, span.m_Start);
+			if (m_CharIter != CharIter::end()) {
+				if (m_CharIter->m_Char == '\'') {
+					++m_CharIter;
+					ConstantPrefix const prefix{ToConstantPrefix(identifier)};
+					return character_constants::Tokenize(m_CharIter, prefix, span.m_Start);
+				}
+
+				if (m_CharIter->m_Char == '"') {
+					++m_CharIter;
+					ConstantPrefix const prefix{ToConstantPrefix(identifier)};
+					return string_literals::Tokenize(m_CharIter, prefix, span.m_Start);
+				}
 			}
 
 			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);

@@ -3,12 +3,13 @@
 
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 namespace jcc::compiler_data_types {
 	template<typename Type>
 	struct TypeInfo final : std::numeric_limits<Type> {
 		using type = Type;
-		static constexpr size_t mask{std::numeric_limits<std::make_unsigned_t<Type>>::max()};
+		static constexpr std::size_t mask{std::numeric_limits<std::make_unsigned_t<Type>>::max()};
 	};
 
 	using IntLeast8_T  = TypeInfo<int8_t>;
