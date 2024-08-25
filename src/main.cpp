@@ -23,7 +23,13 @@ int main(int argCount, char *args[]) {
 	Diagnosis::Vec             diagnoses;
 	preprocessor::Preprocessor preprocessor{filePath, inputFileStream, diagnoses};
 
-	std::ranges::copy(preprocessor, std::ostream_iterator<tokenizer::Token>{std::cout, "\n"});
+	try {
+		std::ranges::copy(preprocessor, std::ostream_iterator<tokenizer::Token>{std::cout, "\n"});
+	} catch (FatalCompilerError const &ex) {
+		Diagnosis diag{ex.GetSpan(), Diagnosis::Class::Error, ex.GetKind(), ex.GetData1(), ex.GetData2()};
+		diag.Print();
+		std::cout << '\n';
+	}
 
 	for (auto const &diagnosis: diagnoses) {
 		diagnosis.Print();

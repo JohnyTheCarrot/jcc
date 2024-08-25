@@ -105,7 +105,7 @@ namespace jcc {
 	}// namespace DiagnosticsUtils
 
 	class FatalCompilerError final : public std::exception {
-		using OptionalData = std::optional<Diagnosis::Data>;
+		using OptionalData = Diagnosis::Data;
 
 		std::string     m_Message;
 		Diagnosis::Kind m_Kind;
@@ -124,6 +124,12 @@ namespace jcc {
 
 		[[nodiscard]]
 		Diagnosis::Kind GetKind() const noexcept;
+
+		[[nodiscard]]
+		OptionalData const &GetData1() const noexcept;
+
+		[[nodiscard]]
+		OptionalData const &GetData2() const noexcept;
 
 		[[nodiscard]]
 		char const *what() const noexcept override;
