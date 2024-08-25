@@ -170,7 +170,7 @@ namespace jcc::tokenizer {
 		if (stringConstant.m_Prefix != ConstantPrefix::None)
 			*os << '(' << magic_enum::enum_name(stringConstant.m_Prefix) << ") ";
 
-		*os << stringConstant.m_String;
+		*os << testing::PrintToString(stringConstant.m_String);
 	}
 
 	std::ostream &operator<<(std::ostream &os, Token const &token) {
