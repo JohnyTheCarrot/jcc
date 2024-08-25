@@ -6,7 +6,9 @@
 #include "misc/Diagnosis.h"
 #include "preprocessor_iterator.h"
 #include "preprocessor_token.h"
-#include "tokenizer/TokenizerOld.h"
+#include "tokenizer/tokenizer.h"
+#include "tokenizer/tokenizer_iterator.h"
+
 #include <optional>
 #include <stack>
 
@@ -18,16 +20,17 @@ namespace jcc::preprocessor {
 
 		MacroDefinitions m_MacroDefinitions{};
 
-		Tokenizer                          m_Tokenizer;
+		tokenizer::Tokenizer               m_Tokenizer;
+		tokenizer::TokenizerIterator       m_TokenIter;
 		Diagnosis::Vec                    *m_pDiagnoses;
 		std::stack<macro::MacroInvocation> m_MacroStack{};
 		Span                               m_CurrentSpan;
 
 		[[nodiscard]]
-		std::optional<Tokenizer::Token> GetTokenFromMacroStack();
+		std::optional<tokenizer::Token> GetTokenFromMacroStack();
 
 		[[nodiscard]]
-		std::optional<Tokenizer::Token> GetTokenFromMacroArgumentReader();
+		std::optional<tokenizer::Token> GetTokenFromMacroArgumentReader();
 
 	public:
 		Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses);
@@ -39,7 +42,7 @@ namespace jcc::preprocessor {
 
 		void InvokeMacro(macro::MacroInvocation &&macroInvocation);
 
-		void UseMacroArguments(std::vector<Tokenizer::Token> &&args);
+		void UseMacroArguments(std::vector<tokenizer::Token> &&args);
 
 		[[nodiscard]]
 		int GetMacroDepth() const noexcept;
@@ -48,7 +51,7 @@ namespace jcc::preprocessor {
 		macro::Macro const *GetMacro(std::string const &name, bool allowCurrentMacro = false) const;
 
 		[[nodiscard]]
-		std::optional<std::vector<Tokenizer::Token>> GetMacroArgument(std::string const &argumentName) const;
+		std::optional<std::vector<tokenizer::Token>> GetMacroArgument(std::string const &argumentName) const;
 
 		[[nodiscard]]
 		PreprocessorToken GetNextPreprocessorToken();
@@ -70,14 +73,14 @@ namespace jcc::preprocessor {
 		template<class It = PreprocessorIterator>
 		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
-		It Until(Tokenizer::Token::Type untilType) {
+		It Until(tokenizer::Token::Type untilType) {
 			return It::Until(untilType);
 		}
 
 		template<class It = PreprocessorIterator>
 		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>
 		[[nodiscard]]
-		It Until(std::function<bool(Tokenizer::Token const &)> const &untilCondition) {
+		It Until(std::function<bool(tokenizer::Token const &)> const &untilCondition) {
 			return It::Until(untilCondition);
 		}
 

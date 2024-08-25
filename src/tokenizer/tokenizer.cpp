@@ -56,6 +56,7 @@ namespace jcc::tokenizer {
 	    : m_CharIter{input, fileName} {
 	}
 
+	// TODO: this function is too long, refactor it
 	std::optional<Token> Tokenizer::GetNextToken() {
 		if (m_CharIter == CharIter::end())
 			return std::nullopt;
@@ -72,6 +73,7 @@ namespace jcc::tokenizer {
 
 		switch (m_CharIter->m_Char) {
 			case '\n':
+				++m_CharIter;
 				return Token{SpecialPurpose::NewLine, std::move(span)};
 			case '\'':
 				++m_CharIter;
@@ -94,21 +96,23 @@ namespace jcc::tokenizer {
 		if (std::holds_alternative<std::string>(valueOrString)) {
 			auto identifier{std::get<std::string>(valueOrString)};
 
+			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);
+
 			if (m_CharIter != CharIter::end()) {
-				if (m_CharIter->m_Char == '\'') {
+				auto const nextChar{m_CharIter->m_Char};
+
+				if (nextChar == '\'') {
 					++m_CharIter;
 					ConstantPrefix const prefix{ToConstantPrefix(identifier)};
 					return character_constants::Tokenize(m_CharIter, prefix, span.m_Start);
 				}
 
-				if (m_CharIter->m_Char == '"') {
+				if (nextChar == '"') {
 					++m_CharIter;
 					ConstantPrefix const prefix{ToConstantPrefix(identifier)};
 					return string_literals::Tokenize(m_CharIter, prefix, span.m_Start);
 				}
 			}
-
-			span.m_End = identifiers::CollectRestOfIdentifier(m_CharIter, identifier).value_or(span.m_End);
 
 			if (couldBeIdentifier)
 				return identifiers::Tokenize(
@@ -165,5 +169,10 @@ namespace jcc::tokenizer {
 
 	TokenizerIterator Tokenizer::end() {
 		return TokenizerIterator{};
+	}
+
+	Span Tokenizer::GetLastSpan() const {
+		return {m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetCurrentSpanMarker(),
+		        m_CharIter.GetInput()->tellg(), m_CharIter.GetInput()};
 	}
 }// namespace jcc::tokenizer

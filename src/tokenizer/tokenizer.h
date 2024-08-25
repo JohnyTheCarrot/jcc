@@ -37,6 +37,9 @@ namespace jcc::tokenizer {
 
 		[[nodiscard]]
 		TokenizerIterator end();
+
+		[[nodiscard]]
+		Span GetLastSpan() const;
 	};
 }// namespace jcc::tokenizer
 

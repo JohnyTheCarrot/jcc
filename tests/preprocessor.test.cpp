@@ -1,23 +1,22 @@
 #include "preprocessor/preprocessor.h"
-#include "tokenizer/TokenizerOld.h"
 
 #include <gtest/gtest.h>
 
 using namespace jcc;
 
-using Keyword             = Tokenizer::Keyword;
-using Punctuator          = Tokenizer::Punctuator;
-using Directive           = Tokenizer::Directive;
-using Identifier          = Tokenizer::Identifier;
-using CharacterConstant   = Tokenizer::CharacterConstant;
-using StringConstant      = Tokenizer::StringConstant;
+using Keyword             = tokenizer::Keyword;
+using Punctuator          = tokenizer::Punctuator;
+using Directive           = tokenizer::Directive;
+using Identifier          = tokenizer::Identifier;
+using CharacterConstant   = tokenizer::CharacterConstant;
+using StringConstant      = tokenizer::StringConstant;
 using DiagnosisKindVec    = std::vector<Diagnosis::Kind>;
-using ConstantPrefix      = Tokenizer::ConstantPrefix;
-using SpecialPurposeToken = Tokenizer::SpecialPurpose;
-using PpNumber            = Tokenizer::PpNumber;
-using IncludeDirective    = Tokenizer::IncludeDirective;
+using ConstantPrefix      = tokenizer::ConstantPrefix;
+using SpecialPurposeToken = tokenizer::SpecialPurpose;
+using PpNumber            = tokenizer::PpNumber;
+using IncludeDirective    = tokenizer::IncludeDirective;
 
-using TokenList = std::vector<Tokenizer::Token::Value>;
+using TokenList = std::vector<tokenizer::Token::Value>;
 
 class PreproTest : public testing::TestWithParam<std::tuple<std::string, std::string, TokenList>> {};
 

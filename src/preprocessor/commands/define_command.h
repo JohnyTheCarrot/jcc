@@ -14,7 +14,7 @@ namespace jcc::preprocessor::commands {
 		static std::pair<bool, macro::FunctionLikeMacro::ParameterList> GatherParameterList(Preprocessor &preprocessor);
 
 		static void
-		DefineObjectLikeMacro(Preprocessor &preprocessor, std::string &&name, Tokenizer::Token &&firstToken);
+		DefineObjectLikeMacro(Preprocessor &preprocessor, std::string &&name, tokenizer::Token &&firstToken);
 
 		static void DefineFunctionLikeMacro(Preprocessor &preprocessor, std::string &&name);
 
@@ -24,7 +24,7 @@ namespace jcc::preprocessor::commands {
 		~DefineCommand() override;
 
 		[[nodiscard]]
-		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const override;
+		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, tokenizer::Token &&) const override;
 	};
 }// namespace jcc::preprocessor::commands
 

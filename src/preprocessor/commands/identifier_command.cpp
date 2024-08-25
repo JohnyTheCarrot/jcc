@@ -5,21 +5,21 @@ namespace jcc::preprocessor::commands {
 	macro::FnMacroArguments
 	IdentifierCommand::GatherArguments(Preprocessor &preprocessor, macro::FunctionLikeMacro const &fnMacro) {
 		auto const [value, span]{preprocessor.GetNextPreprocessorToken().m_Token};
-		if (!std::holds_alternative<Tokenizer::Punctuator>(value))
+		if (!std::holds_alternative<tokenizer::Punctuator>(value))
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedLParen, span};
 
-		if (auto const punctuator{std::get<Tokenizer::Punctuator>(value)};
-		    punctuator != Tokenizer::Punctuator::LeftParenthesis &&
-		    punctuator != Tokenizer::Punctuator::PpLeftParenthesis)
+		if (auto const punctuator{std::get<tokenizer::Punctuator>(value)};
+		    punctuator != tokenizer::Punctuator::LeftParenthesis &&
+		    punctuator != tokenizer::Punctuator::PpLeftParenthesis)
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedLParen, span};
 
 		macro::FnMacroArguments arguments{};
 		auto const              collectVaArgs{[&] {
             auto const        startIt{preprocessor.Current()};
-            auto const        endIt{preprocessor.Until(Tokenizer::Punctuator::RightParenthesis)};
+            auto const        endIt{preprocessor.Until(tokenizer::Punctuator::RightParenthesis)};
             std::string const vaArgsStr{VaArgs};
 
-            auto const vaArgIt{arguments.emplace(vaArgsStr, std::vector<Tokenizer::Token>{})
+            auto const vaArgIt{arguments.emplace(vaArgsStr, std::vector<tokenizer::Token>{})
             };// add empty variadic arguments
             std::move(startIt, endIt, std::back_inserter(vaArgIt.first->second));
         }};
@@ -51,7 +51,7 @@ namespace jcc::preprocessor::commands {
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooManyArgs, span};
 
 		if (vaArgsIter == arguments.end() && fnMacro.m_IsVA)
-			arguments.emplace(VaArgs, std::vector<Tokenizer::Token>{});// add empty variadic arguments
+			arguments.emplace(VaArgs, std::vector<tokenizer::Token>{});// add empty variadic arguments
 
 		if (arguments.size() < fnMacro.m_ParameterList.size())
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooFewArgs, span};
@@ -59,8 +59,8 @@ namespace jcc::preprocessor::commands {
 		return arguments;
 	}
 
-	std::pair<bool, std::vector<Tokenizer::Token>> IdentifierCommand::GatherArgumentTokens(Preprocessor &preprocessor) {
-		std::vector<Tokenizer::Token> argumentTokens{};
+	std::pair<bool, std::vector<tokenizer::Token>> IdentifierCommand::GatherArgumentTokens(Preprocessor &preprocessor) {
+		std::vector<tokenizer::Token> argumentTokens{};
 		int                           numLeftParentheses{1};
 		auto const                    ppItStart{preprocessor.Current<InternalPreprocessorIterator>()};
 		auto const                    ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>()};
@@ -68,18 +68,18 @@ namespace jcc::preprocessor::commands {
 		for (auto &ppToken: std::ranges::subrange(ppItStart, ppItEnd)) {
 			auto &[token, isFromMacro]{ppToken};
 
-			if (!isFromMacro && std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
-				switch (std::get<Tokenizer::Punctuator>(token.m_Value)) {
-					case Tokenizer::Punctuator::LeftParenthesis:
-					case Tokenizer::Punctuator::PpLeftParenthesis:
+			if (!isFromMacro && std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
+				switch (std::get<tokenizer::Punctuator>(token.m_Value)) {
+					case tokenizer::Punctuator::LeftParenthesis:
+					case tokenizer::Punctuator::PpLeftParenthesis:
 						++numLeftParentheses;
 						break;
-					case Tokenizer::Punctuator::RightParenthesis:
+					case tokenizer::Punctuator::RightParenthesis:
 						--numLeftParentheses;
 						if (numLeftParentheses == 0)
 							return {false, argumentTokens};
 						break;
-					case Tokenizer::Punctuator::Comma:
+					case tokenizer::Punctuator::Comma:
 						if (numLeftParentheses == 1)
 							return {true, argumentTokens};
 						break;
@@ -95,14 +95,14 @@ namespace jcc::preprocessor::commands {
 	}
 
 	IdentifierCommand::IdentifierCommand(CommandMap &map)
-	    : Command{map, Tokenizer::Token::GenericType::Identifier} {
+	    : Command{map, tokenizer::Token::GenericType::Identifier} {
 	}
 
 	IdentifierCommand::~IdentifierCommand() = default;
 
 	std::optional<PreprocessorToken>
-	IdentifierCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&ident) const {
-		auto identifierContent{std::get<Tokenizer::Identifier>(ident.m_Value).m_Name};
+	IdentifierCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&ident) const {
+		auto identifierContent{std::get<tokenizer::Identifier>(ident.m_Value).m_Name};
 
 		if (auto const macro{preprocessor.GetMacro(identifierContent)}) {
 			auto macroInvocation{[macro, &identifierContent, &preprocessor] {

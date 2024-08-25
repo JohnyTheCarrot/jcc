@@ -6,7 +6,7 @@ namespace jcc::preprocessor::commands {
 		macro::ReplacementList replacementList{};
 
 		auto const currentPos{preprocessor.Current<PreprocessorIteratorNoCommands>()};
-		auto const untilNewLine{preprocessor.Until<PreprocessorIteratorNoCommands>(Tokenizer::SpecialPurpose::NewLine)};
+		auto const untilNewLine{preprocessor.Until<PreprocessorIteratorNoCommands>(tokenizer::SpecialPurpose::NewLine)};
 
 		std::copy(currentPos, untilNewLine, std::back_inserter(replacementList.m_ReplacementList));
 
@@ -20,32 +20,32 @@ namespace jcc::preprocessor::commands {
 		auto [token, isFromMacro]{preprocessor.GetNextFromTokenizer(false)};
 
 		while (true) {
-			if (!std::holds_alternative<Tokenizer::Identifier>(token.m_Value)) {
-				if (!token.IsPunctuatorKind(Tokenizer::Punctuator::Ellipsis))
+			if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
+				if (!token.Is(tokenizer::Punctuator::Ellipsis))
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedIdentifier, token.m_Span};
 
 				token = preprocessor.GetNextPreprocessorToken().m_Token;
-				if (!token.IsPunctuatorKind(Tokenizer::Punctuator::RightParenthesis)) {
+				if (!token.Is(tokenizer::Punctuator::RightParenthesis)) {
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroEllipsisNotLast, token.m_Span};
 				}
 
 				return std::make_pair(true, parameterList);
 			}
-			auto &identifier{std::get<Tokenizer::Identifier>(token.m_Value)};
+			auto &identifier{std::get<tokenizer::Identifier>(token.m_Value)};
 			parameterList.push_back(std::move(identifier));
 
 			token = preprocessor.GetNextPreprocessorToken().m_Token;
-			if (!std::holds_alternative<Tokenizer::Punctuator>(token.m_Value)) {
+			if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
 				throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedCommaOrRParen, token.m_Span};
 			}
 
-			auto const punctuator{std::get<Tokenizer::Punctuator>(token.m_Value)};
+			auto const punctuator{std::get<tokenizer::Punctuator>(token.m_Value)};
 
-			if (punctuator == Tokenizer::Punctuator::RightParenthesis) {
+			if (punctuator == tokenizer::Punctuator::RightParenthesis) {
 				return std::make_pair(false, parameterList);
 			}
 
-			if (punctuator != Tokenizer::Punctuator::Comma) {
+			if (punctuator != tokenizer::Punctuator::Comma) {
 				throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedCommaOrRParen, token.m_Span};
 			}
 
@@ -54,7 +54,7 @@ namespace jcc::preprocessor::commands {
 	}
 
 	void DefineCommand::DefineObjectLikeMacro(
-	        Preprocessor &preprocessor, std::string &&name, Tokenizer::Token &&firstToken
+	        Preprocessor &preprocessor, std::string &&name, tokenizer::Token &&firstToken
 	) {
 		macro::ReplacementList replacementList{{std::move(firstToken)}};
 		auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
@@ -72,33 +72,33 @@ namespace jcc::preprocessor::commands {
 	}
 
 	DefineCommand::DefineCommand(CommandMap &map)
-	    : Command(map, Tokenizer::Directive::Define) {
+	    : Command(map, tokenizer::Directive::Define) {
 	}
 
 	DefineCommand::~DefineCommand() = default;
 
-	std::optional<PreprocessorToken> DefineCommand::Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const {
+	std::optional<PreprocessorToken> DefineCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
 		auto nextToken{preprocessor.GetNextPreprocessorToken().m_Token};
 
-		if (nextToken.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::Error)) {
+		if (nextToken.Is(tokenizer::SpecialPurpose::Error)) {
 			throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span};
 		}
 
-		auto const isIdent{std::holds_alternative<Tokenizer::Identifier>(nextToken.m_Value)};
-		auto const isKeyword{std::holds_alternative<Tokenizer::Keyword>(nextToken.m_Value)};
+		auto const isIdent{std::holds_alternative<tokenizer::Identifier>(nextToken.m_Value)};
+		auto const isKeyword{std::holds_alternative<tokenizer::Keyword>(nextToken.m_Value)};
 
 		if (!isIdent && !isKeyword) {
 			throw FatalCompilerError{Diagnosis::Kind::PP_MacroExpectedIdentifier, nextToken.m_Span};
 		}
 
 		std::string macroName{
-		        isIdent ? std::get<Tokenizer::Identifier>(nextToken.m_Value).m_Name
-		                : Tokenizer::KeywordAsIdentString(std::get<Tokenizer::Keyword>(nextToken.m_Value))
+		        isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value).m_Name
+		                : KeywordAsIdentString(std::get<tokenizer::Keyword>(nextToken.m_Value))
 		};
 
 		nextToken = preprocessor.GetNextPreprocessorToken().m_Token;
 
-		if (nextToken.IsPunctuatorKind(Tokenizer::Punctuator::PpLeftParenthesis)) {
+		if (nextToken.Is(tokenizer::Punctuator::PpLeftParenthesis)) {
 			DefineFunctionLikeMacro(preprocessor, std::move(macroName));
 		} else {
 			DefineObjectLikeMacro(preprocessor, std::move(macroName), std::move(nextToken));

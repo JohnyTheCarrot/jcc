@@ -113,6 +113,35 @@ namespace jcc::tokenizer {
 		return token == SpecialPurpose::EndOfFile;
 	}
 
+	Token::Type Token::GetValueType() const {
+		if (std::holds_alternative<Identifier>(m_Value))
+			return GenericType::Identifier;
+
+		if (std::holds_alternative<PpNumber>(m_Value))
+			return GenericType::PpNumber;
+
+		if (std::holds_alternative<CharacterConstant>(m_Value))
+			return GenericType::ChararacterConstant;
+
+		if (std::holds_alternative<StringConstant>(m_Value))
+			return GenericType::StringConstant;
+
+		if (std::holds_alternative<Punctuator>(m_Value))
+			return std::get<Punctuator>(m_Value);
+
+		if (std::holds_alternative<Keyword>(m_Value))
+			return std::get<Keyword>(m_Value);
+
+		if (std::holds_alternative<Directive>(m_Value))
+			return std::get<Directive>(m_Value);
+
+		if (std::holds_alternative<SpecialPurpose>(m_Value))
+			return std::get<SpecialPurpose>(m_Value);
+
+		assert(false);
+		return SpecialPurpose::Error;
+	}
+
 	bool Token::operator==(Token const &other) const {
 		return m_Value == other.m_Value && m_Span == other.m_Span;
 	}
@@ -142,5 +171,35 @@ namespace jcc::tokenizer {
 			*os << '(' << magic_enum::enum_name(stringConstant.m_Prefix) << ") ";
 
 		*os << stringConstant.m_String;
+	}
+
+	std::ostream &operator<<(std::ostream &os, Token const &token) {
+		os << '[';
+		PrintTo(token.m_Span, &os);
+		os << "]: ";
+
+		if (std::holds_alternative<IncludeDirective>(token.m_Value)) {
+			PrintTo(std::get<IncludeDirective>(token.m_Value), &os);
+		} else if (std::holds_alternative<Identifier>(token.m_Value)) {
+			PrintTo(std::get<Identifier>(token.m_Value), &os);
+		} else if (std::holds_alternative<CharacterConstant>(token.m_Value)) {
+			PrintTo(std::get<CharacterConstant>(token.m_Value), &os);
+		} else if (std::holds_alternative<StringConstant>(token.m_Value)) {
+			PrintTo(std::get<StringConstant>(token.m_Value), &os);
+		} else if (std::holds_alternative<Punctuator>(token.m_Value)) {
+			os << magic_enum::enum_name(std::get<Punctuator>(token.m_Value));
+		} else if (std::holds_alternative<Keyword>(token.m_Value)) {
+			os << magic_enum::enum_name(std::get<Keyword>(token.m_Value));
+		} else if (std::holds_alternative<Directive>(token.m_Value)) {
+			os << magic_enum::enum_name(std::get<Directive>(token.m_Value));
+		} else if (std::holds_alternative<SpecialPurpose>(token.m_Value)) {
+			os << magic_enum::enum_name(std::get<SpecialPurpose>(token.m_Value));
+		} else if (std::holds_alternative<PpNumber>(token.m_Value)) {
+			PrintTo(std::get<PpNumber>(token.m_Value), &os);
+		} else {
+			assert(false);
+		}
+
+		return os;
 	}
 }// namespace jcc::tokenizer

@@ -3,7 +3,7 @@
 #include "identifier_command.h"
 
 namespace jcc::preprocessor::commands {
-	Command::Command(CommandMap &map, Tokenizer::Token::Type tokenType) {
+	Command::Command(CommandMap &map, tokenizer::Token::Type tokenType) {
 		map.emplace(tokenType, this);
 	}
 

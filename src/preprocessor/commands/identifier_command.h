@@ -15,7 +15,7 @@ namespace jcc::preprocessor::commands {
 		GatherArguments(Preprocessor &preprocessor, macro::FunctionLikeMacro const &fnMacro);
 
 		[[nodiscard]]
-		static std::pair<bool, std::vector<Tokenizer::Token>> GatherArgumentTokens(Preprocessor &preprocessor);
+		static std::pair<bool, std::vector<tokenizer::Token>> GatherArgumentTokens(Preprocessor &preprocessor);
 
 	public:
 		explicit IdentifierCommand(CommandMap &map);
@@ -23,7 +23,7 @@ namespace jcc::preprocessor::commands {
 		~IdentifierCommand() override;
 
 		[[nodiscard]]
-		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, Tokenizer::Token &&ident) const override;
+		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, tokenizer::Token &&ident) const override;
 	};
 }// namespace jcc::preprocessor::commands
 

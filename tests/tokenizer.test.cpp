@@ -200,18 +200,18 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
         Directives, TokenizerTest,
         testing::Values(
-                std::make_tuple("define", Directive::Define, DiagnosisKindVec{}),
+                std::make_tuple("#define", Directive::Define, DiagnosisKindVec{}),
                 std::make_tuple(
-                        "include", Directive::Include, DiagnosisKindVec{Diagnosis::Kind::TK_ExpectedHeaderName}
+                        "#include", Directive::Include, DiagnosisKindVec{Diagnosis::Kind::TK_ExpectedHeaderName}
                 ),
-                std::make_tuple("undef", Directive::Undef, DiagnosisKindVec{}),
-                std::make_tuple("ifdef", Directive::Ifdef, DiagnosisKindVec{}),
-                std::make_tuple("ifndef", Directive::Ifndef, DiagnosisKindVec{}),
-                std::make_tuple("elif", Directive::Elif, DiagnosisKindVec{}),
-                std::make_tuple("endif", Directive::Endif, DiagnosisKindVec{}),
-                std::make_tuple("line", Directive::Line, DiagnosisKindVec{}),
-                std::make_tuple("error", Directive::Error, DiagnosisKindVec{}),
-                std::make_tuple("pragma", Directive::Pragma, DiagnosisKindVec{})
+                std::make_tuple("#undef", Directive::Undef, DiagnosisKindVec{}),
+                std::make_tuple("#ifdef", Directive::Ifdef, DiagnosisKindVec{}),
+                std::make_tuple("#ifndef", Directive::Ifndef, DiagnosisKindVec{}),
+                std::make_tuple("#elif", Directive::Elif, DiagnosisKindVec{}),
+                std::make_tuple("#endif", Directive::Endif, DiagnosisKindVec{}),
+                std::make_tuple("#line", Directive::Line, DiagnosisKindVec{}),
+                std::make_tuple("#error", Directive::Error, DiagnosisKindVec{}),
+                std::make_tuple("#pragma", Directive::Pragma, DiagnosisKindVec{})
         )
 );
 
