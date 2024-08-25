@@ -127,7 +127,7 @@ namespace jcc::tokenizer {
 
 		auto const tokenValue{[&]() -> Token::Value {
 			if (!std::holds_alternative<Token::Value>(valueOrString))
-				throw FatalCompilerError{Diagnosis::Kind::TK_UnexpectedChar, std::move(span)};
+				throw FatalCompilerError{Diagnosis::Kind::TK_UnexpectedChar, std::move(span), m_CharIter->m_Char};
 
 			auto value{std::get<Token::Value>(valueOrString)};
 			if (std::holds_alternative<Punctuator>(value)) {
