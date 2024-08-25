@@ -5,7 +5,7 @@ namespace jcc::preprocessor::commands {
 	macro::ReplacementList DefineCommand::GatherReplacementList(Preprocessor &preprocessor) {
 		macro::ReplacementList replacementList{};
 
-		auto const currentPos{preprocessor.Current<PreprocessorIteratorNoCommands>()};
+		auto const currentPos{++preprocessor.Current<PreprocessorIteratorNoCommands>()};
 		auto const untilNewLine{preprocessor.Until<PreprocessorIteratorNoCommands>(tokenizer::SpecialPurpose::NewLine)};
 
 		std::copy(currentPos, untilNewLine, std::back_inserter(replacementList.m_ReplacementList));

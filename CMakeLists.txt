@@ -51,6 +51,7 @@ set(
         src/tokenizer/tokens/utils.cpp
         src/tokenizer/tokens/pp_numbers.h
         src/tokenizer/tokens/pp_numbers.cpp
+        src/preprocessor/macro.cpp
 )
 
 add_executable("${PROJECT_NAME}"

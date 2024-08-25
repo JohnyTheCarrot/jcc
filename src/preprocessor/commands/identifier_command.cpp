@@ -15,7 +15,7 @@ namespace jcc::preprocessor::commands {
 
 		macro::FnMacroArguments arguments{};
 		auto const              collectVaArgs{[&] {
-            auto const        startIt{preprocessor.Current()};
+            auto const        startIt{++preprocessor.Current()};
             auto const        endIt{preprocessor.Until(tokenizer::Punctuator::RightParenthesis)};
             std::string const vaArgsStr{VaArgs};
 
@@ -62,7 +62,7 @@ namespace jcc::preprocessor::commands {
 	std::pair<bool, std::vector<tokenizer::Token>> IdentifierCommand::GatherArgumentTokens(Preprocessor &preprocessor) {
 		std::vector<tokenizer::Token> argumentTokens{};
 		int                           numLeftParentheses{1};
-		auto const                    ppItStart{preprocessor.Current<InternalPreprocessorIterator>()};
+		auto const                    ppItStart{++preprocessor.Current<InternalPreprocessorIterator>()};
 		auto const                    ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>()};
 
 		for (auto &ppToken: std::ranges::subrange(ppItStart, ppItEnd)) {

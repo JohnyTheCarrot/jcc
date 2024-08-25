@@ -37,7 +37,6 @@ namespace jcc::preprocessor {
 
 		explicit BasePreprocessorIterator(Preprocessor &preprocessor)
 		    : m_pPreprocessor{&preprocessor} {
-			++(*this);
 		}
 
 		BasePreprocessorIterator() = default;

@@ -28,10 +28,9 @@ TEST_P(PreproTest, Preprocessing) {
 	TokenList tokens{};
 
 	try {
-		std::transform(
-		        preprocessor.Current(), preprocessor.EndOfFile(), std::back_inserter(tokens),
-		        [](auto tokenValue) { return tokenValue.m_Value; }
-		);
+		std::transform(preprocessor.begin(), preprocessor.EndOfFile(), std::back_inserter(tokens), [](auto tokenValue) {
+			return tokenValue.m_Value;
+		});
 	} catch (FatalCompilerError const &e) {
 		Diagnosis diag{e.GetSpan(), Diagnosis::Class::Error, e.GetKind()};
 
