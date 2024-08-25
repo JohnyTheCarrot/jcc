@@ -36,7 +36,7 @@ namespace jcc::preprocessor::commands {
 				} else if (!fnMacro.m_ParameterList.empty() && !fnMacro.m_IsVA)
 					throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooManyArgs, span};
 
-				if (arguments.size() + 1 >= fnMacro.m_ParameterList.size() && fnMacro.m_IsVA) {
+				if (arguments.size() >= fnMacro.m_ParameterList.size() && fnMacro.m_IsVA) {
 					collectVaArgs();
 					break;
 				}

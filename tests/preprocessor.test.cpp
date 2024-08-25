@@ -185,6 +185,17 @@ VA(1, 2)
                         }
                 ),
                 std::make_tuple(
+                        "VARIADIC_MACRO_WITH_2_BASE_ARGS",
+                        R"(
+#define VA(a, b, ...) {a, b, __VA_ARGS__}
+VA(1, 2, 3)
+)",
+                        TokenList{
+                                Punctuator::LeftBrace, PpNumber{"1"}, Punctuator::Comma, PpNumber{"2"},
+                                Punctuator::Comma, PpNumber{"3"}, Punctuator::RightBrace
+                        }
+                ),
+                std::make_tuple(
                         "LOCAL_VA_ARGS",
                         // test that __VA_ARGS__ is local to the current function macro. I.e, if another macro is called within the function-like macro, the current __VA_ARGS__ should not expand in said other macro.
                         R"(
