@@ -10,7 +10,7 @@ namespace jcc::preprocessor {
 	}
 
 	PreprocessorIterator Preprocessor::begin() {
-		return PreprocessorIterator{*this};
+		return ++PreprocessorIterator{*this};
 	}
 
 	PreprocessorIterator Preprocessor::end() {
@@ -25,10 +25,12 @@ namespace jcc::preprocessor {
 		while (true) {
 			auto ppToken{[this]() -> PreprocessorToken {
 				if (auto token{GetTokenFromMacroArgumentReader()}; token.has_value())
-					return {std::move(token.value()), true};
+					return {std::move(token.value()), false
+					};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
 
 				if (auto token{GetTokenFromMacroStack()}; token.has_value())
-					return {std::move(token.value()), true};
+					return {std::move(token.value()), false
+					};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
 
 				if (m_TokenIter == m_Tokenizer.end())
 					return {{tokenizer::SpecialPurpose::EndOfFile, m_Tokenizer.GetLastSpan()}, false};
@@ -73,6 +75,12 @@ namespace jcc::preprocessor {
 	}
 
 	void Preprocessor::InvokeMacro(macro::MacroInvocation &&macroInvocation) {
+		// using macro::operator<<;
+		// std::cout << "Invoking macro: " << macroInvocation.m_MacroName << '\n';
+		//
+		// if (macroInvocation.m_Args.has_value())
+		// 	std::cout << "Arguments:\n" << macroInvocation.m_Args.value() << '\n';
+
 		m_MacroStack.push(macroInvocation);
 	}
 

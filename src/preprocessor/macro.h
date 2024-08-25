@@ -41,6 +41,8 @@ namespace jcc::preprocessor::macro {
 
 	using FnMacroArguments = std::unordered_map<std::string, std::vector<tokenizer::Token>>;
 
+	std::ostream &operator<<(std::ostream &os, FnMacroArguments const &args);
+
 	struct MacroArgumentReader final {
 		std::vector<tokenizer::Token> m_Args{};
 		int                           m_CurrentTokenIndex{-1};

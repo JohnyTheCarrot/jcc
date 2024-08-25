@@ -12,7 +12,6 @@ namespace jcc::preprocessor {
 
 	InternalPreprocessorIterator::InternalPreprocessorIterator(Preprocessor &preprocessor)
 	    : m_pPreprocessor{&preprocessor} {
-		++(*this);
 	}
 
 	InternalPreprocessorIterator::reference InternalPreprocessorIterator::operator*() const {
