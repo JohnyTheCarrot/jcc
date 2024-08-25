@@ -2,7 +2,7 @@
 #define PREPROCESSOR_ITERATOR_H
 
 #include "preprocessor_token.h"
-#include "tokenizer/TokenizerOld.h"
+#include "tokenizer/token.h"
 #include <iterator>
 #include <variant>
 
@@ -11,16 +11,16 @@ namespace jcc::preprocessor {
 
 	template<class Super>
 	class BasePreprocessorIterator {
-		using UntilCondition = std::function<bool(Tokenizer::Token const &)>;
+		using UntilCondition = std::function<bool(tokenizer::Token const &)>;
 
-		mutable std::variant<Tokenizer::Token::Type, Tokenizer::Token, UntilCondition> m_Token{
-		        Tokenizer::SpecialPurpose::EndOfFile
+		mutable std::variant<tokenizer::Token::Type, tokenizer::Token, UntilCondition> m_Token{
+		        tokenizer::SpecialPurpose::EndOfFile
 		};
 
 	protected:
 		mutable Preprocessor *m_pPreprocessor{};
 
-		explicit BasePreprocessorIterator(Tokenizer::Token::Type untilType)
+		explicit BasePreprocessorIterator(tokenizer::Token::Type untilType)
 		    : m_Token{untilType} {
 		}
 
@@ -30,7 +30,7 @@ namespace jcc::preprocessor {
 
 	public:
 		using iterator_category = std::input_iterator_tag;
-		using value_type        = Tokenizer::Token;
+		using value_type        = tokenizer::Token;
 		using reference         = value_type &;
 		using pointer           = value_type *;
 		using difference_type   = int;
@@ -43,19 +43,19 @@ namespace jcc::preprocessor {
 		BasePreprocessorIterator() = default;
 
 		reference operator*() const {
-			return std::get<Tokenizer::Token>(m_Token);
+			return std::get<tokenizer::Token>(m_Token);
 		}
 
 		pointer operator->() const {
-			return &std::get<Tokenizer::Token>(m_Token);
+			return &std::get<tokenizer::Token>(m_Token);
 		}
 
 		Super &operator++() {
 			auto const token{static_cast<Super *>(this)->GetNextToken()};
 
-			if (token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::EndOfFile) ||
-			    (std::holds_alternative<Tokenizer::Token::Type>(m_Token) &&
-			     std::get<Tokenizer::Token::Type>(m_Token) == token.GetValueType()))
+			if (token.Is(tokenizer::SpecialPurpose::EndOfFile) ||
+			    (std::holds_alternative<tokenizer::Token::Type>(m_Token) &&
+			     std::get<tokenizer::Token::Type>(m_Token) == token.GetValueType()))
 				m_Token = token.GetValueType();
 			else
 				m_Token = token;
@@ -77,7 +77,7 @@ namespace jcc::preprocessor {
 			return Super{};
 		}
 
-		static Super Until(Tokenizer::Token::Type untilType) {
+		static Super Until(tokenizer::Token::Type untilType) {
 			return Super{untilType};
 		}
 
@@ -86,34 +86,36 @@ namespace jcc::preprocessor {
 		}
 
 		[[nodiscard]]
-		bool operator==(Super const &other) const noexcept {
+		bool
+		operator==(Super const &other) const noexcept {
 			if (std::holds_alternative<UntilCondition>(other.m_Token)) {
-				if (!std::holds_alternative<Tokenizer::Token>(m_Token))
+				if (!std::holds_alternative<tokenizer::Token>(m_Token))
 					return true;// both are special purpose
 
 				auto const condition{std::get<UntilCondition>(other.m_Token)};
 
-				return condition(std::get<Tokenizer::Token>(m_Token));
+				return condition(std::get<tokenizer::Token>(m_Token));
 			}
 
-			if (std::holds_alternative<Tokenizer::Token::Type>(other.m_Token)) {
-				if (!std::holds_alternative<Tokenizer::Token>(m_Token))
+			if (std::holds_alternative<tokenizer::Token::Type>(other.m_Token)) {
+				if (!std::holds_alternative<tokenizer::Token>(m_Token))
 					return true;// both are special purpose
 
-				auto const currentTokenType{std::get<Tokenizer::Token>(m_Token).GetValueType()};
+				auto const currentTokenType{std::get<tokenizer::Token>(m_Token).GetValueType()};
 				auto const isCurrentEOF{
-				        std::holds_alternative<Tokenizer::SpecialPurpose>(currentTokenType) &&
-				        std::get<Tokenizer::SpecialPurpose>(currentTokenType) == Tokenizer::SpecialPurpose::EndOfFile
+				        std::holds_alternative<tokenizer::SpecialPurpose>(currentTokenType) &&
+				        std::get<tokenizer::SpecialPurpose>(currentTokenType) == tokenizer::SpecialPurpose::EndOfFile
 				};
 
-				return isCurrentEOF || currentTokenType == std::get<Tokenizer::Token::Type>(other.m_Token);
+				return isCurrentEOF || currentTokenType == std::get<tokenizer::Token::Type>(other.m_Token);
 			}
 
-			return std::get<Tokenizer::Token>(m_Token) == std::get<Tokenizer::Token>(other.m_Token);
+			return std::get<tokenizer::Token>(m_Token) == std::get<tokenizer::Token>(other.m_Token);
 		}
 
 		[[nodiscard]]
-		bool operator!=(Super const &other) const noexcept {
+		bool
+		operator!=(Super const &other) const noexcept {
 			return !(*this == other);
 		}
 	};
@@ -122,11 +124,11 @@ namespace jcc::preprocessor {
 	concept IsPreprocessorIterator = requires(T t) {
 		requires std::input_iterator<T> and std::default_initializable<T>;
 		{ T::end() } -> std::same_as<T>;
-		{ T::Until(Tokenizer::SpecialPurpose::EndOfFile) } -> std::same_as<T>;
+		{ T::Until(tokenizer::SpecialPurpose::EndOfFile) } -> std::same_as<T>;
 		{
-			T::Until([](Tokenizer::Token const &) { return false; })
+			T::Until([](tokenizer::Token const &) { return false; })
 		} -> std::same_as<T>;
-		{ t.GetNextToken() } -> std::same_as<Tokenizer::Token>;
+		{ t.GetNextToken() } -> std::same_as<tokenizer::Token>;
 	};
 
 	class PreprocessorIterator final : public BasePreprocessorIterator<PreprocessorIterator> {
@@ -134,7 +136,7 @@ namespace jcc::preprocessor {
 		using BasePreprocessorIterator::BasePreprocessorIterator;
 
 		[[nodiscard]]
-		Tokenizer::Token GetNextToken() const;
+		tokenizer::Token GetNextToken() const;
 	};
 
 	static_assert(std::input_iterator<PreprocessorIterator>);
@@ -144,14 +146,14 @@ namespace jcc::preprocessor {
 		using BasePreprocessorIterator::BasePreprocessorIterator;
 
 		[[nodiscard]]
-		Tokenizer::Token GetNextToken() const;
+		tokenizer::Token GetNextToken() const;
 	};
 
 	static_assert(std::input_iterator<PreprocessorIteratorNoCommands>);
 
 	class InternalPreprocessorIterator final {
 		mutable Preprocessor                                           *m_pPreprocessor{};
-		mutable std::variant<Tokenizer::Token::Type, PreprocessorToken> m_Token{Tokenizer::SpecialPurpose::EndOfFile};
+		mutable std::variant<tokenizer::Token::Type, PreprocessorToken> m_Token{tokenizer::SpecialPurpose::EndOfFile};
 
 	public:
 		using iterator_category = std::input_iterator_tag;
@@ -171,17 +173,20 @@ namespace jcc::preprocessor {
 		InternalPreprocessorIterator &operator++();
 
 		[[nodiscard]]
-		InternalPreprocessorIterator operator++(int);
+		InternalPreprocessorIterator
+		operator++(int);
 
 		InternalPreprocessorIterator begin() const;
 
 		static InternalPreprocessorIterator end();
 
 		[[nodiscard]]
-		bool operator==(InternalPreprocessorIterator const &other) const noexcept;
+		bool
+		operator==(InternalPreprocessorIterator const &other) const noexcept;
 
 		[[nodiscard]]
-		bool operator!=(InternalPreprocessorIterator const &other) const noexcept;
+		bool
+		operator!=(InternalPreprocessorIterator const &other) const noexcept;
 	};
 
 	static_assert(std::input_iterator<InternalPreprocessorIterator>);

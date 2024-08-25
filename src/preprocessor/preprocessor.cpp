@@ -3,8 +3,7 @@
 namespace jcc::preprocessor {
 	PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
 		while (true) {
-			if (auto ppToken{GetNextFromTokenizer()};
-			    !ppToken.m_Token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::NewLine)) {
+			if (auto ppToken{GetNextFromTokenizer()}; !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
 				return ppToken;
 			}
 		}
@@ -31,16 +30,22 @@ namespace jcc::preprocessor {
 				if (auto token{GetTokenFromMacroStack()}; token.has_value())
 					return {std::move(token.value()), true};
 
-				return {m_Tokenizer(), false};
+				if (m_TokenIter == m_Tokenizer.end())
+					return {{tokenizer::SpecialPurpose::EndOfFile, m_Tokenizer.GetLastSpan()}, false};
+
+				auto token{*m_TokenIter};
+				++m_TokenIter;
+
+				return {std::move(token), false};
 			}()};
 			auto &[token, span]{ppToken.m_Token};
 
-			m_CurrentSpan = std::move(span);
+			m_CurrentSpan = span;
 
-			if (std::holds_alternative<Tokenizer::SpecialPurpose>(token)) {
-				switch (std::get<Tokenizer::SpecialPurpose>(token)) {
-					case Tokenizer::SpecialPurpose::EndOfFile:
-					case Tokenizer::SpecialPurpose::Error:
+			if (std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
+				switch (std::get<tokenizer::SpecialPurpose>(token)) {
+					case tokenizer::SpecialPurpose::EndOfFile:
+					case tokenizer::SpecialPurpose::Error:
 						return ppToken;
 					default:
 						break;
@@ -71,7 +76,7 @@ namespace jcc::preprocessor {
 		m_MacroStack.push(macroInvocation);
 	}
 
-	void Preprocessor::UseMacroArguments(std::vector<Tokenizer::Token> &&args) {
+	void Preprocessor::UseMacroArguments(std::vector<tokenizer::Token> &&args) {
 		if (m_MacroStack.empty())
 			throw std::runtime_error{"Macro argument reader is set, but the macro stack is empty"};
 
@@ -103,7 +108,7 @@ namespace jcc::preprocessor {
 		return nullptr;
 	}
 
-	std::optional<std::vector<Tokenizer::Token>> Preprocessor::GetMacroArgument(std::string const &argumentName) const {
+	std::optional<std::vector<tokenizer::Token>> Preprocessor::GetMacroArgument(std::string const &argumentName) const {
 		if (m_MacroStack.empty())
 			return std::nullopt;
 
@@ -121,7 +126,7 @@ namespace jcc::preprocessor {
 		return argIt->second;
 	}
 
-	std::optional<Tokenizer::Token> Preprocessor::GetTokenFromMacroStack() {
+	std::optional<tokenizer::Token> Preprocessor::GetTokenFromMacroStack() {
 		if (m_MacroStack.empty())
 			return std::nullopt;
 
@@ -148,7 +153,7 @@ namespace jcc::preprocessor {
 		throw std::runtime_error{"Macro stack is not empty, but the macro is not found"};
 	}
 
-	std::optional<Tokenizer::Token> Preprocessor::GetTokenFromMacroArgumentReader() {
+	std::optional<tokenizer::Token> Preprocessor::GetTokenFromMacroArgumentReader() {
 		if (m_MacroStack.empty())
 			return std::nullopt;
 
@@ -170,8 +175,10 @@ namespace jcc::preprocessor {
 	}
 
 	Preprocessor::Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses)
-	    : m_Tokenizer{filename, ifstream, diagnoses}
+	    : m_Tokenizer{ifstream, filename}
+	    , m_TokenIter{m_Tokenizer.begin()}
 	    , m_pDiagnoses{&diagnoses}
 	    , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, {}, &ifstream} {
+		++m_TokenIter;
 	}
 }// namespace jcc::preprocessor

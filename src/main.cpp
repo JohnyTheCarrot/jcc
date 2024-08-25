@@ -1,5 +1,4 @@
 #include "preprocessor/preprocessor.h"
-#include "tokenizer/TokenizerOld.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -24,7 +23,7 @@ int main(int argCount, char *args[]) {
 	Diagnosis::Vec             diagnoses;
 	preprocessor::Preprocessor preprocessor{filePath, inputFileStream, diagnoses};
 
-	std::ranges::copy(preprocessor, std::ostream_iterator<Tokenizer::Token>{std::cout, "\n"});
+	std::ranges::copy(preprocessor, std::ostream_iterator<tokenizer::Token>{std::cout, "\n"});
 
 	for (auto const &diagnosis: diagnoses) {
 		diagnosis.Print();

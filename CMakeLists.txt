@@ -13,12 +13,8 @@ set(
         src/misc/CharStream.cpp
         src/misc/Diagnosis.h
         src/misc/Diagnosis.cpp
-        #        src/misc/Preprocessor.h
-        #        src/misc/Preprocessor.cpp
         src/misc/Span.h
         src/misc/Span.cpp
-        src/tokenizer/TokenizerOld.h
-        src/tokenizer/TokenizerOld.cpp
         src/misc/trie.h
         src/preprocessor/preprocessor.h
         src/preprocessor/preprocessor.cpp

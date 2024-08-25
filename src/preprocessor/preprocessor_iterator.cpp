@@ -2,11 +2,11 @@
 #include "preprocessor.h"
 
 namespace jcc::preprocessor {
-	Tokenizer::Token PreprocessorIterator::GetNextToken() const {
+	tokenizer::Token PreprocessorIterator::GetNextToken() const {
 		return m_pPreprocessor->GetNextPreprocessorToken().m_Token;
 	}
 
-	Tokenizer::Token PreprocessorIteratorNoCommands::GetNextToken() const {
+	tokenizer::Token PreprocessorIteratorNoCommands::GetNextToken() const {
 		return m_pPreprocessor->GetNextFromTokenizer(false).m_Token;
 	}
 
@@ -27,9 +27,9 @@ namespace jcc::preprocessor {
 		auto ppToken{m_pPreprocessor->GetNextFromTokenizer(true)};
 
 		if (auto const &[token, isFromMacro]{ppToken};
-		    token.IsSpecialPurposeKind(Tokenizer::SpecialPurpose::EndOfFile) ||
-		    (std::holds_alternative<Tokenizer::Token::Type>(m_Token) &&
-		     std::get<Tokenizer::Token::Type>(m_Token) == token.GetValueType()))
+		    token.Is(tokenizer::SpecialPurpose::EndOfFile) ||
+		    (std::holds_alternative<tokenizer::Token::Type>(m_Token) &&
+		     std::get<tokenizer::Token::Type>(m_Token) == token.GetValueType()))
 			m_Token = token.GetValueType();
 		else
 			m_Token = std::move(ppToken);

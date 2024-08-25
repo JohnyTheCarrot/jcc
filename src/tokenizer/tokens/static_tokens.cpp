@@ -1,11 +1,13 @@
 #include "static_tokens.h"
+
+#include "misc/Diagnosis.h"
 #include "misc/trie.h"
 
 namespace jcc::tokenizer::static_tokens {
 	using TokenTrieValue = std::variant<Keyword, Directive, Punctuator, SpecialPurpose>;
 
-	using TokenTrie = TrieNode<'!', '~', TokenTrieValue>;
-	TokenTrie const m_TokenTrie{
+	using KeywDirTokenTrie = TrieNode<'#', 'z', TokenTrieValue>;
+	KeywDirTokenTrie const c_TokenTrie{
 	        {"auto", Keyword::Auto},
 	        {"break", Keyword::Break},
 	        {"case", Keyword::Case},
@@ -53,18 +55,25 @@ namespace jcc::tokenizer::static_tokens {
 	        {"false", Keyword::False},
 	        {"true", Keyword::True},
 	        {"nullptr", Keyword::Nullptr},
-	        {"include", Directive::Include},
-	        {"define", Directive::Define},
-	        {"undef", Directive::Undef},
-	        {"line", Directive::Line},
-	        {"error", Directive::Error},
-	        {"pragma", Directive::Pragma},
-	        {"if", Directive::If},
-	        {"ifdef", Directive::Ifdef},
-	        {"ifndef", Directive::Ifndef},
-	        {"elif", Directive::Elif},
-	        {"else", Directive::Else},
-	        {"endif", Directive::Endif},
+	        // Directives
+	        {"#", Punctuator::Hash},
+	        {"##", Punctuator::HashHash},
+	        {"#include", Directive::Include},
+	        {"#define", Directive::Define},
+	        {"#undef", Directive::Undef},
+	        {"#line", Directive::Line},
+	        {"#error", Directive::Error},
+	        {"#pragma", Directive::Pragma},
+	        {"#if", Directive::If},
+	        {"#ifdef", Directive::Ifdef},
+	        {"#ifndef", Directive::Ifndef},
+	        {"#elif", Directive::Elif},
+	        {"#else", Directive::Else},
+	        {"#endif", Directive::Endif},
+	};
+
+	using PunctuatorTokenTrie = TrieNode<'!', '~', TokenTrieValue>;
+	PunctuatorTokenTrie const c_PunctuatorTrie{
 	        {"[", Punctuator::LeftBracket},
 	        {"]", Punctuator::RightBracket},
 	        {"(", Punctuator::PpLeftParenthesis},
@@ -101,8 +110,6 @@ namespace jcc::tokenizer::static_tokens {
 	        {",", Punctuator::Comma},
 	        {":", Punctuator::Colon},
 	        {";", Punctuator::Semicolon},
-	        {"#", Punctuator::Hash},
-	        {"##", Punctuator::HashHash},
 	        {"?", Punctuator::QuestionMark},
 	        {"*", Punctuator::Asterisk},
 	        {"*=", Punctuator::AsteriskEqual},
@@ -137,23 +144,61 @@ namespace jcc::tokenizer::static_tokens {
 		return std::get<Punctuator>(value);
 	}
 
-	StaticTokenTokenizationResult Tokenize(CharIter &charIter) {
+	StaticTokenTokenizationResult TokenizeKeywordsAndDirectives(CharIter &charIter) {
 		Span span{
 		        charIter.GetFileName(), charIter.GetCurrentSpanMarker(), charIter.GetCurrentSpanMarker(),
 		        charIter.GetInput()->tellg(), charIter.GetInput()
 		};
-		std::string                   unrecognizedTokenBuff{};
-		TokenTrie const              *currentNode{&m_TokenTrie};
+		std::string                   identifierBuf{};
+		KeywDirTokenTrie const       *currentNode{&c_TokenTrie};
 		std::optional<TokenTrieValue> trieResult{};
 
 		while (charIter != CharIter::c_UntilNewline) {
 			auto [spanMarker, character, isSentinel]{*charIter};
 
-			// TODO: this feels like a hack
-			if (character == '\'' || character == '"' || std::isdigit(character))
+			if (character == '\'' || character == '"')
 				break;
 
-			unrecognizedTokenBuff.push_back(character);
+			auto [node, leaf]{currentNode->Find(character)};
+
+			if (node != nullptr)
+				identifierBuf.push_back(character);
+
+			if (leaf != std::nullopt) {
+				trieResult = leaf->m_Value;
+			}
+
+			span.m_End = spanMarker;
+
+			if (!std::isspace(character))
+				currentNode = node;
+
+			if (node == nullptr) {
+				// if (charIter != CharIter::end())
+				// 	++charIter;
+				break;
+			}
+
+			++charIter;
+		}
+
+		if (currentNode == nullptr ||
+		    !trieResult.has_value())// if we haven't reached the end of the trie or there's no trie result
+			return {.valueOrString = std::move(identifierBuf), .endMarker = span.m_End};
+
+		return {.valueOrString = TrieResultToTokenValue(trieResult.value()), .endMarker = span.m_End};
+	}
+
+	StaticTokenTokenizationResult TokenizePunctuators(CharIter &charIter) {
+		Span span{
+		        charIter.GetFileName(), charIter.GetCurrentSpanMarker(), charIter.GetCurrentSpanMarker(),
+		        charIter.GetInput()->tellg(), charIter.GetInput()
+		};
+		PunctuatorTokenTrie const    *currentNode{&c_PunctuatorTrie};
+		std::optional<TokenTrieValue> trieResult{};
+
+		while (charIter != CharIter::c_UntilNewline) {
+			auto [spanMarker, character, isSentinel]{*charIter};
 
 			auto [node, leaf]{currentNode->Find(character)};
 
@@ -167,18 +212,24 @@ namespace jcc::tokenizer::static_tokens {
 				currentNode = node;
 
 			if (node == nullptr) {
-				if (charIter != CharIter::end())
-					++charIter;
+				// if (charIter != CharIter::end())
+				// 	++charIter;
 				break;
 			}
 
 			++charIter;
 		}
 
-		if (currentNode == nullptr ||
-		    !trieResult.has_value())// if we haven't reached the end of the trie or there's no trie result
-			return {.valueOrString = std::move(unrecognizedTokenBuff), .endMarker = span.m_End};
+		if (!trieResult.has_value())
+			throw FatalCompilerError{Diagnosis::Kind::TK_PartialTokenEncountered, std::move(span)};
 
 		return {.valueOrString = TrieResultToTokenValue(trieResult.value()), .endMarker = span.m_End};
+	}
+
+	StaticTokenTokenizationResult Tokenize(CharIter &charIter) {
+		if (auto [node, leaf]{c_PunctuatorTrie.Find(charIter->m_Char)}; node == nullptr)
+			return TokenizeKeywordsAndDirectives(charIter);
+
+		return TokenizePunctuators(charIter);
 	}
 }// namespace jcc::tokenizer::static_tokens

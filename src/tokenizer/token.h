@@ -202,6 +202,10 @@ namespace jcc::tokenizer {
 	};
 
 	struct Token {
+		enum class GenericType { Identifier, PpNumber, ChararacterConstant, StringConstant };
+
+		using Type = std::variant<GenericType, Punctuator, Keyword, Directive, SpecialPurpose>;
+
 		using Value = std::variant<
 		        IncludeDirective, Identifier, PpNumber, CharacterConstant, StringConstant, Punctuator, Keyword,
 		        Directive, SpecialPurpose>;
@@ -212,6 +216,9 @@ namespace jcc::tokenizer {
 		[[nodiscard]]
 		bool IsTerminal() const;
 
+		[[nodiscard]]
+		Type GetValueType() const;
+
 		template<typename T>
 		[[nodiscard]]
 		bool Is(T const &value) const {
@@ -221,6 +228,8 @@ namespace jcc::tokenizer {
 		[[nodiscard]]
 		bool
 		operator==(Token const &other) const;
+
+		friend std::ostream &operator<<(std::ostream &os, Token const &token);
 	};
 
 	void PrintTo(Keyword keyword, std::ostream *os);
@@ -232,6 +241,102 @@ namespace jcc::tokenizer {
 	void PrintTo(SpecialPurpose specialPurpose, std::ostream *os);
 
 	void PrintTo(ConstantPrefix constantPrefix, std::ostream *os);
+
+	[[nodiscard]]
+	static constexpr std::string_view KeywordAsIdentString(Keyword keyword) noexcept {
+		switch (keyword) {
+			case Keyword::Auto:
+				return "auto";
+			case Keyword::Break:
+				return "break";
+			case Keyword::Case:
+				return "case";
+			case Keyword::Char:
+				return "char";
+			case Keyword::Const:
+				return "const";
+			case Keyword::Continue:
+				return "continue";
+			case Keyword::Default:
+				return "default";
+			case Keyword::Do:
+				return "do";
+			case Keyword::Double:
+				return "double";
+			case Keyword::Else:
+				return "else";
+			case Keyword::Enum:
+				return "enum";
+			case Keyword::Extern:
+				return "extern";
+			case Keyword::Float:
+				return "float";
+			case Keyword::For:
+				return "for";
+			case Keyword::Goto:
+				return "goto";
+			case Keyword::If:
+				return "if";
+			case Keyword::Inline:
+				return "inline";
+			case Keyword::Int:
+				return "int";
+			case Keyword::Long:
+				return "long";
+			case Keyword::Register:
+				return "register";
+			case Keyword::Restrict:
+				return "restrict";
+			case Keyword::Return:
+				return "return";
+			case Keyword::Short:
+				return "short";
+			case Keyword::Signed:
+				return "signed";
+			case Keyword::Sizeof:
+				return "sizeof";
+			case Keyword::Static:
+				return "static";
+			case Keyword::Struct:
+				return "struct";
+			case Keyword::Switch:
+				return "switch";
+			case Keyword::Typedef:
+				return "typedef";
+			case Keyword::Union:
+				return "union";
+			case Keyword::Unsigned:
+				return "unsigned";
+			case Keyword::Void:
+				return "void";
+			case Keyword::Volatile:
+				return "volatile";
+			case Keyword::While:
+				return "while";
+			case Keyword::Alignas:
+				return "_Alignas";
+			case Keyword::Alignof:
+				return "_Alignof";
+			case Keyword::Atomic:
+				return "_Atomic";
+			case Keyword::Bool:
+				return "_Bool";
+			case Keyword::Complex:
+				return "_Complex";
+			case Keyword::Generic:
+				return "_Generic";
+			case Keyword::Imaginary:
+				return "_Imaginary";
+			case Keyword::Noreturn:
+				return "_Noreturn";
+			case Keyword::StaticAssert:
+				return "_Static_assert";
+			case Keyword::ThreadLocal:
+				return "_Thread_local";
+			default:
+				return "";// Empty string for unknown keywords
+		}
+	}
 }// namespace jcc::tokenizer
 
 #endif//JCC_TOKEN_H

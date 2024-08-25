@@ -2,7 +2,7 @@
 #define COMMAND_H
 
 #include "preprocessor/preprocessor_token.h"
-#include "tokenizer/TokenizerOld.h"
+#include "tokenizer/token.h"
 #include <optional>
 #include <unordered_map>
 
@@ -10,16 +10,16 @@ namespace jcc::preprocessor {
 	class Preprocessor;
 
 	namespace commands {
-		using CommandMap = std::unordered_map<Tokenizer::Token::Type, class Command *>;
+		using CommandMap = std::unordered_map<tokenizer::Token::Type, class Command *>;
 
 		class Command {
 		public:
-			Command(CommandMap &map, Tokenizer::Token::Type tokenType);
+			Command(CommandMap &map, tokenizer::Token::Type tokenType);
 
 			virtual ~Command() = default;
 
 			[[nodiscard]]
-			virtual std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, Tokenizer::Token &&) const = 0;
+			virtual std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, tokenizer::Token &&) const = 0;
 		};
 
 		class PreprocessorCommandSingleton final {
