@@ -238,6 +238,14 @@ namespace jcc {
 		return m_Kind;
 	}
 
+	FatalCompilerError::OptionalData const &FatalCompilerError::GetData1() const noexcept {
+		return m_Data1;
+	}
+
+	FatalCompilerError::OptionalData const &FatalCompilerError::GetData2() const noexcept {
+		return m_Data2;
+	}
+
 	char const *FatalCompilerError::what() const noexcept {
 		return m_Message.c_str();
 	}
