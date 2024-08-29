@@ -133,6 +133,9 @@ namespace jcc {
 			case Kind::TK_PreprocessingNumberInvalid:
 				fmt::print("Invalid preprocessing number.");
 				break;
+			case Kind::PP_DirectiveNotAloneOnLine:
+				fmt::print("Preprocessor directive must be the only item on a line.");
+				break;
 		}
 	}
 

@@ -7,7 +7,7 @@ namespace jcc::preprocessor {
 	}
 
 	tokenizer::Token PreprocessorIteratorNoCommands::GetNextToken() const {
-		return m_pPreprocessor->GetNextFromTokenizer(false).m_Token;
+		return m_pPreprocessor->SimpleTokenRead().m_Token;
 	}
 
 	InternalPreprocessorIterator::InternalPreprocessorIterator(Preprocessor &preprocessor)

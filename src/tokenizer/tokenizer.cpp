@@ -7,13 +7,6 @@
 #include "tokens/string_literals.h"
 
 namespace jcc::tokenizer {
-	void Tokenizer::ExpectNoEof(Span &span) const {
-		if (m_CharIter == CharIter::end()) {
-			span.m_End = m_CharIter.GetSentinel().m_LastSpanMarker;
-			throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, std::move(span)};
-		}
-	}
-
 	bool Tokenizer::SkipWhitespace() {
 		auto const newIt{std::find_if_not(m_CharIter, CharIter::c_UntilNewline, [](CharInfo const &charInfo) {
 			return std::isspace(charInfo.m_Char);
@@ -50,6 +43,48 @@ namespace jcc::tokenizer {
 
 			++m_CharIter;
 		}
+	}
+
+	std::optional<Token> Tokenizer::TokenizeStaticToken(
+	        static_tokens::StaticTokenTokenizationResult::ValueOrString const &valueOrString, Span &span,
+	        bool skippedWhitespace
+	) {
+		auto const tokenValue{[&]() -> Token::Value {
+			if (!std::holds_alternative<Token::Value>(valueOrString))
+				throw FatalCompilerError{Diagnosis::Kind::TK_UnexpectedChar, std::move(span), m_CharIter->m_Char};
+
+			auto value{std::get<Token::Value>(valueOrString)};
+			if (std::holds_alternative<Punctuator>(value)) {
+				if (auto const punctuator{std::get<Punctuator>(value)};
+				    punctuator == Punctuator::PpLeftParenthesis && skippedWhitespace)
+					value = Punctuator::LeftParenthesis;
+			}
+
+			return value;
+		}()};
+
+		if (std::holds_alternative<Punctuator>(tokenValue)) {
+			if (auto const punctuator{std::get<Punctuator>(tokenValue)};
+			    punctuator == Punctuator::Dot && m_CharIter != CharIter::end() && std::isdigit(m_CharIter->m_Char)) {
+				return pp_numbers::Tokenize(m_CharIter, span.m_Start, true);
+			}
+		}
+
+		if (std::holds_alternative<SpecialPurpose>(tokenValue)) {
+			auto const specialPurpose{std::get<SpecialPurpose>(tokenValue)};
+
+			if (specialPurpose == SpecialPurpose::LineComment) {
+				SkipLineComment();
+				return GetNextToken();
+			}
+
+			if (specialPurpose == SpecialPurpose::BlockComment) {
+				SkipBlockComment(span);
+				return GetNextToken();
+			}
+		}
+
+		return Token{.m_Value = tokenValue, .m_Span = std::move(span)};
 	}
 
 	Tokenizer::Tokenizer(std::istream &input, std::string_view fileName)
@@ -125,42 +160,7 @@ namespace jcc::tokenizer {
 				);
 		}
 
-		auto const tokenValue{[&]() -> Token::Value {
-			if (!std::holds_alternative<Token::Value>(valueOrString))
-				throw FatalCompilerError{Diagnosis::Kind::TK_UnexpectedChar, std::move(span), m_CharIter->m_Char};
-
-			auto value{std::get<Token::Value>(valueOrString)};
-			if (std::holds_alternative<Punctuator>(value)) {
-				if (auto const punctuator{std::get<Punctuator>(value)};
-				    punctuator == Punctuator::PpLeftParenthesis && skippedWhitespace)
-					value = Punctuator::LeftParenthesis;
-			}
-
-			return value;
-		}()};
-
-		if (std::holds_alternative<Punctuator>(tokenValue)) {
-			if (auto const punctuator{std::get<Punctuator>(tokenValue)};
-			    punctuator == Punctuator::Dot && m_CharIter != CharIter::end() && std::isdigit(m_CharIter->m_Char)) {
-				return pp_numbers::Tokenize(m_CharIter, span.m_Start, true);
-			}
-		}
-
-		if (std::holds_alternative<SpecialPurpose>(tokenValue)) {
-			auto const specialPurpose{std::get<SpecialPurpose>(tokenValue)};
-
-			if (specialPurpose == SpecialPurpose::LineComment) {
-				SkipLineComment();
-				return GetNextToken();
-			}
-
-			if (specialPurpose == SpecialPurpose::BlockComment) {
-				SkipBlockComment(span);
-				return GetNextToken();
-			}
-		}
-
-		return Token{.m_Value = tokenValue, .m_Span = std::move(span)};
+		return TokenizeStaticToken(valueOrString, span, skippedWhitespace);
 	}
 
 	TokenizerIterator Tokenizer::begin() {

@@ -55,6 +55,7 @@ namespace jcc {
 			PP_UnexpectedMacroInvocationArgumentCount,
 			PP_MacroDefinedInTermsOfItself,
 			PP_HashNotFollowedByParameter,
+			PP_DirectiveNotAloneOnLine,
 			TODO,
 		};
 
