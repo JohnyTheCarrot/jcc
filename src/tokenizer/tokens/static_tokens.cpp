@@ -174,8 +174,6 @@ namespace jcc::tokenizer::static_tokens {
 				currentNode = node;
 
 			if (node == nullptr) {
-				// if (charIter != CharIter::end())
-				// 	++charIter;
 				break;
 			}
 

@@ -12,9 +12,14 @@
 
 namespace jcc::tokenizer::static_tokens {
 	struct StaticTokenTokenizationResult final {
-		std::variant<Token::Value, std::string> valueOrString{};
-		SpanMarker                              endMarker{};
+		using ValueOrString = std::variant<Token::Value, std::string>;
+
+		ValueOrString valueOrString{};
+		SpanMarker    endMarker{};
 	};
+
+	[[nodiscard]]
+	StaticTokenTokenizationResult TokenizeKeywordsAndDirectives(CharIter &charIter);
 
 	[[nodiscard]]
 	StaticTokenTokenizationResult Tokenize(CharIter &charIter);

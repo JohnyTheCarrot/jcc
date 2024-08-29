@@ -5,14 +5,14 @@
 #include "misc/trie.h"
 #include "tokenizer/token.h"
 #include "tokenizer_iterator.h"
+#include "tokens/static_tokens.h"
+
 #include <optional>
 #include <string_view>
 
 namespace jcc::tokenizer {
 	class Tokenizer final {
 		CharIter m_CharIter;
-
-		void ExpectNoEof(Span &span) const;
 
 		struct TrieTraversalResult final {
 			std::variant<Token::Value, std::string> valueOrString{};
@@ -25,6 +25,12 @@ namespace jcc::tokenizer {
 		void SkipLineComment();
 
 		void SkipBlockComment(Span &span);
+
+		[[nodiscard]]
+		std::optional<Token> TokenizeStaticToken(
+		        static_tokens::StaticTokenTokenizationResult::ValueOrString const &valueOrString, Span &span,
+		        bool skippedWhitespace
+		);
 
 	public:
 		explicit Tokenizer(std::istream &input, std::string_view fileName);

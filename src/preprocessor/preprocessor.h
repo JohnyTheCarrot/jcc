@@ -20,11 +20,11 @@ namespace jcc::preprocessor {
 
 		MacroDefinitions m_MacroDefinitions{};
 
-		tokenizer::Tokenizer               m_Tokenizer;
-		tokenizer::TokenizerIterator       m_TokenIter;
-		Diagnosis::Vec                    *m_pDiagnoses;
-		std::stack<macro::MacroInvocation> m_MacroStack{};
-		Span                               m_CurrentSpan;
+		tokenizer::Tokenizer                 m_Tokenizer;
+		mutable tokenizer::TokenizerIterator m_TokenIter;
+		Diagnosis::Vec                      *m_pDiagnoses;
+		std::stack<macro::MacroInvocation>   m_MacroStack{};
+		Span                                 m_CurrentSpan;
 
 		[[nodiscard]]
 		std::optional<tokenizer::Token> GetTokenFromMacroStack();
@@ -32,11 +32,16 @@ namespace jcc::preprocessor {
 		[[nodiscard]]
 		std::optional<tokenizer::Token> GetTokenFromMacroArgumentReader();
 
+		void SkipEmptyLines();
+
 	public:
 		Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses);
 
 		[[nodiscard]]
 		PreprocessorToken GetNextFromTokenizer(bool executeCommands = true);
+
+		[[nodiscard]]
+		bool IsMacroDefined(std::string const &name) const;
 
 		void RegisterMacro(std::string const &name, macro::Macro macro);
 
@@ -55,6 +60,9 @@ namespace jcc::preprocessor {
 
 		[[nodiscard]]
 		PreprocessorToken GetNextPreprocessorToken();
+
+		[[nodiscard]]
+		PreprocessorToken SimpleTokenRead();
 
 		template<class It = PreprocessorIterator>
 		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>

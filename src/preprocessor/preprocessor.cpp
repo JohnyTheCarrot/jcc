@@ -23,28 +23,9 @@ namespace jcc::preprocessor {
 
 	PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
 		while (true) {
-			auto ppToken{[this]() -> PreprocessorToken {
-				if (auto token{GetTokenFromMacroArgumentReader()}; token.has_value())
-					return {std::move(token.value()), false
-					};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+			auto ppToken{SimpleTokenRead()};
 
-				if (auto token{GetTokenFromMacroStack()}; token.has_value())
-					return {std::move(token.value()), false
-					};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-
-				if (m_TokenIter == m_Tokenizer.end())
-					return {{tokenizer::SpecialPurpose::EndOfFile, m_Tokenizer.GetLastSpan()}, false};
-
-				auto token{*m_TokenIter};
-				++m_TokenIter;
-
-				return {std::move(token), false};
-			}()};
-			auto &[token, span]{ppToken.m_Token};
-
-			m_CurrentSpan = span;
-
-			if (std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
+			if (auto &[token, span]{ppToken.m_Token}; std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
 				switch (std::get<tokenizer::SpecialPurpose>(token)) {
 					case tokenizer::SpecialPurpose::EndOfFile:
 					case tokenizer::SpecialPurpose::Error:
@@ -68,6 +49,10 @@ namespace jcc::preprocessor {
 				return ppToken;
 			}
 		}
+	}
+
+	bool Preprocessor::IsMacroDefined(std::string const &name) const {
+		return m_MacroDefinitions.contains(name);
 	}
 
 	void Preprocessor::RegisterMacro(std::string const &name, macro::Macro macro) {
@@ -180,6 +165,33 @@ namespace jcc::preprocessor {
 		}
 
 		return m_Args.at(m_CurrentTokenIndex);
+	}
+
+	PreprocessorToken Preprocessor::SimpleTokenRead() {
+		if (auto token{GetTokenFromMacroArgumentReader()}; token.has_value()) {
+			m_CurrentSpan = token->m_Span;
+			return {std::move(token.value()), false};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+		}
+
+		if (auto token{GetTokenFromMacroStack()}; token.has_value()) {
+			m_CurrentSpan = token->m_Span;
+			return {std::move(token.value()), false};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+		}
+
+		if (m_TokenIter == m_Tokenizer.end())
+			return {{tokenizer::SpecialPurpose::EndOfFile, m_Tokenizer.GetLastSpan()}, false};
+
+		auto token{*m_TokenIter};
+		++m_TokenIter;
+		m_CurrentSpan = token.m_Span;
+
+		return {std::move(token), false};
+	}
+
+	void Preprocessor::SkipEmptyLines() {
+		auto token{SimpleTokenRead()};
+
+		while (token.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) { token = SimpleTokenRead(); }
 	}
 
 	Preprocessor::Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses)

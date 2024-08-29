@@ -78,7 +78,7 @@ namespace jcc::preprocessor::commands {
 	DefineCommand::~DefineCommand() = default;
 
 	std::optional<PreprocessorToken> DefineCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
-		auto nextToken{preprocessor.GetNextPreprocessorToken().m_Token};
+		auto nextToken{preprocessor.SimpleTokenRead().m_Token};
 
 		if (nextToken.Is(tokenizer::SpecialPurpose::Error)) {
 			throw FatalCompilerError{Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span};
@@ -96,7 +96,11 @@ namespace jcc::preprocessor::commands {
 		                : KeywordAsIdentString(std::get<tokenizer::Keyword>(nextToken.m_Value))
 		};
 
-		nextToken = preprocessor.GetNextPreprocessorToken().m_Token;
+		if (preprocessor.IsMacroDefined(macroName)) {
+			throw FatalCompilerError{Diagnosis::Kind::PP_IllegalMacroRedefinition, nextToken.m_Span};
+		}
+
+		nextToken = preprocessor.SimpleTokenRead().m_Token;
 
 		if (nextToken.Is(tokenizer::Punctuator::PpLeftParenthesis)) {
 			DefineFunctionLikeMacro(preprocessor, std::move(macroName));
