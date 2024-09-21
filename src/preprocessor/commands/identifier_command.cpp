@@ -104,7 +104,7 @@ namespace jcc::preprocessor::commands {
 	IdentifierCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&ident) const {
 		auto identifierContent{std::get<tokenizer::Identifier>(ident.m_Value).m_Name};
 
-		if (auto const macro{preprocessor.GetMacro(identifierContent)}) {
+		if (auto const macro{preprocessor.GetMacroStore().GetMacro(identifierContent)}) {
 			auto macroInvocation{[macro, &identifierContent, &preprocessor] {
 				if (std::holds_alternative<macro::FunctionLikeMacro>(*macro)) {
 					macro::FnMacroArguments arguments{
@@ -117,13 +117,13 @@ namespace jcc::preprocessor::commands {
 				return macro::MacroInvocation{.m_MacroName = identifierContent};
 			}()};
 
-			preprocessor.InvokeMacro(std::move(macroInvocation));
+			preprocessor.GetMacroStore().InvokeMacro(std::move(macroInvocation));
 
 			return preprocessor.GetNextPreprocessorToken();// return the first token of the macro
 		}
 
-		if (auto arg{preprocessor.GetMacroArgument(identifierContent)}; arg.has_value()) {
-			preprocessor.UseMacroArguments(std::move(arg.value()));
+		if (auto arg{preprocessor.GetMacroStore().GetMacroArgument(identifierContent)}; arg.has_value()) {
+			preprocessor.GetMacroStore().PushMacroArgumentTokens(std::move(arg.value()));
 			return preprocessor.GetNextPreprocessorToken();
 		}
 
