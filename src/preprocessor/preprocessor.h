@@ -3,6 +3,7 @@
 
 #include "commands/command.h"
 #include "macro.h"
+#include "macro_store.h"
 #include "misc/Diagnosis.h"
 #include "preprocessor_iterator.h"
 #include "preprocessor_token.h"
@@ -16,21 +17,11 @@ namespace jcc::preprocessor {
 	constexpr std::string_view VaArgs{"__VA_ARGS__"};
 
 	class Preprocessor final {
-		using MacroDefinitions = std::unordered_map<std::string, macro::Macro>;
-
-		MacroDefinitions m_MacroDefinitions{};
-
 		tokenizer::Tokenizer                 m_Tokenizer;
 		mutable tokenizer::TokenizerIterator m_TokenIter;
-		Diagnosis::Vec                      *m_pDiagnoses;
-		std::stack<macro::MacroInvocation>   m_MacroStack{};
 		Span                                 m_CurrentSpan;
-
-		[[nodiscard]]
-		std::optional<tokenizer::Token> GetTokenFromMacroStack();
-
-		[[nodiscard]]
-		std::optional<tokenizer::Token> GetTokenFromMacroArgumentReader();
+		Diagnosis::Vec                      *m_pDiagnoses;
+		std::unique_ptr<MacroStore>          m_pMacroStore{std::make_unique<MacroStore>()};
 
 		void SkipEmptyLines();
 
@@ -41,28 +32,13 @@ namespace jcc::preprocessor {
 		PreprocessorToken GetNextFromTokenizer(bool executeCommands = true);
 
 		[[nodiscard]]
-		bool IsMacroDefined(std::string const &name) const;
-
-		void RegisterMacro(std::string const &name, macro::Macro macro);
-
-		void InvokeMacro(macro::MacroInvocation &&macroInvocation);
-
-		void UseMacroArguments(std::vector<tokenizer::Token> &&args);
-
-		[[nodiscard]]
-		int GetMacroDepth() const noexcept;
-
-		[[nodiscard]]
-		macro::Macro const *GetMacro(std::string const &name, bool allowCurrentMacro = false) const;
-
-		[[nodiscard]]
-		std::optional<std::vector<tokenizer::Token>> GetMacroArgument(std::string const &argumentName) const;
-
-		[[nodiscard]]
 		PreprocessorToken GetNextPreprocessorToken();
 
 		[[nodiscard]]
 		PreprocessorToken SimpleTokenRead();
+
+		[[nodiscard]]
+		MacroStore &GetMacroStore() const noexcept;
 
 		template<class It = PreprocessorIterator>
 		    requires IsPreprocessorIterator<It> or std::same_as<It, InternalPreprocessorIterator>

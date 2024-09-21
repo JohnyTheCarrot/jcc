@@ -60,7 +60,7 @@ namespace jcc::preprocessor::commands {
 		auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
 		std::ranges::move(m_ReplacementList, std::back_inserter(replacementList.m_ReplacementList));
 
-		preprocessor.RegisterMacro(name, macro::ObjectLikeMacro{name, std::move(replacementList)});
+		preprocessor.GetMacroStore().RegisterMacro(name, macro::ObjectLikeMacro{name, std::move(replacementList)});
 	}
 
 	void DefineCommand::DefineFunctionLikeMacro(Preprocessor &preprocessor, std::string &&name) {
@@ -68,7 +68,7 @@ namespace jcc::preprocessor::commands {
 		auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
 
 		macro::FunctionLikeMacro macro{name, std::move(m_ReplacementList), std::move(parameterList), isVariadic};
-		preprocessor.RegisterMacro(name, std::move(macro));
+		preprocessor.GetMacroStore().RegisterMacro(name, std::move(macro));
 	}
 
 	DefineCommand::DefineCommand(CommandMap &map)
@@ -96,7 +96,7 @@ namespace jcc::preprocessor::commands {
 		                : KeywordAsIdentString(std::get<tokenizer::Keyword>(nextToken.m_Value))
 		};
 
-		if (preprocessor.IsMacroDefined(macroName)) {
+		if (preprocessor.GetMacroStore().IsMacroDefined(macroName)) {
 			throw FatalCompilerError{Diagnosis::Kind::PP_IllegalMacroRedefinition, nextToken.m_Span};
 		}
 
