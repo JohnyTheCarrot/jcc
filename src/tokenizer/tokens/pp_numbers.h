@@ -4,16 +4,17 @@
 #include "tokenizer/token.h"
 
 namespace jcc {
-	struct SpanMarker;
+    struct SpanMarker;
 }
 
 namespace jcc::tokenizer {
-	class CharIter;
+    class CharIter;
 }
 
 namespace jcc::tokenizer::pp_numbers {
-	[[nodiscard]]
-	Token Tokenize(CharIter &charIter, SpanMarker const &start, bool startsWithDot);
+    [[nodiscard]]
+    Token
+    Tokenize(CharIter &charIter, SpanMarker const &start, bool startsWithDot);
 }
 
 #endif//PP_NUMBER_H

@@ -1,22 +1,27 @@
 #include "tokenizer/char_iter.h"
-#include "misc/Span.h"
+
 #include <gtest/gtest.h>
+
+#include "misc/Span.h"
 
 using namespace jcc::tokenizer;
 
 using CharInfoList = std::vector<CharInfo>;
 
-class CharIterTest : public testing::TestWithParam<std::tuple<std::string, CharInfoList>> {};
+class CharIterTest
+    : public testing::TestWithParam<std::tuple<std::string, CharInfoList>> {};
 
 TEST_P(CharIterTest, CharIter) {
-	std::stringstream is{std::get<0>(GetParam())};
+    std::stringstream is{std::get<0>(GetParam())};
 
-	std::vector const     expected{std::get<1>(GetParam())};
-	std::vector<CharInfo> actual;
+    std::vector const     expected{std::get<1>(GetParam())};
+    std::vector<CharInfo> actual;
 
-	std::copy(CharIter{is, "test.c"}, CharIter::end(), std::back_inserter(actual));
+    std::copy(
+            CharIter{is, "test.c"}, CharIter::end(), std::back_inserter(actual)
+    );
 
-	EXPECT_EQ(expected, actual);
+    EXPECT_EQ(expected, actual);
 }
 
 INSTANTIATE_TEST_SUITE_P(
