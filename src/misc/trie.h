@@ -1,176 +1,167 @@
 #ifndef TRIE_H
 #define TRIE_H
+
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <iostream>
-
-#include "CharStream.h"
 #include <memory>
 #include <optional>
-#include <string>
-#include <variant>
+#include <utility>
+
+#include "CharStream.h"
 
 namespace jcc {
-	template<size_t charRangeStart, size_t charRangeEnd, class TValue>
-	struct TrieNode final {
-	private:
-		// thanks to https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
-		template<size_t N>
-		struct StringLiteral {
-			constexpr StringLiteral(char const (&str)[N]) {
-				std::copy_n(str, N, value);
-			}
+    template<size_t charRangeStart, size_t charRangeEnd, class TValue>
+    struct TrieNode final {
+    public:
+        static_assert(
+                charRangeEnd > charRangeStart,
+                "end of range must be larger than start"
+        );
+        std::array<std::unique_ptr<TrieNode>, charRangeEnd - charRangeStart + 1>
+                m_Children{};
 
-			char value[N]{};
-		};
+        struct Leaf {
+            TValue m_Value;
+        };
 
-		static constexpr bool IsStringViewValid(std::basic_string_view<char> key) {
-			for (auto const &c: key)
-				if (c < charRangeStart || c > charRangeEnd)
-					return false;
+        using Value = TValue;
 
-			return true;
-		}
+        std::optional<Leaf> m_Leaf{std::nullopt};
 
-	public:
-		static_assert(charRangeEnd > charRangeStart, "end of range must be larger than start");
-		std::array<std::unique_ptr<TrieNode>, charRangeEnd - charRangeStart + 1> m_Children{};
+        TrieNode() = default;
 
-		struct Leaf {
-			TValue m_Value;
-		};
+        TrieNode(std::initializer_list<std::pair<std::string_view, TValue>>
+                         initList) {
+            for (auto const &[key, value] : initList) Insert(key, value);
+        }
 
-		using Value = TValue;
+        void Insert(std::string_view key, TValue const &value) {
+            TrieNode *node{this};
 
-		std::optional<Leaf> m_Leaf{std::nullopt};
+            for (size_t keyIdx{}; keyIdx < key.size(); ++keyIdx) {
+                char const childIndex{static_cast<char>(
+                        static_cast<size_t>(key[keyIdx]) - charRangeStart
+                )};
+                assert(key[keyIdx] >= charRangeStart &&
+                       key[keyIdx] <= charRangeEnd);
 
-		TrieNode() = default;
+                auto &child{node->m_Children[childIndex]};
+                if (child == nullptr) {
+                    child = std::make_unique<TrieNode>();
 
-		TrieNode(std::initializer_list<std::pair<std::string_view, TValue>> initList) {
-			for (auto const &[key, value]: initList) Insert(key, value);
-		}
+                    if (keyIdx + 1 == key.size())
+                        child->m_Leaf = {.m_Value = value};
+                }
 
-		template<StringLiteral Key>
-		void Insert(TValue const &value) {
-			static_assert(IsStringViewValid(Key.value), "key contains invalid characters");
+                node = child.get();
+            }
+        }
 
-			Insert(Key.value, value);
-		}
+        TrieNode const *GetNode(CharStream const &charStream) const {
+            if (!charStream.Good())
+                return nullptr;
 
-		void Insert(std::string_view key, TValue const &value) {
-			TrieNode *node{this};
+            char const c{charStream.Get()};
+            char const childIndex{
+                    static_cast<char>(static_cast<size_t>(c) - charRangeStart)
+            };
+            if (childIndex < 0 || childIndex > charRangeEnd - charRangeStart)
+                return nullptr;
 
-			for (size_t keyIdx{}; keyIdx < key.size(); ++keyIdx) {
-				char const childIndex{static_cast<char>(static_cast<size_t>(key[keyIdx]) - charRangeStart)};
-				assert(key[keyIdx] >= charRangeStart && key[keyIdx] <= charRangeEnd);
+            return m_Children[childIndex].get();
+        }
 
-				auto &child{node->m_Children[childIndex]};
-				if (child == nullptr) {
-					child = std::make_unique<TrieNode>();
+        // [[nodiscard]]
+        // std::optional<TValue> Find(tokenizer::CharIter &charIter) const {
+        // 	TrieNode const       *node{this};
+        // 	std::optional<TValue> result{std::nullopt};
+        //
+        // 	while (node != nullptr) {
+        // 		if (charIter == tokenizer::CharIter::end())
+        // 			return result;
+        //
+        // 		auto const [spanMarker, character, isSentinel]{*charIter};
+        // 		char const charIdx{static_cast<char>(static_cast<size_t>(character) - charRangeStart)};
+        //
+        // 		if (charIdx < 0 || charIdx > m_Children.size() - 1)
+        // 			return result;
+        //
+        // 		auto const &child{node->m_Children[charIdx].get()};
+        //
+        // 		if (child == nullptr)
+        // 			return result;
+        //
+        // 		if (child->m_Leaf.has_value()) {
+        // 			result = child->m_Leaf->m_Value;
+        // 		}
+        //
+        // 		node = child;
+        // 		++charIter;
+        // 	}
+        //
+        // 	return result;
+        // }
 
-					if (keyIdx + 1 == key.size())
-						child->m_Leaf = {.m_Value = value};
-				}
+        [[nodiscard]]
+        std::pair<TrieNode const *, std::optional<Leaf>> Find(char character
+        ) const {
+            char const charIdx{static_cast<char>(
+                    static_cast<size_t>(character) - charRangeStart
+            )};
 
-				node = child.get();
-			}
-		}
+            if (charIdx < 0 || charIdx > m_Children.size() - 1)
+                return {nullptr, std::nullopt};
 
-		TrieNode const *GetNode(CharStream const &charStream) const {
-			if (!charStream.Good())
-				return nullptr;
+            auto const &child{m_Children[charIdx].get()};
 
-			char const c{charStream.Get()};
-			char const childIndex{static_cast<char>(static_cast<size_t>(c) - charRangeStart)};
-			if (childIndex < 0 || childIndex > charRangeEnd - charRangeStart)
-				return nullptr;
+            if (child == nullptr)
+                return {nullptr, std::nullopt};
 
-			return m_Children[childIndex].get();
-		}
+            return {child, child->m_Leaf};
+        }
 
-		// [[nodiscard]]
-		// std::optional<TValue> Find(tokenizer::CharIter &charIter) const {
-		// 	TrieNode const       *node{this};
-		// 	std::optional<TValue> result{std::nullopt};
-		//
-		// 	while (node != nullptr) {
-		// 		if (charIter == tokenizer::CharIter::end())
-		// 			return result;
-		//
-		// 		auto const [spanMarker, character, isSentinel]{*charIter};
-		// 		char const charIdx{static_cast<char>(static_cast<size_t>(character) - charRangeStart)};
-		//
-		// 		if (charIdx < 0 || charIdx > m_Children.size() - 1)
-		// 			return result;
-		//
-		// 		auto const &child{node->m_Children[charIdx].get()};
-		//
-		// 		if (child == nullptr)
-		// 			return result;
-		//
-		// 		if (child->m_Leaf.has_value()) {
-		// 			result = child->m_Leaf->m_Value;
-		// 		}
-		//
-		// 		node = child;
-		// 		++charIter;
-		// 	}
-		//
-		// 	return result;
-		// }
+        [[nodiscard]]
+        std::optional<TValue>
+        Find(std::istringstream &is, std::size_t &nCharsRead) const {
+            TrieNode const       *node{this};
+            std::optional<TValue> result{std::nullopt};
 
-		[[nodiscard]]
-		std::pair<TrieNode const *, std::optional<Leaf>> Find(char character) const {
-			char const charIdx{static_cast<char>(static_cast<size_t>(character) - charRangeStart)};
+            nCharsRead = 0;
 
-			if (charIdx < 0 || charIdx > m_Children.size() - 1)
-				return {nullptr, std::nullopt};
+            std::streamoff const streamPos{is.tellg()};
 
-			auto const &child{m_Children[charIdx].get()};
+            char c;
+            while (is.get(c)) {
+                TrieNode  *child;
+                char const charIdx{static_cast<char>(
+                        static_cast<size_t>(c) - charRangeStart
+                )};
 
-			if (child == nullptr)
-				return {nullptr, std::nullopt};
+                if (c < charRangeStart || c > charRangeEnd ||
+                    (child = node->m_Children[charIdx].get()) == nullptr) {
+                    is.putback(c);
+                    break;
+                }
 
-			return {child, child->m_Leaf};
-		}
+                ++nCharsRead;
 
-		[[nodiscard]]
-		std::optional<TValue> Find(std::istringstream &is, std::size_t &nCharsRead) const {
-			TrieNode const       *node{this};
-			std::optional<TValue> result{std::nullopt};
+                if (child->m_Leaf.has_value()) {
+                    result = child->m_Leaf->m_Value;
+                }
 
-			nCharsRead = 0;
+                node = child;
+            }
 
-			std::streamoff const streamPos{is.tellg()};
+            if (!result.has_value())
+                is.seekg(streamPos, std::istream::beg);// reset stream position
+            return result;
+        }
 
-			char c;
-			while (is.get(c)) {
-				TrieNode  *child;
-				char const charIdx{static_cast<char>(static_cast<size_t>(c) - charRangeStart)};
-
-				if (c < charRangeStart || c > charRangeEnd || (child = node->m_Children[charIdx].get()) == nullptr) {
-					is.putback(c);
-					break;
-				}
-
-				++nCharsRead;
-
-				if (child->m_Leaf.has_value()) {
-					result = child->m_Leaf->m_Value;
-				}
-
-				node = child;
-			}
-
-			if (!result.has_value())
-				is.seekg(streamPos, std::istream::beg);// reset stream position
-			return result;
-		}
-
-		void Clear() {
-			std::ranges::fill(m_Children, nullptr);
-		}
-	};
+        void Clear() {
+            std::ranges::fill(m_Children, nullptr);
+        }
+    };
 }// namespace jcc
 #endif//TRIE_H

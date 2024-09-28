@@ -1,30 +1,38 @@
 #ifndef IDENTIFIER_COMMAND_H
 #define IDENTIFIER_COMMAND_H
 
+#include <utility>
+#include <vector>
+
 #include "command.h"
 #include "preprocessor/macro.h"
 
 namespace jcc::preprocessor {
-	class Preprocessor;
+    class Preprocessor;
 }
 
 namespace jcc::preprocessor::commands {
-	class IdentifierCommand final : public Command {
-		[[nodiscard]]
-		static macro::FnMacroArguments
-		GatherArguments(Preprocessor &preprocessor, macro::FunctionLikeMacro const &fnMacro);
+    class IdentifierCommand final : public Command {
+        [[nodiscard]]
+        static macro::FnMacroArguments GatherArguments(
+                Preprocessor                   &preprocessor,
+                macro::FunctionLikeMacro const &fnMacro
+        );
 
-		[[nodiscard]]
-		static std::pair<bool, std::vector<tokenizer::Token>> GatherArgumentTokens(Preprocessor &preprocessor);
+        [[nodiscard]]
+        static std::pair<bool, std::vector<tokenizer::Token>>
+        GatherArgumentTokens(Preprocessor &preprocessor);
 
-	public:
-		explicit IdentifierCommand(CommandMap &map);
+    public:
+        explicit IdentifierCommand(CommandMap &map);
 
-		~IdentifierCommand() override;
+        ~IdentifierCommand() override;
 
-		[[nodiscard]]
-		std::optional<PreprocessorToken> Execute(Preprocessor &preprocessor, tokenizer::Token &&ident) const override;
-	};
+        [[nodiscard]]
+        std::optional<PreprocessorToken>
+        Execute(Preprocessor      &preprocessor,
+                tokenizer::Token &&ident) const override;
+    };
 }// namespace jcc::preprocessor::commands
 
 #endif//IDENTIFIER_COMMAND_H

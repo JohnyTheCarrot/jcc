@@ -1,34 +1,35 @@
 #include "tokenizer_iterator.h"
+
 #include "tokenizer.h"
 
 namespace jcc::tokenizer {
-	TokenizerIterator::TokenizerIterator() = default;
+    TokenizerIterator::TokenizerIterator() = default;
 
-	TokenizerIterator::TokenizerIterator(Tokenizer &tokenizer)
-	    : m_Tokenizer{&tokenizer} {
-	}
+    TokenizerIterator::TokenizerIterator(Tokenizer &tokenizer)
+        : m_Tokenizer{&tokenizer} {
+    }
 
-	TokenizerIterator::value_type TokenizerIterator::operator*() const {
-		return m_CurrentToken.value();
-	}
+    TokenizerIterator::value_type TokenizerIterator::operator*() const {
+        return m_CurrentToken.value();
+    }
 
-	TokenizerIterator &TokenizerIterator::operator++() {
-		m_CurrentToken = m_Tokenizer->GetNextToken();
+    TokenizerIterator &TokenizerIterator::operator++() {
+        m_CurrentToken = m_Tokenizer->GetNextToken();
 
-		return *this;
-	}
+        return *this;
+    }
 
-	TokenizerIterator TokenizerIterator::operator++(int) {
-		TokenizerIterator copy{*this};
-		++(*this);
-		return copy;
-	}
+    TokenizerIterator TokenizerIterator::operator++(int) {
+        TokenizerIterator copy{*this};
+        ++(*this);
+        return copy;
+    }
 
-	bool TokenizerIterator::operator==(TokenizerIterator const &other) const {
-		return m_CurrentToken == other.m_CurrentToken;
-	}
+    bool TokenizerIterator::operator==(TokenizerIterator const &other) const {
+        return m_CurrentToken == other.m_CurrentToken;
+    }
 
-	bool TokenizerIterator::operator!=(TokenizerIterator const &other) const {
-		return !(*this == other);
-	}
+    bool TokenizerIterator::operator!=(TokenizerIterator const &other) const {
+        return !(*this == other);
+    }
 }// namespace jcc::tokenizer

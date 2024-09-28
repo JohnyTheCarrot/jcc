@@ -1,92 +1,115 @@
 #include "preprocessor.h"
 
+#include <utility>
+
 namespace jcc::preprocessor {
-	PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
-		while (true) {
-			if (auto ppToken{GetNextFromTokenizer()}; !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
-				return ppToken;
-			}
-		}
-	}
+    PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
+        while (true) {
+            if (auto ppToken{GetNextFromTokenizer()};
+                !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
+                return ppToken;
+            }
+        }
+    }
 
-	PreprocessorIterator Preprocessor::begin() {
-		return ++PreprocessorIterator{*this};
-	}
+    PreprocessorIterator Preprocessor::begin() {
+        return ++PreprocessorIterator{*this};
+    }
 
-	PreprocessorIterator Preprocessor::end() {
-		return PreprocessorIterator::end();
-	}
+    PreprocessorIterator Preprocessor::end() {
+        return PreprocessorIterator::end();
+    }
 
-	Span const &Preprocessor::GetCurrentSpan() const noexcept {
-		return m_CurrentSpan;
-	}
+    Span const &Preprocessor::GetCurrentSpan() const noexcept {
+        return m_CurrentSpan;
+    }
 
-	PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
-		while (true) {
-			auto ppToken{SimpleTokenRead()};
+    PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
+        while (true) {
+            auto ppToken{SimpleTokenRead()};
 
-			if (auto &[token, span]{ppToken.m_Token}; std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
-				switch (std::get<tokenizer::SpecialPurpose>(token)) {
-					case tokenizer::SpecialPurpose::EndOfFile:
-					case tokenizer::SpecialPurpose::Error:
-						return ppToken;
-					default:
-						break;
-				}
-			}
+            if (auto &[token, span]{ppToken.m_Token};
+                std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
+                switch (std::get<tokenizer::SpecialPurpose>(token)) {
+                    case tokenizer::SpecialPurpose::EndOfFile:
+                    case tokenizer::SpecialPurpose::Error:
+                        return ppToken;
+                    default:
+                        break;
+                }
+            }
 
-			if (!executeCommands)
-				return ppToken;
+            if (!executeCommands)
+                return ppToken;
 
-			auto const valueType{ppToken.m_Token.GetValueType()};
-			auto const commandMap{commands::PreprocessorCommandSingleton::GetInstance().GetCommandMap()};
+            auto const valueType{ppToken.m_Token.GetValueType()};
+            auto const commandMap{
+                    commands::PreprocessorCommandSingleton::GetInstance()
+                            .GetCommandMap()
+            };
 
-			if (auto const command{commandMap.find(valueType)}; command != commandMap.end()) {
-				if (auto result{command->second->Execute(*this, std::move(ppToken.m_Token))}; result.has_value())
-					// If the command does not return a token, it means it was a directive.
-					return std::move(result.value());
-			} else {
-				return ppToken;
-			}
-		}
-	}
+            if (auto const command{commandMap.find(valueType)};
+                command != commandMap.end()) {
+                if (auto result{command->second->Execute(
+                            *this, std::move(ppToken.m_Token)
+                    )};
+                    result.has_value())
+                    // If the command does not return a token, it means it was a directive.
+                    return std::move(result.value());
+            } else {
+                return ppToken;
+            }
+        }
+    }
 
-	PreprocessorToken Preprocessor::SimpleTokenRead() {
-		if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()}; token.has_value()) {
-			m_CurrentSpan = token->m_Span;
-			return {std::move(token.value()), false};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-		}
+    PreprocessorToken Preprocessor::SimpleTokenRead() {
+        if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()};
+            token.has_value()) {
+            m_CurrentSpan = token->m_Span;
 
-		if (auto token{m_pMacroStore->GetTokenFromMacroStack()}; token.has_value()) {
-			m_CurrentSpan = token->m_Span;
-			return {std::move(token.value()), false};// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-		}
+            // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+            return {std::move(token.value()), false};
+        }
 
-		if (m_TokenIter == m_Tokenizer.end())
-			return {{tokenizer::SpecialPurpose::EndOfFile, m_Tokenizer.GetLastSpan()}, false};
+        if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
+            token.has_value()) {
+            m_CurrentSpan = token->m_Span;
+            return {std::move(token.value()), false
+            };// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+        }
 
-		auto token{*m_TokenIter};
-		++m_TokenIter;
-		m_CurrentSpan = token.m_Span;
+        if (m_TokenIter == m_Tokenizer.end())
+            return {{tokenizer::SpecialPurpose::EndOfFile,
+                     m_Tokenizer.GetLastSpan()},
+                    false};
 
-		return {std::move(token), false};
-	}
+        auto token{*m_TokenIter};
+        ++m_TokenIter;
+        m_CurrentSpan = token.m_Span;
 
-	MacroStore &Preprocessor::GetMacroStore() const noexcept {
-		return *m_pMacroStore;
-	}
+        return {std::move(token), false};
+    }
 
-	void Preprocessor::SkipEmptyLines() {
-		auto token{SimpleTokenRead()};
+    MacroStore &Preprocessor::GetMacroStore() const noexcept {
+        return *m_pMacroStore;
+    }
 
-		while (token.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) { token = SimpleTokenRead(); }
-	}
+    void Preprocessor::SkipEmptyLines() {
+        auto token{SimpleTokenRead()};
 
-	Preprocessor::Preprocessor(std::string const &filename, std::istream &ifstream, Diagnosis::Vec &diagnoses)
-	    : m_Tokenizer{ifstream, filename}
-	    , m_TokenIter{m_Tokenizer.begin()}
-	    , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, {}, &ifstream}
-	    , m_pDiagnoses{&diagnoses} {
-		++m_TokenIter;
-	}
+        while (token.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
+            token = SimpleTokenRead();
+        }
+    }
+
+    Preprocessor::Preprocessor(
+            std::string const &filename, std::istream &ifstream,
+            Diagnosis::Vec &diagnoses
+    )
+        : m_Tokenizer{ifstream, filename}
+        , m_TokenIter{m_Tokenizer.begin()}
+        , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, {}, &ifstream}
+        , m_pDiagnoses{&diagnoses} {
+        ++m_TokenIter;
+    }
 }// namespace jcc::preprocessor
