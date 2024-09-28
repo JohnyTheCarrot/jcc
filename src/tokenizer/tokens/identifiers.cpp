@@ -30,7 +30,7 @@ namespace jcc::tokenizer::identifiers {
             Span span{
                     charIter.GetFileName(), tokenStart.m_Start,
                     charIter.GetSentinel().m_LastSpanMarker,
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetInput()
             };
 
             // check if identifier contains a backslash
@@ -52,7 +52,7 @@ namespace jcc::tokenizer::identifiers {
 
         Span span{
                 charIter.GetFileName(), identifierStart, identifierStart,
-                charIter.GetInput()->tellg(), charIter.GetInput()
+                charIter.GetInput()
         };
 
         identifier.reserve(partialIdentifier.length());

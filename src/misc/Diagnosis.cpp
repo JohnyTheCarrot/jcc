@@ -7,6 +7,16 @@
 #include <utility>
 
 namespace jcc {
+    void Diagnosis::JumpStreamToStartLine() const {
+        m_Span.m_IStream->seekg(std::ios::beg);
+
+        for (int i{1}; i < m_Span.m_Start.m_LineNumber; ++i) {
+            m_Span.m_IStream->ignore(
+                    std::numeric_limits<std::streamsize>::max(), '\n'
+            );
+        }
+    }
+
     void Diagnosis::PrintDiagMessage() const {
         switch (m_Kind) {
             case Kind::TK_StrUnterminated:
@@ -189,9 +199,8 @@ namespace jcc {
         PrintDiagMessage();
         fmt::print("\n\n");
 
-
         m_Span.m_IStream->clear();
-        m_Span.m_IStream->seekg(m_Span.m_StartPos);
+        JumpStreamToStartLine();
 
         std::string line;
 

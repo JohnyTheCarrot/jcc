@@ -16,8 +16,7 @@ namespace jcc::tokenizer::utils {
         if (charIter == CharIter::end() || charIter->m_Char == '\n') {
             Span span{
                     charIter.GetFileName(), startMarker,
-                    charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
             };
 
             auto const diagnosisKind{

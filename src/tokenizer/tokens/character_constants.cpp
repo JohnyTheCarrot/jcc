@@ -20,8 +20,7 @@ namespace jcc::tokenizer::character_constants {
         if (charIter == CharIter::end()) {
             Span span{
                     charIter.GetFileName(), startMarker,
-                    charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -43,8 +42,7 @@ namespace jcc::tokenizer::character_constants {
 
         Span span{
                 charIter.GetFileName(), startMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
 
         if (characters.empty()) {

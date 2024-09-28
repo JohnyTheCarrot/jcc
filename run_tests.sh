@@ -1,1 +1,1 @@
-./build.sh && cd build && ./jcc_tests ; cd ..
+./build.sh && cd build && ./jcc-tests ; cd ..
