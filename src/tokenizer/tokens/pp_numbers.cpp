@@ -54,7 +54,7 @@ namespace jcc::tokenizer::pp_numbers {
         std::string number{startsWithDot ? "." : ""};
         Span        span{
                 charIter.GetFileName(), start, start,
-                charIter.GetInput()->tellg(), charIter.GetInput()
+                charIter.GetInput()
         };
 
         if (charIter == CharIter::end()) {

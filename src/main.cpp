@@ -20,12 +20,13 @@ int main(int argCount, char *args[]) {
         exit(1);
     }
 
-    jcc::Diagnosis::Vec             diagnoses;
-    jcc::preprocessor::Preprocessor preprocessor{
-            filePath, inputFileStream, diagnoses
-    };
+    jcc::Diagnosis::Vec diagnoses;
 
     try {
+        jcc::preprocessor::Preprocessor preprocessor{
+                filePath, inputFileStream, diagnoses
+        };
+
         std::ranges::copy(
                 preprocessor,
                 std::ostream_iterator<jcc::tokenizer::Token>{std::cout, "\n"}
@@ -37,7 +38,7 @@ int main(int argCount, char *args[]) {
         };
         diag.Print();
         std::cout << '\n';
-    }
+    } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
     for (auto const &diagnosis : diagnoses) {
         diagnosis.Print();

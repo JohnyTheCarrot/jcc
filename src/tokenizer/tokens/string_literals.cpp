@@ -16,8 +16,7 @@ namespace jcc::tokenizer::string_literals {
         if (charIter == CharIter::end()) {
             Span span{
                     charIter.GetFileName(), startMarker,
-                    charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -42,8 +41,7 @@ namespace jcc::tokenizer::string_literals {
 
         Span span{
                 charIter.GetFileName(), startMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
 
         return Token{

@@ -1,7 +1,5 @@
 #include "CharStream.h"
 
-#include <string>
-
 namespace jcc {
     bool CharStream::Good() const noexcept {
         return m_IStream.good();

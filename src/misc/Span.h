@@ -1,7 +1,6 @@
 #ifndef JCC_SPAN_H
 #define JCC_SPAN_H
 
-#include <fmt/core.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -37,16 +36,14 @@ namespace jcc {
     struct Span final {
         std::shared_ptr<std::string> m_FileName;
         SpanMarker                   m_Start{}, m_End{};
-        std::streampos               m_StartPos{};
         std::istream                *m_IStream;
 
         Span(std::shared_ptr<std::string> fileName, SpanMarker const &start,
-             SpanMarker const &end, std::streampos const &startPos,
+             SpanMarker const &end,
              std::istream *inputStream) noexcept
             : m_FileName{std::move(fileName)}
             , m_Start{start}
             , m_End{end}
-            , m_StartPos{startPos}
             , m_IStream{inputStream} {
         }
 

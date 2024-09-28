@@ -108,7 +108,7 @@ namespace jcc::preprocessor {
     )
         : m_Tokenizer{ifstream, filename}
         , m_TokenIter{m_Tokenizer.begin()}
-        , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, {}, &ifstream}
+        , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, &ifstream}
         , m_pDiagnoses{&diagnoses} {
         ++m_TokenIter;
     }

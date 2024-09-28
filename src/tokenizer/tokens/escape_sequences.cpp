@@ -154,7 +154,7 @@ namespace jcc::tokenizer::escape_sequences {
             Span span{
                     charIter.GetFileName(), backslashMarker,
                     charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -169,7 +169,7 @@ namespace jcc::tokenizer::escape_sequences {
             Span span{
                     charIter.GetFileName(), backslashMarker,
                     charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -189,7 +189,7 @@ namespace jcc::tokenizer::escape_sequences {
                     Span span{
                             charIter.GetFileName(), backslashMarker,
                             charIter.GetCurrentSpanMarker(),
-                            charIter.GetInput()->tellg(), charIter.GetInput()
+                            charIter.GetInput()
                     };
 
                     throw FatalCompilerError{
@@ -228,7 +228,7 @@ namespace jcc::tokenizer::escape_sequences {
             SpanMarker const &currentMarker{charIter.GetCurrentSpanMarker()};
             Span              span{
                     charIter.GetFileName(), currentMarker, currentMarker,
-                    charIter.GetInput()->tellg(), charIter.GetInput()
+                    charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -254,7 +254,7 @@ namespace jcc::tokenizer::escape_sequences {
 
         Span span{
                 charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
+                charIter.GetCurrentSpanMarker(),
                 charIter.GetInput()
         };
 
@@ -274,7 +274,7 @@ namespace jcc::tokenizer::escape_sequences {
         auto const result{TokenizeNoSizeCheck(charIter, backslashMarker)};
         Span       span{
                 charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
+                charIter.GetCurrentSpanMarker(),
                 charIter.GetInput()
         };
 

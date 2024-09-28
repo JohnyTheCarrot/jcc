@@ -151,7 +151,7 @@ namespace jcc::tokenizer::static_tokens {
     TokenizeKeywordsAndDirectives(CharIter &charIter) {
         Span span{
                 charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
+                charIter.GetCurrentSpanMarker(),
                 charIter.GetInput()
         };
         std::string                   identifierBuf{};
@@ -198,7 +198,7 @@ namespace jcc::tokenizer::static_tokens {
     StaticTokenTokenizationResult TokenizePunctuators(CharIter &charIter) {
         Span span{
                 charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()->tellg(),
+                charIter.GetCurrentSpanMarker(),
                 charIter.GetInput()
         };
         PunctuatorTokenTrie const    *currentNode{&c_PunctuatorTrie};

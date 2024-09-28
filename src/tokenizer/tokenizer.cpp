@@ -121,8 +121,7 @@ namespace jcc::tokenizer {
 
         Span span{
                 m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetInput()->tellg(), m_CharIter.GetInput()
+                m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()
         };
 
         switch (m_CharIter->m_Char) {
@@ -187,7 +186,6 @@ namespace jcc::tokenizer {
                         identifiers::IdentifierTokenStart{
                                 .m_Identifier = std::move(identifier),
                                 .m_Start      = span.m_Start,
-                                .m_StartPos   = span.m_StartPos,
                         }
                 );
         }
@@ -205,7 +203,6 @@ namespace jcc::tokenizer {
 
     Span Tokenizer::GetLastSpan() const {
         return {m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetInput()->tellg(), m_CharIter.GetInput()};
+                m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()};
     }
 }// namespace jcc::tokenizer

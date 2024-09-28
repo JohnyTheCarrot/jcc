@@ -47,7 +47,7 @@ namespace jcc::tokenizer {
             };
             Span span{
                     m_FileName, lastSpanMarker, lastSpanMarker,
-                    m_Input->tellg(), m_Input
+                    m_Input
             };
 
             throw FatalCompilerError{
@@ -60,7 +60,7 @@ namespace jcc::tokenizer {
             };
             character != c) {
             Span span{
-                    m_FileName, spanMarker, spanMarker, m_Input->tellg(),
+                    m_FileName, spanMarker, spanMarker,
                     m_Input
             };
 

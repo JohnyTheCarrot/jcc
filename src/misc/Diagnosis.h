@@ -68,6 +68,8 @@ namespace jcc {
         Kind  m_Kind{};
         Data  m_Data0{}, m_Data1{};
 
+        void JumpStreamToStartLine() const;
+
         void PrintDiagMessage() const;
 
         void Print() const;
