@@ -142,7 +142,7 @@ namespace jcc::preprocessor::commands {
         std::string macroName{
                 isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value)
                                   .m_Name
-                        : KeywordAsIdentString(std::get<tokenizer::Keyword>(
+                        : KeywordToString(std::get<tokenizer::Keyword>(
                                   nextToken.m_Value
                           ))
         };

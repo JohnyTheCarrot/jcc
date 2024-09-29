@@ -182,6 +182,9 @@ namespace jcc {
                 fmt::print("Preprocessor directive must be the only item on a "
                            "line.");
                 break;
+            case Kind::PP_Custom:
+                std::cout << std::get<std::string>(m_Data0.value());
+                break;
         }
     }
 

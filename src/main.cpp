@@ -27,17 +27,19 @@ int main(int argCount, char *args[]) {
                 filePath, inputFileStream, diagnoses
         };
 
-        std::ranges::copy(
-                preprocessor,
-                std::ostream_iterator<jcc::tokenizer::Token>{std::cout, "\n"}
+        std::for_each(
+                preprocessor.begin(), preprocessor.end(),
+                [](jcc::tokenizer::Token const &token) {
+                    token.DebugPrintTo(std::cout);
+                    std::cout << '\n';
+                }
         );
     } catch (jcc::FatalCompilerError const &ex) {
         jcc::Diagnosis diag{
                 ex.GetSpan(), jcc::Diagnosis::Class::Error, ex.GetKind(),
                 ex.GetData1(), ex.GetData2()
         };
-        diag.Print();
-        std::cout << '\n';
+        diagnoses.emplace_back(std::move(diag));
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
     for (auto const &diagnosis : diagnoses) {
