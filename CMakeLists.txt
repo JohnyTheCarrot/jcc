@@ -54,6 +54,8 @@ set(
         src/preprocessor/macro.cpp
         src/preprocessor/macro_store.h
         src/preprocessor/macro_store.cpp
+        src/preprocessor/commands/warning_command.h
+        src/preprocessor/commands/warning_command.cpp
 )
 
 add_executable("${PROJECT_NAME}"

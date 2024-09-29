@@ -94,6 +94,10 @@ namespace jcc::preprocessor {
         return *m_pMacroStore;
     }
 
+    void Preprocessor::EmitWarning(Diagnosis &&diagnosis) const {
+        m_pDiagnoses->emplace_back(std::move(diagnosis));
+    }
+
     void Preprocessor::SkipEmptyLines() {
         auto token{SimpleTokenRead()};
 

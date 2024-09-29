@@ -43,6 +43,8 @@ namespace jcc::preprocessor {
         [[nodiscard]]
         MacroStore &GetMacroStore() const noexcept;
 
+        void EmitWarning(Diagnosis &&diagnosis) const;
+
         template<class It = PreprocessorIterator>
             requires IsPreprocessorIterator<It> ||
                      std::same_as<It, InternalPreprocessorIterator>

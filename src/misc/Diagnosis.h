@@ -55,6 +55,7 @@ namespace jcc {
             PP_MacroDefinedInTermsOfItself,
             PP_HashNotFollowedByParameter,
             PP_DirectiveNotAloneOnLine,
+            PP_Custom,
             TODO,
         };
 

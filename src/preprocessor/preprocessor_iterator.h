@@ -179,6 +179,11 @@ namespace jcc::preprocessor {
 
         explicit InternalPreprocessorIterator(Preprocessor &preprocessor);
 
+        explicit InternalPreprocessorIterator(tokenizer::Token::Type untilType);
+
+        static InternalPreprocessorIterator
+        Until(tokenizer::Token::Type untilType);
+
         reference operator*() const;
 
         pointer operator->() const;

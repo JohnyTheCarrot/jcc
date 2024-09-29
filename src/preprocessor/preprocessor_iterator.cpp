@@ -19,6 +19,17 @@ namespace jcc::preprocessor {
         : m_pPreprocessor{&preprocessor} {
     }
 
+    InternalPreprocessorIterator::InternalPreprocessorIterator(
+            tokenizer::Token::Type untilType
+    )
+        : m_Token{untilType} {
+    }
+
+    InternalPreprocessorIterator
+    InternalPreprocessorIterator::Until(tokenizer::Token::Type untilType) {
+        return InternalPreprocessorIterator{untilType};
+    }
+
     InternalPreprocessorIterator::reference
     InternalPreprocessorIterator::operator*() const {
         return std::get<PreprocessorToken>(m_Token);

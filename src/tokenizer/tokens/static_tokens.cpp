@@ -66,6 +66,7 @@ namespace jcc::tokenizer::static_tokens {
             {"#undef", Directive::Undef},
             {"#line", Directive::Line},
             {"#error", Directive::Error},
+            {"#warning", Directive::Warning},
             {"#pragma", Directive::Pragma},
             {"#if", Directive::If},
             {"#ifdef", Directive::Ifdef},
@@ -151,8 +152,7 @@ namespace jcc::tokenizer::static_tokens {
     TokenizeKeywordsAndDirectives(CharIter &charIter) {
         Span span{
                 charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
         std::string                   identifierBuf{};
         KeywDirTokenTrie const       *currentNode{&c_TokenTrie};
@@ -198,8 +198,7 @@ namespace jcc::tokenizer::static_tokens {
     StaticTokenTokenizationResult TokenizePunctuators(CharIter &charIter) {
         Span span{
                 charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
         PunctuatorTokenTrie const    *currentNode{&c_PunctuatorTrie};
         std::optional<TokenTrieValue> trieResult{};
