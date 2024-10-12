@@ -24,6 +24,26 @@ namespace jcc::preprocessor {
         return m_TokenizerStack.top().GetTokenizer().GetLastSpan();
     }
 
+    tokenizer::Token Preprocessor::SkipUntilConditionEnd() {
+        auto &tokenizer{m_TokenizerStack.top().GetTokenizer()};
+        return tokenizer.SkipUntilConditionEnd();
+    }
+
+    void Preprocessor::PushConditional() {
+        ++m_ConditionalDepth;
+    }
+
+    void Preprocessor::PopConditional() {
+        if (m_ConditionalDepth == 0) {
+            throw FatalCompilerError{
+                    Diagnosis::Kind::PP_OrphanedConditionalClosure,
+                    GetCurrentSpan()
+            };
+        }
+
+        --m_ConditionalDepth;
+    }
+
     PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
         while (true) {
             auto ppToken{SimpleTokenRead()};
@@ -129,6 +149,10 @@ namespace jcc::preprocessor {
 
     tokenizer::Tokenizer const &
     TokenizerIteratorPair::GetTokenizer() const noexcept {
+        return m_Tokenizer;
+    }
+
+    tokenizer::Tokenizer &TokenizerIteratorPair::GetTokenizer() noexcept {
         return m_Tokenizer;
     }
 

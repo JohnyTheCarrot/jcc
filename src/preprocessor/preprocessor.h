@@ -33,6 +33,9 @@ namespace jcc::preprocessor {
         tokenizer::Tokenizer const &GetTokenizer() const noexcept;
 
         [[nodiscard]]
+        tokenizer::Tokenizer &GetTokenizer() noexcept;
+
+        [[nodiscard]]
         tokenizer::TokenizerIterator &GetTokenIter() const noexcept;
     };
 
@@ -41,6 +44,7 @@ namespace jcc::preprocessor {
         Diagnosis::Vec                   *m_pDiagnoses;
         std::unique_ptr<MacroStore> m_pMacroStore{std::make_unique<MacroStore>()
         };
+        int                         m_ConditionalDepth{0};
 
         void SkipEmptyLines();
 
@@ -102,6 +106,13 @@ namespace jcc::preprocessor {
 
         [[nodiscard]]
         Span GetCurrentSpan() const noexcept;
+
+        [[nodiscard]]
+        tokenizer::Token SkipUntilConditionEnd();
+
+        void PushConditional();
+
+        void PopConditional();
     };
 }// namespace jcc::preprocessor
 

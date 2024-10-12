@@ -1,8 +1,11 @@
 #include "command.h"
 
 #include "define_command.h"
+#include "else_command.h"
+#include "endif_command.h"
 #include "error_command.h"
 #include "identifier_command.h"
+#include "ifdef_command.h"
 #include "include_command.h"
 #include "warning_command.h"
 
@@ -18,6 +21,12 @@ namespace jcc::preprocessor::commands {
         m_Commands.emplace_back(std::make_unique<WarningCommand>(m_CommandMap));
         m_Commands.emplace_back(std::make_unique<ErrorCommand>(m_CommandMap));
         m_Commands.emplace_back(std::make_unique<IncludeCommand>(m_CommandMap));
+        m_Commands.emplace_back(std::make_unique<IfdefCommand>(m_CommandMap));
+        m_Commands.emplace_back(
+                std::make_unique<IfdefCommand>(m_CommandMap, true)
+        );
+        m_Commands.emplace_back(std::make_unique<EndifCommand>(m_CommandMap));
+        m_Commands.emplace_back(std::make_unique<ElseCommand>(m_CommandMap));
     }
 
     CommandMap const &

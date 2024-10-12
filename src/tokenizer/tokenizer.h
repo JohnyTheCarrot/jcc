@@ -22,7 +22,6 @@ namespace jcc::tokenizer {
             SpanMarker                              endMarker{};
         };
 
-        [[nodiscard]]
         bool SkipWhitespace();
 
         void SkipLineComment();
@@ -58,6 +57,9 @@ namespace jcc::tokenizer {
 
         [[nodiscard]]
         Span GetLastSpan() const;
+
+        [[nodiscard]]
+        Token SkipUntilConditionEnd();
     };
 }// namespace jcc::tokenizer
 

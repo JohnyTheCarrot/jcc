@@ -18,7 +18,7 @@ namespace jcc {
         , m_Data1{std::move(data1)} {
         std::stringstream ss;
         Print(ss);
-        m_Message = std::move(ss.str());
+        m_Message = ss.str();
     }
 
     std::string const &Diagnosis::GetMessage() const noexcept {
@@ -162,6 +162,14 @@ namespace jcc {
                 return "Expected header name in #include directive.";
             case Kind::PP_DirectiveExpectedNewline:
                 return "Expected newline after preprocessor directive.";
+            case Kind::PP_CondExpectedIdentifier:
+                return "Conditional directive expected identifier.";
+            case Kind::PP_OrphanedConditionalClosure:
+                return "Closing conditional directive without a matching "
+                       "opening directive.";
+            case Kind::PP_ExpectedEndif:
+                return "#else, #elif, #elifdef or #elifndef may not follow "
+                       "#else.";
         }
 
         assert(false);

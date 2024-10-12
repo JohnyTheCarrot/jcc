@@ -462,6 +462,10 @@ namespace jcc::tokenizer {
                 return "#pragma";
             case Directive::Warning:
                 return "#warning";
+            case Directive::Elifdef:
+                return "#elifdef";
+            case Directive::Elifndef:
+                return "#elifndef";
         }
 
         assert(false);
