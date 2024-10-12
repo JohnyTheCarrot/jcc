@@ -51,6 +51,8 @@ namespace jcc::preprocessor {
     public:
         Preprocessor(std::string const &filename, Diagnosis::Vec &diagnoses);
 
+        Preprocessor(std::istream &input, Diagnosis::Vec &diagnoses);
+
         void OpenHeader(std::string_view filename);
 
         [[nodiscard]]

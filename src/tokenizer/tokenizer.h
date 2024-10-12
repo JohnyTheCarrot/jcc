@@ -14,8 +14,15 @@ namespace jcc::tokenizer {
     class TokenizerFileOpenFailure final : public std::exception {};
 
     class Tokenizer final {
-        std::ifstream m_Input;
-        CharIter      m_CharIter;
+        // Dependent on whether we own the input stream or not.
+        using InputPtr =
+                std::variant<std::unique_ptr<std::istream>, std::istream *>;
+
+        InputPtr m_Input;
+        CharIter m_CharIter;
+
+        [[nodiscard]]
+        std::istream &GetStream() const;
 
         struct TrieTraversalResult final {
             std::variant<Token::Value, std::string> valueOrString{};
@@ -37,6 +44,8 @@ namespace jcc::tokenizer {
 
     public:
         explicit Tokenizer(std::string const &fileName);
+
+        explicit Tokenizer(std::istream &input);
 
         Tokenizer(Tokenizer const &) = delete;
 

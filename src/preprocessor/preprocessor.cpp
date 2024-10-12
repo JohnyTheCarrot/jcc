@@ -184,6 +184,19 @@ namespace jcc::preprocessor {
         , m_pDiagnoses{&diagnoses} {
     }
 
+    Preprocessor::Preprocessor(std::istream &input, Diagnosis::Vec &diagnoses)
+        : m_TokenizerStack{[&] {
+            tokenizer::Tokenizer  tokenizer{input};
+            TokenizerIteratorPair pair{std::move(tokenizer)};
+
+            std::stack<TokenizerIteratorPair> stack;
+            stack.push(std::move(pair));
+
+            return stack;
+        }()}
+        , m_pDiagnoses{&diagnoses} {
+    }
+
     void Preprocessor::OpenHeader(std::string_view filename) {
         try {
             auto &top{m_TokenizerStack.emplace(
