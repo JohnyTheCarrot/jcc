@@ -16,6 +16,13 @@
 #include "tokens/string_literals.h"      // for Tokenize
 
 namespace jcc::tokenizer {
+    std::istream &Tokenizer::GetStream() const {
+        if (std::holds_alternative<std::unique_ptr<std::istream>>(m_Input))
+            return *std::get<std::unique_ptr<std::istream>>(m_Input);
+
+        return *std::get<std::istream *>(m_Input);
+    }
+
     bool Tokenizer::SkipWhitespace() {
         auto newIt{std::find_if_not(
                 m_CharIter, CharIter::c_UntilNewline,
@@ -112,20 +119,25 @@ namespace jcc::tokenizer {
 
     Tokenizer::Tokenizer(std::string const &fileName)
         : m_Input{[&] {
-            std::ifstream ifstream{fileName};
+            auto ifstream{std::make_unique<std::ifstream>(fileName)};
 
-            if (!ifstream.is_open())
+            if (!ifstream->is_open())
                 throw TokenizerFileOpenFailure{};
 
             return ifstream;
         }()}
-        , m_CharIter{m_Input, fileName} {
+        , m_CharIter{GetStream(), fileName} {
+    }
+
+    Tokenizer::Tokenizer(std::istream &input)
+        : m_Input{&input}
+        , m_CharIter{GetStream(), "stdin"} {
     }
 
     Tokenizer::Tokenizer(Tokenizer &&other) noexcept
         : m_Input{std::move(other.m_Input)}
         , m_CharIter{std::move(other.m_CharIter)} {
-        m_CharIter.SetInput(m_Input);
+        m_CharIter.SetInput(GetStream());
     }
 
     Tokenizer &Tokenizer::operator=(Tokenizer &&other) noexcept {
@@ -134,7 +146,7 @@ namespace jcc::tokenizer {
 
         m_Input    = std::move(other.m_Input);
         m_CharIter = std::move(other.m_CharIter);
-        m_CharIter.SetInput(m_Input);
+        m_CharIter.SetInput(GetStream());
 
         return *this;
     }
