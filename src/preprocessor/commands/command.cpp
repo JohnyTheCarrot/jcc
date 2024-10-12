@@ -3,6 +3,7 @@
 #include "define_command.h"
 #include "error_command.h"
 #include "identifier_command.h"
+#include "include_command.h"
 #include "warning_command.h"
 
 namespace jcc::preprocessor::commands {
@@ -16,6 +17,7 @@ namespace jcc::preprocessor::commands {
         ));
         m_Commands.emplace_back(std::make_unique<WarningCommand>(m_CommandMap));
         m_Commands.emplace_back(std::make_unique<ErrorCommand>(m_CommandMap));
+        m_Commands.emplace_back(std::make_unique<IncludeCommand>(m_CommandMap));
     }
 
     CommandMap const &

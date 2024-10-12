@@ -46,9 +46,11 @@ namespace jcc::tokenizer {
 
         CharIter();
 
-        explicit CharIter(std::istream &input, std::string_view fileName);
+        CharIter(std::istream &input, std::string_view fileName);
 
         explicit CharIter(char until);
+
+        void SetInput(std::istream &input);
 
         [[nodiscard]]
         std::istream *GetInput() const;

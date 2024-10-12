@@ -10,7 +10,8 @@
 #include "Span.h"
 
 namespace jcc {
-    struct Diagnosis final {
+    class Diagnosis final {
+    public:
         using Vec  = std::vector<Diagnosis>;
         using Data = std::optional<std::variant<char, std::string>>;
 
@@ -41,6 +42,8 @@ namespace jcc {
             TK_DirectiveNotAloneOnLine,
             TK_UnexpectedChar,
             PP_InclDirectiveFileOpenFailed,
+            PP_InclDirectiveExpectedHeaderName,
+            PP_DirectiveExpectedNewline,
             PP_MacroExpectedIdentifier,
             PP_MacroExpectedCommaOrRParen,
             PP_MacroEllipsisNotLast,
@@ -64,20 +67,31 @@ namespace jcc {
             Error,
         };
 
-        Span  m_Span;
-        Class m_Class{};
-        Kind  m_Kind{};
-        Data  m_Data0{}, m_Data1{};
+        Diagnosis(
+                Span &&span, Class diagClass, Kind kind,
+                Data &&data0 = std::nullopt, Data &&data1 = std::nullopt
+        ) noexcept;
+
+        [[nodiscard]]
+        std::string const &GetMessage() const noexcept;
+
+    private:
+        Span        m_Span;
+        Class       m_Class{};
+        Kind        m_Kind{};
+        Data        m_Data0{}, m_Data1{};
+        std::string m_Message;
 
         void JumpStreamToStartLine() const;
 
-        void PrintDiagMessage() const;
+        [[nodiscard]]
+        std::string GetDiagMessage() const;
 
-        void Print() const;
+        void Print(std::ostream &ostream) const;
     };
 
     namespace diagnostic_utils {
-        constexpr fmt::color c_ColorNeutral{fmt::color::dim_gray};
+        constexpr auto c_ColorNeutral{fmt::color::dim_gray};
 
         constexpr fmt::color GetClassColor(Diagnosis::Class diagClass
         ) noexcept {
@@ -101,10 +115,11 @@ namespace jcc {
             }
         }
 
-        void OutputLine(int lineNum, std::string const &line);
+        void
+        OutputLine(std::ostream &ostream, int lineNum, std::string const &line);
 
         void OutputHighlight(
-                std::optional<int> const &startChar,
+                std::ostream &ostream, std::optional<int> const &startChar,
                 std::optional<int> const &endChar, int lineLength,
                 Diagnosis::Class diagClass
         );
@@ -113,11 +128,8 @@ namespace jcc {
     class FatalCompilerError final : public std::exception {
         using OptionalData = Diagnosis::Data;
 
-        std::string     m_Message;
-        Diagnosis::Kind m_Kind;
-        Span            m_Span;
-        OptionalData    m_Data1;
-        OptionalData    m_Data2;
+        Diagnosis   m_Diagnosis;
+        std::string m_Message;
 
     public:
         FatalCompilerError(
@@ -127,16 +139,7 @@ namespace jcc {
         ) noexcept;
 
         [[nodiscard]]
-        Span const &GetSpan() const noexcept;
-
-        [[nodiscard]]
-        Diagnosis::Kind GetKind() const noexcept;
-
-        [[nodiscard]]
-        OptionalData const &GetData1() const noexcept;
-
-        [[nodiscard]]
-        OptionalData const &GetData2() const noexcept;
+        Diagnosis const &GetDiagnosis() const noexcept;
 
         [[nodiscard]]
         char const *what() const noexcept override;

@@ -1,5 +1,6 @@
 #include "tokenizer/tokenizer.h"
 
+#include <fstream>
 #include <string>
 #include <utility>
 
@@ -12,7 +13,7 @@
 
 namespace jcc::tokenizer {
     bool Tokenizer::SkipWhitespace() {
-        auto const newIt{std::find_if_not(
+        auto newIt{std::find_if_not(
                 m_CharIter, CharIter::c_UntilNewline,
                 [](CharInfo const &charInfo) {
                     return std::isspace(charInfo.m_Char);
@@ -20,7 +21,7 @@ namespace jcc::tokenizer {
         )};
 
         bool const didSkipWhitespace{m_CharIter != newIt};
-        m_CharIter = newIt;
+        m_CharIter = std::move(newIt);
 
         return didSkipWhitespace;
     }
@@ -105,8 +106,33 @@ namespace jcc::tokenizer {
         return Token{.m_Value = tokenValue, .m_Span = std::move(span)};
     }
 
-    Tokenizer::Tokenizer(std::istream &input, std::string_view fileName)
-        : m_CharIter{input, fileName} {
+    Tokenizer::Tokenizer(std::string const &fileName)
+        : m_Input{[&] {
+            std::ifstream ifstream{fileName};
+
+            if (!ifstream.is_open())
+                throw TokenizerFileOpenFailure{};
+
+            return ifstream;
+        }()}
+        , m_CharIter{m_Input, fileName} {
+    }
+
+    Tokenizer::Tokenizer(Tokenizer &&other) noexcept
+        : m_Input{std::move(other.m_Input)}
+        , m_CharIter{std::move(other.m_CharIter)} {
+        m_CharIter.SetInput(m_Input);
+    }
+
+    Tokenizer &Tokenizer::operator=(Tokenizer &&other) noexcept {
+        if (this == &other)
+            return *this;
+
+        m_Input    = std::move(other.m_Input);
+        m_CharIter = std::move(other.m_CharIter);
+        m_CharIter.SetInput(m_Input);
+
+        return *this;
     }
 
     // TODO: this function is too long, refactor it
@@ -197,7 +223,7 @@ namespace jcc::tokenizer {
         return TokenizerIterator{*this};
     }
 
-    TokenizerIterator Tokenizer::end() {
+    TokenizerIterator Tokenizer::end() const {
         return TokenizerIterator{};
     }
 

@@ -247,9 +247,14 @@ namespace jcc::tokenizer {
 
         template<typename T>
         [[nodiscard]]
+        bool Is() const {
+            return std::holds_alternative<T>(m_Value);
+        }
+
+        template<typename T>
+        [[nodiscard]]
         bool Is(T const &value) const {
-            return std::holds_alternative<T>(m_Value) &&
-                   std::get<T>(m_Value) == value;
+            return Is<T>() && std::get<T>(m_Value) == value;
         }
 
         [[nodiscard]]
