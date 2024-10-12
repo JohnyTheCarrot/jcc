@@ -154,7 +154,15 @@ namespace jcc::preprocessor::commands {
             };
         }
 
-        nextToken = preprocessor.SimpleTokenRead().m_Token;
+        auto nextPpToken{preprocessor.SimpleTokenRead()};
+        nextToken = nextPpToken.m_Token;
+
+        if (nextToken.Is(tokenizer::SpecialPurpose::NewLine)) {
+            preprocessor.GetMacroStore().RegisterMacro(
+                    macroName, macro::ObjectLikeMacro{macroName, {}}
+            );
+            return nextPpToken;
+        }
 
         if (nextToken.Is(tokenizer::Punctuator::PpLeftParenthesis)) {
             DefineFunctionLikeMacro(preprocessor, std::move(macroName));

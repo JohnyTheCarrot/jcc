@@ -209,6 +209,8 @@ namespace jcc::tokenizer {
         Ifdef,
         Ifndef,
         Elif,
+        Elifdef,
+        Elifndef,
         Else,
         Endif
     };

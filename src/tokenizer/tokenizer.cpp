@@ -231,4 +231,77 @@ namespace jcc::tokenizer {
         return {m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
                 m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()};
     }
+
+    Token Tokenizer::SkipUntilConditionEnd() {
+        int conditionDepth{1};
+
+        while (true) {
+            SkipWhitespace();
+
+            if (m_CharIter == CharIter::end())
+                throw FatalCompilerError{
+                        Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                };
+
+            Span span{
+                    m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
+                    m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()
+            };
+
+            if (m_CharIter->m_Char == '#') {
+                auto const token{
+                        static_tokens::TokenizeKeywordsAndDirectives(m_CharIter)
+                };
+
+                if (!std::holds_alternative<Token::Value>(token.valueOrString
+                    )) {
+                    continue;
+                }
+
+                auto const directive{std::get<Token::Value>(token.valueOrString)
+                };
+                if (!std::holds_alternative<Directive>(directive)) {
+                    continue;
+                }
+
+                span.m_End = token.endMarker;
+
+                switch (std::get<Directive>(directive)) {
+                    case Directive::If:
+                    case Directive::Ifdef:
+                    case Directive::Ifndef:
+                        ++conditionDepth;
+                        break;
+                    case Directive::Endif:
+                        --conditionDepth;
+                        if (conditionDepth != 0)
+                            continue;
+
+                        [[fallthrough]];
+                    case Directive::Elif:
+                    case Directive::Else:
+                    case Directive::Elifdef:
+                    case Directive::Elifndef:
+                        return Token{directive, std::move(span)};
+                    default:
+                        break;
+                }
+
+                // read until newline
+                while (m_CharIter != CharIter::c_UntilNewline) ++m_CharIter;
+
+                if (m_CharIter == CharIter::end())
+                    throw FatalCompilerError{
+                            Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                    };
+
+                ++m_CharIter;
+
+                if (m_CharIter == CharIter::end())
+                    throw FatalCompilerError{
+                            Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                    };
+            }
+        }
+    }
 }// namespace jcc::tokenizer

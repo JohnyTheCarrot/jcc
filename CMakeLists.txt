@@ -60,6 +60,12 @@ set(
         src/preprocessor/commands/error_command.cpp
         src/preprocessor/commands/include_command.h
         src/preprocessor/commands/include_command.cpp
+        src/preprocessor/commands/ifdef_command.h
+        src/preprocessor/commands/ifdef_command.cpp
+        src/preprocessor/commands/endif_command.h
+        src/preprocessor/commands/endif_command.cpp
+        src/preprocessor/commands/else_command.h
+        src/preprocessor/commands/else_command.cpp
 )
 
 add_executable("${PROJECT_NAME}"

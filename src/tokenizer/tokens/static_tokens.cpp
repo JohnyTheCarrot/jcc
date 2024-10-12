@@ -72,6 +72,8 @@ namespace jcc::tokenizer::static_tokens {
             {"#ifdef", Directive::Ifdef},
             {"#ifndef", Directive::Ifndef},
             {"#elif", Directive::Elif},
+            {"#elifdef", Directive::Elifdef},
+            {"#elifndef", Directive::Elifndef},
             {"#else", Directive::Else},
             {"#endif", Directive::Endif},
     };
