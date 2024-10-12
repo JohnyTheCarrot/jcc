@@ -45,10 +45,7 @@ namespace jcc::tokenizer {
             auto const lastSpanMarker{
                     std::get<Sentinel>(m_CurrentChar).m_LastSpanMarker
             };
-            Span span{
-                    m_FileName, lastSpanMarker, lastSpanMarker,
-                    m_Input
-            };
+            Span span{m_FileName, lastSpanMarker, lastSpanMarker, m_Input};
 
             throw FatalCompilerError{
                     Diagnosis::Kind::UnexpectedEOF, std::move(span)
@@ -59,10 +56,7 @@ namespace jcc::tokenizer {
                     std::get<value_type>(m_CurrentChar)
             };
             character != c) {
-            Span span{
-                    m_FileName, spanMarker, spanMarker,
-                    m_Input
-            };
+            Span span{m_FileName, spanMarker, spanMarker, m_Input};
 
             throw FatalCompilerError{
                     Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
@@ -83,6 +77,10 @@ namespace jcc::tokenizer {
 
     CharIter::CharIter(char until)
         : m_CurrentChar{CharInfo{.m_Char = until, .m_IsSentinel = true}} {
+    }
+
+    void CharIter::SetInput(std::istream &input) {
+        m_Input = &input;
     }
 
     std::istream *CharIter::GetInput() const {

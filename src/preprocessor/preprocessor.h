@@ -15,21 +15,39 @@
 namespace jcc::preprocessor {
     constexpr std::string_view VaArgs{"__VA_ARGS__"};
 
-    class Preprocessor final {
+    class TokenizerIteratorPair final {
         tokenizer::Tokenizer                 m_Tokenizer;
         mutable tokenizer::TokenizerIterator m_TokenIter;
-        Span                                 m_CurrentSpan;
-        Diagnosis::Vec                      *m_pDiagnoses;
+
+    public:
+        explicit TokenizerIteratorPair(tokenizer::Tokenizer &&tokenizer);
+
+        TokenizerIteratorPair(TokenizerIteratorPair const &) = delete;
+
+        TokenizerIteratorPair(TokenizerIteratorPair &&) noexcept;
+
+        [[nodiscard]]
+        tokenizer::TokenizerIterator &GetTokenIter() noexcept;
+
+        [[nodiscard]]
+        tokenizer::Tokenizer const &GetTokenizer() const noexcept;
+
+        [[nodiscard]]
+        tokenizer::TokenizerIterator &GetTokenIter() const noexcept;
+    };
+
+    class Preprocessor final {
+        std::stack<TokenizerIteratorPair> m_TokenizerStack;
+        Diagnosis::Vec                   *m_pDiagnoses;
         std::unique_ptr<MacroStore> m_pMacroStore{std::make_unique<MacroStore>()
         };
 
         void SkipEmptyLines();
 
     public:
-        Preprocessor(
-                std::string const &filename, std::istream &ifstream,
-                Diagnosis::Vec &diagnoses
-        );
+        Preprocessor(std::string const &filename, Diagnosis::Vec &diagnoses);
+
+        void OpenHeader(std::string_view filename);
 
         [[nodiscard]]
         PreprocessorToken GetNextFromTokenizer(bool executeCommands = true);
@@ -83,7 +101,7 @@ namespace jcc::preprocessor {
         PreprocessorIterator end();
 
         [[nodiscard]]
-        Span const &GetCurrentSpan() const noexcept;
+        Span GetCurrentSpan() const noexcept;
     };
 }// namespace jcc::preprocessor
 

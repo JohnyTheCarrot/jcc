@@ -58,6 +58,8 @@ set(
         src/preprocessor/commands/warning_command.cpp
         src/preprocessor/commands/error_command.h
         src/preprocessor/commands/error_command.cpp
+        src/preprocessor/commands/include_command.h
+        src/preprocessor/commands/include_command.cpp
 )
 
 add_executable("${PROJECT_NAME}"

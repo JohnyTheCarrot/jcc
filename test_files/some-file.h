@@ -1,9 +1,6 @@
-#ifndef JCC_SOME_FILE_H
-#define JCC_SOME_FILE_H
-
 #include "header-test.h"
 
-char tooBig2ElectricBoogaloo = 'kek';
-int hi = 0;
+#warning "Warning 2"
+int const
 
-#endif//JCC_SOME_FILE_H
+#define B 2

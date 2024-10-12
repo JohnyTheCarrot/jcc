@@ -1,9 +1,9 @@
 #ifndef JCC_TOKENIZER_H
 #define JCC_TOKENIZER_H
 
+#include <fstream>
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "char_iter.h"
 #include "tokenizer/token.h"
@@ -11,8 +11,11 @@
 #include "tokens/static_tokens.h"
 
 namespace jcc::tokenizer {
+    class TokenizerFileOpenFailure final : public std::exception {};
+
     class Tokenizer final {
-        CharIter m_CharIter;
+        std::ifstream m_Input;
+        CharIter      m_CharIter;
 
         struct TrieTraversalResult final {
             std::variant<Token::Value, std::string> valueOrString{};
@@ -34,7 +37,15 @@ namespace jcc::tokenizer {
         );
 
     public:
-        explicit Tokenizer(std::istream &input, std::string_view fileName);
+        explicit Tokenizer(std::string const &fileName);
+
+        Tokenizer(Tokenizer const &) = delete;
+
+        Tokenizer(Tokenizer &&) noexcept;
+
+        Tokenizer &operator=(Tokenizer const &) = delete;
+
+        Tokenizer &operator=(Tokenizer &&) noexcept;
 
         [[nodiscard]]
         std::optional<Token> GetNextToken();
@@ -43,7 +54,7 @@ namespace jcc::tokenizer {
         TokenizerIterator begin();
 
         [[nodiscard]]
-        TokenizerIterator end();
+        TokenizerIterator end() const;
 
         [[nodiscard]]
         Span GetLastSpan() const;

@@ -13,38 +13,24 @@ int main(int argCount, char *args[]) {
 
     std::string filePath{args[1]};
 
-    std::ifstream inputFileStream{filePath};
-    if (!inputFileStream) {
-        std::cerr << "Couldn't open input file: " << strerror(errno)
-                  << std::endl;
-        exit(1);
-    }
-
     jcc::Diagnosis::Vec diagnoses;
 
     try {
-        jcc::preprocessor::Preprocessor preprocessor{
-                filePath, inputFileStream, diagnoses
-        };
+        jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
 
         std::for_each(
                 preprocessor.begin(), preprocessor.end(),
                 [](jcc::tokenizer::Token const &token) {
                     token.DebugPrintTo(std::cout);
-                    std::cout << '\n';
+                    std::cout << std::endl;
                 }
         );
     } catch (jcc::FatalCompilerError const &ex) {
-        jcc::Diagnosis diag{
-                ex.GetSpan(), jcc::Diagnosis::Class::Error, ex.GetKind(),
-                ex.GetData1(), ex.GetData2()
-        };
-        diagnoses.emplace_back(std::move(diag));
+        diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
     for (auto const &diagnosis : diagnoses) {
-        diagnosis.Print();
-        std::cout << '\n';
+        std::cout << diagnosis.GetMessage() << '\n';
     }
 
     return 0;

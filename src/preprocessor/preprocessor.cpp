@@ -20,8 +20,8 @@ namespace jcc::preprocessor {
         return PreprocessorIterator::end();
     }
 
-    Span const &Preprocessor::GetCurrentSpan() const noexcept {
-        return m_CurrentSpan;
+    Span Preprocessor::GetCurrentSpan() const noexcept {
+        return m_TokenizerStack.top().GetTokenizer().GetLastSpan();
     }
 
     PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
@@ -42,8 +42,8 @@ namespace jcc::preprocessor {
             if (!executeCommands)
                 return ppToken;
 
-            auto const valueType{ppToken.m_Token.GetValueType()};
-            auto const commandMap{
+            auto const  valueType{ppToken.m_Token.GetValueType()};
+            auto const &commandMap{
                     commands::PreprocessorCommandSingleton::GetInstance()
                             .GetCommandMap()
             };
@@ -63,31 +63,40 @@ namespace jcc::preprocessor {
     }
 
     PreprocessorToken Preprocessor::SimpleTokenRead() {
-        if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()};
-            token.has_value()) {
-            m_CurrentSpan = token->m_Span;
+        while (true) {
+            if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()};
+                token.has_value()) {
 
-            // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-            return {std::move(token.value()), false};
+                // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+                return {std::move(token.value()), false};
+            }
+
+            if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
+                token.has_value()) {
+
+                // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+                return {std::move(token.value()), false};
+            }
+
+            auto const &tokenizer{m_TokenizerStack.top().GetTokenizer()};
+            auto       &tokenIter{m_TokenizerStack.top().GetTokenIter()};
+
+            if (tokenIter == tokenizer.end()) {
+                if (m_TokenizerStack.size() == 1) {
+                    return {{tokenizer::SpecialPurpose::EndOfFile,
+                             tokenizer.GetLastSpan()},
+                            false};
+                }
+
+                m_TokenizerStack.pop();
+                continue;
+            }
+
+            auto token{*tokenIter};
+            ++tokenIter;
+
+            return {std::move(token), false};
         }
-
-        if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
-            token.has_value()) {
-            m_CurrentSpan = token->m_Span;
-            return {std::move(token.value()), false
-            };// used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-        }
-
-        if (m_TokenIter == m_Tokenizer.end())
-            return {{tokenizer::SpecialPurpose::EndOfFile,
-                     m_Tokenizer.GetLastSpan()},
-                    false};
-
-        auto token{*m_TokenIter};
-        ++m_TokenIter;
-        m_CurrentSpan = token.m_Span;
-
-        return {std::move(token), false};
     }
 
     MacroStore &Preprocessor::GetMacroStore() const noexcept {
@@ -96,6 +105,36 @@ namespace jcc::preprocessor {
 
     void Preprocessor::EmitWarning(Diagnosis &&diagnosis) const {
         m_pDiagnoses->emplace_back(std::move(diagnosis));
+    }
+
+    TokenizerIteratorPair::TokenizerIteratorPair(
+            tokenizer::Tokenizer &&tokenizer
+    )
+        : m_Tokenizer{std::move(tokenizer)}
+        , m_TokenIter{m_Tokenizer.begin()} {
+    }
+
+    TokenizerIteratorPair::TokenizerIteratorPair(TokenizerIteratorPair &&other
+    ) noexcept
+        : m_Tokenizer{std::move(other.m_Tokenizer)}
+        // The tokenizer iterator is a forward iterator, so it's okay to use .begin()
+        , m_TokenIter{m_Tokenizer.begin()} {
+        ++m_TokenIter;
+    }
+
+    tokenizer::TokenizerIterator &
+    TokenizerIteratorPair::GetTokenIter() noexcept {
+        return m_TokenIter;
+    }
+
+    tokenizer::Tokenizer const &
+    TokenizerIteratorPair::GetTokenizer() const noexcept {
+        return m_Tokenizer;
+    }
+
+    tokenizer::TokenizerIterator &
+    TokenizerIteratorPair::GetTokenIter() const noexcept {
+        return m_TokenIter;
     }
 
     void Preprocessor::SkipEmptyLines() {
@@ -107,13 +146,31 @@ namespace jcc::preprocessor {
     }
 
     Preprocessor::Preprocessor(
-            std::string const &filename, std::istream &ifstream,
-            Diagnosis::Vec &diagnoses
+            std::string const &filename, Diagnosis::Vec &diagnoses
     )
-        : m_Tokenizer{ifstream, filename}
-        , m_TokenIter{m_Tokenizer.begin()}
-        , m_CurrentSpan{std::make_shared<std::string>(filename), {}, {}, &ifstream}
+        : m_TokenizerStack{[&] {
+            tokenizer::Tokenizer  tokenizer{filename};
+            TokenizerIteratorPair pair{std::move(tokenizer)};
+
+            std::stack<TokenizerIteratorPair> stack;
+            stack.push(std::move(pair));
+
+            return stack;
+        }()}
         , m_pDiagnoses{&diagnoses} {
-        ++m_TokenIter;
+    }
+
+    void Preprocessor::OpenHeader(std::string_view filename) {
+        try {
+            auto &top{m_TokenizerStack.emplace(
+                    tokenizer::Tokenizer{std::string{filename}}
+            )};
+            ++top.GetTokenIter();
+        } catch (tokenizer::TokenizerFileOpenFailure const &) {
+            throw FatalCompilerError{
+                    Diagnosis::Kind::PP_InclDirectiveFileOpenFailed,
+                    GetCurrentSpan()
+            };
+        }
     }
 }// namespace jcc::preprocessor
