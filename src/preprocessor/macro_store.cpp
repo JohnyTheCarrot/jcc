@@ -10,6 +10,10 @@ namespace jcc::preprocessor {
         return m_MacroDefinitions.contains(name);
     }
 
+    void MacroStore::UnregisterMacro(std::string const &ident) {
+        m_MacroDefinitions.erase(ident);
+    }
+
     void
     MacroStore::RegisterMacro(std::string const &name, macro::Macro macro) {
         m_MacroDefinitions.emplace(name, std::move(macro));

@@ -20,6 +20,8 @@ namespace jcc::preprocessor {
         [[nodiscard]]
         bool IsMacroDefined(std::string const &name) const;
 
+        void UnregisterMacro(std::string const &ident);
+
         void RegisterMacro(std::string const &name, macro::Macro macro);
 
         void InvokeMacro(macro::MacroInvocation &&macroInvocation);

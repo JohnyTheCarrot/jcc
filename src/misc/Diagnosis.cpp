@@ -170,6 +170,8 @@ namespace jcc {
             case Kind::PP_ExpectedEndif:
                 return "#else, #elif, #elifdef or #elifndef may not follow "
                        "#else.";
+            case Kind::PP_UndefExpectedIdentifier:
+                return "Expected identifier in #undef directive.";
         }
 
         assert(false);

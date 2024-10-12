@@ -35,7 +35,7 @@ namespace jcc::preprocessor::commands {
 
         Diagnosis diag{
                 directive.m_Span + lastTokenSpan, Diagnosis::Class::Warning,
-                Diagnosis::Kind::PP_Custom, std::move(ss.str())
+                Diagnosis::Kind::PP_Custom, ss.str()
         };
 
         preprocessor.EmitWarning(std::move(diag));
