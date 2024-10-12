@@ -61,6 +61,7 @@ namespace jcc {
             PP_CondExpectedIdentifier,
             PP_OrphanedConditionalClosure,
             PP_ExpectedEndif,
+            PP_UndefExpectedIdentifier,
             PP_Custom,
             TODO,
         };

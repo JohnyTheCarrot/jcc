@@ -66,6 +66,8 @@ set(
         src/preprocessor/commands/endif_command.cpp
         src/preprocessor/commands/else_command.h
         src/preprocessor/commands/else_command.cpp
+        src/preprocessor/commands/undef_command.h
+        src/preprocessor/commands/undef_command.cpp
 )
 
 add_executable("${PROJECT_NAME}"
