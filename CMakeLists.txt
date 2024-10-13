@@ -68,6 +68,17 @@ set(
         src/preprocessor/commands/else_command.cpp
         src/preprocessor/commands/undef_command.h
         src/preprocessor/commands/undef_command.cpp
+        src/ir_codegen/ir_gen.cpp
+        src/ir_codegen/ir_gen.h
+        src/ir_codegen/target/target.h
+        src/ir_codegen/target/6502_asm/asm6502.h
+        src/ir_codegen/target/6502_asm/asm6502.cpp
+        src/ir_codegen/target/register.h
+        src/ir_codegen/target/register.cpp
+        src/ir_codegen/target/target.cpp
+        src/ir_codegen/target/6502_asm/printer.h
+        src/ir_codegen/target/6502_asm/printer.cpp
+        src/ir_codegen/target/common.h
 )
 
 add_executable("${PROJECT_NAME}"
