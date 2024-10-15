@@ -129,7 +129,7 @@ namespace jcc::preprocessor::commands {
     }
 
     IdentifierCommand::IdentifierCommand(CommandMap &map)
-        : Command{map, tokenizer::Token::GenericType::Identifier} {
+        : Command{map, tokenizer::GenericType::Identifier} {
     }
 
     IdentifierCommand::~IdentifierCommand() = default;

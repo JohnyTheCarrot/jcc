@@ -95,8 +95,16 @@ namespace jcc::tokenizer {
         std::string ToString() const;
     };
 
+    enum class GenericType {
+        Identifier,
+        PpNumber,
+        ChararacterConstant,
+        StringConstant,
+        Max
+    };
+
     enum class Punctuator {
-        LeftBracket,
+        LeftBracket = static_cast<int>(GenericType::Max),
         RightBracket,
         LeftParenthesis,
         RightParenthesis,
@@ -145,10 +153,11 @@ namespace jcc::tokenizer {
         Hash,
         HashHash,
         PpLeftParenthesis,
+        Max,
     };
 
     enum class Keyword {
-        Auto,
+        Auto = static_cast<int>(Punctuator::Max),
         Break,
         Case,
         Char,
@@ -195,10 +204,11 @@ namespace jcc::tokenizer {
         False,
         True,
         Nullptr,
+        Max
     };
 
     enum class Directive {
-        Include,
+        Include = static_cast<int>(Keyword::Max),
         Define,
         Undef,
         Line,
@@ -212,27 +222,31 @@ namespace jcc::tokenizer {
         Elifdef,
         Elifndef,
         Else,
-        Endif
+        Endif,
+        Max
     };
 
     enum class SpecialPurpose {
-        EndOfFile,
+        EndOfFile = static_cast<int>(Directive::Max),
         Error,
         NewLine,
         LineComment,
         BlockComment,
+        Max
     };
 
     struct Token {
-        enum class GenericType {
-            Identifier,
-            PpNumber,
-            ChararacterConstant,
-            StringConstant
-        };
-
         using Type = std::variant<
                 GenericType, Punctuator, Keyword, Directive, SpecialPurpose>;
+
+        static constexpr auto c_NumTokenTypes =
+                static_cast<int>(GenericType::Max) +
+                static_cast<int>(Punctuator::Max) +
+                static_cast<int>(Keyword::Max) +
+                static_cast<int>(Directive::Max) +
+                static_cast<int>(SpecialPurpose::Max);
+
+        int GetTokenTypeId() const;
 
         using Value = std::variant<
                 IncludeDirective, Identifier, PpNumber, CharacterConstant,

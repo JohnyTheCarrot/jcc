@@ -4,10 +4,8 @@
 #include <variant>
 
 namespace jcc::codegen {
-    struct InstructionEnd final {};
-
-    using BinaryOutput       = std::variant<std::byte, InstructionEnd>;
-    using BinaryOutputStream = std::basic_ostream<char>;
+    using BinaryOutput       = char;
+    using BinaryOutputStream = std::basic_ostream<BinaryOutput>;
 }// namespace jcc::codegen
 
 #endif//COMMON_H

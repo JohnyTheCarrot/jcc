@@ -143,6 +143,28 @@ namespace jcc::tokenizer {
         return ss.str();
     }
 
+    int Token::GetTokenTypeId() const {
+        auto const type{GetValueType()};
+
+        if (std::holds_alternative<GenericType>(type))
+            return static_cast<int>(std::get<GenericType>(type));
+
+        if (std::holds_alternative<Punctuator>(type))
+            return static_cast<int>(std::get<Punctuator>(type));
+
+        if (std::holds_alternative<Keyword>(type))
+            return static_cast<int>(std::get<Keyword>(type));
+
+        if (std::holds_alternative<Directive>(type))
+            return static_cast<int>(std::get<Directive>(type));
+
+        if (std::holds_alternative<SpecialPurpose>(type))
+            return static_cast<int>(std::get<SpecialPurpose>(type));
+
+        assert(false);
+        return -1;
+    }
+
     bool Token::IsTerminal() const {
         if (!std::holds_alternative<SpecialPurpose>(m_Value))
             return false;
@@ -428,6 +450,9 @@ namespace jcc::tokenizer {
                 return "##";
             case Punctuator::PpLeftParenthesis:
                 return "(";
+            case Punctuator::Max:
+                assert(false);
+                break;
         }
 
         assert(false);
@@ -466,6 +491,9 @@ namespace jcc::tokenizer {
                 return "#elifdef";
             case Directive::Elifndef:
                 return "#elifndef";
+            case Directive::Max:
+                assert(false);
+                break;
         }
 
         assert(false);

@@ -79,6 +79,8 @@ set(
         src/ir_codegen/target/6502_asm/printer.h
         src/ir_codegen/target/6502_asm/printer.cpp
         src/ir_codegen/target/common.h
+        src/parsing/parser.h
+        src/parsing/parser.cpp
 )
 
 add_executable("${PROJECT_NAME}"

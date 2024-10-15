@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "ir_codegen/target/6502_asm/asm6502.h"
+#include "parsing/parser.h"
 #include "preprocessor/preprocessor.h"
 
 int main(int argCount, char *args[]) {
@@ -23,13 +24,15 @@ int main(int argCount, char *args[]) {
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
 
-        std::for_each(
-                preprocessor.begin(), preprocessor.end(),
-                [](jcc::tokenizer::Token const &token) {
-                    token.DebugPrintTo(std::cout);
-                    std::cout << std::endl;
-                }
-        );
+        // std::for_each(
+        //         preprocessor.begin(), preprocessor.end(),
+        //         [](jcc::tokenizer::Token const &token) {
+        //             token.DebugPrintTo(std::cout);
+        //             std::cout << std::endl;
+        //         }
+        // );
+        jcc::parsing::Parser parser{preprocessor};
+        while (parser.ReadOutput() != '1') {}
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
