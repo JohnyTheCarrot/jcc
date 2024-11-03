@@ -35,7 +35,7 @@ namespace jcc::preprocessor::commands {
 
         throw FatalCompilerError{
                 Diagnosis::Kind::PP_Custom, directive.m_Span + lastTokenSpan,
-                std::move(ss.str())
+                ss.str()
         };
     }
 }// namespace jcc::preprocessor::commands
