@@ -9,8 +9,6 @@ target_include_directories(fmt PRIVATE libs/fmt/include)
 
 set(
         SRC
-        src/misc/CharStream.h
-        src/misc/CharStream.cpp
         src/misc/Diagnosis.h
         src/misc/Diagnosis.cpp
         src/misc/Span.h
@@ -113,18 +111,13 @@ target_include_directories(${TEST_PROJECT_NAME} PRIVATE src libs)
 include(GoogleTest)
 gtest_discover_tests(${TEST_PROJECT_NAME})
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
-    set(COMP_FLAGS --pedantic-errors)
-    target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})
-    target_compile_options(${TEST_PROJECT_NAME} PRIVATE ${COMP_FLAGS})
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "-Wall -funsigned-char")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
     set(COMP_FLAGS --pedantic-errors)
     target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})
     target_compile_options(${TEST_PROJECT_NAME} PRIVATE ${COMP_FLAGS})
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/J /EHsc /diagnostics:caret")
+    set(CMAKE_CXX_FLAGS "/EHsc /WX /diagnostics:caret")
     set(COMP_FLAGS /W4 /utf-8)
     target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})
     target_compile_options(${TEST_PROJECT_NAME} PRIVATE ${COMP_FLAGS})

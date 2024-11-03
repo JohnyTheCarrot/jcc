@@ -9,8 +9,6 @@
 #include <optional>
 #include <utility>
 
-#include "CharStream.h"
-
 namespace jcc {
     template<size_t charRangeStart, size_t charRangeEnd, class TValue>
     struct TrieNode final {
@@ -44,8 +42,8 @@ namespace jcc {
                 char const childIndex{static_cast<char>(
                         static_cast<size_t>(key[keyIdx]) - charRangeStart
                 )};
-                assert(key[keyIdx] >= charRangeStart &&
-                       key[keyIdx] <= charRangeEnd);
+                assert(key[keyIdx] >= static_cast<int>(charRangeStart) &&
+                       key[keyIdx] <= static_cast<int>(charRangeEnd));
 
                 auto &child{node->m_Children[childIndex]};
                 if (child == nullptr) {
@@ -57,20 +55,6 @@ namespace jcc {
 
                 node = child.get();
             }
-        }
-
-        TrieNode const *GetNode(CharStream const &charStream) const {
-            if (!charStream.Good())
-                return nullptr;
-
-            char const c{charStream.Get()};
-            char const childIndex{
-                    static_cast<char>(static_cast<size_t>(c) - charRangeStart)
-            };
-            if (childIndex < 0 || childIndex > charRangeEnd - charRangeStart)
-                return nullptr;
-
-            return m_Children[childIndex].get();
         }
 
         // [[nodiscard]]
@@ -111,7 +95,8 @@ namespace jcc {
                     static_cast<size_t>(character) - charRangeStart
             )};
 
-            if (charIdx < 0 || charIdx > m_Children.size() - 1)
+            if (charIdx < 0 ||
+                charIdx > static_cast<int>(m_Children.size() - 1))
                 return {nullptr, std::nullopt};
 
             auto const &child{m_Children[charIdx].get()};
