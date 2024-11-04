@@ -1,9 +1,12 @@
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <magic_enum/magic_enum.hpp>
+#include <algorithm>// for for_each
+#include <iostream> // for basic_ostream, char_traits
+#include <cstdlib> // for exit
+#include <string>   // for allocator, operator<<, string
+#include <vector>   // for vector
 
-#include "preprocessor/preprocessor.h"
+#include "misc/Diagnosis.h"           // for Diagnosis, FatalCompilerError
+#include "preprocessor/preprocessor.h"// for Preprocessor
+#include "tokenizer/token.h"          // for Token
 
 int main(int argCount, char *args[]) {
     if (argCount < 2) {

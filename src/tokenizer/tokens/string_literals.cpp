@@ -1,12 +1,15 @@
 #include "string_literals.h"
 
-#include <algorithm>
-#include <string>
-#include <utility>
+#include <algorithm>// for __copy_fn, copy
+#include <iterator> // for back_insert_iterator, back_inserter
+#include <optional> // for optional
+#include <string>   // for basic_string, string, u32string
+#include <utility>  // for move
 
-#include "misc/Diagnosis.h"
-#include "tokenizer/char_iter.h"
-#include "utils.h"
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "tokenizer/char_iter.h"// for CharIter
+#include "utils.h"              // for ReadSingleCharacter, ConstantType
 
 namespace jcc::tokenizer::string_literals {
     Token Tokenize(

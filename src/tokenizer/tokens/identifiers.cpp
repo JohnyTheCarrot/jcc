@@ -1,8 +1,11 @@
 #include "identifiers.h"
 
-#include <utility>
+#include <algorithm>// for __move_fn, move
+#include <iterator> // for back_insert_iterator, back_inserter
+#include <utility>  // for move
 
-#include "misc/Diagnosis.h"
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::identifiers {
     [[nodiscard]]
@@ -29,8 +32,7 @@ namespace jcc::tokenizer::identifiers {
         if (charIter == CharIter::end()) {
             Span span{
                     charIter.GetFileName(), tokenStart.m_Start,
-                    charIter.GetSentinel().m_LastSpanMarker,
-                    charIter.GetInput()
+                    charIter.GetSentinel().m_LastSpanMarker, charIter.GetInput()
             };
 
             // check if identifier contains a backslash

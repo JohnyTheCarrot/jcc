@@ -1,6 +1,16 @@
 #include "define_command.h"
 
-#include "preprocessor/preprocessor.h"
+#include <algorithm>// for copy, __move_fn, move
+#include <iterator> // for back_insert_iterator
+#include <variant>  // for get, holds_alternative
+#include <vector>   // for vector
+
+#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "preprocessor/commands/command.h"     // for Command, CommandMap
+#include "preprocessor/macro_store.h"          // for MacroStore
+#include "preprocessor/preprocessor.h"         // for Preprocessor
+#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator...
+#include "tokenizer/token.h"                   // for Identifier, Token
 
 namespace jcc::preprocessor::commands {
     macro::ReplacementList

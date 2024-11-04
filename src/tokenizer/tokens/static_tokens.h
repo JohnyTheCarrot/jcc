@@ -1,12 +1,15 @@
 #ifndef STATIC_TOKEN_TOKENIZER_H
 #define STATIC_TOKEN_TOKENIZER_H
 
-#include <string>
-#include <variant>
+#include <string> // for string
+#include <variant>// for variant
 
-#include "misc/Span.h"
-#include "tokenizer/char_iter.h"
-#include "tokenizer/token.h"
+#include "misc/Span.h"      // for SpanMarker
+#include "tokenizer/token.h"// for Token
+
+namespace jcc::tokenizer {
+    class CharIter;
+}// namespace jcc::tokenizer
 
 // By static token, it is meant that the token is a keyword or a punctuator.
 // It's static because it's not input-dependent.

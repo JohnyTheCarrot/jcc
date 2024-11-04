@@ -1,13 +1,15 @@
 #ifndef JCC_DIAGNOSIS_H
 #define JCC_DIAGNOSIS_H
 
-#include <fmt/color.h>
-#include <optional>
-#include <string>
-#include <variant>
-#include <vector>
+#include <exception>  // for exception
+#include <fmt/color.h>// for color
+#include <iosfwd>     // for ostream
+#include <optional>   // for nullopt, optional
+#include <string>     // for string
+#include <variant>    // for variant
+#include <vector>     // for vector
 
-#include "Span.h"
+#include "Span.h"// for Span
 
 namespace jcc {
     class Diagnosis final {

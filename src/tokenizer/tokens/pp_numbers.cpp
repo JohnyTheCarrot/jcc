@@ -1,11 +1,13 @@
 #include "pp_numbers.h"
 
-#include <string>
-#include <utility>
+#include <cctype> // for isdigit
+#include <string> // for allocator, string
+#include <utility>// for move
 
-#include "misc/Diagnosis.h"
-#include "tokenizer/char_iter.h"
-#include "utils.h"
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "tokenizer/char_iter.h"// for CharIter
+#include "utils.h"              // for IsNonDigit
 
 namespace jcc::tokenizer::pp_numbers {
     [[nodiscard]]
@@ -52,10 +54,7 @@ namespace jcc::tokenizer::pp_numbers {
     Token
     Tokenize(CharIter &charIter, SpanMarker const &start, bool startsWithDot) {
         std::string number{startsWithDot ? "." : ""};
-        Span        span{
-                charIter.GetFileName(), start, start,
-                charIter.GetInput()
-        };
+        Span span{charIter.GetFileName(), start, start, charIter.GetInput()};
 
         if (charIter == CharIter::end()) {
             return Token{

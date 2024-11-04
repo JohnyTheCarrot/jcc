@@ -1,6 +1,7 @@
 #include "tokenizer_iterator.h"
 
-#include "tokenizer.h"
+#include "tokenizer.h"      // for Tokenizer
+#include "tokenizer/token.h"// for Token
 
 namespace jcc::tokenizer {
     TokenizerIterator::TokenizerIterator() = default;

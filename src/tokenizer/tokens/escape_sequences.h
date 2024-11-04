@@ -1,10 +1,15 @@
 #ifndef ESCAPE_SEQUENCES_H
 #define ESCAPE_SEQUENCES_H
 
-#include <misc/compiler_data_types.h>
+#include <misc/compiler_data_types.h>// for Char32
 
-#include "tokenizer/char_iter.h"
-#include "tokenizer/token.h"
+namespace jcc {
+    namespace tokenizer {
+        class CharIter;
+        enum class ConstantPrefix;
+    }// namespace tokenizer
+    struct SpanMarker;
+}// namespace jcc
 
 namespace jcc::tokenizer::escape_sequences {
     [[nodiscard]]

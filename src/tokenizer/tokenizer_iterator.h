@@ -1,9 +1,10 @@
 #ifndef TOKENIZER_ITERATOR_H
 #define TOKENIZER_ITERATOR_H
 
-#include <iterator>
+#include <iterator>// for input_iterator, input_iterator_tag
+#include <optional>// for optional
 
-#include "token.h"
+#include "token.h"// for Token
 
 namespace jcc::tokenizer {
     class Tokenizer;

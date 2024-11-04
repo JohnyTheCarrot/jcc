@@ -1,11 +1,12 @@
 #include "utils.h"
 
-#include <utility>
+#include <cctype> // for isalpha
+#include <utility>// for move
 
-#include "escape_sequences.h"
-#include "misc/Diagnosis.h"
-#include "misc/Span.h"
-#include "tokenizer/char_iter.h"
+#include "escape_sequences.h"   // for Tokenize
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::utils {
     [[nodiscard]]

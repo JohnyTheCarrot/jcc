@@ -1,14 +1,17 @@
 #ifndef JCC_TOKENIZER_H
 #define JCC_TOKENIZER_H
 
-#include <fstream>
-#include <optional>
-#include <string>
+#include <exception>// for exception
+#include <fstream>  // for basic_ifstream, ifstream
+#include <optional> // for optional
+#include <string>   // for string
+#include <variant>  // for variant
 
-#include "char_iter.h"
-#include "tokenizer/token.h"
-#include "tokenizer_iterator.h"
-#include "tokens/static_tokens.h"
+#include "char_iter.h"           // for CharIter
+#include "misc/Span.h"           // for Span, SpanMarker
+#include "tokenizer/token.h"     // for Token
+#include "tokenizer_iterator.h"  // for TokenizerIterator
+#include "tokens/static_tokens.h"// for StaticTokenTokenizationResult
 
 namespace jcc::tokenizer {
     class TokenizerFileOpenFailure final : public std::exception {};

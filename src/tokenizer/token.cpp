@@ -1,8 +1,14 @@
 #include "tokenizer/token.h"
 
-#include <magic_enum/magic_enum.hpp>
+#include <cassert>                 // for assert
+#include <cctype>                   // for isalnum, isalpha
+#include <cstdint>                  // for uint32_t
+#include <magic_enum/magic_enum.hpp>// for enum_name
+#include <sstream>                  // for basic_ostream, operator<<, ost...
 
-#include "misc/compiler_data_types.h"
+#include "gtest/gtest.h"// for PrintToString
+
+#include "misc/compiler_data_types.h"// for Char32, Char, Char16, WChar
 
 namespace jcc::tokenizer {
     bool IncludeDirective::operator==(IncludeDirective const &other) const {

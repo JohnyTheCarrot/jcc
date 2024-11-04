@@ -1,12 +1,15 @@
 #include "character_constants.h"
 
-#include <numeric>
-#include <utility>
-#include <vector>
+#include <numeric> // for accumulate
+#include <optional>// for optional
+#include <utility> // for move
+#include <vector>  // for vector
 
-#include "misc/Diagnosis.h"
-#include "tokenizer/char_iter.h"
-#include "utils.h"
+#include "misc/compiler_data_types.h"// for Char32, Int
+#include "misc/Diagnosis.h"          // for Diagnosis, FatalCompilerError
+#include "misc/Span.h"               // for Span, SpanMarker (ptr only)
+#include "tokenizer/char_iter.h"     // for CharIter
+#include "utils.h"                   // for ReadSingleCharacter, ConstantType
 
 namespace jcc::tokenizer::character_constants {
     constexpr int implMaxCharsInCharLiteral{

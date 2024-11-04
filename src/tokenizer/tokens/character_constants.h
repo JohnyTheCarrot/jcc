@@ -1,7 +1,11 @@
 #ifndef CHARACTER_CONSTANTS_H
 #define CHARACTER_CONSTANTS_H
 
-#include "tokenizer/token.h"
+#include "tokenizer/token.h"// for ConstantPrefix (ptr only), Token
+
+namespace jcc {
+    struct SpanMarker;
+}// namespace jcc
 
 namespace jcc::tokenizer {
     class CharIter;

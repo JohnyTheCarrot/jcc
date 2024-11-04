@@ -1,16 +1,21 @@
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
-#include <memory>
-#include <string>
+#include <concepts>   // for same_as
+#include <functional> // for function
+#include <memory>     // for make_unique, unique_ptr
+#include <stack>      // for stack
+#include <string>     // for string
+#include <string_view>// for string_view
 
-#include "commands/command.h"
-#include "macro_store.h"
-#include "misc/Diagnosis.h"
-#include "preprocessor_iterator.h"
-#include "preprocessor_token.h"
-#include "tokenizer/tokenizer.h"
-#include "tokenizer/tokenizer_iterator.h"
+#include "macro_store.h"                 // for MacroStore
+#include "misc/Diagnosis.h"              // for Diagnosis
+#include "misc/Span.h"                   // for Span
+#include "preprocessor_iterator.h"       // for PreprocessorIterator, IsPr...
+#include "preprocessor_token.h"          // for PreprocessorToken
+#include "tokenizer/token.h"             // for Token
+#include "tokenizer/tokenizer.h"         // for Tokenizer
+#include "tokenizer/tokenizer_iterator.h"// for TokenizerIterator
 
 namespace jcc::preprocessor {
     constexpr std::string_view VaArgs{"__VA_ARGS__"};

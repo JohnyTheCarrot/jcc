@@ -1,7 +1,14 @@
 #ifndef UNDEF_COMMAND_H
 #define UNDEF_COMMAND_H
 
-#include "command.h"
+#include <optional>// for optional
+
+#include "command.h"                        // for Command, CommandMap
+#include "preprocessor/preprocessor_token.h"// for PreprocessorToken
+
+namespace jcc::tokenizer {
+    struct Token;
+}// namespace jcc::tokenizer
 
 namespace jcc::preprocessor {
     class Preprocessor;

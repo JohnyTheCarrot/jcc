@@ -1,6 +1,8 @@
 #include "endif_command.h"
 
-#include "preprocessor/preprocessor.h"
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/preprocessor.h"    // for Preprocessor
+#include "tokenizer/token.h"              // for Directive, Token
 
 namespace jcc::preprocessor::commands {
     EndifCommand::EndifCommand(CommandMap &map)

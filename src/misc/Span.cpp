@@ -1,5 +1,10 @@
 #include "Span.h"
 
+#include <ostream>// for basic_ostream, basic_ostream::operator<<
+#include <utility>// for move
+
+#include "gtest/gtest.h"// for PrintToString
+
 namespace jcc {
     bool SpanMarker::operator==(SpanMarker const &other) const noexcept {
         return m_LineNumber == other.m_LineNumber &&

@@ -1,8 +1,15 @@
 #include "ifdef_command.h"
 
-#include <cassert>
+#include <cassert>// for assert
+#include <utility>// for move
+#include <variant>// for get
 
-#include "preprocessor/preprocessor.h"
+#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "preprocessor/commands/command.h"     // for Command, CommandMap
+#include "preprocessor/macro_store.h"          // for MacroStore
+#include "preprocessor/preprocessor.h"         // for Preprocessor
+#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator...
+#include "tokenizer/token.h"                   // for Identifier, Directive
 
 namespace jcc::preprocessor::commands {
     void

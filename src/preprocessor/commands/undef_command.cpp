@@ -1,6 +1,13 @@
 #include "undef_command.h"
 
-#include "preprocessor/preprocessor.h"
+#include <utility>// for move
+#include <variant>// for get
+
+#include "misc/Diagnosis.h"               // for Diagnosis, FatalCompilerE...
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/macro_store.h"     // for MacroStore
+#include "preprocessor/preprocessor.h"    // for Preprocessor
+#include "tokenizer/token.h"              // for Identifier, Token, Directive
 
 namespace jcc::preprocessor::commands {
     UndefCommand::UndefCommand(CommandMap &map)

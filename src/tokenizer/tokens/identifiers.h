@@ -1,10 +1,16 @@
 #ifndef IDENTIFIER_TOKENIZER_H
 #define IDENTIFIER_TOKENIZER_H
 
-#include <string>
+#include <iosfwd>  // for streampos
+#include <optional>// for optional
+#include <string>  // for string
 
-#include "tokenizer/char_iter.h"
-#include "tokenizer/token.h"
+#include "misc/Span.h"      // for SpanMarker
+#include "tokenizer/token.h"// for Token
+
+namespace jcc::tokenizer {
+    class CharIter;
+}// namespace jcc::tokenizer
 
 namespace jcc::tokenizer::identifiers {
     [[nodiscard]]

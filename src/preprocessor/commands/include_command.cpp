@@ -1,6 +1,12 @@
 #include "include_command.h"
 
-#include "preprocessor/preprocessor.h"
+#include <string> // for char_traits
+#include <variant>// for get
+
+#include "misc/Diagnosis.h"               // for Diagnosis, FatalCompilerE...
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/preprocessor.h"    // for Preprocessor
+#include "tokenizer/token.h"              // for StringConstant, Token
 
 namespace jcc::preprocessor::commands {
     IncludeCommand::IncludeCommand(CommandMap &map)

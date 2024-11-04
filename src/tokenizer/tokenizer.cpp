@@ -1,15 +1,19 @@
 #include "tokenizer/tokenizer.h"
 
-#include <fstream>
-#include <string>
-#include <utility>
+#include <algorithm>// for find_if_not
+#include <cctype>   // for isdigit, isspace
+#include <fstream>  // for basic_ifstream, ifstream
+#include <string>   // for basic_string, char_traits
+#include <utility>  // for move
 
-#include "misc/Diagnosis.h"
-#include "tokens/character_constants.h"
-#include "tokens/identifiers.h"
-#include "tokens/pp_numbers.h"
-#include "tokens/static_tokens.h"
-#include "tokens/string_literals.h"
+#include "misc/Diagnosis.h"              // for Diagnosis, FatalCompilerError
+#include "tokenizer/char_iter.h"         // for CharIter, CharInfo
+#include "tokenizer/tokenizer_iterator.h"// for TokenizerIterator
+#include "tokens/character_constants.h"  // for Tokenize
+#include "tokens/identifiers.h"          // for CollectRestOfIdentifier
+#include "tokens/pp_numbers.h"           // for Tokenize
+#include "tokens/static_tokens.h"        // for StaticTokenTokenizationResult
+#include "tokens/string_literals.h"      // for Tokenize
 
 namespace jcc::tokenizer {
     bool Tokenizer::SkipWhitespace() {

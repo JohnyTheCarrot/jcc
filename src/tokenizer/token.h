@@ -1,12 +1,14 @@
 #ifndef JCC_TOKEN_H
 #define JCC_TOKEN_H
 
-#include <misc/compiler_data_types.h>
-#include <string>
-#include <utility>
-#include <variant>
+#include <iosfwd>                    // for ostream
+#include <misc/compiler_data_types.h>// for Char32
+#include <string>                    // for string
+#include <string_view>               // for string_view
+#include <utility>                   // for pair
+#include <variant>                   // for variant, holds_alternative
 
-#include "misc/Span.h"
+#include "misc/Span.h"// for Span
 
 namespace jcc::tokenizer {
     struct IncludeDirective final {

@@ -1,11 +1,19 @@
 #include "Diagnosis.h"
 
-#include <algorithm>
-#include <fmt/color.h>
-#include <fmt/ostream.h>
-#include <format>
-#include <magic_enum/magic_enum.hpp>
-#include <utility>
+#include <algorithm>                // for max
+#include <cassert>                  // for assert
+#include <fmt/color.h>              // for format, fg, styled, color, emph...
+#include <format>                   // for format, format_string
+#include <limits>                   // for numeric_limits
+#include <magic_enum/magic_enum.hpp>// for enum_name
+#include <memory>                   // for __shared_ptr_access, shared_ptr
+#include <sstream>                  // for basic_ostream, basic_istream
+#include <string_view>              // for basic_string_view, operator<<
+#include <utility>                  // for move
+
+#include "fmt/core.h"  // for format, format_string
+#include "fmt/format.h"// for buffer::append
+#include "misc/Span.h" // for Span, SpanMarker
 
 namespace jcc {
     Diagnosis::Diagnosis(

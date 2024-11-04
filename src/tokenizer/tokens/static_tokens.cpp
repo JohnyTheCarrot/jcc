@@ -1,9 +1,12 @@
 #include "static_tokens.h"
 
-#include <utility>
+#include <cctype>  // for isspace
+#include <optional>// for optional, operator==, nullopt
+#include <utility> // for move
 
-#include "misc/Diagnosis.h"
-#include "misc/trie.h"
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "misc/trie.h"          // for TrieNode
+#include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::static_tokens {
     using TokenTrieValue =

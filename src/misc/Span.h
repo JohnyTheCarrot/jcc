@@ -1,10 +1,9 @@
 #ifndef JCC_SPAN_H
 #define JCC_SPAN_H
 
-#include <memory>
-#include <string>
-
-#include <gtest/gtest-printers.h>
+#include <iosfwd>// for ostream, istream
+#include <memory>// for shared_ptr
+#include <string>// for string
 
 namespace jcc {
     struct SpanMarker final {

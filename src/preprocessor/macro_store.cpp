@@ -1,7 +1,12 @@
 #include "macro_store.h"
 
-#include <utility>
-#include <vector>
+#include <functional>// for identity
+#include <ranges>    // for __find_if_fn, borrowed_iterator_t
+#include <stdexcept> // for runtime_error
+#include <utility>   // for move, pair
+#include <vector>    // for vector
+
+#include "preprocessor/macro.h"// for MacroInvocation, MacroArgumentReader
 
 namespace jcc::preprocessor {
     MacroStore::MacroStore() = default;

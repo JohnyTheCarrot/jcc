@@ -1,11 +1,23 @@
 #ifndef DEFINE_COMMAND_H
 #define DEFINE_COMMAND_H
 
-#include <utility>
-#include <string>
+#include <optional>// for optional
+#include <string>  // for string
+#include <utility> // for pair
 
-#include "command.h"
-#include "preprocessor/macro.h"
+#include "command.h"                        // for Command, CommandMap
+#include "preprocessor/macro.h"             // for FunctionLikeMacro, Repl...
+#include "preprocessor/preprocessor_token.h"// for PreprocessorToken
+
+namespace jcc {
+    namespace preprocessor {
+        class Preprocessor;
+    }// namespace preprocessor
+
+    namespace tokenizer {
+        struct Token;
+    }// namespace tokenizer
+}// namespace jcc
 
 namespace jcc::preprocessor::commands {
     class DefineCommand final : public Command {

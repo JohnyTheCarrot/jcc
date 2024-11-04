@@ -1,13 +1,14 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include <memory>
-#include <optional>
-#include <unordered_map>
-#include <vector>
+#include <memory>       // for unique_ptr
+#include <optional>     // for optional
+#include <unordered_map>// for unordered_map
+#include <variant>      // for hash
+#include <vector>       // for vector
 
-#include "preprocessor/preprocessor_token.h"
-#include "tokenizer/token.h"
+#include "preprocessor/preprocessor_token.h"// for PreprocessorToken
+#include "tokenizer/token.h"                // for Token
 
 namespace jcc::preprocessor {
     class Preprocessor;

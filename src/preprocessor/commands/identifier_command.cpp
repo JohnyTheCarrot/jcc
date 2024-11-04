@@ -1,8 +1,17 @@
 #include "identifier_command.h"
 
-#include <string>
+#include <algorithm>    // for move
+#include <iterator>     // for back_insert_iterator
+#include <ranges>       // for subrange
+#include <string>       // for operator==, hash
+#include <unordered_map>// for operator==, _Node_it...
+#include <variant>      // for get, holds_alternative
 
-#include "preprocessor/preprocessor.h"
+#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "preprocessor/commands/command.h"     // for Command, CommandMap
+#include "preprocessor/macro_store.h"          // for MacroStore
+#include "preprocessor/preprocessor.h"         // for Preprocessor, VaArgs
+#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
 
 namespace jcc::preprocessor::commands {
     macro::FnMacroArguments IdentifierCommand::GatherArguments(

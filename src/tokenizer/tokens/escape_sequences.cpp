@@ -1,9 +1,14 @@
 #include "escape_sequences.h"
 
-#include <misc/compiler_data_types.h>
-#include <utility>
+#include <misc/compiler_data_types.h>// for Char32
+#include <optional>                  // for optional, nullopt
+#include <utility>                   // for move
+#include <variant>                   // for variant
 
-#include "misc/Diagnosis.h"
+#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "tokenizer/char_iter.h"// for CharIter
+#include "tokenizer/token.h"    // for GetConstantPrefixRange, Consta...
 
 namespace jcc::tokenizer::escape_sequences {
     [[nodiscard]]
@@ -153,8 +158,7 @@ namespace jcc::tokenizer::escape_sequences {
         if (charIter == CharIter::end()) {
             Span span{
                     charIter.GetFileName(), backslashMarker,
-                    charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()
+                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -168,8 +172,7 @@ namespace jcc::tokenizer::escape_sequences {
         } else {
             Span span{
                     charIter.GetFileName(), backslashMarker,
-                    charIter.GetCurrentSpanMarker(),
-                    charIter.GetInput()
+                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
             };
 
             throw FatalCompilerError{
@@ -188,8 +191,7 @@ namespace jcc::tokenizer::escape_sequences {
                 if (++digitIdx == N_INT_HEX_DIGITS) {
                     Span span{
                             charIter.GetFileName(), backslashMarker,
-                            charIter.GetCurrentSpanMarker(),
-                            charIter.GetInput()
+                            charIter.GetCurrentSpanMarker(), charIter.GetInput()
                     };
 
                     throw FatalCompilerError{
@@ -254,8 +256,7 @@ namespace jcc::tokenizer::escape_sequences {
 
         Span span{
                 charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
 
         if (c == 'u' || c == 'U') {
@@ -274,8 +275,7 @@ namespace jcc::tokenizer::escape_sequences {
         auto const result{TokenizeNoSizeCheck(charIter, backslashMarker)};
         Span       span{
                 charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(),
-                charIter.GetInput()
+                charIter.GetCurrentSpanMarker(), charIter.GetInput()
         };
 
         return ValidateEscapeSequenceSize(result, prefix, span);

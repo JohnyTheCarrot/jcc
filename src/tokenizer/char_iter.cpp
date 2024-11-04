@@ -1,9 +1,12 @@
 #include "tokenizer/char_iter.h"
 
-#include <format>
-#include <utility>
+#include <format> // for format, format_string
+#include <istream>// for basic_istream, basic_ios, basic_istream:...
+#include <utility>// for move
 
-#include "misc/Diagnosis.h"
+#include "gtest/gtest.h"// for PrintToString
+
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
 
 namespace jcc::tokenizer {
     CharIter const CharIter::c_UntilNewline{'\n'};

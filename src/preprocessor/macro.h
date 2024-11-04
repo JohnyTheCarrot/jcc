@@ -1,11 +1,14 @@
 #ifndef MACRO_H
 #define MACRO_H
 
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <iosfwd>       // for ostream
+#include <optional>     // for optional
+#include <string>       // for string
+#include <unordered_map>// for unordered_map
+#include <variant>      // for variant
+#include <vector>       // for vector
 
-#include "tokenizer/token.h"
+#include "tokenizer/token.h"// for Token, Identifier
 
 namespace jcc::preprocessor::macro {
     struct ReplacementList {

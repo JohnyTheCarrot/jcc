@@ -1,8 +1,9 @@
 #include "preprocessor_iterator.h"
 
-#include <utility>
+#include <utility>// for move
 
-#include "preprocessor.h"
+#include "preprocessor.h"                   // for Preprocessor
+#include "preprocessor/preprocessor_token.h"// for PreprocessorToken
 
 namespace jcc::preprocessor {
     tokenizer::Token PreprocessorIterator::GetNextToken() const {

@@ -1,11 +1,13 @@
 #ifndef PREPROCESSOR_ITERATOR_H
 #define PREPROCESSOR_ITERATOR_H
 
-#include <iterator>
-#include <variant>
+#include <concepts>  // for same_as, default_initializable
+#include <functional>// for function
+#include <iterator>  // for input_iterator, input_iterator_tag
+#include <variant>   // for get, holds_alternative, variant
 
-#include "preprocessor_token.h"
-#include "tokenizer/token.h"
+#include "preprocessor_token.h"// for PreprocessorToken
+#include "tokenizer/token.h"   // for Token, SpecialPurpose
 
 namespace jcc::preprocessor {
     class Preprocessor;

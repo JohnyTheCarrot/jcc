@@ -1,12 +1,14 @@
 #ifndef CHAR_ITER_H
 #define CHAR_ITER_H
 
-#include <memory>
-#include <string>
-#include <string_view>
-#include <variant>
+#include <iosfwd>     // for istream, ostream
+#include <iterator>   // for input_iterator, input_iterator_tag
+#include <memory>     // for shared_ptr
+#include <string>     // for string
+#include <string_view>// for string_view
+#include <variant>    // for variant
 
-#include "misc/Span.h"
+#include "misc/Span.h"// for SpanMarker
 
 namespace jcc::tokenizer {
     struct CharInfo final {

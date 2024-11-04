@@ -1,11 +1,15 @@
 #ifndef MACRO_STORE_H
 #define MACRO_STORE_H
 
-#include <stack>
-#include <string>
-#include <unordered_map>
+#include <optional>     // for optional
+#include <stack>        // for stack
+#include <string>       // for string, hash, operator==
+#include <unordered_map>// for unordered_map
+#include <variant>      // for variant
+#include <vector>       // for vector
 
-#include "macro.h"
+#include "macro.h"          // for MacroInvocation, Macro
+#include "tokenizer/token.h"// for Token
 
 namespace jcc::preprocessor {
     class MacroStore final {

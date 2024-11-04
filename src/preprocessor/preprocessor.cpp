@@ -1,6 +1,15 @@
 #include "preprocessor.h"
 
-#include <utility>
+#include <algorithm>    // for copy
+#include <optional>     // for optional
+#include <unordered_map>// for operator==, _Node_it...
+#include <utility>      // for move, pair
+#include <variant>      // for get, holds_alternative
+
+#include "preprocessor/commands/command.h"     // for PreprocessorCommandS...
+#include "preprocessor/macro_store.h"          // for MacroStore
+#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
+#include "preprocessor/preprocessor_token.h"   // for PreprocessorToken
 
 namespace jcc::preprocessor {
     PreprocessorToken Preprocessor::GetNextPreprocessorToken() {

@@ -1,6 +1,11 @@
 #include "else_command.h"
 
-#include "preprocessor/preprocessor.h"
+#include <variant>// for get
+
+#include "misc/Diagnosis.h"               // for Diagnosis, FatalCompilerE...
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/preprocessor.h"    // for Preprocessor
+#include "tokenizer/token.h"              // for Token, Directive
 
 namespace jcc::preprocessor::commands {
     ElseCommand::ElseCommand(CommandMap &map)
