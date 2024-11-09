@@ -1,6 +1,6 @@
 #include <algorithm>// for for_each
+#include <cstdlib>  // for exit
 #include <iostream> // for basic_ostream, char_traits
-#include <cstdlib> // for exit
 #include <string>   // for allocator, operator<<, string
 #include <vector>   // for vector
 

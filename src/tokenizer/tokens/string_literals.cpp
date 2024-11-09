@@ -27,7 +27,22 @@ namespace jcc::tokenizer::string_literals {
             };
         }
 
-        std::u32string u32Characters{};
+        // std::u32string u32Characters{};
+        // while (true) {
+        //     auto const chOptional{utils::ReadSingleCharacter(
+        //             charIter, prefix, startMarker, utils::ConstantType::String
+        //     )};
+        //     if (!chOptional.has_value())
+        //         break;
+        //
+        //     u32Characters.push_back(chOptional.value());
+        // }
+        //
+        // // TODO: this probably doesn't actually work
+        // std::string strContents{};
+        // std::ranges::copy(u32Characters, std::back_inserter(strContents));
+        // TODO
+        std::string strContents{};
         while (true) {
             auto const chOptional{utils::ReadSingleCharacter(
                     charIter, prefix, startMarker, utils::ConstantType::String
@@ -35,12 +50,10 @@ namespace jcc::tokenizer::string_literals {
             if (!chOptional.has_value())
                 break;
 
-            u32Characters.push_back(chOptional.value());
+            strContents.push_back(static_cast<char>(
+                    chOptional.value() & std::numeric_limits<char>::max()
+            ));
         }
-
-        // TODO: this probably doesn't actually work
-        std::string strContents{};
-        std::ranges::copy(u32Characters, std::back_inserter(strContents));
 
         Span span{
                 charIter.GetFileName(), startMarker,
