@@ -1,0 +1,4 @@
+#ifndef GRAMMAR_PARSER_H
+#define GRAMMAR_PARSER_H
+
+#endif //GRAMMAR_PARSER_H

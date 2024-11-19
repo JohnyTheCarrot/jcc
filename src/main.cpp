@@ -1,17 +1,19 @@
-#include <cstring>
-#include <fstream>
-#include <iostream>
+#include <algorithm>// for for_each
+#include <cstdlib>  // for exit
+#include <iostream> // for basic_ostream, char_traits
+#include <string>   // for allocator, operator<<, string
+#include <vector>   // for vector
 
-#include "ir_codegen/target/6502_asm/asm6502.h"
-#include "parsing/parser.h"
-#include "preprocessor/preprocessor.h"
+#include "misc/Diagnosis.h"           // for Diagnosis, FatalCompilerError
+#include "preprocessor/preprocessor.h"// for Preprocessor
+#include "tokenizer/token.h"          // for Token
 
 int main(int argCount, char *args[]) {
-    jcc::codegen::asm6502::Target6502Asm target;
-
-    auto result{target.EmitStoreInt8Immediate(0x15, std::cout)};
-    result = result->LogicalAnd(0x3, std::cout);
-    auto incrementResult{result->Increment(std::cout)};
+    // jcc::codegen::asm6502::Target6502Asm target;
+    //
+    // auto result{target.EmitStoreInt8Immediate(0x15, std::cout)};
+    // result = result->LogicalAnd(0x3, std::cout);
+    // auto incrementResult{result->Increment(std::cout)};
     if (argCount < 2) {
         std::cerr << "Please specify an input file." << std::endl;
         exit(1);
@@ -31,8 +33,6 @@ int main(int argCount, char *args[]) {
         //             std::cout << std::endl;
         //         }
         // );
-        jcc::parsing::Parser parser{preprocessor};
-        while (parser.ReadOutput() != '1') {}
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
