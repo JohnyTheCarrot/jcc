@@ -37,8 +37,7 @@ TerminalMap GenerateFirstTable(
     }
 
     // add epsilon to table
-    jcc::parser_gen::NonTerminal const *const epsilon{nullptr};
-    table[epsilon] = {};
+    table[&jcc::parser_gen::NonTerminal::c_SPrime] = {};
 
     bool didChange{true};
 
@@ -90,8 +89,9 @@ GenerateFollowTable(TerminalMap const &firstTable, Grammar const &grammar) {
         table[terminal] = {};
     }
 
-    jcc::parser_gen::NonTerminal const *const sPrime{nullptr};
-    table[sPrime] = {&jcc::parser_gen::Terminal::c_Eof};
+    table[&jcc::parser_gen::NonTerminal::c_SPrime] = {
+            &jcc::parser_gen::Terminal::c_Eof
+    };
 
     bool didChange{true};
     while (didChange) {
@@ -166,6 +166,44 @@ GenerateFollowTable(TerminalMap const &firstTable, Grammar const &grammar) {
     return table;
 }
 
+jcc::parser_gen::ItemSet
+Closure(Grammar const &grammar, jcc::parser_gen::ItemSet const &itemSet,
+        TerminalMap const &firstTable) {
+    jcc::parser_gen::ItemSet closure{itemSet};
+
+    bool didChange = true;
+    while (didChange) {
+        didChange = false;
+
+        for (auto currentClosure = closure; auto const &item : currentClosure) {
+            // Get the symbol after the dot (if any)
+            auto const nextSymbol{item.GetSymbolAtPosition()};
+            if (!std::holds_alternative<jcc::parser_gen::NonTerminal const *>(
+                        nextSymbol
+                )) {
+                continue;// Skip if no symbol after dot or not a non-terminal
+            }
+
+            auto const *nonTerminal =
+                    std::get<jcc::parser_gen::NonTerminal const *>(nextSymbol);
+
+            // Add items for all productions of the non-terminal
+            for (auto const &production : grammar) {
+                if (production.m_Terminal != nonTerminal) {
+                    continue;
+                }
+
+                if (jcc::parser_gen::Item newItem{&production, 0};
+                    closure.insert(newItem).second) {
+                    didChange = true;
+                }
+            }
+        }
+    }
+
+    return closure;
+}
+
 int main() {
     std::vector terminals{jcc::parser_gen::Terminal{"+"},
                           jcc::parser_gen::Terminal{"*"},
@@ -183,7 +221,9 @@ int main() {
     };
 
     Grammar const grammar{
-            jcc::parser_gen::Production{nullptr, {&nonTerminals[0]}},
+            jcc::parser_gen::Production{
+                    &jcc::parser_gen::NonTerminal::c_SPrime, {&nonTerminals[0]}
+            },
             jcc::parser_gen::Production{
                     &nonTerminals[0], {&nonTerminals[2], &nonTerminals[1]}
             },
@@ -238,24 +278,8 @@ int main() {
         std::cout << "}\n";
     }
 
-    // std::ranges::copy(
-    //         grammar,
-    //         std::ostream_iterator<jcc::parser_gen::Production>{std::cout, "\n"}
-    // );
-
-    // ComputeItemSets(grammar);
-    // jcc::parser_gen::ItemSet const itemSet{Predict(grammar, {{&grammar[0], 0}})
-    // };
-    //
-    // std::cout << "0:\n" << itemSet << '\n';
-    //
-    // auto const partitions{Partition(itemSet)};
-    // for (auto const &[symbol, items] : partitions) {
-    //     std::cout << GetSymbolName(symbol) << ":\n";
-    //     std::ranges::copy(
-    //             items,
-    //             std::ostream_iterator<jcc::parser_gen::Item>{std::cout, "\n"}
-    //     );
-    //     std::cout << '\n';
-    // }
+    auto const closure{Closure(
+            grammar, {jcc::parser_gen::Item{&grammar[0], 0}}, firstTable
+    )};
+    std::cout << "\nClosure:\n" << closure << std::endl;
 }

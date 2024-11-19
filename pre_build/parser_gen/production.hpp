@@ -10,6 +10,8 @@
 namespace jcc::parser_gen {
     struct NonTerminal final {
         std::string m_Name;
+
+        static NonTerminal const c_SPrime;
     };
 
     struct Terminal final {
@@ -52,6 +54,12 @@ namespace jcc::parser_gen {
         [[nodiscard]]
         bool
         operator==(Item const &other) const;
+
+        [[nodiscard]]
+        Symbol GetSymbolAtPosition() const;
+
+        [[nodiscard]]
+        bool IsKernel() const;
     };
 
     // hash of Item

@@ -15,6 +15,8 @@ namespace jcc::parser_gen {
         return m_Token == c_Epsilon.m_Token;
     }
 
+    NonTerminal const NonTerminal::c_SPrime{"S'"};
+
     Terminal const Terminal::c_Epsilon{"ε"};
     Terminal const Terminal::c_Eof{"$"};
 
@@ -28,11 +30,6 @@ namespace jcc::parser_gen {
         }
 
         if (std::holds_alternative<NonTerminal const *>(symbol)) {
-            if (auto const *nonTerminal{std::get<NonTerminal const *>(symbol)};
-                nonTerminal == nullptr) {
-                return c_SPrime;
-            }
-
             return std::get<NonTerminal const *>(symbol)->m_Name;
         }
 
@@ -40,12 +37,7 @@ namespace jcc::parser_gen {
     }
 
     std::ostream &operator<<(std::ostream &os, Production const &prod) {
-        if (prod.m_Terminal == nullptr) {
-            os << "S'";
-        } else {
-            os << prod.m_Terminal->m_Name;
-        }
-        os << "\t->\t";
+        os << prod.m_Terminal->m_Name << "\t->\t";
 
         std::ranges::transform(
                 prod.m_Symbols, std::ostream_iterator<std::string>{os, " "},
@@ -60,6 +52,20 @@ namespace jcc::parser_gen {
                m_Position == other.m_Position;
     }
 
+    Symbol Item::GetSymbolAtPosition() const {
+        if (static_cast<std::size_t>(m_Position) ==
+            m_Production->m_Symbols.size()) {
+            return nullptr;
+        }
+
+        return m_Production->m_Symbols.at(m_Position);
+    }
+
+    bool Item::IsKernel() const {
+        return m_Position != 0 ||
+               m_Production->m_Terminal != &NonTerminal::c_SPrime;
+    }
+
     std::size_t ItemHash::operator()(Item const &item) const {
         return std::hash<Production const *>{}(item.m_Production) ^
                std::hash<int>{}(item.m_Position);
@@ -68,12 +74,7 @@ namespace jcc::parser_gen {
     std::ostream &operator<<(std::ostream &os, Item const &item) {
         auto const &[prodSymbol, symbols]{*item.m_Production};
 
-        if (prodSymbol == nullptr) {
-            os << 'T';
-        } else {
-            os << prodSymbol->m_Name;
-        }
-        os << " -> ";
+        os << prodSymbol->m_Name << " -> ";
 
         std::transform(
                 symbols.cbegin(), symbols.cbegin() + item.m_Position,
