@@ -11,7 +11,12 @@ namespace jcc::parser_gen {
         return m_Token == other.m_Token;
     }
 
+    bool Terminal::IsEpsilon() const {
+        return m_Token == c_Epsilon.m_Token;
+    }
+
     Terminal const Terminal::c_Epsilon{"ε"};
+    Terminal const Terminal::c_Eof{"$"};
 
     std::size_t TerminalHash::operator()(Terminal const &terminal) const {
         return std::hash<std::string>{}(terminal.m_Token);

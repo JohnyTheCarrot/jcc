@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iterator>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -12,14 +14,14 @@ using Grammar = std::vector<jcc::parser_gen::Production>;
 
 using TerminalSet = std::unordered_set<jcc::parser_gen::Terminal const *>;
 
-using FirstTable = std::unordered_map<jcc::parser_gen::Symbol, TerminalSet>;
+using TerminalMap = std::unordered_map<jcc::parser_gen::Symbol, TerminalSet>;
 
-FirstTable GenerateFirstTable(
+TerminalMap GenerateFirstTable(
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
         std::vector<jcc::parser_gen::Terminal> const    &terminals,
         Grammar const                                   &grammar
 ) {
-    FirstTable table;
+    TerminalMap table;
 
     // copy terminals to table
     std::ranges::transform(
@@ -43,8 +45,8 @@ FirstTable GenerateFirstTable(
     while (didChange) {
         didChange = false;
 
-        for (auto const &[terminal, symbols] : grammar) {
-            auto      &firstSet{table.at(terminal)};
+        for (auto const &[nonTerminal, symbols] : grammar) {
+            auto      &firstSet{table.at(nonTerminal)};
             auto const nFirstSetElements{firstSet.size()};
 
             int const numSymbols{static_cast<int>(symbols.size())};
@@ -79,122 +81,89 @@ FirstTable GenerateFirstTable(
     return table;
 }
 
-jcc::parser_gen::Symbol AfterDot(jcc::parser_gen::Item const &item) {
-    auto const &prod{*item.m_Production};
+TerminalMap
+GenerateFollowTable(TerminalMap const &firstTable, Grammar const &grammar) {
+    TerminalMap table;
 
-    if (static_cast<std::size_t>(item.m_Position) >= prod.m_Symbols.size()) {
-        return nullptr;
+    // Write empty set to table for each terminal
+    for (auto const &terminal : firstTable | std::views::keys) {
+        table[terminal] = {};
     }
 
-    return prod.m_Symbols[item.m_Position];
-}
+    jcc::parser_gen::NonTerminal const *const sPrime{nullptr};
+    table[sPrime] = {&jcc::parser_gen::Terminal::c_Eof};
 
-// TODO: understand and refactor
-jcc::parser_gen::ItemSet
-Predict(Grammar const                                           &grammar,
-        std::vector<jcc::parser_gen::Item> /* copy intentional*/ items) {
-    jcc::parser_gen::ItemSet prediction;
-    prediction.reserve(items.size());
-    std::ranges::copy(items, std::inserter(prediction, prediction.end()));
-
-    std::size_t previousPredictionSize{prediction.size()};
-    while (!items.empty()) {
-        auto const symbol{AfterDot(items.back())};
-        items.pop_back();
+    bool didChange{true};
+    while (didChange) {
+        didChange = false;
 
         for (auto const &production : grammar) {
-            if (production.m_Terminal == nullptr ||
-                !std::holds_alternative<jcc::parser_gen::NonTerminal const *>(
-                        symbol
-                ) ||
-                std::get<jcc::parser_gen::NonTerminal const *>(symbol) !=
-                        production.m_Terminal) {
-                continue;
-            }
-
-            prediction.emplace(&production, 0);
-            if (previousPredictionSize >= prediction.size()) {
-                continue;
-            }
-
-            previousPredictionSize = prediction.size();
-            items.emplace_back(&production, 0);
-        }
-    }
-
-    return prediction;
-}
-
-using Partitions =
-        std::unordered_map<jcc::parser_gen::Symbol, jcc::parser_gen::ItemSet>;
-
-Partitions Partition(jcc::parser_gen::ItemSet const &itemSet) {
-    Partitions partitions;
-
-    for (auto const &item : itemSet) {
-        auto const symbol{AfterDot(item)};
-
-        if (std::holds_alternative<std::nullptr_t>(symbol)) {
-            partitions[nullptr].emplace(item);
-            continue;
-        }
-
-        partitions[symbol].emplace(item.m_Production, item.m_Position + 1);
-    }
-
-    return partitions;
-}
-
-auto ComputeItemSets(Grammar const &grammar) {
-    std::vector<jcc::parser_gen::ItemSet> fullItemSets{};
-    std::vector<jcc::parser_gen::ItemSet> itemSets{
-            {jcc::parser_gen::Item{&grammar[0], 0}}
-    };
-    std::unordered_map<jcc::parser_gen::ItemSet const *, std::size_t>
-            itemSetIndices;
-    for (std::size_t i{}; i < itemSets.size(); ++i) {
-        itemSetIndices[&itemSets[i]] = i;
-    }
-
-    std::vector<std::unordered_map<jcc::parser_gen::Symbol, std::size_t>>
-                                          shifts;
-    std::vector<jcc::parser_gen::ItemSet> reductions;
-
-    for (std::size_t i{}; i < itemSets.size(); ++i) {
-        auto const &itemSet{itemSets[i]};
-        auto const  predictionSet{
-                Predict(grammar, std::vector(itemSet.cbegin(), itemSet.cend()))
-        };
-        fullItemSets.push_back(predictionSet);
-
-        std::unordered_map<jcc::parser_gen::Symbol, std::size_t> setShifts;
-        jcc::parser_gen::ItemSet                                 setReductions;
-
-        auto const partitions{Partition(predictionSet)};
-        for (auto const &[symbol, items] : partitions) {
-            if (std::holds_alternative<std::nullptr_t>(symbol)) {
-                setReductions.insert(items.cbegin(), items.cend());
-                continue;
-            }
-
-            std::size_t const j{[&] {
-                if (itemSetIndices.contains(&items)) {
-                    return itemSetIndices[&items];
+            auto const &[nonTerminal, symbols]{production};
+            for (auto it{symbols.cbegin()}; it != symbols.cend(); ++it) {
+                auto const &symbol{*it};
+                if (!std::holds_alternative<
+                            jcc::parser_gen::NonTerminal const *>(symbol)) {
+                    continue;
                 }
 
-                itemSets.push_back(items);
-                return itemSetIndices[&items] = itemSets.size();
-            }()};
-            setShifts[symbol] = j;
+                auto      &currentFollowSet{table.at(symbol)};
+                auto const nFirstSetElements{currentFollowSet.size()};
+                auto const betaContainsEpsilon{[&] {
+                    assert(it + 1 != symbols.end());
+                    auto const beta{*std::next(it)};
+                    return firstTable.at(beta).contains(
+                            &jcc::parser_gen::Terminal::c_Epsilon
+                    );
+                }};
+
+                if (it + 1 == symbols.end() || betaContainsEpsilon()) {
+                    std::ranges::copy_if(
+                            table.at(nonTerminal),
+                            std::inserter(
+                                    currentFollowSet, currentFollowSet.end()
+                            ),
+                            [](jcc::parser_gen::Terminal const *nonTerminal) {
+                                return !nonTerminal->IsEpsilon();
+                            }
+                    );
+                } else {
+                    auto const  beta{*std::next(it)};
+                    auto const &betaFirstSet{firstTable.at(beta)};
+
+
+                    std::ranges::copy_if(
+                            betaFirstSet,
+                            std::inserter(
+                                    currentFollowSet, currentFollowSet.end()
+                            ),
+                            [](jcc::parser_gen::Terminal const *nonTerminal) {
+                                return !nonTerminal->IsEpsilon();
+                            }
+                    );
+
+                    if (std::ranges::find_if(
+                                betaFirstSet,
+                                [](auto const &terminal) {
+                                    return terminal->IsEpsilon();
+                                }
+                        ) != betaFirstSet.end()) {
+                        std::ranges::copy_if(
+                                table.at(nonTerminal),
+                                std::inserter(
+                                        currentFollowSet, currentFollowSet.end()
+                                ),
+                                [](jcc::parser_gen::Terminal const *nonTerminal
+                                ) { return !nonTerminal->IsEpsilon(); }
+                        );
+                    }
+                }
+
+                didChange |= currentFollowSet.size() != nFirstSetElements;
+            }
         }
-        shifts.emplace_back(std::move(setShifts));
-        reductions.emplace_back(std::move(setReductions));
     }
 
-    // print results
-    for (std::size_t i{}; i < fullItemSets.size(); ++i) {
-        std::cout << i << ":\n" << fullItemSets[i] << '\n';
-    }
+    return table;
 }
 
 int main() {
@@ -251,6 +220,19 @@ int main() {
         }
         std::cout << "FIRST(" << GetSymbolName(symbol) << ") = {";
         for (auto const &terminal : firstSet) {
+            std::cout << terminal->m_Token << ", ";
+        }
+        std::cout << "}\n";
+    }
+
+    auto const followTable{GenerateFollowTable(firstTable, grammar)};
+    std::cout << "\nFollow Table:" << std::endl;
+    for (auto const &[symbol, followSet] : followTable) {
+        if (std::holds_alternative<jcc::parser_gen::Terminal const *>(symbol)) {
+            continue;
+        }
+        std::cout << "FOLLOW(" << GetSymbolName(symbol) << ") = {";
+        for (auto const &terminal : followSet) {
             std::cout << terminal->m_Token << ", ";
         }
         std::cout << "}\n";

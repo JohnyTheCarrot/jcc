@@ -16,10 +16,14 @@ namespace jcc::parser_gen {
         std::string m_Token{};
 
         static Terminal const c_Epsilon;
+        static Terminal const c_Eof;
 
         [[nodiscard]]
         bool
         operator==(Terminal const &other) const;
+
+        [[nodiscard]]
+        bool IsEpsilon() const;
     };
 
     struct TerminalHash final {
