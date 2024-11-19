@@ -204,6 +204,28 @@ Closure(Grammar const &grammar, jcc::parser_gen::ItemSet const &itemSet,
     return closure;
 }
 
+jcc::parser_gen::ItemSet
+Goto(jcc::parser_gen::ItemSet const &itemSet,
+     jcc::parser_gen::Symbol const &symbol, Grammar const &grammar,
+     TerminalMap const &firstTable) {
+    jcc::parser_gen::ItemSet gotoSet;
+    for (auto const &item : itemSet) {
+        auto const nextSymbol{item.GetSymbolAtPosition()};
+        if (nextSymbol != symbol) {
+            continue;
+        }
+
+        if (jcc::parser_gen::Item newItem{
+                    item.m_Production, item.m_Position + 1
+            };
+            gotoSet.insert(newItem).second) {
+            gotoSet.merge(Closure(grammar, gotoSet, firstTable));
+        }
+    }
+
+    return gotoSet;
+}
+
 int main() {
     std::vector terminals{jcc::parser_gen::Terminal{"+"},
                           jcc::parser_gen::Terminal{"*"},
@@ -220,30 +242,55 @@ int main() {
             jcc::parser_gen::NonTerminal{"F"},
     };
 
+    // Grammar const grammar{
+    //         jcc::parser_gen::Production{
+    //                 &jcc::parser_gen::NonTerminal::c_SPrime, {&nonTerminals[0]}
+    //         },
+    //         jcc::parser_gen::Production{
+    //                 &nonTerminals[0], {&nonTerminals[2], &nonTerminals[1]}
+    //         },
+    //         jcc::parser_gen::Production{
+    //                 &nonTerminals[1],
+    //                 {&terminals[0], &nonTerminals[2], &nonTerminals[1]}
+    //         },
+    //         jcc::parser_gen::Production{&nonTerminals[1], {&terminals[5]}},
+    //         jcc::parser_gen::Production{
+    //                 &nonTerminals[2], {&nonTerminals[4], &nonTerminals[3]}
+    //         },
+    //         jcc::parser_gen::Production{
+    //                 &nonTerminals[3],
+    //                 {&terminals[1], &nonTerminals[4], &nonTerminals[3]}
+    //         },
+    //         jcc::parser_gen::Production{&nonTerminals[3], {&terminals[5]}},
+    //         jcc::parser_gen::Production{
+    //                 &nonTerminals[4],
+    //                 {&terminals[2], &nonTerminals[0], &terminals[3]}
+    //         },
+    //         jcc::parser_gen::Production{&nonTerminals[4], {&terminals[4]}}
+    // };
     Grammar const grammar{
+            // E' -> E
+            jcc::parser_gen::Production{&nonTerminals[1], {&nonTerminals[0]}},
+            // E -> E + T
             jcc::parser_gen::Production{
-                    &jcc::parser_gen::NonTerminal::c_SPrime, {&nonTerminals[0]}
+                    &nonTerminals[0],
+                    {&nonTerminals[0], &terminals[0], &nonTerminals[2]}
             },
+            // E -> T
+            jcc::parser_gen::Production{&nonTerminals[0], {&nonTerminals[2]}},
+            // T -> T * F
             jcc::parser_gen::Production{
-                    &nonTerminals[0], {&nonTerminals[2], &nonTerminals[1]}
+                    &nonTerminals[2],
+                    {&nonTerminals[2], &terminals[1], &nonTerminals[4]}
             },
-            jcc::parser_gen::Production{
-                    &nonTerminals[1],
-                    {&terminals[0], &nonTerminals[2], &nonTerminals[1]}
-            },
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[5]}},
-            jcc::parser_gen::Production{
-                    &nonTerminals[2], {&nonTerminals[4], &nonTerminals[3]}
-            },
-            jcc::parser_gen::Production{
-                    &nonTerminals[3],
-                    {&terminals[1], &nonTerminals[4], &nonTerminals[3]}
-            },
-            jcc::parser_gen::Production{&nonTerminals[3], {&terminals[5]}},
+            // T -> F
+            jcc::parser_gen::Production{&nonTerminals[2], {&nonTerminals[4]}},
+            // F -> ( E )
             jcc::parser_gen::Production{
                     &nonTerminals[4],
                     {&terminals[2], &nonTerminals[0], &terminals[3]}
             },
+            // F -> id
             jcc::parser_gen::Production{&nonTerminals[4], {&terminals[4]}}
     };
 
@@ -282,4 +329,11 @@ int main() {
             grammar, {jcc::parser_gen::Item{&grammar[0], 0}}, firstTable
     )};
     std::cout << "\nClosure:\n" << closure << std::endl;
+
+    jcc::parser_gen::ItemSet const gotoInputSet{
+            jcc::parser_gen::Item{&grammar[0], 1},
+            jcc::parser_gen::Item{&grammar[1], 1}
+    };
+    auto const gotoSet{Goto(gotoInputSet, &terminals[0], grammar, firstTable)};
+    std::cout << "\nGoto:\n" << gotoSet << std::endl;
 }
