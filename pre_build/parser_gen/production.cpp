@@ -5,12 +5,13 @@
 
 namespace jcc::parser_gen {
     std::string const c_Epsilon{"ε"};
+    std::string const c_SPrime{"S'"};
 
     bool Terminal::operator==(Terminal const &other) const {
         return m_Token == other.m_Token;
     }
 
-    Terminal const Terminal::c_Epsilon{"<Epsilon>"};
+    Terminal const Terminal::c_Epsilon{"ε"};
 
     std::size_t TerminalHash::operator()(Terminal const &terminal) const {
         return std::hash<std::string>{}(terminal.m_Token);
@@ -22,9 +23,9 @@ namespace jcc::parser_gen {
         }
 
         if (std::holds_alternative<NonTerminal const *>(symbol)) {
-            auto const *terminal{std::get<NonTerminal const *>(symbol)};
-            if (terminal == nullptr) {
-                return c_Epsilon;
+            if (auto const *nonTerminal{std::get<NonTerminal const *>(symbol)};
+                nonTerminal == nullptr) {
+                return c_SPrime;
             }
 
             return std::get<NonTerminal const *>(symbol)->m_Name;
@@ -35,11 +36,11 @@ namespace jcc::parser_gen {
 
     std::ostream &operator<<(std::ostream &os, Production const &prod) {
         if (prod.m_Terminal == nullptr) {
-            os << 'T';
+            os << "S'";
         } else {
             os << prod.m_Terminal->m_Name;
         }
-        os << " -> ";
+        os << "\t->\t";
 
         std::ranges::transform(
                 prod.m_Symbols, std::ostream_iterator<std::string>{os, " "},

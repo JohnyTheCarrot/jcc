@@ -10,9 +10,9 @@
 
 using Grammar = std::vector<jcc::parser_gen::Production>;
 
-using NonTerminalSet = std::unordered_set<jcc::parser_gen::Terminal const *>;
+using TerminalSet = std::unordered_set<jcc::parser_gen::Terminal const *>;
 
-using FirstTable = std::unordered_map<jcc::parser_gen::Symbol, NonTerminalSet>;
+using FirstTable = std::unordered_map<jcc::parser_gen::Symbol, TerminalSet>;
 
 FirstTable GenerateFirstTable(
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
@@ -25,9 +25,7 @@ FirstTable GenerateFirstTable(
     std::ranges::transform(
             terminals, std::inserter(table, table.end()),
             [](jcc::parser_gen::Terminal const &nonTerminal) {
-                return std::make_pair(
-                        &nonTerminal, NonTerminalSet{&nonTerminal}
-                );
+                return std::make_pair(&nonTerminal, TerminalSet{&nonTerminal});
             }
     );
 
@@ -76,7 +74,6 @@ FirstTable GenerateFirstTable(
 
             didChange |= firstSet.size() != nFirstSetElements;
         }
-        std::cout << "didChange: " << didChange << '\n';
     }
 
     return table;
@@ -201,40 +198,62 @@ auto ComputeItemSets(Grammar const &grammar) {
 }
 
 int main() {
-    std::vector terminals{
-            jcc::parser_gen::Terminal{"Punctuator::Asterisk"},
-            jcc::parser_gen::Terminal{"Punctuator::Semicolon"},
-            jcc::parser_gen::Terminal{"Punctuator::Comma"}
-    };
+    std::vector terminals{jcc::parser_gen::Terminal{"+"},
+                          jcc::parser_gen::Terminal{"*"},
+                          jcc::parser_gen::Terminal{"("},
+                          jcc::parser_gen::Terminal{")"},
+                          jcc::parser_gen::Terminal{"id"},
+                          jcc::parser_gen::Terminal::c_Epsilon};
 
     std::vector nonTerminals{
-            jcc::parser_gen::NonTerminal{"Program"},
-            jcc::parser_gen::NonTerminal{"Declaration"}
+            jcc::parser_gen::NonTerminal{"E"},
+            jcc::parser_gen::NonTerminal{"E'"},
+            jcc::parser_gen::NonTerminal{"T"},
+            jcc::parser_gen::NonTerminal{"T'"},
+            jcc::parser_gen::NonTerminal{"F"},
     };
 
     Grammar const grammar{
             jcc::parser_gen::Production{nullptr, {&nonTerminals[0]}},
-            jcc::parser_gen::Production{&nonTerminals[0], {}},
             jcc::parser_gen::Production{
-                    &nonTerminals[0], {&nonTerminals[0], &nonTerminals[1]}
+                    &nonTerminals[0], {&nonTerminals[2], &nonTerminals[1]}
             },
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[0]}},
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[1]}},
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[2]}}
+            jcc::parser_gen::Production{
+                    &nonTerminals[1],
+                    {&terminals[0], &nonTerminals[2], &nonTerminals[1]}
+            },
+            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[5]}},
+            jcc::parser_gen::Production{
+                    &nonTerminals[2], {&nonTerminals[4], &nonTerminals[3]}
+            },
+            jcc::parser_gen::Production{
+                    &nonTerminals[3],
+                    {&terminals[1], &nonTerminals[4], &nonTerminals[3]}
+            },
+            jcc::parser_gen::Production{&nonTerminals[3], {&terminals[5]}},
+            jcc::parser_gen::Production{
+                    &nonTerminals[4],
+                    {&terminals[2], &nonTerminals[0], &terminals[3]}
+            },
+            jcc::parser_gen::Production{&nonTerminals[4], {&terminals[4]}}
     };
 
     std::cout << "Grammar:" << std::endl;
+    std::ranges::copy(
+            grammar,
+            std::ostream_iterator<jcc::parser_gen::Production>{std::cout, "\n"}
+    );
     auto const firstTable{GenerateFirstTable(nonTerminals, terminals, grammar)};
-    std::cout << "First Table:" << std::endl;
+    std::cout << "\nFirst Table:" << std::endl;
     for (auto const &[symbol, firstSet] : firstTable) {
-        std::cout << GetSymbolName(symbol) << ":" << std::endl;
-        std::ranges::transform(
-                firstSet, std::ostream_iterator<std::string>{std::cout, "\n"},
-                [](jcc::parser_gen::Terminal const *terminal) {
-                    return terminal->m_Token;
-                }
-        );
-        std::cout << '\n';
+        if (std::holds_alternative<jcc::parser_gen::Terminal const *>(symbol)) {
+            continue;
+        }
+        std::cout << "FIRST(" << GetSymbolName(symbol) << ") = {";
+        for (auto const &terminal : firstSet) {
+            std::cout << terminal->m_Token << ", ";
+        }
+        std::cout << "}\n";
     }
 
     // std::ranges::copy(
