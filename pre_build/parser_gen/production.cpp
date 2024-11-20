@@ -1,7 +1,9 @@
 #include "production.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
+#include <numeric>
 
 namespace jcc::parser_gen {
     std::string const c_Epsilon{"ε"};
@@ -49,16 +51,32 @@ namespace jcc::parser_gen {
 
     bool Item::operator==(Item const &other) const {
         return m_Production == other.m_Production &&
-               m_Position == other.m_Position;
+               m_Position == other.m_Position &&
+               m_LookAhead == other.m_LookAhead;
     }
 
-    Symbol Item::GetSymbolAtPosition() const {
-        if (static_cast<std::size_t>(m_Position) ==
-            m_Production->m_Symbols.size()) {
+    Symbol Item::GetSymbolAtPosition(std::size_t offset) const {
+        if (m_Position + offset >= m_Production->m_Symbols.size()) {
             return nullptr;
         }
 
-        return m_Production->m_Symbols.at(m_Position);
+        return m_Production->m_Symbols.at(m_Position + offset);
+    }
+
+    std::unordered_set<Symbol> Item::GetSymbolsAfterPosition() const {
+        std::unordered_set<Symbol> symbols;
+        if (static_cast<std::size_t>(m_Position) + 1 >=
+            m_Production->m_Symbols.size()) {
+            return symbols;
+        }
+
+        std::copy(
+                m_Production->m_Symbols.cbegin() + m_Position + 1,
+                m_Production->m_Symbols.cend(),
+                std::inserter(symbols, symbols.end())
+        );
+
+        return symbols;
     }
 
     bool Item::IsKernel() const {
@@ -74,7 +92,7 @@ namespace jcc::parser_gen {
     std::ostream &operator<<(std::ostream &os, Item const &item) {
         auto const &[prodSymbol, symbols]{*item.m_Production};
 
-        os << prodSymbol->m_Name << " -> ";
+        os << prodSymbol->m_Name << " -> [";
 
         std::transform(
                 symbols.cbegin(), symbols.cbegin() + item.m_Position,
@@ -87,8 +105,23 @@ namespace jcc::parser_gen {
                 symbols.cbegin() + item.m_Position, symbols.cend(),
                 std::ostream_iterator<std::string>{os, " "}, GetSymbolName
         );
+        os << ", ";
+        std::ranges::transform(
+                item.m_LookAhead, std::ostream_iterator<std::string>{os, " "},
+                [](Terminal const *terminal) { return terminal->m_Token; }
+        );
+        os << "]";
 
         return os;
+    }
+
+    std::size_t ItemSetHash::operator()(ItemSet const &itemSet) const {
+        return std::accumulate(
+                itemSet.cbegin(), itemSet.cend(), std::size_t{},
+                [](std::size_t hash, Item const &item) {
+                    return hash ^ ItemHash {}(item);
+                }
+        );
     }
 
     std::ostream &operator<<(std::ostream &os, ItemSet const &itemSet) {

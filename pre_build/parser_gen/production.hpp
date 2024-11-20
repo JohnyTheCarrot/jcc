@@ -47,16 +47,22 @@ namespace jcc::parser_gen {
 
     std::ostream &operator<<(std::ostream &os, Production const &prod);
 
+    using TerminalSet = std::unordered_set<Terminal const *>;
+
     struct Item final {
         Production const *m_Production{};
         int               m_Position{};
+        TerminalSet       m_LookAhead{};
 
         [[nodiscard]]
         bool
         operator==(Item const &other) const;
 
         [[nodiscard]]
-        Symbol GetSymbolAtPosition() const;
+        Symbol GetSymbolAtPosition(std::size_t offset = 0) const;
+
+        [[nodiscard]]
+        std::unordered_set<Symbol> GetSymbolsAfterPosition() const;
 
         [[nodiscard]]
         bool IsKernel() const;
@@ -72,6 +78,12 @@ namespace jcc::parser_gen {
     std::ostream &operator<<(std::ostream &os, Item const &item);
 
     using ItemSet = std::unordered_set<Item, ItemHash>;
+
+    struct ItemSetHash final {
+        [[nodiscard]]
+        std::size_t
+        operator()(ItemSet const &itemSet) const;
+    };
 
     std::ostream &operator<<(std::ostream &os, ItemSet const &itemSet);
 }// namespace jcc::parser_gen
