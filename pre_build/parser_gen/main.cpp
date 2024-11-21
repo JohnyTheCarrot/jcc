@@ -45,7 +45,7 @@ TerminalMap GenerateFirstTable(
     while (didChange) {
         didChange = false;
 
-        for (auto const &[nonTerminal, symbols] : grammar) {
+        for (auto const &[nonTerminal, symbols, index] : grammar) {
             auto      &firstSet{table.at(nonTerminal)};
             auto const nFirstSetElements{firstSet.size()};
 
@@ -99,7 +99,7 @@ GenerateFollowTable(TerminalMap const &firstTable, Grammar const &grammar) {
         didChange = false;
 
         for (auto const &production : grammar) {
-            auto const &[nonTerminal, symbols]{production};
+            auto const &[nonTerminal, symbols, index]{production};
             for (auto it{symbols.cbegin()}; it != symbols.cend(); ++it) {
                 auto const &symbol{*it};
                 if (!std::holds_alternative<
@@ -260,10 +260,150 @@ Goto(jcc::parser_gen::ItemSet const &itemSet,
         gotoSet.insert(std::move(newItem));
     }
 
-    // Apply Closure on the fully constructed gotoSet
-    gotoSet.merge(Closure(grammar, gotoSet, firstTable));
+    return Closure(grammar, gotoSet, firstTable);
+}
 
-    return gotoSet;
+using GotoMap = std::vector<std::unordered_map<jcc::parser_gen::Symbol, int>>;
+
+std::vector<jcc::parser_gen::ItemSet> GenerateCanonicalSetCollection(
+        std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
+        std::vector<jcc::parser_gen::Terminal> const    &terminals,
+        Grammar const &grammar, TerminalMap const &firstTable, GotoMap &gotoMap
+) {
+    std::vector items{
+            Closure(grammar,
+                    {jcc::parser_gen::Item{
+                            &grammar[0], 0, {&jcc::parser_gen::Terminal::c_Eof}
+                    }},
+                    firstTable)
+    };
+
+    std::vector<jcc::parser_gen::Symbol> grammarSymbols;
+    for (auto const &nonTerminal : nonTerminals) {
+        grammarSymbols.emplace_back(&nonTerminal);
+    }
+
+    for (auto const &terminal : terminals) {
+        grammarSymbols.emplace_back(&terminal);
+    }
+
+    while (true) {
+        auto const nItems{items.size()};
+        for (std::size_t i{}; i < items.size(); ++i) {
+            auto const        &itemSet{items[i]};
+            GotoMap::reference gotoMapEntry{
+                    i >= gotoMap.size() ? gotoMap.emplace_back() : gotoMap[i]
+            };
+            std::vector<jcc::parser_gen::ItemSet> resultSet;
+            for (auto const &symbol : grammarSymbols) {
+                auto gotoSet{Goto(itemSet, symbol, grammar, firstTable)};
+                if (!gotoSet.empty() &&
+                    std::ranges::find(items, gotoSet) == items.cend()) {
+
+                    if (!std::holds_alternative<std::nullptr_t>(symbol)) {
+                        gotoMapEntry[symbol] = static_cast<int>(
+                                items.size() + resultSet.size()
+                        );
+                    }
+                    resultSet.emplace_back(std::move(gotoSet));
+                }
+            }
+
+            items.insert(items.end(), resultSet.begin(), resultSet.end());
+        }
+        if (items.size() == nItems) {
+            break;
+        }
+    }
+
+    return items;
+}
+
+enum class ActionType { Shift, Reduce, Accept, Error };
+
+struct Action final {
+    ActionType m_Type;
+    int        m_Value;
+
+    Action(ActionType shift, int value)
+        : m_Type{shift}
+        , m_Value{value} {
+    }
+};
+
+struct ParsingTableRow final {
+    std::unordered_map<jcc::parser_gen::Terminal const *, Action> m_Actions;
+    std::unordered_map<jcc::parser_gen::NonTerminal const *, std::optional<int>>
+            m_Goto;
+};
+
+using ParsingTable = std::vector<ParsingTableRow>;
+
+ParsingTable GenerateParsingTable(
+        std::vector<jcc::parser_gen::ItemSet> const     &canonicalSetCollection,
+        GotoMap const                                   &gotoMap,
+        std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals
+) {
+    ParsingTable table;
+
+    auto const verifyInsertion{[](auto const &pair) {
+        if (!pair.second)
+            throw std::runtime_error{"Invalid grammar, conflicts found"};
+    }};
+
+    for (int i{}; i < static_cast<int>(canonicalSetCollection.size()); ++i) {
+        auto const &itemSet{canonicalSetCollection[i]};
+        auto       &currentRow{table.emplace_back()};
+
+        // GOTO
+        for (auto const &nonTerminal : nonTerminals) {
+            if (gotoMap.at(i).contains(&nonTerminal)) {
+                currentRow.m_Goto[&nonTerminal] =
+                        gotoMap.at(i).at(&nonTerminal);
+            }
+        }
+
+        // ACTION
+        for (auto const &item : itemSet) {
+            if (!item.HasNextSymbol()) {
+                if (item.m_Production->m_Terminal ==
+                    &jcc::parser_gen::NonTerminal::c_SPrime) {
+                    verifyInsertion(currentRow.m_Actions.emplace(
+                            &jcc::parser_gen::Terminal::c_Eof,
+                            Action{ActionType::Accept, 0}
+                    ));
+                    continue;
+                }
+
+                for (auto const &terminal : item.m_LookAhead) {
+                    verifyInsertion(currentRow.m_Actions.emplace(
+                            terminal, Action{ActionType::Reduce,
+                                             item.m_Production->m_Index}
+                    ));
+                }
+            }
+            auto const &symbol{item.GetSymbolAtPosition()};
+            if (!std::holds_alternative<jcc::parser_gen::Terminal const *>(
+                        symbol
+                )) {
+                continue;
+            }
+
+            auto const it{gotoMap.at(i).find(
+                    std::get<jcc::parser_gen::Terminal const *>(symbol)
+            )};
+            if (it == gotoMap.at(i).end()) {
+                continue;
+            }
+            auto const &[_sym, shiftIndex]{*it};
+            verifyInsertion(currentRow.m_Actions.emplace(
+                    std::get<jcc::parser_gen::Terminal const *>(symbol),
+                    Action{ActionType::Shift, shiftIndex}
+            ));
+        }
+    }
+
+    return table;
 }
 
 int main() {
@@ -317,18 +457,20 @@ int main() {
     Grammar const grammar{
             // S' -> S
             jcc::parser_gen::Production{
-                    &jcc::parser_gen::NonTerminal::c_SPrime, {&nonTerminals[0]}
+                    &jcc::parser_gen::NonTerminal::c_SPrime,
+                    {&nonTerminals[0]},
+                    0
             },
             // S -> CC
             jcc::parser_gen::Production{
-                    &nonTerminals[0], {&nonTerminals[1], &nonTerminals[1]}
+                    &nonTerminals[0], {&nonTerminals[1], &nonTerminals[1]}, 1
             },
             // C -> cC
             jcc::parser_gen::Production{
-                    &nonTerminals[1], {&terminals[0], &nonTerminals[1]}
+                    &nonTerminals[1], {&terminals[0], &nonTerminals[1]}, 2
             },
             // C -> d
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[1]}}
+            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[1]}, 3}
     };
     // Grammar const grammar{
     //         // E' -> E
@@ -396,45 +538,52 @@ int main() {
     };
     std::cout << "\nClosure:\n" << closure << std::endl;
 
-    std::vector items{
-            Closure(grammar,
-                    {jcc::parser_gen::Item{
-                            &grammar[0], 0, {&jcc::parser_gen::Terminal::c_Eof}
-                    }},
-                    firstTable)
-    };
-
-    std::vector<jcc::parser_gen::Symbol> grammarSymbols;
-    for (auto const &nonTerminal : nonTerminals) {
-        grammarSymbols.emplace_back(&nonTerminal);
-    }
-
-    for (auto const &terminal : terminals) {
-        grammarSymbols.emplace_back(&terminal);
-    }
-
-    while (true) {
-        std::cout << "Items:\n";
-        auto const nItems{items.size()};
-        for (auto itemsCopy{items}; auto const &itemSet : itemsCopy) {
-            std::cout << "ItemSet:\n" << itemSet << std::endl;
-            for (auto const &symbol : grammarSymbols) {
-                auto gotoSet{Goto(itemSet, symbol, grammar, firstTable)};
-                if (!gotoSet.empty() &&
-                    std::ranges::find(items, gotoSet) == items.cend()) {
-                    items.emplace_back(std::move(gotoSet));
-                }
-            }
-        }
-        if (items.size() == nItems) {
-            break;
-        }
-    }
+    GotoMap    gotoMap;
+    auto const items{GenerateCanonicalSetCollection(
+            nonTerminals, terminals, grammar, firstTable, gotoMap
+    )};
 
     // print item set
     auto i{0};
     for (auto const &itemSet : items) {
         std::cout << "I" << i << ":\n" << itemSet << std::endl;
         ++i;
+    }
+
+    auto const parsingTable{GenerateParsingTable(items, gotoMap, nonTerminals)};
+    std::cout << "\nParsing Table:" << std::endl;
+    for (int i{}; i < static_cast<int>(parsingTable.size()); ++i) {
+        auto const &row{parsingTable[i]};
+        std::cout << "State " << i << ":\n";
+        std::cout << "- Actions:\n";
+        for (auto const &[terminal, action] : row.m_Actions) {
+            std::cout << "  " << terminal->m_Token << " -> ";
+            switch (action.m_Type) {
+                case ActionType::Shift:
+                    std::cout << "Shift " << action.m_Value;
+                    break;
+                case ActionType::Reduce:
+                    std::cout << "Reduce " << action.m_Value;
+                    break;
+                case ActionType::Accept:
+                    std::cout << "Accept";
+                    break;
+                case ActionType::Error:
+                    std::cout << "Error";
+                    break;
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "- Goto:\n";
+        for (auto const &[nonTerminal, value] : row.m_Goto) {
+            std::cout << "  " << nonTerminal->m_Name << " -> ";
+            if (value.has_value()) {
+                std::cout << value.value();
+            } else {
+                std::cout << "Error";
+            }
+            std::cout << std::endl;
+        }
     }
 }

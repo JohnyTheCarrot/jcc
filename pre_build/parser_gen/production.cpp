@@ -84,13 +84,18 @@ namespace jcc::parser_gen {
                m_Production->m_Terminal != &NonTerminal::c_SPrime;
     }
 
+    bool Item::HasNextSymbol() const {
+        return static_cast<std::size_t>(m_Position) <
+               m_Production->m_Symbols.size();
+    }
+
     std::size_t ItemHash::operator()(Item const &item) const {
         return std::hash<Production const *>{}(item.m_Production) ^
                std::hash<int>{}(item.m_Position);
     }
 
     std::ostream &operator<<(std::ostream &os, Item const &item) {
-        auto const &[prodSymbol, symbols]{*item.m_Production};
+        auto const &[prodSymbol, symbols, index]{*item.m_Production};
 
         os << prodSymbol->m_Name << " -> [";
 

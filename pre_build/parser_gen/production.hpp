@@ -43,6 +43,7 @@ namespace jcc::parser_gen {
     struct Production final {
         NonTerminal const  *m_Terminal;
         std::vector<Symbol> m_Symbols;
+        int                 m_Index{};
     };
 
     std::ostream &operator<<(std::ostream &os, Production const &prod);
@@ -66,6 +67,9 @@ namespace jcc::parser_gen {
 
         [[nodiscard]]
         bool IsKernel() const;
+
+        [[nodiscard]]
+        bool HasNextSymbol() const;
     };
 
     // hash of Item
