@@ -11,12 +11,23 @@
 #include "preprocessor/preprocessor_iterator.h"
 
 namespace jcc::parsing {
-    class Parser final {
-        using StackToken = std::variant<tokenizer::Token, NonTerminal>;
+    struct NonTerminalAstNode;
 
-        std::deque<codegen::BinaryOutput>  m_Output;
+    using AstNode = std::variant<tokenizer::Token, NonTerminalAstNode>;
+
+    struct NonTerminalAstNode final {
+        NonTerminal          m_Type{};
+        std::vector<AstNode> m_Children{};
+        NonTerminalAstNode  *m_Parent{nullptr};
+    };
+
+    void PrintTo(NonTerminalAstNode const &node, int depth, std::ostream &os);
+
+    void PrintTo(AstNode const &node, int depth, std::ostream &os);
+
+    class Parser final {
         std::stack<State>                  m_States;
-        std::stack<StackToken>             m_NonTerminals;
+        std::stack<AstNode>                m_NonTerminals;
         preprocessor::PreprocessorIterator m_CurrentIt;
         preprocessor::Preprocessor        *m_Preprocessor;
 
@@ -27,7 +38,7 @@ namespace jcc::parsing {
         explicit Parser(preprocessor::Preprocessor &preprocessor);
 
         [[nodiscard]]
-        codegen::BinaryOutput ReadOutput();
+        bool ReadOutput(AstNode &ast);
     };
 }// namespace jcc::parsing
 

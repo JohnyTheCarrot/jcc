@@ -2,16 +2,81 @@
 %token pp_lparen jcc::tokenizer::Punctuator::PpLeftParenthesis
 %token lparen jcc::tokenizer::Punctuator::LeftParenthesis
 %token rparen jcc::tokenizer::Punctuator::RightParenthesis
+%token dec_op jcc::tokenizer::Punctuator::MinusMinus
+%token inc_op jcc::tokenizer::Punctuator::PlusPlus
+%token asterisk jcc::tokenizer::Punctuator::Asterisk
+%token slash jcc::tokenizer::Punctuator::Slash
+%token dot jcc::tokenizer::Punctuator::Dot
+%token number jcc::tokenizer::GenericType::PpNumber
+%token plus jcc::tokenizer::Punctuator::Plus
+%token minus jcc::tokenizer::Punctuator::Minus
+%token tilde jcc::tokenizer::Punctuator::Tilde
 
-PrimaryExpression
+Expression
     ;
 
 SPrime
-    : PrimaryExpression
+    : Expression
     ;
 
 PrimaryExpression
     : identifier
-    | lparen SPrime rparen
-    | pp_lparen SPrime rparen
+    | number
+    | lparen Expression rparen
+    | pp_lparen Expression rparen
+    ;
+
+MemberAccessCont
+    : dot identifier
+    ;
+
+FunctionInvocCont
+    : lparen rparen
+    | pp_lparen rparen
+    | lparen Expression rparen
+    | pp_lparen Expression rparen
+    ;
+
+PostfixExpression
+    : PrimaryExpression
+    | PostfixExpression MemberAccessCont
+    | PostfixExpression FunctionInvocCont
+    | PostfixExpression inc_op
+    | PostfixExpression dec_op
+    ;
+
+UnaryOperator
+    : asterisk
+    | plus
+    | minus
+    | tilde
+    ;
+
+UnaryExpression
+    : PostfixExpression
+    | inc_op UnaryExpression
+    | dec_op UnaryExpression
+    | UnaryOperator UnaryExpression
+    ;
+
+MultiplicationCont
+    : asterisk UnaryExpression
+    ;
+
+Multiplication
+    : UnaryExpression
+    | Multiplication MultiplicationCont
+    ;
+
+AdditionCont
+    : plus Multiplication
+    ;
+
+Addition
+    : Multiplication
+    | Addition AdditionCont
+    ;
+
+Expression
+    : Addition
     ;

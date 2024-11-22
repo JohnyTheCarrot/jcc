@@ -292,6 +292,8 @@ namespace jcc::tokenizer {
 
     void PrintTo(ConstantPrefix constantPrefix, std::ostream *os);
 
+    void PrintTo(Token::Type type, std::ostream *os);
+
     [[nodiscard]]
     char const *KeywordToString(Keyword keyword) noexcept;
 

@@ -35,8 +35,12 @@ int main(int argCount, char *args[]) {
         //         }
         // );
 
-        jcc::parsing::Parser parser{preprocessor};
-        while (parser.ReadOutput() == '0') {}
+        jcc::parsing::Parser  parser{preprocessor};
+        jcc::parsing::AstNode ast{jcc::parsing::NonTerminalAstNode{}};
+        while (parser.ReadOutput(ast)) {}
+
+        std::cout << "\nAST:\n";
+        PrintTo(ast, 0, std::cout);
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (std::runtime_error const &ex) {

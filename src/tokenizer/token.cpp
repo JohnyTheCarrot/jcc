@@ -255,6 +255,27 @@ namespace jcc::tokenizer {
         *os << "CharacterConstant::" << magic_enum::enum_name(constantPrefix);
     }
 
+    void PrintTo(Token::Type type, std::ostream *os) {
+        if (std::holds_alternative<GenericType>(type)) {
+            *os << "GenericType::"
+                << magic_enum::enum_name(std::get<GenericType>(type));
+        } else if (std::holds_alternative<Punctuator>(type)) {
+            *os << "Punctuator::"
+                << magic_enum::enum_name(std::get<Punctuator>(type));
+        } else if (std::holds_alternative<Keyword>(type)) {
+            *os << "Keyword::"
+                << magic_enum::enum_name(std::get<Keyword>(type));
+        } else if (std::holds_alternative<Directive>(type)) {
+            *os << "Directive::"
+                << magic_enum::enum_name(std::get<Directive>(type));
+        } else if (std::holds_alternative<SpecialPurpose>(type)) {
+            *os << "SpecialPurpose::"
+                << magic_enum::enum_name(std::get<SpecialPurpose>(type));
+        } else {
+            assert(false);
+        }
+    }
+
     char const *KeywordToString(Keyword keyword) noexcept {
         switch (keyword) {
             case Keyword::Auto:
