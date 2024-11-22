@@ -1,0 +1,17 @@
+%token identifier jcc::tokenizer::GenericType::Identifier
+%token pp_lparen jcc::tokenizer::Punctuator::PpLeftParenthesis
+%token lparen jcc::tokenizer::Punctuator::LeftParenthesis
+%token rparen jcc::tokenizer::Punctuator::RightParenthesis
+
+PrimaryExpression
+    ;
+
+SPrime
+    : PrimaryExpression
+    ;
+
+PrimaryExpression
+    : identifier
+    | lparen SPrime rparen
+    | pp_lparen SPrime rparen
+    ;

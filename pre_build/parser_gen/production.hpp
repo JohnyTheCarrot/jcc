@@ -12,6 +12,8 @@ namespace jcc::parser_gen {
         std::string m_Name;
 
         static NonTerminal const c_SPrime;
+
+        bool operator==(NonTerminal const &other) const;
     };
 
     struct Terminal final {
@@ -28,27 +30,77 @@ namespace jcc::parser_gen {
         bool IsEpsilon() const;
     };
 
+    struct NonTerminalHash final {
+        [[nodiscard]]
+        std::size_t
+        operator()(NonTerminal const &nonTerminal) const;
+    };
+
     struct TerminalHash final {
         [[nodiscard]]
         std::size_t
         operator()(Terminal const &terminal) const;
     };
 
+    struct TerminalIndex final {
+        std::size_t m_Index{};
+
+        static TerminalIndex const c_EpsilonIndex;
+
+        static TerminalIndex const c_EofIndex;
+
+        [[nodiscard]]
+        bool
+        operator==(TerminalIndex const &other) const;
+    };
+
+    class TerminalIndexHash final {
+    public:
+        [[nodiscard]]
+        std::size_t
+        operator()(TerminalIndex const &terminalIndex) const;
+    };
+
+    struct NonTerminalIndex final {
+        std::size_t m_Index{};
+
+        static NonTerminalIndex const c_SPrimeIndex;
+
+        [[nodiscard]]
+        bool
+        operator==(NonTerminalIndex const &other) const;
+    };
+
+    class NonTerminalIndexHash final {
+    public:
+        [[nodiscard]]
+        std::size_t
+        operator()(NonTerminalIndex const &nonTerminalIndex) const;
+    };
+
     using Symbol =
-            std::variant<Terminal const *, NonTerminal const *, std::nullptr_t>;
+            std::variant<TerminalIndex, NonTerminalIndex, std::nullptr_t>;
+
+    class SymbolHash final {
+    public:
+        [[nodiscard]]
+        std::size_t
+        operator()(Symbol const &symbol) const;
+    };
 
     [[nodiscard]]
-    std::string const &GetSymbolName(Symbol const &symbol);
+    std::string const &GetSymbolName(
+            std::vector<NonTerminal> const &nonTerminals,
+            std::vector<Terminal> const &terminals, Symbol const &symbol
+    );
 
     struct Production final {
-        NonTerminal const  *m_Terminal;
+        NonTerminalIndex    m_NonTerminal;
         std::vector<Symbol> m_Symbols;
         int                 m_Index{};
     };
 
-    std::ostream &operator<<(std::ostream &os, Production const &prod);
-
-    using TerminalSet = std::unordered_set<Terminal const *>;
+    using TerminalSet = std::unordered_set<TerminalIndex, TerminalIndexHash>;
 
     struct Item final {
         Production const *m_Production{};
@@ -63,7 +115,7 @@ namespace jcc::parser_gen {
         Symbol GetSymbolAtPosition(std::size_t offset = 0) const;
 
         [[nodiscard]]
-        std::unordered_set<Symbol> GetSymbolsAfterPosition() const;
+        std::unordered_set<Symbol, SymbolHash> GetSymbolsAfterPosition() const;
 
         [[nodiscard]]
         bool HasNextSymbol() const;
@@ -76,8 +128,6 @@ namespace jcc::parser_gen {
         operator()(Item const &item) const;
     };
 
-    std::ostream &operator<<(std::ostream &os, Item const &item);
-
     using ItemSet = std::unordered_set<Item, ItemHash>;
 
     struct ItemSetHash final {
@@ -85,8 +135,6 @@ namespace jcc::parser_gen {
         std::size_t
         operator()(ItemSet const &itemSet) const;
     };
-
-    std::ostream &operator<<(std::ostream &os, ItemSet const &itemSet);
 }// namespace jcc::parser_gen
 
 #endif//PRODUCTION_H

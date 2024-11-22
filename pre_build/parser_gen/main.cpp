@@ -10,33 +10,38 @@
 #include <unordered_set>
 #include <vector>
 
+#include "grammar_parser.hpp"
 #include "production.hpp"
 
-using Grammar = std::vector<jcc::parser_gen::Production>;
-
 using TerminalMap = std::unordered_map<
-        jcc::parser_gen::Symbol, jcc::parser_gen::TerminalSet>;
+        jcc::parser_gen::Symbol, jcc::parser_gen::TerminalSet,
+        jcc::parser_gen::SymbolHash>;
 
 TerminalMap GenerateFirstTable(
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
         std::vector<jcc::parser_gen::Terminal> const    &terminals,
-        Grammar const                                   &grammar
+        jcc::parser_gen::Grammar const                  &grammar
 ) {
     TerminalMap table;
 
     // copy terminals to table
-    std::ranges::transform(
-            terminals, std::inserter(table, table.end()),
-            [](jcc::parser_gen::Terminal const &nonTerminal) {
-                return std::make_pair(
-                        &nonTerminal, jcc::parser_gen::TerminalSet{&nonTerminal}
-                );
-            }
-    );
+    // std::ranges::transform(
+    //         terminals, std::inserter(table, table.end()),
+    //         [](jcc::parser_gen::Terminal const &nonTerminal) {
+    //             return std::make_pair(
+    //                     &nonTerminal, jcc::parser_gen::TerminalSet{&nonTerminal}
+    //             );
+    //         }
+    // );
+    for (std::size_t i{}; i < terminals.size(); ++i) {
+        jcc::parser_gen::TerminalIndex terminalIndex{i};
+        table[terminalIndex].insert(terminalIndex);
+    }
 
     // Write empty set to table for each terminal
     for (std::size_t i{}; i < nonTerminals.size(); ++i) {
-        table[&nonTerminals.at(i)] = {};
+        jcc::parser_gen::NonTerminalIndex nonTerminalIndex{i};
+        table[nonTerminalIndex] = {};
     }
 
     bool didChange{true};
@@ -55,13 +60,16 @@ TerminalMap GenerateFirstTable(
                 auto const &firstEntry{table.at(currentSymbol)};
                 std::ranges::copy_if(
                         firstEntry, std::inserter(firstSet, firstSet.end()),
-                        [](jcc::parser_gen::Terminal const *nonTerminal) {
-                            return !nonTerminal->m_Token.empty();
+                        [&](jcc::parser_gen::TerminalIndex terminalIndex) {
+                            auto const &terminal{
+                                    terminals.at(terminalIndex.m_Index)
+                            };
+                            return !terminal.m_Token.empty();
                         }
                 );
 
                 auto const containsEpsilon{firstEntry.contains(
-                        &jcc::parser_gen::Terminal::c_Epsilon
+                        jcc::parser_gen::TerminalIndex::c_EpsilonIndex
                 )};
 
                 if (!containsEpsilon) {
@@ -69,7 +77,9 @@ TerminalMap GenerateFirstTable(
                 }
 
                 if (i == numSymbols - 1) {
-                    firstSet.emplace(&jcc::parser_gen::Terminal::c_Epsilon);
+                    firstSet.emplace(
+                            jcc::parser_gen::TerminalIndex::c_EpsilonIndex
+                    );
                 }
             }
 
@@ -81,8 +91,8 @@ TerminalMap GenerateFirstTable(
 }
 
 TerminalMap GenerateFollowTable(
-        std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
-        TerminalMap const &firstTable, Grammar const &grammar
+        jcc::parser_gen::Terminals const &terminals,
+        TerminalMap const &firstTable, jcc::parser_gen::Grammar const &grammar
 ) {
     TerminalMap table;
 
@@ -91,7 +101,9 @@ TerminalMap GenerateFollowTable(
         table[terminal] = {};
     }
 
-    table[&nonTerminals.at(0) /* S' */] = {&jcc::parser_gen::Terminal::c_Eof};
+    table[jcc::parser_gen::NonTerminalIndex::c_SPrimeIndex] = {
+            jcc::parser_gen::TerminalIndex::c_EofIndex
+    };
 
     bool didChange{true};
     while (didChange) {
@@ -101,8 +113,9 @@ TerminalMap GenerateFollowTable(
             auto const &[nonTerminal, symbols, index]{production};
             for (auto it{symbols.cbegin()}; it != symbols.cend(); ++it) {
                 auto const &symbol{*it};
-                if (!std::holds_alternative<
-                            jcc::parser_gen::NonTerminal const *>(symbol)) {
+                if (!std::holds_alternative<jcc::parser_gen::NonTerminalIndex>(
+                            symbol
+                    )) {
                     continue;
                 }
 
@@ -112,7 +125,7 @@ TerminalMap GenerateFollowTable(
                     assert(it + 1 != symbols.end());
                     auto const beta{*std::next(it)};
                     return firstTable.at(beta).contains(
-                            &jcc::parser_gen::Terminal::c_Epsilon
+                            jcc::parser_gen::TerminalIndex::c_EpsilonIndex
                     );
                 }};
 
@@ -122,8 +135,11 @@ TerminalMap GenerateFollowTable(
                             std::inserter(
                                     currentFollowSet, currentFollowSet.end()
                             ),
-                            [](jcc::parser_gen::Terminal const *nonTerminal) {
-                                return !nonTerminal->IsEpsilon();
+                            [&](jcc::parser_gen::TerminalIndex terminalIndex) {
+                                auto const &terminal{
+                                        terminals.at(terminalIndex.m_Index)
+                                };
+                                return !terminal.IsEpsilon();
                             }
                     );
                 } else {
@@ -136,15 +152,23 @@ TerminalMap GenerateFollowTable(
                             std::inserter(
                                     currentFollowSet, currentFollowSet.end()
                             ),
-                            [](jcc::parser_gen::Terminal const *nonTerminal) {
-                                return !nonTerminal->IsEpsilon();
+                            [&](jcc::parser_gen::TerminalIndex terminalIndex) {
+                                auto const &terminal{
+                                        terminals.at(terminalIndex.m_Index)
+                                };
+                                return !terminal.IsEpsilon();
                             }
                     );
 
                     if (std::ranges::find_if(
                                 betaFirstSet,
-                                [](auto const &terminal) {
-                                    return terminal->IsEpsilon();
+                                [&](jcc::parser_gen::TerminalIndex terminalIndex
+                                ) {
+                                    auto const &terminal{
+                                            terminals.at(terminalIndex.m_Index)
+                                    };
+
+                                    return terminal.IsEpsilon();
                                 }
                         ) != betaFirstSet.end()) {
                         std::ranges::copy_if(
@@ -152,8 +176,13 @@ TerminalMap GenerateFollowTable(
                                 std::inserter(
                                         currentFollowSet, currentFollowSet.end()
                                 ),
-                                [](jcc::parser_gen::Terminal const *nonTerminal
-                                ) { return !nonTerminal->IsEpsilon(); }
+                                [&](jcc::parser_gen::TerminalIndex terminalIndex
+                                ) {
+                                    auto const &terminal{
+                                            terminals.at(terminalIndex.m_Index)
+                                    };
+                                    return !terminal.IsEpsilon();
+                                }
                         );
                     }
                 }
@@ -184,7 +213,8 @@ jcc::parser_gen::TerminalSet ComputeLookahead(
 
         betaFirst.insert(firstSet.cbegin(), firstSet.cend());
         canDeriveEpsilon =
-                firstSet.contains(&jcc::parser_gen::Terminal::c_Epsilon);
+                firstSet.contains(jcc::parser_gen::TerminalIndex::c_EpsilonIndex
+                );
     }
     lookahead.insert(betaFirst.cbegin(), betaFirst.cend());
 
@@ -197,8 +227,9 @@ jcc::parser_gen::TerminalSet ComputeLookahead(
 }
 
 jcc::parser_gen::ItemSet
-Closure(Grammar const &grammar, jcc::parser_gen::ItemSet const &itemSet,
-        TerminalMap const &firstTable) {
+Closure(jcc::parser_gen::Grammar const &grammar,
+        jcc::parser_gen::ItemSet const &itemSet,
+        TerminalMap const              &firstTable) {
     jcc::parser_gen::ItemSet closure{itemSet};
 
     bool didChange = true;
@@ -208,18 +239,19 @@ Closure(Grammar const &grammar, jcc::parser_gen::ItemSet const &itemSet,
         for (auto currentClosure{closure}; auto const &item : currentClosure) {
             // Get the symbol after the dot (if any)
             auto const nextSymbol{item.GetSymbolAtPosition()};
-            if (!std::holds_alternative<jcc::parser_gen::NonTerminal const *>(
+            if (!std::holds_alternative<jcc::parser_gen::NonTerminalIndex>(
                         nextSymbol
                 )) {
                 continue;// Skip if no symbol after dot or not a non-terminal
             }
 
-            auto const *nonTerminal =
-                    std::get<jcc::parser_gen::NonTerminal const *>(nextSymbol);
+            auto const nonTerminal{
+                    std::get<jcc::parser_gen::NonTerminalIndex>(nextSymbol)
+            };
 
             // Add items for all productions of the non-terminal
             for (auto const &production : grammar) {
-                if (production.m_Terminal != nonTerminal) {
+                if (production.m_NonTerminal != nonTerminal) {
                     continue;
                 }
 
@@ -242,8 +274,8 @@ Closure(Grammar const &grammar, jcc::parser_gen::ItemSet const &itemSet,
 
 jcc::parser_gen::ItemSet
 Goto(jcc::parser_gen::ItemSet const &itemSet,
-     jcc::parser_gen::Symbol const &symbol, Grammar const &grammar,
-     TerminalMap const &firstTable) {
+     jcc::parser_gen::Symbol const  &symbol,
+     jcc::parser_gen::Grammar const &grammar, TerminalMap const &firstTable) {
     jcc::parser_gen::ItemSet gotoSet;
 
     for (auto const &item : itemSet) {
@@ -262,28 +294,30 @@ Goto(jcc::parser_gen::ItemSet const &itemSet,
     return Closure(grammar, gotoSet, firstTable);
 }
 
-using GotoMap = std::vector<std::unordered_map<jcc::parser_gen::Symbol, int>>;
+using GotoMap = std::vector<std::unordered_map<
+        jcc::parser_gen::Symbol, int, jcc::parser_gen::SymbolHash>>;
 
 std::vector<jcc::parser_gen::ItemSet> GenerateCanonicalSetCollection(
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
         std::vector<jcc::parser_gen::Terminal> const    &terminals,
-        Grammar const &grammar, TerminalMap const &firstTable, GotoMap &gotoMap
+        jcc::parser_gen::Grammar const &grammar, TerminalMap const &firstTable,
+        GotoMap &gotoMap
 ) {
-    std::vector items{
-            Closure(grammar,
-                    {jcc::parser_gen::Item{
-                            &grammar[0], 0, {&jcc::parser_gen::Terminal::c_Eof}
-                    }},
-                    firstTable)
-    };
+    std::vector items{Closure(
+            grammar,
+            {jcc::parser_gen::Item{
+                    &grammar[0], 0, {jcc::parser_gen::TerminalIndex::c_EofIndex}
+            }},
+            firstTable
+    )};
 
     std::vector<jcc::parser_gen::Symbol> grammarSymbols;
-    for (auto const &nonTerminal : nonTerminals) {
-        grammarSymbols.emplace_back(&nonTerminal);
+    for (std::size_t i{}; i < nonTerminals.size(); ++i) {
+        grammarSymbols.emplace_back(jcc::parser_gen::NonTerminalIndex{i});
     }
 
-    for (auto const &terminal : terminals) {
-        grammarSymbols.emplace_back(&terminal);
+    for (std::size_t i{}; i < terminals.size(); ++i) {
+        grammarSymbols.emplace_back(jcc::parser_gen::TerminalIndex{i});
     }
 
     while (true) {
@@ -353,11 +387,14 @@ struct Action final {
 };
 
 struct ParsingTableRow final {
-    using Actions =
-            std::unordered_map<jcc::parser_gen::Terminal const *, Action>;
+    using Actions = std::unordered_map<
+            jcc::parser_gen::TerminalIndex, Action,
+            jcc::parser_gen::TerminalIndexHash>;
 
     Actions m_Actions;
-    std::unordered_map<jcc::parser_gen::NonTerminal const *, std::optional<int>>
+    std::unordered_map<
+            jcc::parser_gen::NonTerminalIndex, std::optional<int>,
+            jcc::parser_gen::NonTerminalIndexHash>
             m_Goto;
 };
 
@@ -382,22 +419,24 @@ ParsingTable GenerateParsingTable(
         auto       &currentRow{table.emplace_back()};
 
         // GOTO
-        for (auto const &nonTerminal : nonTerminals) {
-            if (gotoMap.at(i).contains(&nonTerminal)) {
-                currentRow.m_Goto[&nonTerminal] =
-                        gotoMap.at(i).at(&nonTerminal);
+        for (jcc::parser_gen::NonTerminalIndex nonTerminalIndex{};
+             nonTerminalIndex.m_Index < nonTerminals.size();
+             ++nonTerminalIndex.m_Index) {
+            if (gotoMap.at(i).contains(nonTerminalIndex)) {
+                currentRow.m_Goto[nonTerminalIndex] =
+                        gotoMap.at(i).at(nonTerminalIndex);
             }
         }
 
         // ACTION
         for (auto const &item : itemSet) {
             if (!item.HasNextSymbol()) {
-                if (item.m_Production->m_Terminal ==
-                    &nonTerminals.at(0) /* S' */) {
+                if (item.m_Production->m_NonTerminal ==
+                    jcc::parser_gen::NonTerminalIndex::c_SPrimeIndex) {
                     verifyInsertion(
                             currentRow,
                             std::make_pair(
-                                    &jcc::parser_gen::Terminal::c_Eof,
+                                    jcc::parser_gen::TerminalIndex::c_EofIndex,
                                     Action{ActionType::Accept, 0}
                             )
                     );
@@ -416,32 +455,22 @@ ParsingTable GenerateParsingTable(
                 continue;
             }
             auto const &symbol{item.GetSymbolAtPosition()};
-            if (!std::holds_alternative<jcc::parser_gen::Terminal const *>(
-                        symbol
+            if (!std::holds_alternative<jcc::parser_gen::TerminalIndex>(symbol
                 )) {
                 continue;
             }
 
             auto const it{gotoMap.at(i).find(
-                    std::get<jcc::parser_gen::Terminal const *>(symbol)
+                    std::get<jcc::parser_gen::TerminalIndex>(symbol)
             )};
             if (it == gotoMap.at(i).end()) {
-                throw std::runtime_error{std::format(
-                        "Invalid grammar, no goto entry for set {} and symbol "
-                        "{}",
-                        i,
-                        GetSymbolName(
-                                std::get<jcc::parser_gen::Terminal const *>(
-                                        symbol
-                                )
-                        )
-                )};
+                throw std::runtime_error{"Invalid grammar, no goto found"};
             }
             auto const &[_sym, shiftIndex]{*it};
             verifyInsertion(
                     currentRow,
                     std::make_pair(
-                            std::get<jcc::parser_gen::Terminal const *>(symbol),
+                            std::get<jcc::parser_gen::TerminalIndex>(symbol),
                             Action{ActionType::Shift, shiftIndex}
                     )
             );
@@ -452,13 +481,13 @@ ParsingTable GenerateParsingTable(
 }
 
 void OutputActionCPlusPlus(
-        jcc::parser_gen::Terminal const &terminal,
+        jcc::parser_gen::TerminalIndex  terminalIndex,
         ParsingTableRow::Actions const &actions, std::ostream &os
 ) {
-    if (!actions.contains(&terminal)) {
+    if (!actions.contains(terminalIndex)) {
         os << "Error()";
     } else {
-        auto const &action{actions.at(&terminal)};
+        auto const &action{actions.at(terminalIndex)};
         switch (action.m_Type) {
             case ActionType::Shift:
                 os << "Shift(" << action.m_Value << ")";
@@ -474,18 +503,17 @@ void OutputActionCPlusPlus(
                 break;
         }
     }
-    os << "/* " << terminal.m_Token << " */";
 }
 
 void OutputCPlusPlusLRTable(
-        Grammar const &grammar, ParsingTable const &table,
+        jcc::parser_gen::Grammar const &grammar, ParsingTable const &table,
         std::vector<jcc::parser_gen::Terminal> const    &terminals,
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
         std::string const &lrTableCppPath, std::string const &lrTableHeaderPath
 ) {
     std::ofstream headerFile{lrTableHeaderPath, std::ios::trunc};
 
-    auto const numTerminals{terminals.size() + 1};
+    auto const numTerminals{terminals.size()};
     auto const numNonTerminals{nonTerminals.size()};
 
     headerFile
@@ -526,9 +554,13 @@ void OutputCPlusPlusLRTable(
             << "namespace jcc::parsing {\n"
             << "\tTerminals const c_Terminals{";
     for (auto const &terminal : terminals) {
-        cppFile << terminal.m_Token << ", ";
+        cppFile << terminal.m_Token;
+
+        if (&terminal != &terminals.back()) {
+            cppFile << ", ";
+        }
     }
-    cppFile << jcc::parser_gen::Terminal::c_Eof.m_Token << "};\n\n";
+    cppFile << "};\n\n";
 
     cppFile << "\tTokenToIndexMap const c_TokenToIndexMap{\n";
 
@@ -536,14 +568,15 @@ void OutputCPlusPlusLRTable(
         cppFile << "\t\tstd::pair{" << terminals[i].m_Token << ", " << i
                 << "},\n";
     }
-    cppFile << "\t\tstd::pair{" << jcc::parser_gen::Terminal::c_Eof.m_Token
-            << ", " << terminals.size() << "}\n\t};\n\n"
-            << "ProductionLengths const c_GrammarLengths{\n";
+    cppFile << "\t};\n\n"
+            << "\tProductionLengths const c_GrammarLengths{\n";
 
     for (std::size_t i{}; i < grammar.size(); ++i) {
         auto const &production{grammar[i]};
-        cppFile << "\t\tstd::pair{NonTerminal::"
-                << production.m_Terminal->m_Name << ", "
+        auto const &nonTerminal{nonTerminals.at(production.m_NonTerminal.m_Index
+        )};
+
+        cppFile << "\t\tstd::pair{NonTerminal::" << nonTerminal.m_Name << ", "
                 << production.m_Symbols.size() << "}";
         if (i != grammar.size() - 1) {
             cppFile << ',';
@@ -552,7 +585,7 @@ void OutputCPlusPlusLRTable(
         cppFile << '\n';
     }
 
-    cppFile << "};\n\n"
+    cppFile << "\t};\n\n"
             << "\tTable const c_LrOneTable{[] {\n"
             << "\t\tTable table{};\n\n";
 
@@ -562,24 +595,27 @@ void OutputCPlusPlusLRTable(
                 << numTerminals << ">, GotoRow<" << numNonTerminals << ">>(\n"
                 << "\t\t\tActionRow<" << numTerminals << ">{";
 
-        for (auto const &terminal : terminals) {
-            OutputActionCPlusPlus(terminal, row.m_Actions, cppFile);
-            cppFile << ", ";
+        for (jcc::parser_gen::TerminalIndex terminalIndex{};
+             terminalIndex.m_Index < terminals.size();
+             ++terminalIndex.m_Index) {
+            OutputActionCPlusPlus(terminalIndex, row.m_Actions, cppFile);
+            if (terminalIndex.m_Index != terminals.size() - 1) {
+                cppFile << ", ";
+            }
         }
-        OutputActionCPlusPlus(
-                jcc::parser_gen::Terminal::c_Eof, row.m_Actions, cppFile
-        );
         cppFile << "}, GotoRow<" << numNonTerminals << ">{";
 
-        for (auto const &nonTerminal : nonTerminals) {
-            if (auto it{row.m_Goto.find(&nonTerminal)};
+        for (std::size_t j{}; j < nonTerminals.size(); ++j) {
+            jcc::parser_gen::NonTerminalIndex nonTerminalIndex{j};
+
+            if (auto it{row.m_Goto.find(nonTerminalIndex)};
                 it != row.m_Goto.end() && it->second) {
                 cppFile << it->second.value();
             } else {
                 cppFile << "std::nullopt";
             }
 
-            if (&nonTerminal != &nonTerminals.back()) {
+            if (j != nonTerminals.size() - 1) {
                 cppFile << ", ";
             }
         }
@@ -595,131 +631,58 @@ void OutputCPlusPlusLRTable(
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
+    if (argc != 4) {
         std::cerr << "Usage: " << argv[0]
-                  << " <cpp_output_file> <hpp_output_file>\n";
+                  << " <grammar> <cpp_output_file> <hpp_output_file>\n";
         exit(1);
     }
 
+    std::string const              grammarPath{argv[1]};
+    jcc::parser_gen::GrammarParser parser;
+    auto const [terminals, nonTerminals, grammar]{parser.Parse(argv[1])};
+
     using namespace jcc::parser_gen;
 
-    std::vector terminals{
-            Terminal{"jcc::tokenizer::Punctuator::Plus"},            // +
-            Terminal{"jcc::tokenizer::Punctuator::Asterisk"},        // *
-            Terminal{"jcc::tokenizer::Punctuator::LeftParenthesis"}, // (
-            Terminal{"jcc::tokenizer::Punctuator::RightParenthesis"},// )
-            Terminal{"jcc::tokenizer::GenericType::PpNumber"}        // n
-    };
-
-    std::vector nonTerminals{
-            NonTerminal::c_SPrime,// S'
-            NonTerminal{"S"},     // Expression
-            NonTerminal{"T"},     // Term
-            NonTerminal{"F"},     // Factor
-    };
-
-    Grammar const grammar{
-            // S' → S
-            Production{&nonTerminals[0], {&nonTerminals[1]}, 0},
-
-            // S → S + T
-            Production{
-                    &nonTerminals[1],
-                    {&nonTerminals[1], &terminals[0], &nonTerminals[2]},
-                    1
-            },
-
-            // S → T
-            Production{&nonTerminals[1], {&nonTerminals[2]}, 2},
-
-            // T → T * F
-            Production{
-                    &nonTerminals[2],
-                    {&nonTerminals[2], &terminals[1], &nonTerminals[3]},
-                    3
-            },
-
-            // T → F
-            Production{&nonTerminals[2], {&nonTerminals[3]}, 4},
-
-            // F → ( S )
-            Production{
-                    &nonTerminals[3],
-                    {&terminals[2], &nonTerminals[1], &terminals[3]},
-                    5
-            },
-
-            // F → n
-            Production{&nonTerminals[3], {&terminals[4]}, 6},
-    };
-
-    // std::vector terminals{
-    //         Terminal{"jcc::tokenizer::Punctuator::Asterisk"},// *
-    //         Terminal{"jcc::tokenizer::Punctuator::Tilde"},   // ~
-    // };
-    //
-    // std::vector nonTerminals{
-    //         NonTerminal::c_SPrime,
-    //         NonTerminal{"S"},
-    //         NonTerminal{"C"},
-    // };
-
-    // Grammar const grammar{
-    //         // S' -> S
-    //         Production{&nonTerminals[0], {&nonTerminals[1]}, 0},
-    //
-    //         // S -> C C
-    //         Production{
-    //                 &nonTerminals[1], {&nonTerminals[2], &nonTerminals[2]}, 1
-    //         },
-    //
-    //         // C -> * C
-    //         Production{&nonTerminals[2], {&terminals[0], &nonTerminals[2]}, 2},
-    //
-    //         // C -> ~
-    //         Production{&nonTerminals[2], {&terminals[1]}, 3},
-    // };
-
     std::cout << "Grammar:" << std::endl;
-    std::ranges::copy(
-            grammar, std::ostream_iterator<Production>{std::cout, "\n"}
-    );
+    for (auto const &production : grammar) {
+        std::cout << GetSymbolName(
+                             nonTerminals, terminals, production.m_NonTerminal
+                     )
+                  << " -> ";
+        for (auto const &symbol : production.m_Symbols) {
+            std::cout << GetSymbolName(nonTerminals, terminals, symbol) << " ";
+        }
+        std::cout << std::endl;
+    }
     auto const firstTable{GenerateFirstTable(nonTerminals, terminals, grammar)};
     std::cout << "\nFirst Table:" << std::endl;
     for (auto const &[symbol, firstSet] : firstTable) {
-        if (std::holds_alternative<Terminal const *>(symbol)) {
+        if (std::holds_alternative<TerminalIndex>(symbol)) {
             continue;
         }
-        std::cout << "FIRST(" << GetSymbolName(symbol) << ") = {";
-        for (auto const &terminal : firstSet) {
-            std::cout << terminal->m_Token << ", ";
+        std::cout << "FIRST(" << GetSymbolName(nonTerminals, terminals, symbol)
+                  << ") = {";
+        for (auto terminalIndex : firstSet) {
+            auto const &terminal{terminals.at(terminalIndex.m_Index)};
+            std::cout << terminal.m_Token << ", ";
         }
         std::cout << "}\n";
     }
 
-    auto const followTable{
-            GenerateFollowTable(nonTerminals, firstTable, grammar)
-    };
+    auto const followTable{GenerateFollowTable(terminals, firstTable, grammar)};
     std::cout << "\nFollow Table:" << std::endl;
     for (auto const &[symbol, followSet] : followTable) {
-        if (std::holds_alternative<Terminal const *>(symbol)) {
+        if (std::holds_alternative<TerminalIndex>(symbol)) {
             continue;
         }
-        std::cout << "FOLLOW(" << GetSymbolName(symbol) << ") = {";
-        for (auto const &terminal : followSet) {
-            std::cout << terminal->m_Token << ", ";
+        std::cout << "FOLLOW(" << GetSymbolName(nonTerminals, terminals, symbol)
+                  << ") = {";
+        for (auto const &terminalIndex : followSet) {
+            auto const &terminal{terminals.at(terminalIndex.m_Index)};
+            std::cout << terminal.m_Token << ", ";
         }
         std::cout << "}\n";
     }
-
-    auto const closure{
-            Closure(grammar,
-                    {jcc::parser_gen::Item{
-                            &grammar[0], 0, {&jcc::parser_gen::Terminal::c_Eof}
-                    }},
-                    firstTable)
-    };
-    std::cout << "\nClosure:\n" << closure << std::endl;
 
     GotoMap    gotoMap;
     auto const items{GenerateCanonicalSetCollection(
@@ -731,8 +694,8 @@ int main(int argc, char *argv[]) {
     for (int i{}; i < static_cast<int>(gotoMap.size()); ++i) {
         std::cout << "State " << i << ":\n";
         for (auto const &[symbol, value] : gotoMap[i]) {
-            std::cout << "  " << GetSymbolName(symbol) << " -> " << value
-                      << "\n";
+            std::cout << "  " << GetSymbolName(nonTerminals, terminals, symbol)
+                      << " -> " << value << "\n";
         }
     }
     std::cout << std::endl;
@@ -740,7 +703,36 @@ int main(int argc, char *argv[]) {
     // print item set
     auto i{0};
     for (auto const &itemSet : items) {
-        std::cout << "I" << i << ":\n" << itemSet << std::endl;
+        std::cout << "I" << i << ":\n";
+
+        for (auto const &item : itemSet) {
+            auto const &production{item.m_Production};
+            auto const &nonTerminal{
+                    nonTerminals.at(production->m_NonTerminal.m_Index)
+            };
+
+            std::cout << "  " << nonTerminal.m_Name << " -> ";
+            for (int j{}; j < static_cast<int>(production->m_Symbols.size());
+                 ++j) {
+                if (j == item.m_Position) {
+                    std::cout << ". ";
+                }
+                auto const &symbol{production->m_Symbols[j]};
+                std::cout << GetSymbolName(nonTerminals, terminals, symbol)
+                          << " ";
+            }
+            if (item.m_Position ==
+                static_cast<int>(production->m_Symbols.size())) {
+                std::cout << ". ";
+            }
+            std::cout << ", ";
+            for (auto const &terminalIndex : item.m_LookAhead) {
+                auto const &terminal{terminals.at(terminalIndex.m_Index)};
+                std::cout << terminal.m_Token << ", ";
+            }
+            std::cout << std::endl;
+        }
+
         ++i;
     }
 
@@ -750,8 +742,9 @@ int main(int argc, char *argv[]) {
         auto const &row{parsingTable[i]};
         std::cout << "State " << i << ":\n";
         std::cout << "- Actions:\n";
-        for (auto const &[terminal, action] : row.m_Actions) {
-            std::cout << "  " << terminal->m_Token << " -> ";
+        for (auto const &[terminalIndex, action] : row.m_Actions) {
+            auto const &terminal{terminals.at(terminalIndex.m_Index)};
+            std::cout << "  " << terminal.m_Token << " -> ";
             switch (action.m_Type) {
                 case ActionType::Shift:
                     std::cout << "Shift " << action.m_Value;
@@ -770,8 +763,9 @@ int main(int argc, char *argv[]) {
         }
 
         std::cout << "- Goto:\n";
-        for (auto const &[nonTerminal, value] : row.m_Goto) {
-            std::cout << "  " << nonTerminal->m_Name << " -> ";
+        for (auto const &[nonTerminalIndex, value] : row.m_Goto) {
+            auto const &nonTerminal{nonTerminals.at(nonTerminalIndex.m_Index)};
+            std::cout << "  " << nonTerminal.m_Name << " -> ";
             if (value.has_value()) {
                 std::cout << value.value();
             } else {
@@ -781,9 +775,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::string const cppOutputFile{argv[1]};
-    std::string const hppOutputFile{argv[2]};
+    std::string const cppOutputFile{argv[2]};
+    std::string const hppOutputFile{argv[3]};
     OutputCPlusPlusLRTable(
             grammar, parsingTable, terminals, nonTerminals, cppOutputFile,
-            hppOutputFile);
+            hppOutputFile
+    );
 }

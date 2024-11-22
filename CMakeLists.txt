@@ -41,7 +41,7 @@ add_custom_command(
 # Step 3: Run lr1_gen_exec only if the GENERATED_OUTPUT is missing or needs to be regenerated
 add_custom_command(
         OUTPUT ${GENERATED_OUTPUT}
-        COMMAND ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP}
+        COMMAND ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_FILE} ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP}
         DEPENDS ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_OUTPUT_FILE}
         COMMENT "Running lr1_gen to generate parser.cpp"
 )

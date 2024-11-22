@@ -62,6 +62,8 @@ namespace jcc::parsing {
                 m_States.emplace(c_LrOneTable[m_States.top()]
                                          .second[static_cast<int>(nonTerminal)]
                                          .value());
+                std::cout << "goto: " << m_States.top() << '\n';
+                ++m_CurrentIt;
                 break;
             }
             case ActionRowElement::Action::Error:
