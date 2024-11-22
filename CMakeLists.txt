@@ -7,6 +7,51 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
+set(PARSER_GEN_SRC
+        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/main.cpp
+        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/grammar_parser.cpp
+        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/production.cpp
+)
+
+set(PRE_BUILD_DIR ${CMAKE_SOURCE_DIR}/pre_build)
+set(GRAMMAR_FILE ${PRE_BUILD_DIR}/grammar.txt)
+set(GRAMMAR_OUTPUT_FILE ${CMAKE_BINARY_DIR}/grammar.txt)
+
+# Assuming lr1_gen_exec generates 'parser.cpp' as its output
+set(GENERATED_LR_TABLE_CPP ${CMAKE_BINARY_DIR}/lr_table.cpp)
+set(GENERATED_LR_TABLE_HPP ${CMAKE_BINARY_DIR}/lr_table.hpp)
+set(GENERATED_OUTPUT ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP})
+
+# Step 1: Copy the grammar file only if it has changed
+add_custom_command(
+        OUTPUT ${GRAMMAR_OUTPUT_FILE}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GRAMMAR_FILE} ${GRAMMAR_OUTPUT_FILE}
+        DEPENDS ${GRAMMAR_FILE}
+        COMMENT "Copying grammar file"
+)
+
+# Step 2: Compile lr1_gen.cpp only if grammar.txt or lr1_gen.cpp has changed
+add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/lr1_gen_exec
+        COMMAND ${CMAKE_CXX_COMPILER} -o "${CMAKE_BINARY_DIR}/lr1_gen_exec" ${PARSER_GEN_SRC} -std=c++20
+        COMMENT "Building lr1_gen"
+        DEPENDS ${GRAMMAR_OUTPUT_FILE} ${PARSER_GEN_SRC}
+)
+
+# Step 3: Run lr1_gen_exec only if the GENERATED_OUTPUT is missing or needs to be regenerated
+add_custom_command(
+        OUTPUT ${GENERATED_OUTPUT}
+        COMMAND ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP}
+        DEPENDS ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_OUTPUT_FILE}
+        COMMENT "Running lr1_gen to generate parser.cpp"
+)
+
+# Step 4: Create a custom target that depends on the generated output
+add_custom_target(run_lr1_gen
+        DEPENDS ${GENERATED_OUTPUT}
+        COMMENT "Ensuring lr1_gen_exec has run if necessary"
+)
+
 set(
         SRC
         src/misc/CharStream.h
@@ -81,49 +126,8 @@ set(
         src/ir_codegen/target/common.h
         src/parsing/parser.h
         src/parsing/parser.cpp
-)
-
-set(PARSER_GEN_SRC
-        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/main.cpp
-        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/grammar_parser.cpp
-        ${CMAKE_SOURCE_DIR}/pre_build/parser_gen/production.cpp
-)
-
-set(PRE_BUILD_DIR ${CMAKE_SOURCE_DIR}/pre_build)
-set(GRAMMAR_FILE ${PRE_BUILD_DIR}/grammar.txt)
-set(GRAMMAR_OUTPUT_FILE ${CMAKE_BINARY_DIR}/grammar.txt)
-
-# Assuming lr1_gen_exec generates 'parser.cpp' as its output
-set(GENERATED_OUTPUT ${CMAKE_BINARY_DIR}/parser.cpp)  # Replace with the actual output of lr1_gen_exec
-
-# Step 1: Copy the grammar file only if it has changed
-add_custom_command(
-        OUTPUT ${GRAMMAR_OUTPUT_FILE}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GRAMMAR_FILE} ${GRAMMAR_OUTPUT_FILE}
-        DEPENDS ${GRAMMAR_FILE}
-        COMMENT "Copying grammar file"
-)
-
-# Step 2: Compile lr1_gen.cpp only if grammar.txt or lr1_gen.cpp has changed
-add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR}/lr1_gen_exec
-        COMMAND ${CMAKE_CXX_COMPILER} -o "${CMAKE_BINARY_DIR}/lr1_gen_exec" ${PARSER_GEN_SRC} -std=c++20
-        COMMENT "Building lr1_gen"
-        DEPENDS ${GRAMMAR_OUTPUT_FILE} ${PARSER_GEN_SRC}
-)
-
-# Step 3: Run lr1_gen_exec only if the GENERATED_OUTPUT is missing or needs to be regenerated
-add_custom_command(
-        OUTPUT ${GENERATED_OUTPUT}
-        COMMAND ${CMAKE_BINARY_DIR}/lr1_gen_exec
-        DEPENDS ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_OUTPUT_FILE}
-        COMMENT "Running lr1_gen to generate parser.cpp"
-)
-
-# Step 4: Create a custom target that depends on the generated output
-add_custom_target(run_lr1_gen
-        DEPENDS ${GENERATED_OUTPUT}
-        COMMENT "Ensuring lr1_gen_exec has run if necessary"
+        src/parsing/lrtable_utils.hpp
+        ${GENERATED_OUTPUT}
 )
 
 add_executable("${PROJECT_NAME}"

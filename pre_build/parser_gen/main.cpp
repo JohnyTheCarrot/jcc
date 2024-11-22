@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <ranges>
@@ -329,10 +330,19 @@ struct Action final {
         : m_Type{shift}
         , m_Value{value} {
     }
+
+    [[nodiscard]]
+    bool
+    operator==(Action const &other) const {
+        return m_Type == other.m_Type && m_Value == other.m_Value;
+    }
 };
 
 struct ParsingTableRow final {
-    std::unordered_map<jcc::parser_gen::Terminal const *, Action> m_Actions;
+    using Actions =
+            std::unordered_map<jcc::parser_gen::Terminal const *, Action>;
+
+    Actions m_Actions;
     std::unordered_map<jcc::parser_gen::NonTerminal const *, std::optional<int>>
             m_Goto;
 };
@@ -346,9 +356,11 @@ ParsingTable GenerateParsingTable(
 ) {
     ParsingTable table;
 
-    auto const verifyInsertion{[](auto const &pair) {
-        if (!pair.second)
+    auto const verifyInsertion{[](auto &currentRow, auto const &pair) {
+        auto const &[_, result]{currentRow.m_Actions.emplace(pair)};
+        if (!result && currentRow.m_Actions.at(pair.first) != pair.second) {
             throw std::runtime_error{"Invalid grammar, conflicts found"};
+        }
     }};
 
     for (int i{}; i < static_cast<int>(canonicalSetCollection.size()); ++i) {
@@ -368,18 +380,24 @@ ParsingTable GenerateParsingTable(
             if (!item.HasNextSymbol()) {
                 if (item.m_Production->m_Terminal ==
                     &jcc::parser_gen::NonTerminal::c_SPrime) {
-                    verifyInsertion(currentRow.m_Actions.emplace(
-                            &jcc::parser_gen::Terminal::c_Eof,
-                            Action{ActionType::Accept, 0}
-                    ));
+                    verifyInsertion(
+                            currentRow,
+                            std::make_pair(
+                                    &jcc::parser_gen::Terminal::c_Eof,
+                                    Action{ActionType::Accept, 0}
+                            )
+                    );
                     continue;
                 }
 
                 for (auto const &terminal : item.m_LookAhead) {
-                    verifyInsertion(currentRow.m_Actions.emplace(
-                            terminal, Action{ActionType::Reduce,
-                                             item.m_Production->m_Index}
-                    ));
+                    verifyInsertion(
+                            currentRow,
+                            std::make_pair(
+                                    terminal, Action{ActionType::Reduce,
+                                                     item.m_Production->m_Index}
+                            )
+                    );
                 }
             }
             auto const &symbol{item.GetSymbolAtPosition()};
@@ -396,108 +414,175 @@ ParsingTable GenerateParsingTable(
                 continue;
             }
             auto const &[_sym, shiftIndex]{*it};
-            verifyInsertion(currentRow.m_Actions.emplace(
-                    std::get<jcc::parser_gen::Terminal const *>(symbol),
-                    Action{ActionType::Shift, shiftIndex}
-            ));
+            verifyInsertion(
+                    currentRow,
+                    std::make_pair(
+                            std::get<jcc::parser_gen::Terminal const *>(symbol),
+                            Action{ActionType::Shift, shiftIndex}
+                    )
+            );
         }
     }
 
     return table;
 }
 
-int main() {
-    // std::vector terminals{jcc::parser_gen::Terminal{"+"},
-    //                       jcc::parser_gen::Terminal{"*"},
-    //                       jcc::parser_gen::Terminal{"("},
-    //                       jcc::parser_gen::Terminal{")"},
-    //                       jcc::parser_gen::Terminal{"id"},
-    //                       jcc::parser_gen::Terminal::c_Epsilon};
-    //
-    // std::vector nonTerminals{
-    //         jcc::parser_gen::NonTerminal{"E"},
-    //         jcc::parser_gen::NonTerminal{"E'"},
-    //         jcc::parser_gen::NonTerminal{"T"},
-    //         jcc::parser_gen::NonTerminal{"T'"},
-    //         jcc::parser_gen::NonTerminal{"F"},
-    // };
+void OutputActionCPlusPlus(
+        jcc::parser_gen::Terminal const &terminal,
+        ParsingTableRow::Actions const &actions, std::ostream &os
+) {
+    if (!actions.contains(&terminal)) {
+        os << "Error()";
+    } else {
+        auto const &action{actions.at(&terminal)};
+        switch (action.m_Type) {
+            case ActionType::Shift:
+                os << "Shift(" << action.m_Value << ")";
+                break;
+            case ActionType::Reduce:
+                os << "Reduce(" << action.m_Value << ")";
+                break;
+            case ActionType::Accept:
+                os << "Accept()";
+                break;
+            case ActionType::Error:
+                os << "Error()";
+                break;
+        }
+    }
+}
+
+void OutputCPlusPlusLRTable(
+        ParsingTable const                              &table,
+        std::vector<jcc::parser_gen::Terminal> const    &terminals,
+        std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals,
+        std::string const &lrTableCppPath, std::string const &lrTableHeaderPath
+) {
+    std::ofstream file{lrTableHeaderPath, std::ios::trunc};
+
+    auto const numActionElements{terminals.size() + 1};
+
+    file << "#ifndef LR_TABLE_H\n"
+         << "#define LR_TABLE_H\n\n"
+         << "#include \"parsing/lrtable_utils.hpp\"\n"
+         << "#include <array>\n#include \"tokenizer/token.h\"\n\n"
+         << "namespace jcc::parser {\n"
+         << "\tusing ActionHeader = std::array<jcc::tokenizer::Token::Type, "
+         << numActionElements << ">;\n"
+         << "\textern ActionHeader const c_ActionHeader;\n\n"
+         << "\tusing Table = LrOneTable<" << numActionElements << ", "
+         << nonTerminals.size() << ", " << table.size() << ">;\n"
+         << "\textern Table const c_LrOneTable;"
+         << "\n"
+         << "}// namespace jcc::parsing\n"
+         << "#endif//LR_TABLE_H\n";
+
+    std::ofstream cppFile{lrTableCppPath, std::ios::trunc};
+
+    cppFile << "#include \"lr_table.hpp\"\n\n"
+            << "namespace jcc::parser {\n"
+            << "\tActionHeader const c_ActionHeader{";
+    for (auto const &terminal : terminals) {
+        cppFile << terminal.m_Token;
+        if (&terminal != &terminals.back()) {
+            cppFile << ", ";
+        }
+    }
+
+    cppFile << "};\n\n"
+            << "\tTable const c_LrOneTable{[] {\n"
+            << "\t\tTable table{};\n\n";
+
+    for (std::size_t i{}; i < table.size(); ++i) {
+        auto const &row{table[i]};
+        cppFile << "\t\ttable[" << i << "] = std::make_pair<ActionRow<"
+                << numActionElements << ">, GotoRow<" << nonTerminals.size()
+                << ">>(\n"
+                << "\t\t\tActionRow<" << numActionElements << ">{";
+
+        for (auto const &terminal : terminals) {
+            OutputActionCPlusPlus(terminal, row.m_Actions, cppFile);
+            cppFile << ", ";
+        }
+        OutputActionCPlusPlus(
+                jcc::parser_gen::Terminal::c_Eof, row.m_Actions, cppFile
+        );
+        cppFile << "}, GotoRow<" << nonTerminals.size() << ">{";
+
+        for (auto const &nonTerminal : nonTerminals) {
+            if (auto it{row.m_Goto.find(&nonTerminal)};
+                it != row.m_Goto.end() && it->second) {
+                cppFile << it->second.value();
+            } else {
+                cppFile << "std::nullopt";
+            }
+
+            if (&nonTerminal != &nonTerminals.back()) {
+                cppFile << ", ";
+            }
+        }
+
+        cppFile << "}\n"
+                << "\t\t);\n";
+    }
+
+    cppFile << "\n"
+            << "\t\treturn table;\n"
+            << "\t}()};\n"
+            << "}// namespace jcc::parser\n";
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0]
+                  << " <cpp_output_file> <hpp_output_file>\n";
+        exit(1);
+    }
+
+    using namespace jcc::parser_gen;
+
+    // Define Terminals
     std::vector terminals{
-            jcc::parser_gen::Terminal{"c"}, jcc::parser_gen::Terminal{"d"}
+            Terminal{"jcc::tokenizer::Punctuator::Plus"},            // +
+            Terminal{"jcc::tokenizer::Punctuator::LeftParenthesis"}, // (
+            Terminal{"jcc::tokenizer::Punctuator::RightParenthesis"},// )
+            Terminal{"jcc::tokenizer::GenericType::PpNumber"}        // n
     };
+
+    // Define NonTerminals
     std::vector nonTerminals{
-            jcc::parser_gen::NonTerminal{"S"}, jcc::parser_gen::NonTerminal{"C"}
+            NonTerminal{"E"},// Expression
+            NonTerminal{"T"} // Term
     };
 
-    // Grammar const grammar{
-    //         jcc::parser_gen::Production{
-    //                 &jcc::parser_gen::NonTerminal::c_SPrime, {&nonTerminals[0]}
-    //         },
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[0], {&nonTerminals[2], &nonTerminals[1]}
-    //         },
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[1],
-    //                 {&terminals[0], &nonTerminals[2], &nonTerminals[1]}
-    //         },
-    //         jcc::parser_gen::Production{&nonTerminals[1], {&terminals[5]}},
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[2], {&nonTerminals[4], &nonTerminals[3]}
-    //         },
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[3],
-    //                 {&terminals[1], &nonTerminals[4], &nonTerminals[3]}
-    //         },
-    //         jcc::parser_gen::Production{&nonTerminals[3], {&terminals[5]}},
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[4],
-    //                 {&terminals[2], &nonTerminals[0], &terminals[3]}
-    //         },
-    //         jcc::parser_gen::Production{&nonTerminals[4], {&terminals[4]}}
-    // };
+    // Define Grammar Productions
     Grammar const grammar{
-            // S' -> S
-            jcc::parser_gen::Production{
-                    &jcc::parser_gen::NonTerminal::c_SPrime,
-                    {&nonTerminals[0]},
-                    0
-            },
-            // S -> CC
-            jcc::parser_gen::Production{
-                    &nonTerminals[0], {&nonTerminals[1], &nonTerminals[1]}, 1
-            },
-            // C -> cC
-            jcc::parser_gen::Production{
-                    &nonTerminals[1], {&terminals[0], &nonTerminals[1]}, 2
-            },
-            // C -> d
-            jcc::parser_gen::Production{&nonTerminals[1], {&terminals[1]}, 3}
-    };
-    // Grammar const grammar{
-    //         // E' -> E
-    //         jcc::parser_gen::Production{&nonTerminals[1], {&nonTerminals[0]}},
-    //         // E -> E + T
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[0],
-    //                 {&nonTerminals[0], &terminals[0], &nonTerminals[2]}
-    //         },
-    //         // E -> T
-    //         jcc::parser_gen::Production{&nonTerminals[0], {&nonTerminals[2]}},
-    //         // T -> T * F
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[2],
-    //                 {&nonTerminals[2], &terminals[1], &nonTerminals[4]}
-    //         },
-    //         // T -> F
-    //         jcc::parser_gen::Production{&nonTerminals[2], {&nonTerminals[4]}},
-    //         // F -> ( E )
-    //         jcc::parser_gen::Production{
-    //                 &nonTerminals[4],
-    //                 {&terminals[2], &nonTerminals[0], &terminals[3]}
-    //         },
-    //         // F -> id
-    //         jcc::parser_gen::Production{&nonTerminals[4], {&terminals[4]}}
-    // };
+            // S → E
+            Production{&NonTerminal::c_SPrime, {&nonTerminals[0]}, 0},
 
+            // E → T
+            Production{&nonTerminals[0], {&nonTerminals[1]}, 1},
+
+            // E → ( E )
+            Production{
+                    &nonTerminals[0],
+                    {&terminals[1], &nonTerminals[0], &terminals[2]},
+                    2
+            },
+
+            // T → n
+            Production{&nonTerminals[1], {&terminals[3]}, 3},
+
+            // T → + T
+            Production{&nonTerminals[1], {&terminals[0], &nonTerminals[1]}, 4},
+
+            // T → T + n
+            Production{
+                    &nonTerminals[1],
+                    {&nonTerminals[1], &terminals[0], &terminals[3]},
+                    5
+            },
+    };
     std::cout << "Grammar:" << std::endl;
     std::ranges::copy(
             grammar,
@@ -586,4 +671,9 @@ int main() {
             std::cout << std::endl;
         }
     }
+
+    std::string const cppOutputFile{argv[1]};
+    std::string const hppOutputFile{argv[2]};
+    OutputCPlusPlusLRTable(
+            parsingTable, terminals, nonTerminals, cppOutputFile, hppOutputFile);
 }

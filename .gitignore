@@ -5,3 +5,5 @@
 /.cache
 /CMakeFiles
 CMakeLists.txt.user
+lr_table.hpp
+lr_table.cpp

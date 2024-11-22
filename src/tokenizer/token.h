@@ -235,7 +235,7 @@ namespace jcc::tokenizer {
         Max
     };
 
-    struct Token {
+    struct Token final {
         using Type = std::variant<
                 GenericType, Punctuator, Keyword, Directive, SpecialPurpose>;
 
