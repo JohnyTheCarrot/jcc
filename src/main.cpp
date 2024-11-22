@@ -4,7 +4,8 @@
 #include <string>   // for allocator, operator<<, string
 #include <vector>   // for vector
 
-#include "misc/Diagnosis.h"           // for Diagnosis, FatalCompilerError
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "parsing/parser.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "tokenizer/token.h"          // for Token
 
@@ -33,8 +34,13 @@ int main(int argCount, char *args[]) {
         //             std::cout << std::endl;
         //         }
         // );
+
+        jcc::parsing::Parser parser{preprocessor};
+        while (parser.ReadOutput() == '0') {}
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
+    } catch (std::runtime_error const &ex) {
+        std::cerr << ex.what() << std::endl;
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
     for (auto const &diagnosis : diagnoses) {

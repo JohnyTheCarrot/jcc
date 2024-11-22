@@ -66,9 +66,6 @@ namespace jcc::parser_gen {
         std::unordered_set<Symbol> GetSymbolsAfterPosition() const;
 
         [[nodiscard]]
-        bool IsKernel() const;
-
-        [[nodiscard]]
         bool HasNextSymbol() const;
     };
 

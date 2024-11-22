@@ -2,10 +2,10 @@
 #define LRTABLE_UTILS_H
 
 #include <array>
+#include <cstdint>
+#include <optional>
 
-#include "tokenizer/token.h"
-
-namespace jcc::parser {
+namespace jcc::parsing {
     struct ActionRowElement final {
         enum class Action {
             Shift,
@@ -36,15 +36,15 @@ namespace jcc::parser {
 
     using State = int;
 
-    template<size_t nAction>
+    template<std::size_t nAction>
     using ActionRow = std::array<ActionRowElement, nAction>;
 
-    template<size_t nGoto>
+    template<std::size_t nGoto>
     using GotoRow = std::array<std::optional<State>, nGoto>;
 
-    template<size_t nAction, size_t nGoto, size_t nStates>
+    template<std::size_t nAction, std::size_t nGoto, std::size_t nStates>
     using LrOneTable =
             std::array<std::pair<ActionRow<nAction>, GotoRow<nGoto>>, nStates>;
-}// namespace jcc::parser
+}// namespace jcc::parsing
 
 #endif//LRTABLE_UTILS_H

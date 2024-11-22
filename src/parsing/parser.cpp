@@ -2,39 +2,19 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include "lr_table.hpp"
+
 namespace jcc::parsing {
     ActionRowElement Parser::GetAction(tokenizer::Token const &token) {
         auto const id{[&] {
-            auto const tokenId{token.GetValueType()};
+            auto const tokenType{token.GetValueType()};
 
-            if (std::holds_alternative<tokenizer::GenericType>(tokenId) &&
-                std::get<tokenizer::GenericType>(tokenId) ==
-                        tokenizer::GenericType::Identifier) {
-                return 0;
+            // TODO: in the final grammar, we won't really need this check
+            if (!c_TokenToIndexMap.contains(tokenType)) {
+                throw std::runtime_error{"Token not in grammar"};
             }
 
-            if (std::holds_alternative<tokenizer::Punctuator>(tokenId)) {
-                switch (std::get<tokenizer::Punctuator>(tokenId)) {
-                    case tokenizer::Punctuator::Plus:
-                        return 1;
-                    case tokenizer::Punctuator::Asterisk:
-                        return 2;
-                    case tokenizer::Punctuator::LeftParenthesis:
-                        return 3;
-                    case tokenizer::Punctuator::RightParenthesis:
-                        return 4;
-                    default:
-                        break;
-                }
-            }
-
-            if (std::holds_alternative<tokenizer::SpecialPurpose>(tokenId) &&
-                std::get<tokenizer::SpecialPurpose>(tokenId) ==
-                        tokenizer::SpecialPurpose::EndOfFile) {
-                return 5;
-            }
-
-            throw std::runtime_error{"Invalid token"};
+            return c_TokenToIndexMap.at(tokenType);
         }()};
 
         return c_LrOneTable[m_States.top()].first[id];
@@ -58,6 +38,8 @@ namespace jcc::parsing {
             return *m_CurrentIt;
         }()};
 
+        std::cout << "token: " << token << '\n';
+
         switch (auto const &[index, action]{GetAction(token)}; action) {
             case ActionRowElement::Action::Shift:
                 m_NonTerminals.emplace(token);
@@ -66,12 +48,12 @@ namespace jcc::parsing {
                 ++m_CurrentIt;
                 break;
             case ActionRowElement::Action::Reduce: {
-                for (int i = 0; i < c_Grammar[index - 1].second; ++i) {
+                for (int i = 0; i < c_GrammarLengths[index].second; ++i) {
                     m_NonTerminals.pop();
                     m_States.pop();
                 }
                 // non-terminal
-                auto const nonTerminal{c_Grammar[index - 1].first};
+                auto const nonTerminal{c_GrammarLengths[index].first};
                 std::cout << "reduce: " << magic_enum::enum_name(nonTerminal)
                           << '\n';
 

@@ -17,10 +17,10 @@ namespace jcc::parser_gen {
         return m_Token == c_Epsilon.m_Token;
     }
 
-    NonTerminal const NonTerminal::c_SPrime{"S'"};
+    NonTerminal const NonTerminal::c_SPrime{"SPrime"};
 
     Terminal const Terminal::c_Epsilon{"ε"};
-    Terminal const Terminal::c_Eof{"$"};
+    Terminal const Terminal::c_Eof{"jcc::tokenizer::SpecialPurpose::EndOfFile"};
 
     std::size_t TerminalHash::operator()(Terminal const &terminal) const {
         return std::hash<std::string>{}(terminal.m_Token);
@@ -77,11 +77,6 @@ namespace jcc::parser_gen {
         );
 
         return symbols;
-    }
-
-    bool Item::IsKernel() const {
-        return m_Position != 0 ||
-               m_Production->m_Terminal != &NonTerminal::c_SPrime;
     }
 
     bool Item::HasNextSymbol() const {

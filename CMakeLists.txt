@@ -18,8 +18,8 @@ set(GRAMMAR_FILE ${PRE_BUILD_DIR}/grammar.txt)
 set(GRAMMAR_OUTPUT_FILE ${CMAKE_BINARY_DIR}/grammar.txt)
 
 # Assuming lr1_gen_exec generates 'parser.cpp' as its output
-set(GENERATED_LR_TABLE_CPP ${CMAKE_BINARY_DIR}/lr_table.cpp)
-set(GENERATED_LR_TABLE_HPP ${CMAKE_BINARY_DIR}/lr_table.hpp)
+set(GENERATED_LR_TABLE_CPP ${CMAKE_BINARY_DIR}/gen/lr_table.cpp)
+set(GENERATED_LR_TABLE_HPP ${CMAKE_BINARY_DIR}/gen/lr_table.hpp)
 set(GENERATED_OUTPUT ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP})
 
 # Step 1: Copy the grammar file only if it has changed
@@ -51,6 +51,8 @@ add_custom_target(run_lr1_gen
         DEPENDS ${GENERATED_OUTPUT}
         COMMENT "Ensuring lr1_gen_exec has run if necessary"
 )
+
+add_executable(lr1_gen_exec ${PARSER_GEN_SRC})
 
 set(
         SRC
@@ -131,14 +133,14 @@ set(
 )
 
 add_executable("${PROJECT_NAME}"
-        #        src/main.cpp
+        src/main.cpp
         ${SRC}
-        ${PARSER_GEN_SRC}
+        #        ${PARSER_GEN_SRC}
 )
 
 add_dependencies(${PROJECT_NAME} run_lr1_gen)
 
-target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_BINARY_DIR}/gen)
 
 set(TEST_PROJECT_NAME "jcc-tests")
 
