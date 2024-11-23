@@ -1,3 +1,1 @@
-someBool
-        ? 1
-        : 2
+void Function();

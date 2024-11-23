@@ -30,12 +30,12 @@ add_custom_command(
         COMMENT "Copying grammar file"
 )
 
-# Step 2: Compile lr1_gen.cpp only if grammar.txt or lr1_gen.cpp has changed
+# Step 2: Compile lr1_gen.cpp only lr1_gen.cpp has changed
 add_custom_command(
         OUTPUT ${CMAKE_BINARY_DIR}/lr1_gen_exec
-        COMMAND ${CMAKE_CXX_COMPILER} -o "${CMAKE_BINARY_DIR}/lr1_gen_exec" ${PARSER_GEN_SRC} -std=c++20
+        COMMAND ${CMAKE_CXX_COMPILER} -o "${CMAKE_BINARY_DIR}/lr1_gen_exec" ${PARSER_GEN_SRC} -std=c++20 -O2
         COMMENT "Building lr1_gen"
-        DEPENDS ${GRAMMAR_OUTPUT_FILE} ${PARSER_GEN_SRC}
+        DEPENDS ${PARSER_GEN_SRC}
 )
 
 # Step 3: Run lr1_gen_exec only if the GENERATED_OUTPUT is missing or needs to be regenerated

@@ -45,16 +45,37 @@
 %token static jcc::tokenizer::Keyword::Static
 %token auto jcc::tokenizer::Keyword::Auto
 %token register jcc::tokenizer::Keyword::Register
+%token void jcc::tokenizer::Keyword::Void
+%token char jcc::tokenizer::Keyword::Char
+%token short jcc::tokenizer::Keyword::Short
+%token int jcc::tokenizer::Keyword::Int
+%token long jcc::tokenizer::Keyword::Long
+%token float jcc::tokenizer::Keyword::Float
+%token double jcc::tokenizer::Keyword::Double
+%token signed jcc::tokenizer::Keyword::Signed
+%token unsigned jcc::tokenizer::Keyword::Unsigned
+%token const jcc::tokenizer::Keyword::Const
+%token volatile jcc::tokenizer::Keyword::Volatile
+%token semicolon jcc::tokenizer::Punctuator::Semicolon
+%token lbrace jcc::tokenizer::Punctuator::LeftBrace
+%token rbrace jcc::tokenizer::Punctuator::RightBrace
+%token struct jcc::tokenizer::Keyword::Struct
+%token union jcc::tokenizer::Keyword::Union
+%token lbracket jcc::tokenizer::Punctuator::LeftBracket
+%token rbracket jcc::tokenizer::Punctuator::RightBracket
 
 # ------------
 # Expressions
 # ------------
 
-Expression
+TranslationUnit
     ;
 
 SPrime
-    : Expression
+    : TranslationUnit
+    ;
+
+Expression
     ;
 
 PrimaryExpression
@@ -250,4 +271,193 @@ Expression
 
 ConstantExpression
     : ConditionalExpression
+    ;
+
+# ------------
+# Declarations
+# ------------
+
+StorageClassSpecifier
+    : typedef
+    | extern
+    | static
+    | auto
+    | register
+    ;
+
+StructOrUnion
+    : struct
+    | union
+    ;
+
+StructDeclaration
+    ;
+
+StructDeclarationList
+    : StructDeclaration
+    | StructDeclarationList StructDeclaration
+    ;
+
+TypeSpecifier
+    ;
+
+TypeQualifier
+    ;
+
+SpecifierQualifierList
+    : TypeSpecifier
+    | TypeSpecifier SpecifierQualifierList
+    | TypeQualifier
+    | TypeQualifier SpecifierQualifierList
+    ;
+
+Pointer
+    ;
+
+Declarator
+    ;
+
+DirectDeclaratorCont
+    : lbracket rbracket
+    | lbracket ConstantExpression rbracket
+    | lparen rparen
+    | pp_lparen rparen
+    ;
+
+DirectDeclarator
+    : identifier
+    | lparen Declarator rparen
+    | pp_lparen Declarator rparen
+    | DirectDeclarator DirectDeclaratorCont
+    ;
+
+Declarator
+    : Pointer DirectDeclarator
+    | DirectDeclarator
+    ;
+
+StructDeclaratorCont
+    : colon ConstantExpression
+    ;
+
+StructDeclarator
+    : Declarator
+    | colon ConstantExpression
+    | Declarator StructDeclaratorCont
+    ;
+
+StructDeclaratorListCont
+    : comma StructDeclarator
+    ;
+
+StructDeclaratorList
+    : StructDeclarator
+    | StructDeclaratorList StructDeclaratorListCont
+    ;
+
+StructDeclarationCont
+    : StructDeclaratorList semicolon
+    ;
+
+StructDeclaration
+    : SpecifierQualifierList StructDeclarationCont
+    ;
+
+StructOrUnionSpecifierCont
+    : lbrace StructDeclarationList rbrace
+    ;
+
+StructOrUnionSpecifier
+    : StructOrUnion identifier
+    | StructOrUnion StructOrUnionSpecifierCont
+    ;
+
+TypeSpecifier
+    : void
+    | char
+    | short
+    | int
+    | long
+    | float
+    | double
+    | signed
+    | unsigned
+    | StructOrUnionSpecifier
+    # TODO: enum specifier
+    # TODO: typedef name
+    ;
+
+TypeQualifier
+    : const
+    | volatile
+    ;
+
+DeclarationSpecifiers
+    : StorageClassSpecifier
+    | StorageClassSpecifier DeclarationSpecifiers
+    | TypeSpecifier
+    | TypeSpecifier DeclarationSpecifiers
+    | TypeQualifier
+    | TypeQualifier DeclarationSpecifiers
+    ;
+
+TypeQualifierList
+    : TypeQualifier
+    | TypeQualifierList TypeQualifier
+    ;
+
+Pointer
+    : asterisk
+    | asterisk TypeQualifierList
+    | asterisk Pointer
+    | asterisk TypeQualifierList Pointer
+    ;
+
+InitializerList
+    ;
+
+Initializer
+    : AssignmentExpression
+    | lbrace InitializerList rbrace
+    | lbrace InitializerList comma rbrace
+    ;
+
+InitializerListCont
+    : comma Initializer
+    ;
+
+InitializerList
+    : Initializer
+    | InitializerList InitializerListCont
+    ;
+
+InitDeclaratorCont
+    : assign Initializer
+    ;
+
+InitDeclarator
+    : Declarator
+    | Declarator InitDeclaratorCont
+    ;
+
+InitDeclaratorListCont
+    : comma InitDeclarator
+    ;
+
+InitDeclaratorList
+    : InitDeclarator
+    | InitDeclaratorList InitDeclaratorListCont
+    ;
+
+DeclarationCont
+    : InitDeclaratorList semicolon
+    ;
+
+Declaration
+    : DeclarationSpecifiers semicolon
+    | DeclarationSpecifiers DeclarationCont
+    ;
+
+TranslationUnit
+    : Declaration
     ;

@@ -232,39 +232,40 @@ Closure(jcc::parser_gen::Grammar const &grammar,
         TerminalMap const              &firstTable) {
     jcc::parser_gen::ItemSet closure{itemSet};
 
-    bool didChange = true;
-    while (didChange) {
-        didChange = false;
+    // Use a queue-like mechanism to process newly added items
+    std::vector<jcc::parser_gen::Item const *> worklist;
+    for (auto const &item : closure) { worklist.push_back(&item); }
 
-        for (auto currentClosure{closure}; auto const &item : currentClosure) {
-            // Get the symbol after the dot (if any)
-            auto const nextSymbol{item.GetSymbolAtPosition()};
-            if (!std::holds_alternative<jcc::parser_gen::NonTerminalIndex>(
-                        nextSymbol
-                )) {
-                continue;// Skip if no symbol after dot or not a non-terminal
+    while (!worklist.empty()) {
+        auto const *currentItem{worklist.back()};
+        worklist.pop_back();
+
+        // Get the symbol after the dot (if any)
+        auto const nextSymbol{currentItem->GetSymbolAtPosition()};
+        if (!std::holds_alternative<jcc::parser_gen::NonTerminalIndex>(
+                    nextSymbol
+            )) {
+            continue;// Skip if no symbol after dot or not a non-terminal
+        }
+
+        auto const nonTerminal{
+                std::get<jcc::parser_gen::NonTerminalIndex>(nextSymbol)
+        };
+
+        // Add items for all productions of the non-terminal
+        for (auto const &production : grammar) {
+            if (production.m_NonTerminal != nonTerminal) {
+                continue;
             }
 
-            auto const nonTerminal{
-                    std::get<jcc::parser_gen::NonTerminalIndex>(nextSymbol)
+            jcc::parser_gen::TerminalSet lookahead{
+                    ComputeLookahead(*currentItem, firstTable)
             };
 
-            // Add items for all productions of the non-terminal
-            for (auto const &production : grammar) {
-                if (production.m_NonTerminal != nonTerminal) {
-                    continue;
-                }
-
-                jcc::parser_gen::TerminalSet lookahead{
-                        ComputeLookahead(item, firstTable)
-                };
-
-                if (jcc::parser_gen::Item newItem{
-                            &production, 0, std::move(lookahead)
-                    };
-                    closure.insert(newItem).second) {
-                    didChange = true;
-                }
+            jcc::parser_gen::Item newItem{&production, 0, std::move(lookahead)};
+            if (closure.insert(newItem).second) {
+                // Add newly added item to the worklist
+                worklist.push_back(&(*closure.find(newItem)));
             }
         }
     }
