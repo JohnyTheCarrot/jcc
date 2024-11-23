@@ -49,6 +49,7 @@ namespace jcc::tokenizer::static_tokens {
             {"_Alignof", Keyword::Alignof},
             {"_Atomic", Keyword::Atomic},
             {"_Bool", Keyword::Bool},
+            {"bool", Keyword::Bool},
             {"_Complex", Keyword::Complex},
             {"_Generic", Keyword::Generic},
             {"_Imaginary", Keyword::Imaginary},

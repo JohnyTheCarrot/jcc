@@ -63,6 +63,18 @@
 %token union jcc::tokenizer::Keyword::Union
 %token lbracket jcc::tokenizer::Punctuator::LeftBracket
 %token rbracket jcc::tokenizer::Punctuator::RightBracket
+%token ellipsis jcc::tokenizer::Punctuator::Ellipsis
+%token case jcc::tokenizer::Keyword::Case
+%token default jcc::tokenizer::Keyword::Default
+%token return jcc::tokenizer::Keyword::Return
+%token continue jcc::tokenizer::Keyword::Continue
+%token break jcc::tokenizer::Keyword::Break
+%token goto jcc::tokenizer::Keyword::Goto
+%token if jcc::tokenizer::Keyword::If
+%token else jcc::tokenizer::Keyword::Else
+%token string jcc::tokenizer::GenericType::StringConstant
+%token switch jcc::tokenizer::Keyword::Switch
+%token bool jcc::tokenizer::Keyword::Bool
 
 # ------------
 # Expressions
@@ -81,6 +93,7 @@ Expression
 PrimaryExpression
     : identifier
     | number
+    | string
     | lparen Expression rparen
     | pp_lparen Expression rparen
     ;
@@ -317,11 +330,82 @@ Pointer
 Declarator
     ;
 
+IdentifierListCont
+    : comma identifier
+    ;
+
+IdentifierList
+    : identifier
+    | IdentifierList IdentifierListCont
+    ;
+
+DirectAbstractDeclarator
+    ;
+
+AbstractDeclarator
+    : Pointer
+    | DirectAbstractDeclarator
+    | Pointer DirectAbstractDeclarator
+    ;
+
+ParameterTypeList
+    ;
+
+DirectAbstractDeclaratorCont
+    : lbracket rbracket
+    | lbracket ConstantExpression rbracket
+    | lparen rparen
+    | pp_lparen rparen
+    | lparen ParameterTypeList rparen
+    | pp_lparen ParameterTypeList rparen
+    ;
+
+DirectAbstractDeclarator
+    : lbracket rbracket
+    | lbracket ConstantExpression rbracket
+    | lparen rparen
+    | pp_lparen rparen
+    | lparen AbstractDeclarator rparen
+    | pp_lparen AbstractDeclarator rparen
+    | DirectAbstractDeclarator DirectAbstractDeclaratorCont
+    ;
+
+DeclarationSpecifiers
+    ;
+
+ParameterDeclaration
+    : DeclarationSpecifiers
+    | DeclarationSpecifiers Declarator
+    | DeclarationSpecifiers AbstractDeclarator
+    ;
+
+ParameterListCont
+    : comma ParameterDeclaration
+    ;
+
+ParameterList
+    : ParameterDeclaration
+    | ParameterList ParameterListCont
+    ;
+
+ParameterTypeListCont
+    : comma ellipsis
+    ;
+
+ParameterTypeList
+    : ParameterList
+    | ParameterList ParameterTypeListCont
+    ;
+
 DirectDeclaratorCont
     : lbracket rbracket
     | lbracket ConstantExpression rbracket
     | lparen rparen
     | pp_lparen rparen
+    | lparen IdentifierList rparen
+    | pp_lparen IdentifierList rparen
+    | lparen ParameterTypeList rparen
+    | pp_lparen ParameterTypeList rparen
     ;
 
 DirectDeclarator
@@ -382,6 +466,7 @@ TypeSpecifier
     | double
     | signed
     | unsigned
+    | bool
     | StructOrUnionSpecifier
     # TODO: enum specifier
     # TODO: typedef name
@@ -458,6 +543,110 @@ Declaration
     | DeclarationSpecifiers DeclarationCont
     ;
 
-TranslationUnit
+DeclarationList
     : Declaration
+    | DeclarationList Declaration
+    ;
+
+Statement
+    ;
+
+Label
+    # TODO: attribute specifier sequence
+    : identifier colon
+    | case ConstantExpression colon
+    | default colon
+    ;
+
+#LabeledStatement
+#    : Label Statement
+#    ;
+
+ExpressionStatement
+    : semicolon
+    | Expression semicolon
+    # TODO: attribute specifier sequence + Expression + semicolon
+    ;
+
+ReturnCont
+    : semicolon
+    | Expression semicolon
+    ;
+
+JumpStatement
+    : return ReturnCont
+    | continue semicolon
+    | break semicolon
+    | goto identifier semicolon
+    ;
+
+CompoundStatement
+    ;
+
+SecondaryBlock
+    : Statement
+    ;
+
+SelectionExpression
+    : lparen Expression rparen
+    ;
+
+UnlabeledStatement
+    ;
+
+SelectionStatement
+    : if SelectionExpression SecondaryBlock
+    # TODO: For some reason else doesn't want to work
+    | if SelectionExpression SecondaryBlock else SecondaryBlock
+    | switch SelectionExpression SecondaryBlock
+    ;
+
+PrimaryBlock
+    : CompoundStatement
+    | SelectionStatement
+    ;
+
+UnlabeledStatement
+    : ExpressionStatement
+    | JumpStatement
+    | PrimaryBlock
+    # TODO: attribute specifier sequence + PrimaryBlock / JumpStatement
+    ;
+
+Statement
+    #: LabeledStatement
+    | UnlabeledStatement
+    ;
+
+BlockItem
+    : Declaration
+    | UnlabeledStatement
+    | Label
+    ;
+
+BlockItemList
+    : BlockItem
+    | BlockItemList BlockItem
+    ;
+
+CompoundStatement
+    : lbrace rbrace
+    | lbrace BlockItemList rbrace
+    ;
+
+FunctionDefinition
+    : DeclarationSpecifiers Declarator DeclarationList CompoundStatement
+    | DeclarationSpecifiers Declarator CompoundStatement
+    | Declarator DeclarationList CompoundStatement
+    | Declarator CompoundStatement
+    ;
+
+ExternalDeclaration
+    : Declaration
+    | FunctionDefinition
+    ;
+
+TranslationUnit
+    : ExternalDeclaration
+    | TranslationUnit ExternalDeclaration
     ;

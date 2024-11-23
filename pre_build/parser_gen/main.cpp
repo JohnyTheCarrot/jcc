@@ -212,9 +212,9 @@ jcc::parser_gen::TerminalSet ComputeLookahead(
         auto const &firstSet{firstTable.at(symbol)};
 
         betaFirst.insert(firstSet.cbegin(), firstSet.cend());
-        canDeriveEpsilon =
-                firstSet.contains(jcc::parser_gen::TerminalIndex::c_EpsilonIndex
-                );
+        canDeriveEpsilon = firstSet.contains(
+                jcc::parser_gen::TerminalIndex::c_EpsilonIndex
+        );
     }
     lookahead.insert(betaFirst.cbegin(), betaFirst.cend());
 
@@ -381,8 +381,7 @@ struct Action final {
     }
 
     [[nodiscard]]
-    bool
-    operator==(Action const &other) const {
+    bool operator==(Action const &other) const {
         return m_Type == other.m_Type && m_Value == other.m_Value;
     }
 };
@@ -401,19 +400,53 @@ struct ParsingTableRow final {
 
 using ParsingTable = std::vector<ParsingTableRow>;
 
+void VerifyInsertion(
+        ParsingTableRow                                         &currentRow,
+        std::pair<jcc::parser_gen::TerminalIndex, Action> const &newAction
+) {
+    if (auto it = currentRow.m_Actions.find(newAction.first);
+        it != currentRow.m_Actions.end()) {
+        // Conflict detected: existing action vs new action
+        if (it->second.m_Type == ActionType::Reduce &&
+            newAction.second.m_Type == ActionType::Shift) {
+            // Prioritize Shift over Reduce
+            it->second = newAction.second;
+            std::cout << "Shift/Reduce conflict detected and resolved by "
+                         "overwriting "
+                         "existing Reduce with new Shift"
+                      << std::endl;
+            return;
+        }
+        if (it->second.m_Type == ActionType::Shift &&
+            newAction.second.m_Type == ActionType::Reduce) {
+            // Keep existing Shift, ignore new Reduce
+            std::cout << "Shift/Reduce conflict detected and resolved by "
+                         "keeping existing Shift"
+                      << std::endl;
+            return;
+        }
+
+        if (it->second == newAction.second) {
+            // No conflict, just ignore the new action
+            return;
+        }
+
+        // Handle other conflicts (e.g., Reduce-Reduce or Shift-Shift)
+        throw std::runtime_error{
+                "Shift/Reduce conflict detected and not resolved"
+        };
+    }
+
+    // No conflict, just insert the new action
+    currentRow.m_Actions.insert(newAction);
+}
+
 ParsingTable GenerateParsingTable(
         std::vector<jcc::parser_gen::ItemSet> const     &canonicalSetCollection,
         GotoMap const                                   &gotoMap,
         std::vector<jcc::parser_gen::NonTerminal> const &nonTerminals
 ) {
     ParsingTable table;
-
-    auto const verifyInsertion{[](auto &currentRow, auto const &pair) {
-        auto const &[_, result]{currentRow.m_Actions.emplace(pair)};
-        if (!result && currentRow.m_Actions.at(pair.first) != pair.second) {
-            throw std::runtime_error{"Invalid grammar, conflicts found"};
-        }
-    }};
 
     for (int i{}; i < static_cast<int>(canonicalSetCollection.size()); ++i) {
         auto const &itemSet{canonicalSetCollection[i]};
@@ -434,7 +467,7 @@ ParsingTable GenerateParsingTable(
             if (!item.HasNextSymbol()) {
                 if (item.m_Production->m_NonTerminal ==
                     jcc::parser_gen::NonTerminalIndex::c_SPrimeIndex) {
-                    verifyInsertion(
+                    VerifyInsertion(
                             currentRow,
                             std::make_pair(
                                     jcc::parser_gen::TerminalIndex::c_EofIndex,
@@ -445,7 +478,7 @@ ParsingTable GenerateParsingTable(
                 }
 
                 for (auto const &terminal : item.m_LookAhead) {
-                    verifyInsertion(
+                    VerifyInsertion(
                             currentRow,
                             std::make_pair(
                                     terminal, Action{ActionType::Reduce,
@@ -468,7 +501,7 @@ ParsingTable GenerateParsingTable(
                 throw std::runtime_error{"Invalid grammar, no goto found"};
             }
             auto const &[_sym, shiftIndex]{*it};
-            verifyInsertion(
+            VerifyInsertion(
                     currentRow,
                     std::make_pair(
                             std::get<jcc::parser_gen::TerminalIndex>(symbol),
