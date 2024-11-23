@@ -586,7 +586,7 @@ void OutputCPlusPlusLRTable(
     }
 
     cppFile << "\t};\n\n"
-            << "\tTable const c_LrOneTable{[] {\n"
+            << "\tTable constexpr c_LrOneTable{[] {\n"
             << "\t\tTable table{};\n\n";
 
     for (std::size_t i{}; i < table.size(); ++i) {
