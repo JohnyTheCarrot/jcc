@@ -23,6 +23,7 @@ namespace jcc::parsing {
         if (std::holds_alternative<tokenizer::Token>(node)) {
             os << std::string(depth, ' ');
             PrintTo(std::get<tokenizer::Token>(node).GetValueType(), &os);
+            os << '(' << std::get<tokenizer::Token>(node) << ')';
         } else {
             PrintTo(std::get<NonTerminalAstNode>(node), depth, os);
         }
@@ -61,19 +62,14 @@ namespace jcc::parsing {
             return *m_CurrentIt;
         }()};
 
-        std::cout << "token: " << token << '\n';
-
         switch (auto const &[index, action]{GetAction(token)}; action) {
             case ActionRowElement::Action::Shift:
                 m_NonTerminals.emplace(token);
                 m_States.push(index);
-                std::cout << "shift: " << index << '\n';
                 ++m_CurrentIt;
                 break;
             case ActionRowElement::Action::Reduce: {
                 auto const nonTerminal{c_GrammarLengths.at(index).first};
-                std::cout << "reduce: " << magic_enum::enum_name(nonTerminal)
-                          << '\n';
 
                 NonTerminalAstNode node{nonTerminal};
                 for (int i = 0; i < c_GrammarLengths.at(index).second; ++i) {
@@ -91,7 +87,6 @@ namespace jcc::parsing {
                                          .second
                                          .at(static_cast<int>(nonTerminal))
                                          .value());
-                std::cout << "goto: " << m_States.top() << '\n';
                 break;
             }
             case ActionRowElement::Action::Error: {
@@ -126,7 +121,6 @@ namespace jcc::parsing {
                 )};
             }
             case ActionRowElement::Action::Accept:
-                std::cout << "accept\n";
                 return false;
         }
 

@@ -641,139 +641,14 @@ int main(int argc, char *argv[]) {
     jcc::parser_gen::GrammarParser parser;
     auto const [terminals, nonTerminals, grammar]{parser.Parse(argv[1])};
 
-    using namespace jcc::parser_gen;
-
-    std::cout << "Grammar:" << std::endl;
-    for (auto const &production : grammar) {
-        std::cout << GetSymbolName(
-                             nonTerminals, terminals, production.m_NonTerminal
-                     )
-                  << " -> ";
-        for (auto const &symbol : production.m_Symbols) {
-            std::cout << GetSymbolName(nonTerminals, terminals, symbol) << " ";
-        }
-        std::cout << std::endl;
-    }
     auto const firstTable{GenerateFirstTable(nonTerminals, terminals, grammar)};
-    std::cout << "\nFirst Table:" << std::endl;
-    for (auto const &[symbol, firstSet] : firstTable) {
-        if (std::holds_alternative<TerminalIndex>(symbol)) {
-            continue;
-        }
-        std::cout << "FIRST(" << GetSymbolName(nonTerminals, terminals, symbol)
-                  << ") = {";
-        for (auto terminalIndex : firstSet) {
-            auto const &terminal{terminals.at(terminalIndex.m_Index)};
-            std::cout << terminal.m_Token << ", ";
-        }
-        std::cout << "}\n";
-    }
-
-    auto const followTable{GenerateFollowTable(terminals, firstTable, grammar)};
-    std::cout << "\nFollow Table:" << std::endl;
-    for (auto const &[symbol, followSet] : followTable) {
-        if (std::holds_alternative<TerminalIndex>(symbol)) {
-            continue;
-        }
-        std::cout << "FOLLOW(" << GetSymbolName(nonTerminals, terminals, symbol)
-                  << ") = {";
-        for (auto const &terminalIndex : followSet) {
-            auto const &terminal{terminals.at(terminalIndex.m_Index)};
-            std::cout << terminal.m_Token << ", ";
-        }
-        std::cout << "}\n";
-    }
 
     GotoMap    gotoMap;
     auto const items{GenerateCanonicalSetCollection(
             nonTerminals, terminals, grammar, firstTable, gotoMap
     )};
 
-    // print goto map
-    std::cout << "\nGoto Map:" << std::endl;
-    for (int i{}; i < static_cast<int>(gotoMap.size()); ++i) {
-        std::cout << "State " << i << ":\n";
-        for (auto const &[symbol, value] : gotoMap[i]) {
-            std::cout << "  " << GetSymbolName(nonTerminals, terminals, symbol)
-                      << " -> " << value << "\n";
-        }
-    }
-    std::cout << std::endl;
-
-    // print item set
-    auto i{0};
-    for (auto const &itemSet : items) {
-        std::cout << "I" << i << ":\n";
-
-        for (auto const &item : itemSet) {
-            auto const &production{item.m_Production};
-            auto const &nonTerminal{
-                    nonTerminals.at(production->m_NonTerminal.m_Index)
-            };
-
-            std::cout << "  " << nonTerminal.m_Name << " -> ";
-            for (int j{}; j < static_cast<int>(production->m_Symbols.size());
-                 ++j) {
-                if (j == item.m_Position) {
-                    std::cout << ". ";
-                }
-                auto const &symbol{production->m_Symbols[j]};
-                std::cout << GetSymbolName(nonTerminals, terminals, symbol)
-                          << " ";
-            }
-            if (item.m_Position ==
-                static_cast<int>(production->m_Symbols.size())) {
-                std::cout << ". ";
-            }
-            std::cout << ", ";
-            for (auto const &terminalIndex : item.m_LookAhead) {
-                auto const &terminal{terminals.at(terminalIndex.m_Index)};
-                std::cout << terminal.m_Token << ", ";
-            }
-            std::cout << std::endl;
-        }
-
-        ++i;
-    }
-
     auto const parsingTable{GenerateParsingTable(items, gotoMap, nonTerminals)};
-    std::cout << "\nParsing Table:" << std::endl;
-    for (int i{}; i < static_cast<int>(parsingTable.size()); ++i) {
-        auto const &row{parsingTable[i]};
-        std::cout << "State " << i << ":\n";
-        std::cout << "- Actions:\n";
-        for (auto const &[terminalIndex, action] : row.m_Actions) {
-            auto const &terminal{terminals.at(terminalIndex.m_Index)};
-            std::cout << "  " << terminal.m_Token << " -> ";
-            switch (action.m_Type) {
-                case ActionType::Shift:
-                    std::cout << "Shift " << action.m_Value;
-                    break;
-                case ActionType::Reduce:
-                    std::cout << "Reduce " << action.m_Value;
-                    break;
-                case ActionType::Accept:
-                    std::cout << "Accept";
-                    break;
-                case ActionType::Error:
-                    std::cout << "Error";
-                    break;
-            }
-            std::cout << std::endl;
-        }
-
-        std::cout << "- Goto:\n";
-        for (auto const &[nonTerminalIndex, value] : row.m_Goto) {
-            auto const &nonTerminal{nonTerminals.at(nonTerminalIndex.m_Index)};
-            std::cout << "  " << nonTerminal.m_Name << " -> ";
-            if (value.has_value()) {
-                std::cout << value.value();
-            } else {
-                std::cout << "Error";
-            }
-            std::cout << std::endl;
-        }
-    }
 
     std::string const cppOutputFile{argv[2]};
     std::string const hppOutputFile{argv[3]};

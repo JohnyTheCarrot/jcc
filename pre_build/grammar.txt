@@ -11,6 +11,44 @@
 %token plus jcc::tokenizer::Punctuator::Plus
 %token minus jcc::tokenizer::Punctuator::Minus
 %token tilde jcc::tokenizer::Punctuator::Tilde
+%token ampersand jcc::tokenizer::Punctuator::Ampersand
+%token lshift jcc::tokenizer::Punctuator::LessThanLessThan
+%token rshift jcc::tokenizer::Punctuator::GreaterThanGreaterThan
+%token less jcc::tokenizer::Punctuator::LessThan
+%token greater jcc::tokenizer::Punctuator::GreaterThan
+%token eq_op jcc::tokenizer::Punctuator::EqualEqual
+%token ne_op jcc::tokenizer::Punctuator::ExclamationMarkEqual
+%token caret jcc::tokenizer::Punctuator::Caret
+%token vertical_bar jcc::tokenizer::Punctuator::VerticalBar
+%token and_op jcc::tokenizer::Punctuator::AmpersandAmpersand
+%token or_op jcc::tokenizer::Punctuator::VerticalBarVerticalBar
+%token question_mark jcc::tokenizer::Punctuator::QuestionMark
+%token colon jcc::tokenizer::Punctuator::Colon
+%token assign jcc::tokenizer::Punctuator::Equal
+%token mul_assign jcc::tokenizer::Punctuator::AsteriskEqual
+%token div_assign jcc::tokenizer::Punctuator::SlashEqual
+%token mod_assign jcc::tokenizer::Punctuator::PercentEqual
+%token add_assign jcc::tokenizer::Punctuator::PlusEqual
+%token sub_assign jcc::tokenizer::Punctuator::MinusEqual
+%token lshift_assign jcc::tokenizer::Punctuator::LessThanLessThanEqual
+%token rshift_assign jcc::tokenizer::Punctuator::GreaterThanGreaterThanEqual
+%token and_assign jcc::tokenizer::Punctuator::AmpersandEqual
+%token xor_assign jcc::tokenizer::Punctuator::CaretEqual
+%token or_assign jcc::tokenizer::Punctuator::VerticalBarEqual
+%token comma jcc::tokenizer::Punctuator::Comma
+%token exclamation_mark jcc::tokenizer::Punctuator::ExclamationMark
+%token less_eq jcc::tokenizer::Punctuator::LessThanEqual
+%token greater_eq jcc::tokenizer::Punctuator::GreaterThanEqual
+%token mod jcc::tokenizer::Punctuator::Percent
+%token typedef jcc::tokenizer::Keyword::Typedef
+%token extern jcc::tokenizer::Keyword::Extern
+%token static jcc::tokenizer::Keyword::Static
+%token auto jcc::tokenizer::Keyword::Auto
+%token register jcc::tokenizer::Keyword::Register
+
+# ------------
+# Expressions
+# ------------
 
 Expression
     ;
@@ -50,6 +88,8 @@ UnaryOperator
     | plus
     | minus
     | tilde
+    | ampersand
+    | exclamation_mark
     ;
 
 UnaryExpression
@@ -59,24 +99,155 @@ UnaryExpression
     | UnaryOperator UnaryExpression
     ;
 
-MultiplicationCont
+MultiplicativeCont
     : asterisk UnaryExpression
+    | slash UnaryExpression
+    | mod UnaryExpression
     ;
 
-Multiplication
+Multiplicative
     : UnaryExpression
-    | Multiplication MultiplicationCont
+    | Multiplicative MultiplicativeCont
     ;
 
-AdditionCont
-    : plus Multiplication
+AdditiveCont
+    : plus Multiplicative
+    | minus Multiplicative
     ;
 
-Addition
-    : Multiplication
-    | Addition AdditionCont
+Additive
+    : Multiplicative
+    | Additive AdditiveCont
+    ;
+
+ShiftCont
+    : lshift Additive
+    | rshift Additive
+    ;
+
+ShiftExpression
+    : Additive
+    | ShiftExpression ShiftCont
+    ;
+
+RelationalCont
+    : less ShiftExpression
+    | greater ShiftExpression
+    | less_eq ShiftExpression
+    | greater_eq ShiftExpression
+    ;
+
+RelationalExpression
+    : ShiftExpression
+    | RelationalExpression RelationalCont
+    ;
+
+EqualityCont
+    : eq_op RelationalExpression
+    | ne_op RelationalExpression
+    ;
+
+EqualityExpression
+    : RelationalExpression
+    | EqualityExpression EqualityCont
+    ;
+
+AndExpressionCont
+    : ampersand EqualityExpression
+    ;
+
+AndExpression
+    : EqualityExpression
+    | AndExpression AndExpressionCont
+    ;
+
+ExclusiveOrExpressionCont
+    : caret AndExpression
+    ;
+
+ExclusiveOrExpression
+    : AndExpression
+    | ExclusiveOrExpression ExclusiveOrExpressionCont
+    ;
+
+InclusiveOrExpressionCont
+    : vertical_bar ExclusiveOrExpression
+    ;
+
+InclusiveOrExpression
+    : ExclusiveOrExpression
+    | InclusiveOrExpression InclusiveOrExpressionCont
+    ;
+
+LogicalAndExpressionCont
+    : and_op InclusiveOrExpression
+    ;
+
+LogicalAndExpression
+    : InclusiveOrExpression
+    | LogicalAndExpression LogicalAndExpressionCont
+    ;
+
+LogicalOrExpressionCont
+    : or_op LogicalAndExpression
+    ;
+
+LogicalOrExpression
+    : LogicalAndExpression
+    | LogicalOrExpression LogicalOrExpressionCont
+    ;
+
+ConditionalExpression
+    ;
+
+ConditionalExpressionCont2
+    : colon ConditionalExpression
+    ;
+
+ConditionalExpressionCont
+    : question_mark Expression ConditionalExpressionCont2
+    ;
+
+ConditionalExpression
+    : LogicalOrExpression
+    | LogicalOrExpression ConditionalExpressionCont
+    ;
+
+AssignmentOperator
+    : assign
+    | mul_assign
+    | div_assign
+    | mod_assign
+    | add_assign
+    | sub_assign
+    | lshift_assign
+    | rshift_assign
+    | and_assign
+    | xor_assign
+    | or_assign
+    ;
+
+AssignmentExpression
+    ;
+
+AssignmentCont
+    : AssignmentOperator AssignmentExpression
+    ;
+
+AssignmentExpression
+    : ConditionalExpression
+    | UnaryExpression AssignmentCont
+    ;
+
+ExpressionCont
+    : comma AssignmentExpression
     ;
 
 Expression
-    : Addition
+    : AssignmentExpression
+    | Expression ExpressionCont
+    ;
+
+ConstantExpression
+    : ConditionalExpression
     ;

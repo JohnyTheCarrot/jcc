@@ -8,8 +8,6 @@
 namespace jcc::parser_gen {
     TerminalIndex
     GrammarParserController::AddTerminal(std::string token, std::string value) {
-        std::cout << "Adding token: " << token << " with value: " << value
-                  << std::endl;
         Terminal terminal{std::move(value)};
         if (std::ranges::find(
                     m_Terminals.cbegin(), m_Terminals.cend(), terminal
@@ -46,8 +44,6 @@ namespace jcc::parser_gen {
     }
 
     NonTerminalIndex GrammarParserController::AddNonTerminal(std::string name) {
-        std::cout << "Adding non-terminal: " << name << std::endl;
-
         NonTerminal nonTerminal{std::move(name)};
         if (auto const it{std::find(
                     m_NonTerminals.cbegin(), m_NonTerminals.cend(), nonTerminal
@@ -188,8 +184,6 @@ namespace jcc::parser_gen {
             return;
         }
 
-        std::cout << "Adding production for non-terminal: " << name
-                  << std::endl;
         m_CurrentNonTerminal = m_Controller.AddNonTerminal(std::move(name));
     }
 
@@ -209,7 +203,6 @@ namespace jcc::parser_gen {
             )};
             std::string const token{firstNonSpace, nextSpace};
 
-            std::cout << "Adding symbol: " << token << std::endl;
             auto const symbol{m_Controller.GetSymbol(token)};
             production.m_Symbols.push_back(symbol);
 
@@ -253,6 +246,8 @@ namespace jcc::parser_gen {
                         throw std::runtime_error{"No non-terminal declared"};
                     }
                     m_CurrentNonTerminal.reset();
+                    break;
+                case '#':
                     break;
                 default:
                     ParseNonTerminalDeclaration(
