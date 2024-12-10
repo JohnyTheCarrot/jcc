@@ -43,7 +43,7 @@ add_custom_command(
         OUTPUT ${GENERATED_OUTPUT}
         COMMAND ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_FILE} ${GENERATED_LR_TABLE_CPP} ${GENERATED_LR_TABLE_HPP}
         DEPENDS ${CMAKE_BINARY_DIR}/lr1_gen_exec ${GRAMMAR_OUTPUT_FILE}
-        COMMENT "Running lr1_gen to generate parser.cpp"
+        COMMENT "Running lr1_gen to generate lr_table.cpp"
 )
 
 # Step 4: Create a custom target that depends on the generated output

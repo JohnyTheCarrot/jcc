@@ -6,6 +6,14 @@
 #include "../../pre_build/parser_gen/production.hpp"
 #include "lr_table.hpp"
 
+// #define JCC_DEBUG
+#ifdef JCC_DEBUG
+#include <iostream>
+#define DEBUG(x) std::cout << x;
+#else
+#define DEBUG(x)
+#endif
+
 namespace jcc::parsing {
     void PrintTo(NonTerminalAstNode const &node, int depth, std::ostream &os) {
         os << std::string(depth, ' ') << magic_enum::enum_name(node.m_Type)
@@ -67,12 +75,11 @@ namespace jcc::parsing {
                 m_NonTerminals.emplace(token);
                 m_States.push(index);
                 ++m_CurrentIt;
-                std::cout << "Shift " << token << '\n';
+                DEBUG("Shift " << token << '\n');
                 break;
             case ActionRowElement::Action::Reduce: {
                 auto const nonTerminal{c_GrammarLengths.at(index).first};
-                std::cout << "Reduce: " << magic_enum::enum_name(nonTerminal)
-                          << '\n';
+                DEBUG("Reduce: " << magic_enum::enum_name(nonTerminal) << '\n');
 
                 NonTerminalAstNode node{nonTerminal};
                 for (int i = 0; i < c_GrammarLengths.at(index).second; ++i) {
@@ -90,8 +97,8 @@ namespace jcc::parsing {
                                          .second
                                          .at(static_cast<int>(nonTerminal))
                                          .value());
-                std::cout << "Goto " << magic_enum::enum_name(nonTerminal)
-                          << " (" << m_States.top() << ")" << '\n';
+                DEBUG("Goto " << magic_enum::enum_name(nonTerminal) << " ("
+                              << m_States.top() << ")" << '\n');
                 break;
             }
             case ActionRowElement::Action::Error: {
@@ -119,13 +126,11 @@ namespace jcc::parsing {
 
                 std::stringstream tokenSs;
                 PrintTo(token.GetValueType(), &tokenSs);
-                tokenSs << '(' << token << ")\n";
-                PrintTo(token.m_Span, &tokenSs);
 
-                throw std::runtime_error{std::format(
-                        "Unexpected token: {}\nExpected one of: {}",
+                throw FatalCompilerError{
+                        Diagnosis::Kind::SyntaxError, token.m_Span,
                         tokenSs.str(), expectedSs.str()
-                )};
+                };
             }
             case ActionRowElement::Action::Accept:
                 return false;

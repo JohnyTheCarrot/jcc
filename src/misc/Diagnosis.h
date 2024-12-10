@@ -16,6 +16,7 @@ namespace jcc {
         using Data = std::optional<std::variant<char, std::string>>;
 
         enum class Kind {
+            SyntaxError,
             TK_StrUnterminated,
             TK_CharUnterminated,
             TK_HeaderNameUnterminated,
@@ -97,8 +98,8 @@ namespace jcc {
     namespace diagnostic_utils {
         constexpr auto c_ColorNeutral{fmt::color::dim_gray};
 
-        constexpr fmt::color GetClassColor(Diagnosis::Class diagClass
-        ) noexcept {
+        constexpr fmt::color
+        GetClassColor(Diagnosis::Class diagClass) noexcept {
             switch (diagClass) {
                 case Diagnosis::Class::Warning:
                     return fmt::color::orange;
@@ -108,8 +109,8 @@ namespace jcc {
             }
         }
 
-        constexpr char const *GetClassName(Diagnosis::Class diagClass
-        ) noexcept {
+        constexpr char const *
+        GetClassName(Diagnosis::Class diagClass) noexcept {
             switch (diagClass) {
                 case Diagnosis::Class::Warning:
                     return "Warning";

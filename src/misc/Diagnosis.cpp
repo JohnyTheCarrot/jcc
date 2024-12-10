@@ -37,6 +37,18 @@ namespace jcc {
 
     std::string Diagnosis::GetDiagMessage() const {
         switch (m_Kind) {
+            case Kind::SyntaxError:
+                return fmt::format(
+                        "Unexpected token {}. Expected one of {}",
+                        fmt::styled(
+                                std::get<std::string>(m_Data0.value()),
+                                fmt::fg(fmt::color::cyan)
+                        ),
+                        fmt::styled(
+                                std::get<std::string>(m_Data1.value()),
+                                fmt::fg(fmt::color::cyan)
+                        )
+                );
             case Kind::TK_StrUnterminated:
                 return "String literal was not terminated.";
             case Kind::TK_CharUnterminated:
