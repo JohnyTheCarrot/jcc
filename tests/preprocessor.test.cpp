@@ -25,22 +25,19 @@ class PreproTest
 TEST_P(PreproTest, Preprocessing) {
     std::istringstream         iss{std::get<1>(GetParam())};
     Diagnosis::Vec             diagnoses{};
-    preprocessor::Preprocessor preprocessor{"test", iss, diagnoses};
+    preprocessor::Preprocessor preprocessor{iss, diagnoses};
 
     TokenList tokens{};
 
     try {
         std::transform(
-                preprocessor.begin(), preprocessor.EndOfFile(),
+                preprocessor.begin(),
+                preprocessor.EndOfFile<preprocessor::PreprocessorIterator>(),
                 std::back_inserter(tokens),
-                [](auto tokenValue) { return tokenValue.m_Value; }
+                [](auto const &tokenValue) { return tokenValue.m_Value; }
         );
     } catch (FatalCompilerError const &e) {
-        Diagnosis diag{e.GetSpan(), Diagnosis::Class::Error, e.GetKind()};
-
-        diag.Print();
-
-        FAIL();
+        FAIL() << e.GetDiagnosis().GetMessage();
     }
 
     TokenList const expectedTokens{std::get<2>(GetParam())};

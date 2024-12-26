@@ -16,6 +16,7 @@ namespace jcc::tokenizer::pp_numbers {
             case '\'':
                 ++charIter;
 
+                // Make sure the single quote is followed by a digit
                 if (charIter == CharIter::end() ||
                     (!utils::IsNonDigit(charIter->m_Char) &&
                      std::isdigit(charIter->m_Char)))
@@ -53,15 +54,10 @@ namespace jcc::tokenizer::pp_numbers {
 
     Token
     Tokenize(CharIter &charIter, SpanMarker const &start, bool startsWithDot) {
+        // In order to have reached this point, we must have already consumed a digit.
+        // We therefore know that charIter must be a digit and cannot be at the end of the input.
         std::string number{startsWithDot ? "." : ""};
         Span span{charIter.GetFileName(), start, start, charIter.GetInput()};
-
-        if (charIter == CharIter::end()) {
-            return Token{
-                    .m_Value = PpNumber{std::move(number)},
-                    .m_Span  = std::move(span)
-            };
-        }
 
         number += charIter->m_Char;
         ++charIter;

@@ -1,6 +1,6 @@
 #include "tokenizer/token.h"
 
-#include <cassert>                 // for assert
+#include <cassert>                  // for assert
 #include <cctype>                   // for isalnum, isalpha
 #include <cstdint>                  // for uint32_t
 #include <magic_enum/magic_enum.hpp>// for enum_name

@@ -23,6 +23,9 @@ namespace jcc {
 
         friend std::ostream &
         operator<<(std::ostream &os, SpanMarker const &spanMarker);
+
+        [[nodiscard]]
+        SpanMarker operator-(int value) const;
     };
 
     struct Span final {
@@ -38,12 +41,10 @@ namespace jcc {
         friend void PrintTo(Span const &span, std::ostream *os);
 
         [[nodiscard]]
-        Span
-        operator+(Span const &other) const noexcept;
+        Span operator+(Span const &other) const noexcept;
 
         [[nodiscard]]
-        Span const &
-        operator+=(Span const &other) noexcept;
+        Span const &operator+=(Span const &other) noexcept;
     };
 }// namespace jcc
 

@@ -12,6 +12,15 @@ namespace jcc {
                m_RealCharacterIndex == other.m_RealCharacterIndex;
     }
 
+    SpanMarker SpanMarker::operator-(int value) const {
+        SpanMarker copy{*this};
+
+        copy.m_CharacterIndex -= value;
+        copy.m_RealCharacterIndex -= value;
+
+        return copy;
+    }
+
     void SpanMarker::NextChar(bool shouldIncrementReal, int number) noexcept {
         m_CharacterIndex += number;
         if (shouldIncrementReal)

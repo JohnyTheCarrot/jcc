@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace jcc {
-    template<size_t charRangeStart, size_t charRangeEnd, class TValue>
+    template<char charRangeStart, char charRangeEnd, class TValue>
     struct TrieNode final {
     public:
         static_assert(
@@ -30,8 +30,10 @@ namespace jcc {
 
         TrieNode() = default;
 
-        TrieNode(std::initializer_list<std::pair<std::string_view, TValue>>
-                         initList) {
+        TrieNode(
+                std::initializer_list<std::pair<std::string_view, TValue>>
+                        initList
+        ) {
             for (auto const &[key, value] : initList) Insert(key, value);
         }
 
@@ -89,8 +91,8 @@ namespace jcc {
         // }
 
         [[nodiscard]]
-        std::pair<TrieNode const *, std::optional<Leaf>> Find(char character
-        ) const {
+        std::pair<TrieNode const *, std::optional<Leaf>>
+        Find(char character) const {
             char const charIdx{static_cast<char>(
                     static_cast<size_t>(character) - charRangeStart
             )};

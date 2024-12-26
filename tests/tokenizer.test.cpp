@@ -25,7 +25,7 @@ TEST_P(TokenizerTest, Tokenizing) {
     auto const tokenize{[] {
         std::istringstream iss{std::get<0>(GetParam())};
         Diagnosis::Vec     diagnoses{};
-        Tokenizer          tokenizer{iss, "test"};
+        Tokenizer          tokenizer{iss};
 
         return tokenizer.GetNextToken();
     }};
@@ -41,7 +41,7 @@ TEST_P(TokenizerTest, Tokenizing) {
                    << " but got no exception, got token instead: "
                    << testing::PrintToString(token.value().m_Value);
         } catch (jcc::FatalCompilerError const &ex) {
-            EXPECT_EQ(exceptionDiagKind, ex.GetKind());
+            EXPECT_EQ(exceptionDiagKind, ex.GetDiagnosis().GetKind());
         } catch (...) {
             FAIL() << "Expected jcc::FatalCompilerError but got a different "
                       "exception";
@@ -668,7 +668,9 @@ INSTANTIATE_TEST_SUITE_P(
                 ),
                 std::make_tuple("10.0", PpNumber{"10.0"}, DiagnosisKindVec{}),
                 std::make_tuple("10Ex", PpNumber{"10Ex"}, DiagnosisKindVec{}),
-                std::make_tuple(".15", PpNumber{".15"}, DiagnosisKindVec{})
+                std::make_tuple(".15", PpNumber{".15"}, DiagnosisKindVec{}),
+                std::make_tuple("16.", PpNumber{"16."}, DiagnosisKindVec{}),
+                std::make_tuple("18ull", PpNumber{"18ull"}, DiagnosisKindVec{})
         )
 );
 
@@ -679,7 +681,7 @@ class SpanGenerationTest
 TEST_P(SpanGenerationTest, SpanGeneration) {
     std::istringstream iss{std::get<0>(GetParam())};
     Diagnosis::Vec     diagnoses{};
-    Tokenizer          tokenizer{iss, "test"};
+    Tokenizer          tokenizer{iss};
 
     auto const optionalToken{tokenizer.GetNextToken()};
     ASSERT_TRUE(optionalToken.has_value());

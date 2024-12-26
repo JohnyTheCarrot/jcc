@@ -33,6 +33,14 @@ namespace jcc {
         return m_Message;
     }
 
+    Diagnosis::Kind Diagnosis::GetKind() const noexcept {
+        return m_Kind;
+    }
+
+    Diagnosis::Class Diagnosis::GetClass() const noexcept {
+        return m_Class;
+    }
+
     void Diagnosis::JumpStreamToStartLine() const {
         m_Span.m_IStream->seekg(std::ios::beg);
 
@@ -180,6 +188,8 @@ namespace jcc {
                        "#else.";
             case Kind::PP_UndefExpectedIdentifier:
                 return "Expected identifier in #undef directive.";
+            case Kind::PRS_UnrecognizedIntegerSuffix:
+                return "Unrecognized integer suffix.";
         }
 
         assert(false);

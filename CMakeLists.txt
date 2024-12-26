@@ -66,6 +66,12 @@ set(
         src/preprocessor/commands/else_command.cpp
         src/preprocessor/commands/undef_command.h
         src/preprocessor/commands/undef_command.cpp
+        src/parsing_sema/types/type.h
+        src/parsing_sema/types/type.cpp
+        src/parsing_sema/integer_constant.h
+        src/parsing_sema/integer_constant.cpp
+        src/parsing_sema/parser.h
+        src/parsing_sema/ast_node.h
 )
 
 add_executable("${PROJECT_NAME}"
@@ -98,10 +104,10 @@ enable_testing()
 
 add_executable(${TEST_PROJECT_NAME} ${SRC}
         tests/preprocessor.test.cpp
-        #        tests/tokenizer.old.test.cpp
         tests/trie.test.cpp
         tests/char_iter.cpp
         tests/tokenizer.test.cpp
+        tests/parser.test.cpp
 )
 
 target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt)

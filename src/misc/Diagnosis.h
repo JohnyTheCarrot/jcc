@@ -65,6 +65,7 @@ namespace jcc {
             PP_ExpectedEndif,
             PP_UndefExpectedIdentifier,
             PP_Custom,
+            PRS_UnrecognizedIntegerSuffix,
             TODO,
         };
 
@@ -80,6 +81,12 @@ namespace jcc {
 
         [[nodiscard]]
         std::string const &GetMessage() const noexcept;
+
+        [[nodiscard]]
+        Kind GetKind() const noexcept;
+
+        [[nodiscard]]
+        Class GetClass() const noexcept;
 
     private:
         Span        m_Span;
@@ -99,8 +106,8 @@ namespace jcc {
     namespace diagnostic_utils {
         constexpr auto c_ColorNeutral{fmt::color::dim_gray};
 
-        constexpr fmt::color GetClassColor(Diagnosis::Class diagClass
-        ) noexcept {
+        constexpr fmt::color
+        GetClassColor(Diagnosis::Class diagClass) noexcept {
             switch (diagClass) {
                 case Diagnosis::Class::Warning:
                     return fmt::color::orange;
@@ -110,8 +117,8 @@ namespace jcc {
             }
         }
 
-        constexpr char const *GetClassName(Diagnosis::Class diagClass
-        ) noexcept {
+        constexpr char const *
+        GetClassName(Diagnosis::Class diagClass) noexcept {
             switch (diagClass) {
                 case Diagnosis::Class::Warning:
                     return "Warning";

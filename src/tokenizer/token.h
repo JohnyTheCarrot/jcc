@@ -17,8 +17,7 @@ namespace jcc::tokenizer {
         enum class HeaderType { HChar, QChar, MacroName } m_HeaderType;
 
         [[nodiscard]]
-        bool
-        operator==(IncludeDirective const &other) const;
+        bool operator==(IncludeDirective const &other) const;
 
         friend void
         PrintTo(IncludeDirective const &headerName, std::ostream *os);
@@ -35,8 +34,7 @@ namespace jcc::tokenizer {
         static bool IsValidChar(char c);
 
         [[nodiscard]]
-        bool
-        operator==(Identifier const &other) const;
+        bool operator==(Identifier const &other) const;
 
         friend void PrintTo(Identifier const &identifier, std::ostream *os);
     };
@@ -47,8 +45,7 @@ namespace jcc::tokenizer {
         std::string m_Number{};
 
         [[nodiscard]]
-        bool
-        operator==(PpNumber const &other) const;
+        bool operator==(PpNumber const &other) const;
 
         friend void PrintTo(PpNumber const &ppNumber, std::ostream *os);
     };
@@ -69,11 +66,10 @@ namespace jcc::tokenizer {
 
     struct CharacterConstant final {
         compiler_data_types::Char32::type m_Character;
-        ConstantPrefix                    m_Prefix;
+        ConstantPrefix                    m_Prefix{ConstantPrefix::None};
 
         [[nodiscard]]
-        bool
-        operator==(CharacterConstant const &other) const;
+        bool operator==(CharacterConstant const &other) const;
 
         friend void
         PrintTo(CharacterConstant const &characterConstant, std::ostream *os);
@@ -84,11 +80,10 @@ namespace jcc::tokenizer {
 
     struct StringConstant final {
         std::string    m_String;
-        ConstantPrefix m_Prefix;
+        ConstantPrefix m_Prefix{ConstantPrefix::None};
 
         [[nodiscard]]
-        bool
-        operator==(StringConstant const &other) const;
+        bool operator==(StringConstant const &other) const;
 
         friend void
         PrintTo(StringConstant const &stringConstant, std::ostream *os);
@@ -262,8 +257,7 @@ namespace jcc::tokenizer {
         }
 
         [[nodiscard]]
-        bool
-        operator==(Token const &other) const;
+        bool operator==(Token const &other) const;
 
         friend std::ostream &operator<<(std::ostream &os, Token const &token);
 
