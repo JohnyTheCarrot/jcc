@@ -125,15 +125,27 @@ namespace jcc::parsing_sema {
                 std::cout << floatingValue << std::endl;
                 return nullptr;
             }
-
             auto const startOffset{
                     std::distance(ppNumber.m_Number.cbegin(), numStart)
             };
+
+            // TODO: this likely allows for separators in the middle of suffixes
+            std::string numberWithoutSeparators;
+            numberWithoutSeparators.reserve(
+                    ppNumber.m_Number.size() - startOffset
+            );
+            std::copy_if(
+                    ppNumber.m_Number.cbegin() + startOffset,
+                    ppNumber.m_Number.cend(),
+                    std::back_inserter(numberWithoutSeparators),
+                    [](char c) { return c != '\''; }
+            );
+
             IntValue   integerValue{};
             auto const result{std::from_chars(
-                    ppNumber.m_Number.data() + startOffset,
-                    ppNumber.m_Number.data() + startOffset +
-                            (ppNumber.m_Number.size() - startOffset),
+                    numberWithoutSeparators.data(),
+                    numberWithoutSeparators.data() +
+                            numberWithoutSeparators.size(),
                     integerValue, radix
             )};
             if (result.ec != std::errc{}) {

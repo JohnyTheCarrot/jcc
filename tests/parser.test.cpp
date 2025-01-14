@@ -114,6 +114,10 @@ INSTANTIATE_TEST_SUITE_P(
                 ICP_RULE(
                         0x100000000 /* ULONG_MAX + 1 */,
                         types::StandardIntegerType::LongLong, Signedness::Signed
+                ),
+                ICP_RULE(
+                        1'000, types::StandardIntegerType::Int,
+                        Signedness::Signed
                 )
         )
 );
