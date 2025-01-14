@@ -68,10 +68,12 @@ set(
         src/preprocessor/commands/undef_command.cpp
         src/parsing_sema/types/type.h
         src/parsing_sema/types/type.cpp
-        src/parsing_sema/integer_constant.h
-        src/parsing_sema/integer_constant.cpp
         src/parsing_sema/parser.h
         src/parsing_sema/ast_node.h
+        src/parsing_sema/numeric_constant.h
+        src/parsing_sema/numeric_constant.cpp
+        src/platform/platform.h
+        src/platform/platform.cpp
 )
 
 add_executable("${PROJECT_NAME}"

@@ -20,6 +20,10 @@ namespace jcc::parsing_sema::types {
         *os << "StandardIntegerType::" << magic_enum::enum_name(bitInteger);
     }
 
+    bool IntegerType::operator==(IntegerType const &other) const {
+        return m_Type == other.m_Type && m_Sign == other.m_Sign;
+    }
+
     void PrintTo(IntegerType type, std::ostream *os) {
         *os << "IntegerType{";
         std::visit([&os](auto const &t) { PrintTo(t, os); }, type.m_Type);

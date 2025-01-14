@@ -7,8 +7,12 @@
 
 namespace jcc::parsing_sema {
     template<typename TIterator>
-        requires std::input_iterator<TIterator> and
-                 std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>
+    concept TokenIterator =
+            std::input_iterator<TIterator> and
+            std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
+
+    template<typename TIterator>
+        requires TokenIterator<TIterator>
     class Parser {
         TIterator m_Current;
         TIterator m_End;

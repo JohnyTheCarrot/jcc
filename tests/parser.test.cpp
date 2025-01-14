@@ -3,19 +3,20 @@
 
 #include <gtest/gtest.h>
 
-#include "parsing_sema/integer_constant.h"
+#include "parsing_sema/numeric_constant.h"
 
 using namespace jcc::parsing_sema;
 
 using Iterator       = std::vector<jcc::tokenizer::Token>::const_iterator;
-using IntConstParser = IntegerConstantParser<Iterator>;
+using NumConstParser = NumericConstantParser<Iterator>;
 
 using Signedness = types::IntegerType::Signedness;
 
-class IntegerConstantParserSuffixTest
-    : public testing::TestWithParam<std::tuple<std::string, IntegerSuffix>> {};
+class IntegerConstantParserTest
+    : public testing::TestWithParam<
+              std::tuple<std::string, AstIntegerConstant>> {};
 
-TEST_P(IntegerConstantParserSuffixTest, Suffixes) {
+TEST_P(IntegerConstantParserTest, Suffixes) {
     auto const &[input, expected] = GetParam();
 
     auto const         length{static_cast<int>(input.size())};
@@ -31,62 +32,88 @@ TEST_P(IntegerConstantParserSuffixTest, Suffixes) {
             jcc::tokenizer::Token{jcc::tokenizer::PpNumber{input}, span}
     );
 
-    IntConstParser parser{tokens.cbegin(), tokens.cend()};
-    auto           suffixStartIt{input.cbegin()};
-    auto const     suffix{
-            parser.ParseIntegerSuffix(span, suffixStartIt, input.cend())
-    };
+    NumConstParser parser{tokens.cbegin(), tokens.cend()};
+    auto const     suffix{parser.ParseNumericConstant()};
 
-    EXPECT_EQ(suffix, expected);
+    ASSERT_NE(suffix, nullptr);
+    auto const astIntConst{dynamic_cast<AstIntegerConstant *>(suffix.get())};
+    ASSERT_NE(astIntConst, nullptr);
+
+    EXPECT_EQ(*astIntConst, expected);
 }
 
+// NOTE: Please make sure the `num` is a valid integer literal, NOT an expression.
+#define ICP_RULE(num, type, sign)                                              \
+    std::make_tuple(                                                           \
+            #num, AstIntegerConstant{types::IntegerType{type, sign}, num}      \
+    )
+
 INSTANTIATE_TEST_SUITE_P(
-        Suffixes, IntegerConstantParserSuffixTest,
+        Suffixes, IntegerConstantParserTest,
         testing::Values(
-                std::make_tuple(
-                        "l",
-                        IntegerSuffix{
-                                Signedness::Unspecified,
-                                types::StandardIntegerType::Long
-                        }
+                ICP_RULE(
+                        1, types::StandardIntegerType::Int, Signedness::Signed
                 ),
-                std::make_tuple(
-                        "ll",
-                        IntegerSuffix{
-                                Signedness::Unspecified,
-                                types::StandardIntegerType::LongLong
-                        }
+                ICP_RULE(
+                        1u, types::StandardIntegerType::Int,
+                        Signedness::Unsigned
                 ),
-                std::make_tuple(
-                        "u", IntegerSuffix{Signedness::Unsigned, std::nullopt}
+                ICP_RULE(
+                        1l, types::StandardIntegerType::Long, Signedness::Signed
                 ),
-                std::make_tuple(
-                        "ul",
-                        IntegerSuffix{
-                                Signedness::Unsigned,
-                                types::StandardIntegerType::Long
-                        }
+                ICP_RULE(
+                        1ll, types::StandardIntegerType::LongLong,
+                        Signedness::Signed
                 ),
-                std::make_tuple(
-                        "ull",
-                        IntegerSuffix{
-                                Signedness::Unsigned,
-                                types::StandardIntegerType::LongLong
-                        }
+                ICP_RULE(
+                        1ul, types::StandardIntegerType::Long,
+                        Signedness::Unsigned
                 ),
-                std::make_tuple(
-                        "lu",
-                        IntegerSuffix{
-                                Signedness::Unsigned,
-                                types::StandardIntegerType::Long
-                        }
+                ICP_RULE(
+                        1ull, types::StandardIntegerType::LongLong,
+                        Signedness::Unsigned
                 ),
-                std::make_tuple(
-                        "llu",
-                        IntegerSuffix{
-                                Signedness::Unsigned,
-                                types::StandardIntegerType::LongLong
-                        }
+                ICP_RULE(
+                        1lu, types::StandardIntegerType::Long,
+                        Signedness::Unsigned
+                ),
+                ICP_RULE(
+                        1llu, types::StandardIntegerType::LongLong,
+                        Signedness::Unsigned
+                ),
+                // Decimal INT_MAX + 1 is a long, as it doesn't fit in an int.
+                ICP_RULE(
+                        32768 /* INT_MAX + 1 */,
+                        types::StandardIntegerType::Long, Signedness::Signed
+                ),
+                // Non-decimal INT_MAX + 1 is an unsigned int, as non-decimal literals may be unsigned if it can't fit in the signed type.
+                ICP_RULE(
+                        0x8000, types::StandardIntegerType::Int,
+                        Signedness::Unsigned
+                ),
+                ICP_RULE(
+                        65536 /* UINT_MAX + 1 */,
+                        types::StandardIntegerType::Long, Signedness::Signed
+                ),
+                ICP_RULE(
+                        0x8000ull, types::StandardIntegerType::LongLong,
+                        Signedness::Unsigned
+                ),
+                ICP_RULE(
+                        2147483648 /* LONG_MAX + 1*/,
+                        types::StandardIntegerType::LongLong, Signedness::Signed
+                ),
+                ICP_RULE(
+                        0x80000000 /* LONG_MAX + 1*/,
+                        types::StandardIntegerType::Long, Signedness::Unsigned
+                ),
+                ICP_RULE(
+                        4294967295 /* ULONG_MAX + 1*/,
+                        types::StandardIntegerType::LongLong, Signedness::Signed
+                ),
+                ICP_RULE(
+                        0x100000000 /* ULONG_MAX + 1 */,
+                        types::StandardIntegerType::LongLong, Signedness::Signed
                 )
         )
 );

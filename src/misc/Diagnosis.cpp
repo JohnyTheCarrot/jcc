@@ -190,6 +190,12 @@ namespace jcc {
                 return "Expected identifier in #undef directive.";
             case Kind::PRS_UnrecognizedIntegerSuffix:
                 return "Unrecognized integer suffix.";
+            case Kind::PRS_InvalidFloatingPointLiteral:
+                return "Invalid floating point literal.";
+            case Kind::PRS_InvalidIntegerLiteral:
+                return "Invalid integer literal.";
+            case Kind::SEMA_NoCompatibleIntegerType:
+                return "No compatible integer type found.";
         }
 
         assert(false);

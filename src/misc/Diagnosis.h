@@ -66,6 +66,9 @@ namespace jcc {
             PP_UndefExpectedIdentifier,
             PP_Custom,
             PRS_UnrecognizedIntegerSuffix,
+            PRS_InvalidFloatingPointLiteral,
+            PRS_InvalidIntegerLiteral,
+            SEMA_NoCompatibleIntegerType,
             TODO,
         };
 

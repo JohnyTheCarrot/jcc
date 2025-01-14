@@ -38,6 +38,9 @@ namespace jcc::parsing_sema::types {
 
         Type       m_Type;
         Signedness m_Sign;
+
+        [[nodiscard]]
+        bool operator==(IntegerType const &other) const;
     };
 
     void PrintTo(IntegerType type, std::ostream *os);
