@@ -49,7 +49,7 @@ TEST_P(IntegerConstantParserTest, Suffixes) {
     )
 
 INSTANTIATE_TEST_SUITE_P(
-        Suffixes, IntegerConstantParserTest,
+        IntegerConstants, IntegerConstantParserTest,
         testing::Values(
                 ICP_RULE(
                         1, types::StandardIntegerType::Int, Signedness::Signed
@@ -118,6 +118,20 @@ INSTANTIATE_TEST_SUITE_P(
                 ICP_RULE(
                         1'000, types::StandardIntegerType::Int,
                         Signedness::Signed
+                ),
+                std::make_tuple(
+                        "7wb",
+                        AstIntegerConstant{
+                                {types::BitInteger{3}, Signedness::Signed},
+                                7
+                        }
+                ),
+                std::make_tuple(
+                        "7uwb",
+                        AstIntegerConstant{
+                                {types::BitInteger{4}, Signedness::Unsigned},
+                                7
+                        }
                 )
         )
 );

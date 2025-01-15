@@ -140,7 +140,7 @@ namespace jcc::parsing_sema {
             };
 
             return types::IntegerType{
-                    types::BitInteger{numMinBits}, signedness
+                    types::BitInteger{numMinBits + isForcedUnsigned}, signedness
             };
         }
 

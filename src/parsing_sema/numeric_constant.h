@@ -1,7 +1,6 @@
 #ifndef NUMERIC_CONSTANT_H
 #define NUMERIC_CONSTANT_H
 
-#include <functional>
 #include <iostream>
 #include <random>
 #include <string_view>
@@ -45,8 +44,6 @@ namespace jcc::parsing_sema {
     template<typename TIterator>
         requires TokenIterator<TIterator>
     class NumericConstantParser final : public Parser<TIterator> {
-        NumConstValue m_Value{};
-
     public:
         using Parser<TIterator>::Parser;
 
