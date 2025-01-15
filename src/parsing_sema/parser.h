@@ -2,7 +2,6 @@
 #define PARSER_STATE_H
 
 #include "ast_node.h"
-#include "misc/Diagnosis.h"
 #include "tokenizer/token.h"
 
 namespace jcc::parsing_sema {
@@ -10,6 +9,8 @@ namespace jcc::parsing_sema {
     concept TokenIterator =
             std::input_iterator<TIterator> and
             std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
+
+    using AstNodePtr = std::unique_ptr<AstNode>;
 
     template<typename TIterator>
         requires TokenIterator<TIterator>
@@ -45,8 +46,6 @@ namespace jcc::parsing_sema {
         }
 
     public:
-        using NodePtr = std::unique_ptr<AstNode>;
-
         Parser(TIterator begin, TIterator end)
             : m_Current{begin}
             , m_End{end} {

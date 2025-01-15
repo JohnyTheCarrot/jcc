@@ -1,9 +1,7 @@
 #ifndef NUMERIC_CONSTANT_H
 #define NUMERIC_CONSTANT_H
 
-#include <iostream>
 #include <random>
-#include <string_view>
 
 #include "parser.h"
 #include "types/type.h"
@@ -31,15 +29,10 @@ namespace jcc::parsing_sema {
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os);
 
-    [[nodiscard]]
-    int CalcMinNumBits(std::int64_t value) noexcept;
-
-    [[nodiscard]]
-    types::IntegerType ParseIntegerSuffix(
-            Span &completeSpan, std::string_view string_view,
-            int  numMinBitsNoSign,// Num of bits excluding sign bit
-            bool isDecimal
-    );
+    namespace internal {
+        [[nodiscard]]
+        AstNodePtr ParseNumericConstant(tokenizer::Token &token);
+    }// namespace internal
 
     template<typename TIterator>
         requires TokenIterator<TIterator>
@@ -47,119 +40,14 @@ namespace jcc::parsing_sema {
     public:
         using Parser<TIterator>::Parser;
 
-        typename NumericConstantParser::NodePtr ParseNumericConstant() {
+        AstNodePtr ParseNumericConstant() {
             if (this->IsExhausted()) {
                 return nullptr;
             }
 
             auto token{*this->GetCurrent()};
 
-            tokenizer::PpNumber ppNumber{
-                    std::get<tokenizer::PpNumber>(token.m_Value)
-            };
-
-            constexpr auto RADIX_HEX{16};
-            constexpr auto RADIX_OCT{8};
-            constexpr auto RADIX_DEC{10};
-
-            auto const numEnd{std::ranges::find_if(
-                    ppNumber.m_Number,
-                    [](char c) {
-                        switch (std::tolower(c)) {
-                            // Floating point significant digits postfix
-                            case '.':
-                            case 'e':
-                            case 'p':
-
-                            // Floating point suffix
-                            case 'f':
-
-                            // Integer suffixes
-                            case 'l':
-                            case 'w':
-                            case 'u':
-                                return true;
-                            default:
-                                return false;
-                        }
-                    }
-            )};
-            auto const isFloat{
-                    numEnd != ppNumber.m_Number.end() &&
-                    (*numEnd == '.' || *numEnd == 'e' || *numEnd == 'p')
-            };
-
-            auto const [radix, numStart]{[&] {
-                if (ppNumber.m_Number.starts_with("0x")) {
-                    return std::make_pair(
-                            RADIX_HEX, ppNumber.m_Number.cbegin() + 2
-                    );
-                }
-
-                if (!isFloat && ppNumber.m_Number.starts_with('0')) {
-                    return std::make_pair(
-                            RADIX_OCT, ppNumber.m_Number.cbegin() + 1
-                    );
-                }
-
-                return std::make_pair(RADIX_DEC, ppNumber.m_Number.cbegin());
-            }()};
-
-            if (isFloat) {
-                double     floatingValue{};
-                auto const result{std::from_chars(
-                        ppNumber.m_Number.data(),
-                        ppNumber.m_Number.data() + ppNumber.m_Number.size(),
-                        floatingValue
-                )};
-                if (result.ec != std::errc{}) {
-                    throw FatalCompilerError{
-                            Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
-                            Span{token.m_Span}
-                    };
-                }
-
-                std::cout << floatingValue << std::endl;
-                return nullptr;
-            }
-            auto const startOffset{
-                    std::distance(ppNumber.m_Number.cbegin(), numStart)
-            };
-
-            // TODO: this likely allows for separators in the middle of suffixes
-            std::string numberWithoutSeparators;
-            numberWithoutSeparators.reserve(
-                    ppNumber.m_Number.size() - startOffset
-            );
-            std::copy_if(
-                    ppNumber.m_Number.cbegin() + startOffset,
-                    ppNumber.m_Number.cend(),
-                    std::back_inserter(numberWithoutSeparators),
-                    [](char c) { return c != '\''; }
-            );
-
-            IntValue   integerValue{};
-            auto const result{std::from_chars(
-                    numberWithoutSeparators.data(),
-                    numberWithoutSeparators.data() +
-                            numberWithoutSeparators.size(),
-                    integerValue, radix
-            )};
-            if (result.ec != std::errc{}) {
-                throw FatalCompilerError{
-                        Diagnosis::Kind::PRS_InvalidIntegerLiteral,
-                        Span{token.m_Span}
-                };
-            }
-
-            auto const minBits{CalcMinNumBits(integerValue)};
-            // Use left-over suffix in result.ptr
-            std::string_view const suffixStart{result.ptr};
-            auto const             suffix{ParseIntegerSuffix(
-                    token.m_Span, suffixStart, minBits, radix == RADIX_DEC
-            )};
-
-            return std::make_unique<AstIntegerConstant>(suffix, integerValue);
+            return internal::ParseNumericConstant(token);
         }
     };
 }// namespace jcc::parsing_sema
