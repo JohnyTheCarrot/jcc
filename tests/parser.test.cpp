@@ -7,8 +7,7 @@
 
 using namespace jcc::parsing_sema;
 
-using Iterator       = std::vector<jcc::tokenizer::Token>::const_iterator;
-using NumConstParser = NumericConstantParser<Iterator>;
+using Iterator = std::vector<jcc::tokenizer::Token>::const_iterator;
 
 using Signedness = types::IntegerType::Signedness;
 
@@ -27,13 +26,8 @@ TEST_P(IntegerConstantParserTest, Suffixes) {
             jcc::SpanMarker{1, length, length - 1}, &iss
     };
 
-    std::vector<jcc::tokenizer::Token> tokens;
-    tokens.emplace_back(
-            jcc::tokenizer::Token{jcc::tokenizer::PpNumber{input}, span}
-    );
-
-    NumConstParser parser{tokens.cbegin(), tokens.cend()};
-    auto const     suffix{parser.ParseNumericConstant()};
+    jcc::tokenizer::Token token{jcc::tokenizer::PpNumber{input}, span};
+    auto const            suffix{ParseNumericConstant(token)};
 
     ASSERT_NE(suffix, nullptr);
     auto const astIntConst{dynamic_cast<AstIntegerConstant *>(suffix.get())};

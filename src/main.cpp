@@ -4,7 +4,8 @@
 #include <string>   // for allocator, operator<<, string
 #include <vector>   // for vector
 
-#include "misc/Diagnosis.h"           // for Diagnosis, FatalCompilerError
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "parsing_sema/numeric_constant.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "tokenizer/token.h"          // for Token
 
@@ -21,13 +22,38 @@ int main(int argCount, char *args[]) {
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
 
-        std::for_each(
-                preprocessor.begin(), preprocessor.end(),
-                [](jcc::tokenizer::Token const &token) {
-                    token.DebugPrintTo(std::cout);
-                    std::cout << std::endl;
-                }
-        );
+        auto token{*preprocessor.begin()};
+
+        auto  constant{jcc::parsing_sema::ParseNumericConstant(token)};
+        auto *value{constant->Codegen()};
+        auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
+        auto &context{compState.GetContext()};
+        auto &builder{compState.GetBuilder()};
+
+        llvm::Module module(filePath, context);
+
+        llvm::FunctionType *fnType{
+                llvm::FunctionType::get(value->getType(), false)
+        };
+
+        llvm::Function *fn{llvm::Function::Create(
+                fnType, llvm::Function::ExternalLinkage, "test", module
+        )};
+
+        llvm::BasicBlock *entry =
+                llvm::BasicBlock::Create(context, "entry", fn);
+        builder.SetInsertPoint(entry);
+        builder.CreateRet(value);
+
+        module.print(llvm::outs(), nullptr);
+
+        // std::for_each(
+        //         preprocessor.begin(), preprocessor.end(),
+        //         [](jcc::tokenizer::Token const &token) {
+        //             token.DebugPrintTo(std::cout);
+        //             std::cout << std::endl;
+        //         }
+        // );
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (...) { std::cerr << "An internal compiler error occurred."; }

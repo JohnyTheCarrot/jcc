@@ -10,7 +10,7 @@ namespace jcc::parsing_sema {
     using IntValue      = std::int64_t;
     using NumConstValue = std::variant<IntValue, double>;
 
-    class AstIntegerConstant final : public AstNode {
+    class AstIntegerConstant final : public AstExpression {
         types::IntegerType m_Type;
         IntValue           m_Value;
 
@@ -25,31 +25,15 @@ namespace jcc::parsing_sema {
 
         [[nodiscard]]
         bool operator==(AstIntegerConstant const &other) const;
+
+        llvm::Value *Codegen() override;
     };
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os);
 
-    namespace internal {
-        [[nodiscard]]
-        AstNodePtr ParseNumericConstant(tokenizer::Token &token);
-    }// namespace internal
-
-    template<typename TIterator>
-        requires TokenIterator<TIterator>
-    class NumericConstantParser final : public Parser<TIterator> {
-    public:
-        using Parser<TIterator>::Parser;
-
-        AstNodePtr ParseNumericConstant() {
-            if (this->IsExhausted()) {
-                return nullptr;
-            }
-
-            auto token{*this->GetCurrent()};
-
-            return internal::ParseNumericConstant(token);
-        }
-    };
+    [[nodiscard]]
+    std::unique_ptr<AstIntegerConstant>
+    ParseNumericConstant(tokenizer::Token &token);
 }// namespace jcc::parsing_sema
 
 #endif//NUMERIC_CONSTANT_H

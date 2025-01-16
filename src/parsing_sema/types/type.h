@@ -1,5 +1,6 @@
 #ifndef TYPE_H
 #define TYPE_H
+#include <llvm/IR/Type.h>
 #include <ostream>
 #include <variant>
 
@@ -14,6 +15,9 @@ namespace jcc::parsing_sema::types {
         int GetBitWidth() const noexcept;
 
         bool operator==(BitInteger const &) const = default;
+
+        [[nodiscard]]
+        llvm::Type *GetLLVMType() const;
     };
 
     void PrintTo(BitInteger const &bitInteger, std::ostream *os);
@@ -41,6 +45,12 @@ namespace jcc::parsing_sema::types {
 
         [[nodiscard]]
         bool operator==(IntegerType const &other) const;
+
+        [[nodiscard]]
+        bool IsSigned() const noexcept;
+
+        [[nodiscard]]
+        llvm::Type *GetLLVMType() const;
     };
 
     void PrintTo(IntegerType type, std::ostream *os);

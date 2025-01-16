@@ -1,6 +1,11 @@
 #ifndef PARSER_STATE_H
 #define PARSER_STATE_H
 
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/TargetParser/Host.h>
+
 #include "ast_node.h"
 #include "tokenizer/token.h"
 
@@ -12,44 +17,39 @@ namespace jcc::parsing_sema {
 
     using AstNodePtr = std::unique_ptr<AstNode>;
 
-    template<typename TIterator>
-        requires TokenIterator<TIterator>
-    class Parser {
-        TIterator m_Current;
-        TIterator m_End;
+    class CompilerState final {
+        llvm::LLVMContext   m_Context{};
+        llvm::IRBuilder<>   m_Builder{m_Context};
+        llvm::Target const *m_Target{[] {
+            llvm::InitializeAllTargetInfos();
+            llvm::InitializeAllTargets();
+            auto const targetTriple{llvm::sys::getDefaultTargetTriple()};
 
-    protected:
-        void Advance() {
-            if (m_Current != m_End) {
-                ++m_Current;
+            std::string error;
+            if (auto const target{
+                        llvm::TargetRegistry::lookupTarget(targetTriple, error)
+                };
+                target != nullptr) {
+                return target;
             }
-        }
 
-        [[nodiscard]]
-        TIterator GetCurrent() const {
-            return m_Current;
-        }
-
-        [[nodiscard]]
-        TIterator GetEnd() const {
-            return m_End;
-        }
-
-        [[nodiscard]]
-        bool IsExhausted() const {
-            return m_Current == m_End;
-        }
-
-        [[nodiscard]]
-        int GetDistance() const {
-            return std::distance(m_Current, m_End);
-        }
+            throw std::runtime_error{error};
+        }()};
 
     public:
-        Parser(TIterator begin, TIterator end)
-            : m_Current{begin}
-            , m_End{end} {
-        }
+        [[nodiscard]]
+        llvm::IRBuilder<> &GetBuilder() noexcept;
+
+        [[nodiscard]]
+        llvm::IRBuilder<> const &GetBuilder() const noexcept;
+
+        [[nodiscard]]
+        llvm::LLVMContext &GetContext() noexcept;
+
+        [[nodiscard]]
+        llvm::LLVMContext const &GetContext() const noexcept;
+
+        static CompilerState &GetInstance();
     };
 }// namespace jcc::parsing_sema
 

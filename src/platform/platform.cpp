@@ -11,10 +11,10 @@ namespace jcc::platform {
             case StandardIntegerType::Char:
                 return 1;
             case StandardIntegerType::Short:
-            case StandardIntegerType::Int:
                 return 2;
-            case StandardIntegerType::Long:
+            case StandardIntegerType::Int:
                 return 4;
+            case StandardIntegerType::Long:
             case StandardIntegerType::LongLong:
                 return 8;
         }

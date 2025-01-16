@@ -74,6 +74,9 @@ set(
         src/parsing_sema/numeric_constant.cpp
         src/platform/platform.h
         src/platform/platform.cpp
+        src/parsing_sema/constant.h
+        src/parsing_sema/constant.cpp
+        src/parsing_sema/parser.cpp
 )
 
 add_executable("${PROJECT_NAME}"
@@ -112,8 +115,25 @@ add_executable(${TEST_PROJECT_NAME} ${SRC}
         tests/parser.test.cpp
 )
 
-target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt)
-target_link_libraries(${PROJECT_NAME} GTest::gtest_main fmt)
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+include_directories(${LLVM_INCLUDE_DIRS})
+separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+add_definitions(${LLVM_DEFINITIONS_LIST})
+
+execute_process(COMMAND llvm-config --libs OUTPUT_VARIABLE LIBS)
+execute_process(COMMAND llvm-config --system-libs OUTPUT_VARIABLE SYS_LIBS)
+execute_process(COMMAND llvm-config --ldflags OUTPUT_VARIABLE LDF)
+
+string(STRIP ${LIBS} LIBS)
+string(STRIP ${SYS_LIBS} SYS_LIBS)
+string(STRIP ${LDF} LDF)
+
+target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt ${LIBS} ${SYS_LIBS} ${LDF})
+target_link_libraries(${PROJECT_NAME} GTest::gtest_main fmt ${LIBS} ${SYS_LIBS} ${LDF})
 target_include_directories(${TEST_PROJECT_NAME} PRIVATE src libs)
 
 include(GoogleTest)
