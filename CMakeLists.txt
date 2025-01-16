@@ -77,6 +77,8 @@ set(
         src/parsing_sema/constant.h
         src/parsing_sema/constant.cpp
         src/parsing_sema/parser.cpp
+        src/parsing_sema/primary_expression.h
+        src/parsing_sema/primary_expression.cpp
 )
 
 add_executable("${PROJECT_NAME}"

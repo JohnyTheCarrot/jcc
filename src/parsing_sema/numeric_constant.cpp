@@ -33,6 +33,10 @@ namespace jcc::parsing_sema {
         return llvm::ConstantInt::get(type, m_Value, m_Type.IsSigned());
     }
 
+    ValueCategory AstIntegerConstant::GetValueCategory() const noexcept {
+        return ValueCategory::RValue;
+    }
+
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os) {
         *os << "AstIntegerConstant{";
         PrintTo(astIntConst.GetType(), os);

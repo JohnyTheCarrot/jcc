@@ -6,6 +6,7 @@
 
 #include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
 #include "parsing_sema/numeric_constant.h"
+#include "parsing_sema/primary_expression.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "tokenizer/token.h"          // for Token
 
@@ -24,11 +25,11 @@ int main(int argCount, char *args[]) {
 
         auto token{*preprocessor.begin()};
 
-        auto  constant{jcc::parsing_sema::ParseNumericConstant(token)};
-        auto *value{constant->Codegen()};
-        auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
-        auto &context{compState.GetContext()};
-        auto &builder{compState.GetBuilder()};
+        auto const constant{jcc::parsing_sema::ParsePrimaryExpression(token)};
+        auto      *value{constant->Codegen()};
+        auto      &compState{jcc::parsing_sema::CompilerState::GetInstance()};
+        auto      &context{compState.GetContext()};
+        auto      &builder{compState.GetBuilder()};
 
         llvm::Module module(filePath, context);
 

@@ -27,6 +27,9 @@ namespace jcc::parsing_sema {
         bool operator==(AstIntegerConstant const &other) const;
 
         llvm::Value *Codegen() override;
+
+        [[nodiscard]]
+        ValueCategory GetValueCategory() const noexcept override;
     };
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os);

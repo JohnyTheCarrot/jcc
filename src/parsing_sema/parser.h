@@ -15,8 +15,6 @@ namespace jcc::parsing_sema {
             std::input_iterator<TIterator> and
             std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
 
-    using AstNodePtr = std::unique_ptr<AstNode>;
-
     class CompilerState final {
         llvm::LLVMContext   m_Context{};
         llvm::IRBuilder<>   m_Builder{m_Context};
