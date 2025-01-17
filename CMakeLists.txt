@@ -79,6 +79,12 @@ set(
         src/parsing_sema/parser.cpp
         src/parsing_sema/primary_expression.h
         src/parsing_sema/primary_expression.cpp
+        src/parsing_sema/postfix_expression.h
+        src/parsing_sema/postfix_expression.cpp
+        src/parsing_sema/types.h
+        src/parsing_sema/types.cpp
+        src/parsing_sema/type_name.h
+        src/parsing_sema/type_name.cpp
 )
 
 add_executable("${PROJECT_NAME}"

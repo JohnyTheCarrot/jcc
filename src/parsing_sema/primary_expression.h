@@ -4,7 +4,7 @@
 #include "ast_node.h"
 
 namespace jcc::tokenizer {
-    class Token;
+    struct Token;
 }
 
 namespace jcc::parsing_sema {

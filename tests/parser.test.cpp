@@ -1,9 +1,11 @@
+#include <magic_enum/magic_enum.hpp>
 #include <tuple>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "parsing_sema/numeric_constant.h"
+#include "parsing_sema/types.h"
 
 using namespace jcc::parsing_sema;
 
@@ -77,37 +79,21 @@ INSTANTIATE_TEST_SUITE_P(
                 ),
                 // Decimal INT_MAX + 1 is a long, as it doesn't fit in an int.
                 ICP_RULE(
-                        32768 /* INT_MAX + 1 */,
+                        2147483648 /* INT_MAX + 1 */,
                         types::StandardIntegerType::Long, Signedness::Signed
                 ),
                 // Non-decimal INT_MAX + 1 is an unsigned int, as non-decimal literals may be unsigned if it can't fit in the signed type.
                 ICP_RULE(
-                        0x8000, types::StandardIntegerType::Int,
+                        0x80000000, types::StandardIntegerType::Int,
                         Signedness::Unsigned
                 ),
                 ICP_RULE(
-                        65536 /* UINT_MAX + 1 */,
+                        4294967296 /* UINT_MAX + 1 */,
                         types::StandardIntegerType::Long, Signedness::Signed
                 ),
                 ICP_RULE(
                         0x8000ull, types::StandardIntegerType::LongLong,
                         Signedness::Unsigned
-                ),
-                ICP_RULE(
-                        2147483648 /* LONG_MAX + 1*/,
-                        types::StandardIntegerType::LongLong, Signedness::Signed
-                ),
-                ICP_RULE(
-                        0x80000000 /* LONG_MAX + 1*/,
-                        types::StandardIntegerType::Long, Signedness::Unsigned
-                ),
-                ICP_RULE(
-                        4294967295 /* ULONG_MAX + 1*/,
-                        types::StandardIntegerType::LongLong, Signedness::Signed
-                ),
-                ICP_RULE(
-                        0x100000000 /* ULONG_MAX + 1 */,
-                        types::StandardIntegerType::LongLong, Signedness::Signed
                 ),
                 ICP_RULE(
                         1'000, types::StandardIntegerType::Int,
@@ -126,6 +112,41 @@ INSTANTIATE_TEST_SUITE_P(
                                 {types::BitInteger{4}, Signedness::Unsigned},
                                 7
                         }
+                )
+        )
+);
+
+class BasicTypeCompatibilityTest
+    : public testing::TestWithParam<std::tuple<BasicTypeSpecifier, bool>> {};
+
+TEST_P(BasicTypeCompatibilityTest, BasicTypeCompatibility) {
+    auto const &[first, expected] = GetParam();
+
+    EXPECT_EQ(AreBasicTypesCompatible(first), expected);
+}
+
+using namespace magic_enum::bitwise_operators;
+
+INSTANTIATE_TEST_CASE_P(
+        BasicTypeCompatibility, BasicTypeCompatibilityTest,
+        testing::Values(
+                std::make_tuple(BasicTypeSpecifier::Void, true),
+                std::make_tuple(
+                        BasicTypeSpecifier::Void | BasicTypeSpecifier::Int,
+                        false
+                ),
+                std::make_tuple(
+                        BasicTypeSpecifier::Char | BasicTypeSpecifier::Signed,
+                        true
+                ),
+                std::make_tuple(
+                        BasicTypeSpecifier::Char | BasicTypeSpecifier::Unsigned,
+                        true
+                ),
+                std::make_tuple(
+                        BasicTypeSpecifier::Char | BasicTypeSpecifier::Signed |
+                                BasicTypeSpecifier::Unsigned,
+                        false
                 )
         )
 );

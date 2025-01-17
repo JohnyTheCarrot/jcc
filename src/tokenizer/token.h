@@ -150,6 +150,7 @@ namespace jcc::tokenizer {
         Case,
         Char,
         Const,
+        Constexpr,
         Continue,
         Default,
         Do,

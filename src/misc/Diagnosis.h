@@ -68,6 +68,7 @@ namespace jcc {
             PRS_UnrecognizedIntegerSuffix,
             PRS_InvalidFloatingPointLiteral,
             PRS_InvalidIntegerLiteral,
+            PRS_SyntaxError,
             SEMA_NoCompatibleIntegerType,
             TODO,
         };

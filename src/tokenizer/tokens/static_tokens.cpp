@@ -19,6 +19,7 @@ namespace jcc::tokenizer::static_tokens {
             {"case", Keyword::Case},
             {"char", Keyword::Char},
             {"const", Keyword::Const},
+            {"constexpr", Keyword::Constexpr},
             {"continue", Keyword::Continue},
             {"default", Keyword::Default},
             {"do", Keyword::Do},

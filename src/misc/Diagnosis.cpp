@@ -194,6 +194,11 @@ namespace jcc {
                 return "Invalid floating point literal.";
             case Kind::PRS_InvalidIntegerLiteral:
                 return "Invalid integer literal.";
+            case Kind::PRS_SyntaxError:
+                return std::format(
+                        "Syntax error: {}",
+                        std::get<std::string>(m_Data0.value())
+                );
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
         }
