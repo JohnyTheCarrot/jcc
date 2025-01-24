@@ -3,6 +3,7 @@
 #include "parsing_sema/additive_expression.h"
 #include "parsing_sema/multiplicative_expression.h"
 #include "parsing_sema/numeric_constant.h"
+#include "parsing_sema/shift_expression.h"
 
 namespace jcc::codegen {
     void ExpressionCodegenVisitor::Visit(
@@ -122,6 +123,50 @@ namespace jcc::codegen {
                 case parsing_sema::AdditiveOperator::Subtraction:
                     m_Value =
                             builder.CreateSub(lhsValue, rhsValue, "sub_result");
+                    break;
+            }
+            return;
+        }
+
+        throw std::runtime_error{"Unsupported additive expression type"};
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing_sema::AstShiftExpression const *astShiftExpr
+    ) {
+        auto const *lhs{astShiftExpr->GetLhs()};
+        auto const *rhs{astShiftExpr->GetRhs()};
+
+        lhs->Accept(this);
+        auto *lhsValue{GetValue()};
+
+        if (lhs->GetType() != astShiftExpr->GetType()) {
+            lhsValue = CastValue(
+                    lhsValue, lhs->GetType(), astShiftExpr->GetType()
+            );
+        }
+
+        rhs->Accept(this);
+        auto *rhsValue{GetValue()};
+
+        if (rhs->GetType() != astShiftExpr->GetType()) {
+            rhsValue = CastValue(
+                    rhsValue, rhs->GetType(), astShiftExpr->GetType()
+            );
+        }
+
+        auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
+
+        if (astShiftExpr->GetType().IsInteger()) {
+            switch (astShiftExpr->GetOperator()) {
+                case parsing_sema::ShiftOperator::Left:
+                    m_Value =
+                            builder.CreateShl(lhsValue, rhsValue, "shl_result");
+                    break;
+                case parsing_sema::ShiftOperator::Right:
+                    m_Value = builder.CreateAShr(
+                            lhsValue, rhsValue, "shr_result"
+                    );
                     break;
             }
             return;

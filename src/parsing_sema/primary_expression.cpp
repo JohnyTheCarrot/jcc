@@ -10,9 +10,10 @@ namespace jcc::parsing_sema {
             preprocessor::PreprocessorIterator const &end
     ) {
         auto firstToken{*current};
+        ++current;
 
         if (firstToken.Is(tokenizer::Punctuator::LeftParenthesis)) {
-            auto result{ParseExpression(++current, end)};
+            auto result{ParseExpression(current, end)};
             if (current == end ||
                 !current->Is(tokenizer::Punctuator::RightParenthesis)) {
                 throw FatalCompilerError{

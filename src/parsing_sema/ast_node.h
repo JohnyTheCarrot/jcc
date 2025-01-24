@@ -6,6 +6,8 @@
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
+    class AstShiftExpression;
+
     class AstAdditiveExpression;
 
     class AstMultiplicativeExpression;
@@ -33,6 +35,8 @@ namespace jcc::parsing_sema {
         Visit(AstMultiplicativeExpression const *astMultiplicativeExpr) = 0;
 
         virtual void Visit(AstAdditiveExpression const *astAdditiveExpr) = 0;
+
+        virtual void Visit(AstShiftExpression const *astShiftExpr) = 0;
     };
 
     class AstExpression {

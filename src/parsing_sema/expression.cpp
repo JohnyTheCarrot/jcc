@@ -1,7 +1,7 @@
 #include "expression.h"
 
-#include "additive_expression.h"
 #include "preprocessor/preprocessor_iterator.h"
+#include "shift_expression.h"
 
 namespace jcc::parsing_sema {
     AstExpressionPtr ParseExpression(
@@ -11,6 +11,6 @@ namespace jcc::parsing_sema {
         if (current == end)
             return nullptr;
 
-        return ParseAdditiveExpression(current, end);
+        return ParseShiftExpression(current, end);
     }
 }// namespace jcc::parsing_sema

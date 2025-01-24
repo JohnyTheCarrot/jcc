@@ -22,6 +22,9 @@ namespace jcc::codegen {
         Visit(parsing_sema::AstAdditiveExpression const *astAdditiveExpr
         ) override;
 
+        void
+        Visit(parsing_sema::AstShiftExpression const *astShiftExpr) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() const noexcept;
     };
