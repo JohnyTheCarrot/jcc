@@ -4,8 +4,11 @@
 #include <string>   // for allocator, operator<<, string
 #include <vector>   // for vector
 
+#include "codegen/expressions.h"
 #include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "parsing_sema/multiplicative_expression.h"
 #include "parsing_sema/numeric_constant.h"
+#include "parsing_sema/postfix_expression.h"
 #include "parsing_sema/primary_expression.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "tokenizer/token.h"          // for Token
@@ -23,13 +26,18 @@ int main(int argCount, char *args[]) {
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
 
-        auto token{*preprocessor.begin()};
+        // auto token{*preprocessor.begin()};
 
-        auto const constant{jcc::parsing_sema::ParsePrimaryExpression(token)};
-        auto      *value{constant->Codegen()};
-        auto      &compState{jcc::parsing_sema::CompilerState::GetInstance()};
-        auto      &context{compState.GetContext()};
-        auto      &builder{compState.GetBuilder()};
+        auto const constant{jcc::parsing_sema::ParseMultiplicativeExpression(
+                preprocessor.begin(), preprocessor.end()
+        )};
+        jcc::codegen::ExpressionCodegenVisitor visitor;
+
+        constant->Accept(&visitor);
+        auto *value{visitor.GetValue()};
+        auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
+        auto &context{compState.GetContext()};
+        auto &builder{compState.GetBuilder()};
 
         llvm::Module module(filePath, context);
 

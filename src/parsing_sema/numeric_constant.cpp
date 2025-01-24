@@ -5,47 +5,31 @@
 #include <string_view>
 
 #include "misc/Diagnosis.h"
-#include "platform/platform.h"
 
 namespace jcc::parsing_sema {
     AstIntegerConstant::AstIntegerConstant(
             types::IntegerType type, IntValue value
-    ) noexcept
-        : m_Type{type}
+    )
+        : AstExpression{types::ValueType{type}}
         , m_Value{value} {
     }
 
-    types::IntegerType AstIntegerConstant::GetType() const noexcept {
-        return m_Type;
-    }
-
-    NumConstValue AstIntegerConstant::GetValue() const noexcept {
+    IntValue AstIntegerConstant::GetValue() const noexcept {
         return m_Value;
     }
 
+    void AstIntegerConstant::Accept(ExpressionVisitor *visitor) const {
+        return visitor->Visit(this);
+    }
+
     bool AstIntegerConstant::operator==(AstIntegerConstant const &other) const {
-        return m_Type == other.m_Type && m_Value == other.m_Value;
-    }
-
-    llvm::Value *AstIntegerConstant::Codegen() {
-        auto *type{m_Type.GetLLVMType()};
-
-        return llvm::ConstantInt::get(type, m_Value, m_Type.IsSigned());
-    }
-
-    ValueCategory AstIntegerConstant::GetValueCategory() const noexcept {
-        return ValueCategory::RValue;
+        return m_Value == other.m_Value && GetType() == other.GetType();
     }
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os) {
         *os << "AstIntegerConstant{";
         PrintTo(astIntConst.GetType(), os);
-        *os << ", ";
-        std::visit(
-                [&os](auto const &value) { *os << value; },
-                astIntConst.GetValue()
-        );
-        *os << '}';
+        *os << ", " << astIntConst.GetValue() << '}';
     }
 
     int CalcMinNumBits(std::int64_t value) noexcept {
@@ -65,13 +49,15 @@ namespace jcc::parsing_sema {
     [[nodiscard]]
     types::IntegerType ChooseSmallestCompatible(
             Span &intSpan, std::span<types::StandardIntegerType const> types,
-            int numBits, SignPossibilities signPossibilities
+            unsigned numBits, SignPossibilities signPossibilities
     ) {
         using namespace magic_enum::bitwise_operators;
         using Signedness = types::IntegerType::Signedness;
 
         for (auto const type : types) {
-            auto const typeSize{platform::GetTypeSize(type)};
+            auto const typeSize{
+                    types::IntegerType::GetLLVMType(type)->getIntegerBitWidth()
+            };
             auto const unsignedPossible{
                     (signPossibilities & SignPossibilities::Unsigned) ==
                     SignPossibilities::Unsigned
@@ -81,11 +67,11 @@ namespace jcc::parsing_sema {
                     SignPossibilities::Signed
             };
 
-            if (signedPossible && typeSize * 8 - 1 /* sign bit */ >= numBits) {
+            if (signedPossible && typeSize - 1 /* sign bit */ >= numBits) {
                 return types::IntegerType{type, Signedness::Signed};
             }
 
-            if (unsignedPossible && typeSize * 8 >= numBits) {
+            if (unsignedPossible && typeSize >= numBits) {
                 return types::IntegerType{type, Signedness::Unsigned};
             }
         }

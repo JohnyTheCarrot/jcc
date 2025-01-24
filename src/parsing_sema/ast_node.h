@@ -3,15 +3,16 @@
 
 #include <llvm/IR/Value.h>
 
+#include "types/type.h"
+
 namespace jcc::parsing_sema {
+    class AstMultiplicativeExpression;
+}
+
+namespace jcc::parsing_sema {
+    class AstIntegerConstant;
+
     class CompilerState;
-
-    class AstNode {
-    public:
-        virtual ~AstNode() = default;
-    };
-
-    using AstNodePtr = std::unique_ptr<AstNode>;
 
     enum class ValueCategory { LValue, RValue };
 
@@ -20,15 +21,28 @@ namespace jcc::parsing_sema {
         { T::GetValueCategory() } -> std::same_as<ValueCategory>;
     };
 
-    class AstExpression : public AstNode {
+    class ExpressionVisitor {
     public:
-        AstExpression() noexcept = default;
+        virtual ~ExpressionVisitor() = default;
+
+        virtual void Visit(AstIntegerConstant const *astIntConst) = 0;
+
+        virtual void
+        Visit(AstMultiplicativeExpression const *astMultiplicativeExpr) = 0;
+    };
+
+    class AstExpression {
+        types::ValueType m_Type;
+
+    public:
+        virtual ~AstExpression() = default;
+
+        explicit AstExpression(types::ValueType type);
+
+        virtual void Accept(ExpressionVisitor *visitor) const = 0;
 
         [[nodiscard]]
-        virtual llvm::Value *Codegen() = 0;
-
-        [[nodiscard]]
-        virtual ValueCategory GetValueCategory() const noexcept = 0;
+        types::ValueType const &GetType() const;
     };
 
     using AstExpressionPtr = std::unique_ptr<AstExpression>;

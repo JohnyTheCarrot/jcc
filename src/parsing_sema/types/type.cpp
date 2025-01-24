@@ -20,6 +20,10 @@ namespace jcc::parsing_sema::types {
         return llvm::Type::getIntNTy(context, m_BitWidth);
     }
 
+    int_ranks::IntegerConversionRank BitInteger::GetConversionRank() const {
+        return int_ranks::c_LongLongRank + m_BitWidth;
+    }
+
     void PrintTo(BitInteger const &bitInteger, std::ostream *os) {
         *os << "BitInteger{" << bitInteger.GetBitWidth() << '}';
     }
@@ -29,18 +33,43 @@ namespace jcc::parsing_sema::types {
     }
 
     bool IntegerType::operator==(IntegerType const &other) const {
-        return m_Type == other.m_Type && m_Sign == other.m_Sign;
+        if (std::holds_alternative<StandardIntegerType>(m_Type)) {
+            if (!std::holds_alternative<StandardIntegerType>(other.m_Type))
+                return false;
+
+            auto const typeLhs{std::get<StandardIntegerType>(m_Type)};
+            auto const typeRhs{std::get<StandardIntegerType>(other.m_Type)};
+
+            // char != signed char != unsigned char
+            if (typeLhs == StandardIntegerType::Char ||
+                typeRhs == StandardIntegerType::Char) {
+                return typeLhs == typeRhs && m_Sign == other.m_Sign;
+            }
+        }
+
+        auto const signednessLhs{
+                m_Sign != Signedness::Unsigned ? Signedness::Signed
+                                               : Signedness::Unsigned
+        };
+        auto const signednessRhs{
+                other.m_Sign != Signedness::Unsigned ? Signedness::Signed
+                                                     : Signedness::Unsigned
+        };
+
+        return m_Type == other.m_Type && signednessLhs == signednessRhs;
     }
 
     bool IntegerType::IsSigned() const noexcept {
         return m_Sign == Signedness::Signed;
     }
 
-    llvm::Type *IntegerType::GetLLVMType() const {
+    llvm::Type *IntegerType::GetLLVMType(Type type) {
         auto &context{CompilerState::GetInstance().GetContext()};
 
-        if (std::holds_alternative<StandardIntegerType>(m_Type)) {
-            switch (std::get<StandardIntegerType>(m_Type)) {
+        if (std::holds_alternative<StandardIntegerType>(type)) {
+            switch (std::get<StandardIntegerType>(type)) {
+                case StandardIntegerType::Bool:
+                    return llvm::Type::getInt1Ty(context);
                 case StandardIntegerType::Char:
                     return llvm::Type::getInt8Ty(context);
                 case StandardIntegerType::Short:
@@ -56,12 +85,94 @@ namespace jcc::parsing_sema::types {
             }
         }
 
-        if (std::holds_alternative<BitInteger>(m_Type)) {
-            return std::get<BitInteger>(m_Type).GetLLVMType();
+        if (std::holds_alternative<BitInteger>(type)) {
+            return std::get<BitInteger>(type).GetLLVMType();
         }
 
         assert(false);
         return nullptr;
+    }
+
+    llvm::Type *IntegerType::GetLLVMType() const {
+        return GetLLVMType(m_Type);
+    }
+
+    int_ranks::IntegerConversionRank IntegerType::GetConversionRank() const {
+        if (std::holds_alternative<StandardIntegerType>(m_Type)) {
+            return static_cast<int>(std::get<StandardIntegerType>(m_Type));
+        }
+
+        return std::get<BitInteger>(m_Type).GetConversionRank();
+    }
+
+    IntegerType IntegerType::Promote() const {
+        auto const llvmType{GetLLVMType()};
+        auto const llvmInt{GetLLVMType(StandardIntegerType::Int)};
+        auto const numBits{
+                llvmType->getIntegerBitWidth() /* sizeof(T) */ - IsSigned()
+        };
+        auto const numUnsignedIntBits{llvmInt->getIntegerBitWidth()};
+
+        // Check if the type is promotable to signed int
+        if (numBits <= numUnsignedIntBits - 1 /* sign bit */)
+            return IntegerType{
+                    Type{StandardIntegerType::Int}, Signedness::Signed
+            };
+
+        // Check if the type is promotable to unsigned int
+        if (numBits <= numUnsignedIntBits)
+            return IntegerType{
+                    Type{StandardIntegerType::Int}, Signedness::Unsigned
+            };
+
+        // Type is not promotable to int, leave it as is
+        return *this;
+    }
+
+    bool IntegerType::CanRepresentValuesOf(IntegerType const &other) const {
+        auto const &lhsType{GetLLVMType()};
+        auto const  lhsSigned{IsSigned()};
+        auto const &rhsType{other.GetLLVMType()};
+        auto const  rhsSigned{other.IsSigned()};
+
+        return lhsType->getIntegerBitWidth() - lhsSigned >=
+               rhsType->getIntegerBitWidth() - rhsSigned;
+    }
+
+    IntegerType
+    IntegerType::UsualArithmeticConversion(IntegerType const &other) const {
+        // Promote both operands
+        auto const promotedLhs{Promote()};
+        auto const promotedRhs{other.Promote()};
+
+        // If both operands have the same type, then no further conversion is needed
+        if (promotedLhs == promotedRhs)
+            return promotedLhs;
+
+        // If both operands have the same signedness, then the operand with the lower rank is converted to the type of the operand with the higher rank
+        if (promotedLhs.IsSigned() == promotedRhs.IsSigned())
+            return promotedLhs.GetConversionRank() >
+                                   promotedRhs.GetConversionRank()
+                         ? promotedLhs
+                         : promotedRhs;
+
+        auto const &unsignedType{
+                promotedLhs.IsSigned() ? promotedRhs : promotedLhs
+        };
+        auto const &signedType{
+                promotedLhs.IsSigned() ? promotedLhs : promotedRhs
+        };
+
+        // If the unsigned type has a conversion rank greater than or equal to the signed type, then the signed type is converted to the unsigned type
+        if (unsignedType.GetConversionRank() >= signedType.GetConversionRank())
+            return unsignedType;
+
+        // If the signed type can represent all values of the unsigned type, then the unsigned type is converted to the signed type
+        if (signedType.CanRepresentValuesOf(unsignedType))
+            return signedType;
+
+        // Otherwise, both operands are converted to the unsigned type corresponding to the signed type
+        return IntegerType{signedType.m_Type, Signedness::Unsigned};
     }
 
     void PrintTo(IntegerType type, std::ostream *os) {
@@ -70,17 +181,85 @@ namespace jcc::parsing_sema::types {
         *os << ", " << magic_enum::enum_name(type.m_Sign) << '}';
     }
 
-    IntegerLimits::IntegerLimits(NumBits numBits)
-        : m_NumBits{numBits} {
+    ValueType::ValueType(Type &&type)
+        : m_Type{type} {
     }
 
-    IntegerLimits::NumBytes IntegerLimits::GetNumBytes() const noexcept {
-        return static_cast<NumBytes>(
-                std::ceil(static_cast<float>(m_NumBits) / 8.f)
+    bool ValueType::IsArithmetic() const noexcept {
+        if (std::holds_alternative<IntegerType>(m_Type))
+            return true;
+
+        // TODO: other arithmetic types
+
+        return false;
+    }
+
+    bool ValueType::IsInteger() const noexcept {
+        return std::holds_alternative<IntegerType>(m_Type);
+    }
+
+    llvm::Type *ValueType::GetLLVMType() const {
+        return std::visit(
+                [&](auto &&arg) { return arg.GetLLVMType(); }, m_Type
         );
     }
 
-    IntegerLimits::NumBits IntegerLimits::GetNumBits() const noexcept {
-        return m_NumBits;
+    ValueType::Type const &ValueType::GetInnerType() const noexcept {
+        return m_Type;
+    }
+
+    bool ValueType::operator==(ValueType const &other) const {
+        return m_Type == other.m_Type;
+    }
+
+    llvm::Value *CastValue(llvm::Value *value, ValueType const &type) {
+        auto &builder{CompilerState::GetInstance().GetBuilder()};
+
+        if (type.IsInteger()) {
+            auto const &integerType{std::get<IntegerType>(type.GetInnerType())};
+
+            return builder.CreateIntCast(
+                    value, type.GetLLVMType(), integerType.IsSigned(),
+                    "arith_int_cast"
+            );
+        }
+
+        throw std::runtime_error{
+                "TODO: Implement CastValue for non-integer types"
+        };
+    }
+
+    void PrintTo(ValueType const &type, std::ostream *os) {
+        std::visit(
+                [&os](auto const &t) { PrintTo(t, os); }, type.GetInnerType()
+        );
+    }
+
+    ValueType
+    UsualArithmeticConversions(ValueType const &lhs, ValueType const &rhs) {
+        if (!lhs.IsArithmetic() || !rhs.IsArithmetic())
+            // TODO: Use FatalCompilerError with span info
+            throw std::runtime_error{"must be arithmetic types"};
+
+        // TODO: If one operand has decimal floating type, the other operand shall not have standard floating, complex, or imaginary type.
+        // TODO: First, if the type of either operand is _Decimal128, the other operand is converted to _Decimal128.
+        // TODO: Otherwise, if the type of either operand is _Decimal64, the other operand is converted to _Decimal64
+        // TODO: Otherwise, if the type of either operand is _Decimal32, the other operand is converted to _Decimal32.
+        // TODO: Otherwise, if the corresponding real type of either operand is long double, the other operand is converted, without change of type domain, to a type whose corresponding real type is long double.
+        // TODO: Otherwise, if the corresponding real type of either operand is double, the other operand is converted, without change of type domain, to a type whose corresponding real type is double.
+        // TODO: Otherwise, if the corresponding real type of either operand is float, the other operand is converted, without change of type domain, to a type whose corresponding real type is float.
+        // TODO: Otherwise, if any of the two types is an enumeration, it is converted to its underlying type.
+
+        if (!std::holds_alternative<IntegerType>(lhs.GetInnerType()) ||
+            !std::holds_alternative<IntegerType>(rhs.GetInnerType()))
+            throw std::runtime_error{
+                    "TODO: Implement UsualArithmeticConversions for "
+                    "non-integer types"
+            };
+
+        auto const &lhsIntType{std::get<IntegerType>(lhs.GetInnerType())};
+        auto const &rhsIntType{std::get<IntegerType>(rhs.GetInnerType())};
+
+        return ValueType{lhsIntType.UsualArithmeticConversion(rhsIntType)};
     }
 }// namespace jcc::parsing_sema::types

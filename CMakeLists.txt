@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
-set(
-        SRC
+add_library(
+        jcc_core STATIC
         src/misc/Diagnosis.h
         src/misc/Diagnosis.cpp
         src/misc/Span.h
@@ -72,8 +72,6 @@ set(
         src/parsing_sema/ast_node.h
         src/parsing_sema/numeric_constant.h
         src/parsing_sema/numeric_constant.cpp
-        src/platform/platform.h
-        src/platform/platform.cpp
         src/parsing_sema/constant.h
         src/parsing_sema/constant.cpp
         src/parsing_sema/parser.cpp
@@ -85,12 +83,15 @@ set(
         src/parsing_sema/types.cpp
         src/parsing_sema/type_name.h
         src/parsing_sema/type_name.cpp
+        src/parsing_sema/ast_node.cpp
+        src/parsing_sema/multiplicative_expression.cpp
+        src/parsing_sema/multiplicative_expression.h
+        src/codegen/expressions.cpp
+        src/codegen/expressions.h
 )
 
-add_executable("${PROJECT_NAME}"
-        src/main.cpp
-        ${SRC}
-)
+add_executable("${PROJECT_NAME}" src/main.cpp)
+target_link_libraries("${PROJECT_NAME}" jcc_core)
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
@@ -115,13 +116,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(${TEST_PROJECT_NAME} ${SRC}
+add_executable(${TEST_PROJECT_NAME}
         tests/preprocessor.test.cpp
         tests/trie.test.cpp
         tests/char_iter.cpp
         tests/tokenizer.test.cpp
         tests/parser.test.cpp
+        tests/type.test.cpp
 )
+target_link_libraries(${TEST_PROJECT_NAME} jcc_core)
 
 find_package(LLVM REQUIRED CONFIG)
 
@@ -142,7 +145,9 @@ string(STRIP ${LDF} LDF)
 
 target_link_libraries(${TEST_PROJECT_NAME} GTest::gtest_main fmt ${LIBS} ${SYS_LIBS} ${LDF})
 target_link_libraries(${PROJECT_NAME} GTest::gtest_main fmt ${LIBS} ${SYS_LIBS} ${LDF})
+target_link_libraries(jcc_core GTest::gtest_main fmt ${LIBS} ${SYS_LIBS} ${LDF})
 target_include_directories(${TEST_PROJECT_NAME} PRIVATE src libs)
+target_include_directories(jcc_core PRIVATE src libs)
 
 include(GoogleTest)
 gtest_discover_tests(${TEST_PROJECT_NAME})

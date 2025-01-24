@@ -4,6 +4,7 @@
 #include "ast_node.h"
 #include "misc/Diagnosis.h"
 #include "parser.h"
+#include "primary_expression.h"
 #include "types.h"
 
 namespace jcc::tokenizer {
@@ -18,21 +19,34 @@ namespace jcc::parsing_sema {
         if (current == end)
             return nullptr;
 
-        auto const &firstToken{*current};
+        auto &firstToken{*current};
 
-        if (firstToken.Is(tokenizer::Punctuator::LeftParenthesis)) {
-            ++current;
-            if (current == end) {
-                throw FatalCompilerError{
-                        Diagnosis::Kind::PRS_SyntaxError,
-                        std::move(firstToken.m_Span),
-                        "Expected either an expression or a storage class "
-                        "specifier."
-                };
+        // TODO: if firstToken is a left paren, it may be a compound literal
+        auto primaryExpr{ParsePrimaryExpression(firstToken)};
+
+        ++current;
+        if (current == end)
+            return primaryExpr;
+
+        // TODO: while next is one of [, (, ., ->, ++ or --, parse the appropriate postfix operator
+        if (tokenizer::Token & nextToken{*current};
+            nextToken.Is<tokenizer::Punctuator>()) {
+            switch (std::get<tokenizer::Punctuator>(nextToken.m_Value)) {
+                case tokenizer::Punctuator::LeftBracket:
+                case tokenizer::Punctuator::LeftParenthesis:
+                case tokenizer::Punctuator::Dot:
+                case tokenizer::Punctuator::Arrow:
+                case tokenizer::Punctuator::PlusPlus:
+                case tokenizer::Punctuator::MinusMinus:
+                    throw FatalCompilerError{
+                            Diagnosis::Kind::TODO, std::move(nextToken.m_Span)
+                    };
+                default:
+                    break;
             }
-
-            if (specifierParseStorageClassSpecifier(*current)) {}
         }
+
+        return primaryExpr;
     }
 }// namespace jcc::parsing_sema
 #endif//POSTFIX_EXPRESSION_H

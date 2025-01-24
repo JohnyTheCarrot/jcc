@@ -32,10 +32,9 @@ TEST_P(IntegerConstantParserTest, Suffixes) {
     auto const            suffix{ParseNumericConstant(token)};
 
     ASSERT_NE(suffix, nullptr);
-    auto const astIntConst{dynamic_cast<AstIntegerConstant *>(suffix.get())};
-    ASSERT_NE(astIntConst, nullptr);
+    ASSERT_NE(suffix, nullptr);
 
-    EXPECT_EQ(*astIntConst, expected);
+    EXPECT_EQ(*suffix, expected);
 }
 
 // NOTE: Please make sure the `num` is a valid integer literal, NOT an expression.

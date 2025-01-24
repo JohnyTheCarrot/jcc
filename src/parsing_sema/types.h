@@ -48,7 +48,7 @@ namespace jcc::parsing_sema {
         return {};
     }
 
-    class AstStorageClassSpecifiers final : public AstNode {
+    class AstStorageClassSpecifiers final {
         std::vector<StorageClassSpecifier> m_StorageClassSpecifiers;
 
     public:

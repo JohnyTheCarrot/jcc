@@ -1,10 +1,26 @@
 #ifndef TYPE_H
 #define TYPE_H
+
 #include <llvm/IR/Type.h>
 #include <ostream>
 #include <variant>
 
+namespace llvm {
+    class Value;
+}
+
 namespace jcc::parsing_sema::types {
+    namespace int_ranks {
+        using IntegerConversionRank = int;
+
+        constexpr IntegerConversionRank c_BoolRank{0};
+        constexpr IntegerConversionRank c_CharRank{c_BoolRank + 1};
+        constexpr IntegerConversionRank c_ShortRank{c_CharRank + 1};
+        constexpr IntegerConversionRank c_IntRank{c_ShortRank + 1};
+        constexpr IntegerConversionRank c_LongRank{c_IntRank + 1};
+        constexpr IntegerConversionRank c_LongLongRank{c_LongRank + 1};
+    }// namespace int_ranks
+
     class BitInteger final {
         int m_BitWidth;
 
@@ -18,16 +34,20 @@ namespace jcc::parsing_sema::types {
 
         [[nodiscard]]
         llvm::Type *GetLLVMType() const;
+
+        [[nodiscard]]
+        int_ranks::IntegerConversionRank GetConversionRank() const;
     };
 
     void PrintTo(BitInteger const &bitInteger, std::ostream *os);
 
     enum class StandardIntegerType {
-        Char,
-        Short,
-        Int,
-        Long,
-        LongLong,
+        Bool     = int_ranks::c_BoolRank,
+        Char     = int_ranks::c_CharRank,
+        Short    = int_ranks::c_ShortRank,
+        Int      = int_ranks::c_IntRank,
+        Long     = int_ranks::c_LongRank,
+        LongLong = int_ranks::c_LongLongRank,
     };
 
     void PrintTo(StandardIntegerType const &bitInteger, std::ostream *os);
@@ -50,63 +70,59 @@ namespace jcc::parsing_sema::types {
         bool IsSigned() const noexcept;
 
         [[nodiscard]]
+        static llvm::Type *GetLLVMType(Type type);
+
+        [[nodiscard]]
         llvm::Type *GetLLVMType() const;
+
+        [[nodiscard]]
+        int_ranks::IntegerConversionRank GetConversionRank() const;
+
+        [[nodiscard]]
+        IntegerType Promote() const;
+
+        [[nodiscard]]
+        bool CanRepresentValuesOf(IntegerType const &other) const;
+
+        [[nodiscard]]
+        IntegerType UsualArithmeticConversion(IntegerType const &other) const;
     };
 
     void PrintTo(IntegerType type, std::ostream *os);
 
-    class IntegerLimits final {
+    class ValueType final {
     public:
-        using NumBits  = int;
-        using NumBytes = int;
+        using Type = std::variant<IntegerType>;
 
-        explicit IntegerLimits(NumBits numBits);
-
-        [[nodiscard]]
-        NumBytes GetNumBytes() const noexcept;
+        explicit ValueType(Type &&type);
 
         [[nodiscard]]
-        NumBits GetNumBits() const noexcept;
+        bool IsArithmetic() const noexcept;
+
+        [[nodiscard]]
+        bool IsInteger() const noexcept;
+
+        [[nodiscard]]
+        llvm::Type *GetLLVMType() const;
+
+        [[nodiscard]]
+        Type const &GetInnerType() const noexcept;
+
+        [[nodiscard]]
+        bool operator==(ValueType const &other) const;
 
     private:
-        NumBits m_NumBits;
+        Type m_Type;
     };
 
     [[nodiscard]]
-    // not consteval because this is architecture dependent, and we might load that in at runtime later
-    IntegerLimits GetIntegerLimits(StandardIntegerType type);
+    llvm::Value *CastValue(llvm::Value *value, ValueType const &type);
 
-    using ConversionRank = int;
+    void PrintTo(ValueType const &type, std::ostream *os);
 
     [[nodiscard]]
-    consteval ConversionRank GetStdIntConversionRank(StandardIntegerType type) {
-        switch (type) {
-            case StandardIntegerType::Char:
-                return 1;
-            case StandardIntegerType::Short:
-                return 2;
-            case StandardIntegerType::Int:
-                return 3;
-            case StandardIntegerType::Long:
-                return 4;
-            case StandardIntegerType::LongLong:
-                return 5;
-            default:
-                return 0;
-        }
-    }
-
-    //
-    // [[nodiscard]]
-    // consteval ConversionRank GetBitIntConversionRank(BitInteger const &type) {
-    // }
-    //
-    // [[nodiscard]]
-    // consteval ConversionRank GetConversionRank(IntegerType type) {
-    //     if (std::holds_alternative<StandardIntegerType>(type)) {
-    //         return GetStdIntConversionRank(std::get<StandardIntegerType>(type));
-    //     }
-    // }
+    ValueType
+    UsualArithmeticConversions(ValueType const &lhs, ValueType const &rhs);
 }// namespace jcc::parsing_sema::types
 
 #endif//TYPE_H

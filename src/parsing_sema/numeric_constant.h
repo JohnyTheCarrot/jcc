@@ -11,25 +11,18 @@ namespace jcc::parsing_sema {
     using NumConstValue = std::variant<IntValue, double>;
 
     class AstIntegerConstant final : public AstExpression {
-        types::IntegerType m_Type;
-        IntValue           m_Value;
+        IntValue m_Value;
 
     public:
-        AstIntegerConstant(types::IntegerType type, IntValue value) noexcept;
+        AstIntegerConstant(types::IntegerType type, IntValue value);
 
         [[nodiscard]]
-        types::IntegerType GetType() const noexcept;
+        IntValue GetValue() const noexcept;
 
-        [[nodiscard]]
-        NumConstValue GetValue() const noexcept;
+        void Accept(ExpressionVisitor *visitor) const override;
 
         [[nodiscard]]
         bool operator==(AstIntegerConstant const &other) const;
-
-        llvm::Value *Codegen() override;
-
-        [[nodiscard]]
-        ValueCategory GetValueCategory() const noexcept override;
     };
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os);
