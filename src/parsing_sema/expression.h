@@ -1,16 +1,18 @@
-#ifndef PRIMARY_EXPRESSION_H
-#define PRIMARY_EXPRESSION_H
+#ifndef EXPRESSION_H
+#define EXPRESSION_H
 
-#include "ast_node.h"
 #include "parser.h"
-#include "preprocessor/preprocessor_iterator.h"
+
+namespace jcc::preprocessor {
+    class PreprocessorIterator;
+}
 
 namespace jcc::parsing_sema {
     [[nodiscard]]
-    AstExpressionPtr ParsePrimaryExpression(
+    AstExpressionPtr ParseExpression(
             preprocessor::PreprocessorIterator       &current,
             preprocessor::PreprocessorIterator const &end
     );
 }// namespace jcc::parsing_sema
 
-#endif//PRIMARY_EXPRESSION_H
+#endif//EXPRESSION_H

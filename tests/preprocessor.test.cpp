@@ -244,7 +244,7 @@ VA(9, 1)
                         TokenList{
                                 Punctuator::LeftBrace, PpNumber{"9"},
                                 Punctuator::Comma, Identifier{"someFn"},
-                                Punctuator::PpLeftParenthesis, PpNumber{"17"},
+                                Punctuator::LeftParenthesis, PpNumber{"17"},
                                 Punctuator::Comma, PpNumber{"1"},
                                 Punctuator::RightParenthesis,
                                 Punctuator::RightBrace
@@ -261,7 +261,7 @@ VA(9, 1)
                         TokenList{
                                 Punctuator::LeftBrace, PpNumber{"9"},
                                 Punctuator::Comma, Identifier{"someFn"},
-                                Punctuator::PpLeftParenthesis, PpNumber{"17"},
+                                Punctuator::LeftParenthesis, PpNumber{"17"},
                                 Punctuator::Comma, PpNumber{"1"},
                                 Punctuator::RightParenthesis, Punctuator::Comma,
                                 PpNumber{"1"}, Punctuator::RightBrace

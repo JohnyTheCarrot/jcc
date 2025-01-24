@@ -1,5 +1,6 @@
 #include "expressions.h"
 
+#include "parsing_sema/additive_expression.h"
 #include "parsing_sema/multiplicative_expression.h"
 #include "parsing_sema/numeric_constant.h"
 
@@ -29,30 +30,104 @@ namespace jcc::codegen {
         auto *lhsValue{GetValue()};
 
         if (lhs->GetType() != astMultiplicativeExpr->GetType()) {
-            lhsValue = CastValue(lhsValue, astMultiplicativeExpr->GetType());
+            lhsValue = CastValue(
+                    lhsValue, lhs->GetType(), astMultiplicativeExpr->GetType()
+            );
         }
 
         rhs->Accept(this);
         auto *rhsValue{GetValue()};
 
         if (rhs->GetType() != astMultiplicativeExpr->GetType()) {
-            rhsValue = CastValue(rhsValue, astMultiplicativeExpr->GetType());
+            rhsValue = CastValue(
+                    rhsValue, rhs->GetType(), astMultiplicativeExpr->GetType()
+            );
         }
 
 
         auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
 
-        switch (astMultiplicativeExpr->GetOperator()) {
-            case parsing_sema::MultiplicativeOperator::Multiplication:
-                m_Value = builder.CreateMul(lhsValue, rhsValue, "mult_result");
-                break;
-            case parsing_sema::MultiplicativeOperator::Division:
-                m_Value = builder.CreateSDiv(lhsValue, rhsValue, "div_result");
-                break;
-            case parsing_sema::MultiplicativeOperator::Modulo:
-                m_Value = builder.CreateSRem(lhsValue, rhsValue, "mod_result");
-                break;
+        if (astMultiplicativeExpr->GetType().IsInteger()) {
+            auto const type{std::get<parsing_sema::types::IntegerType>(
+                    astMultiplicativeExpr->GetType().GetInnerType()
+            )};
+
+            switch (astMultiplicativeExpr->GetOperator()) {
+                case parsing_sema::MultiplicativeOperator::Multiplication:
+                    m_Value = builder.CreateMul(
+                            lhsValue, rhsValue, "mult_result"
+                    );
+                    break;
+                case parsing_sema::MultiplicativeOperator::Division:
+                    if (type.IsSigned()) {
+                        m_Value = builder.CreateSDiv(
+                                lhsValue, rhsValue, "div_result"
+                        );
+                    } else {
+                        m_Value = builder.CreateUDiv(
+                                lhsValue, rhsValue, "div_result"
+                        );
+                    }
+                    break;
+                case parsing_sema::MultiplicativeOperator::Modulo:
+                    if (type.IsSigned()) {
+                        m_Value = builder.CreateSRem(
+                                lhsValue, rhsValue, "mod_result"
+                        );
+                    } else {
+                        m_Value = builder.CreateURem(
+                                lhsValue, rhsValue, "mod_result"
+                        );
+                    }
+                    break;
+            }
+            return;
         }
+
+        throw std::runtime_error{"Unsupported multiplicative expression type"};
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing_sema::AstAdditiveExpression const *astAdditiveExpr
+    ) {
+        auto const *lhs{astAdditiveExpr->GetLhs()};
+        auto const *rhs{astAdditiveExpr->GetRhs()};
+
+        lhs->Accept(this);
+        auto *lhsValue{GetValue()};
+
+        if (lhs->GetType() != astAdditiveExpr->GetType()) {
+            lhsValue = CastValue(
+                    lhsValue, lhs->GetType(), astAdditiveExpr->GetType()
+            );
+        }
+
+        rhs->Accept(this);
+        auto *rhsValue{GetValue()};
+
+        if (rhs->GetType() != astAdditiveExpr->GetType()) {
+            rhsValue = CastValue(
+                    rhsValue, rhs->GetType(), astAdditiveExpr->GetType()
+            );
+        }
+
+        auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
+
+        if (astAdditiveExpr->GetType().IsInteger()) {
+            switch (astAdditiveExpr->GetOperator()) {
+                case parsing_sema::AdditiveOperator::Addition:
+                    m_Value =
+                            builder.CreateAdd(lhsValue, rhsValue, "add_result");
+                    break;
+                case parsing_sema::AdditiveOperator::Subtraction:
+                    m_Value =
+                            builder.CreateSub(lhsValue, rhsValue, "sub_result");
+                    break;
+            }
+            return;
+        }
+
+        throw std::runtime_error{"Unsupported additive expression type"};
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() const noexcept {

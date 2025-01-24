@@ -7,7 +7,11 @@
 
 namespace jcc::preprocessor {
     tokenizer::Token PreprocessorIterator::GetNextToken() const {
-        return m_pPreprocessor->GetNextPreprocessorToken().m_Token;
+        auto token{m_pPreprocessor->GetNextPreprocessorToken().m_Token};
+        if (token.Is(tokenizer::Punctuator::PpLeftParenthesis))
+            token.m_Value = tokenizer::Punctuator::LeftParenthesis;
+
+        return token;
     }
 
     tokenizer::Token PreprocessorIteratorNoCommands::GetNextToken() const {

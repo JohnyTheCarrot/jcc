@@ -18,6 +18,10 @@ namespace jcc::codegen {
         Visit(parsing_sema::AstMultiplicativeExpression const
                       *astMultiplicativeExpr) override;
 
+        void
+        Visit(parsing_sema::AstAdditiveExpression const *astAdditiveExpr
+        ) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() const noexcept;
     };

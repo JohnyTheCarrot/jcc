@@ -76,7 +76,6 @@ add_library(
         src/parsing_sema/constant.cpp
         src/parsing_sema/parser.cpp
         src/parsing_sema/primary_expression.h
-        src/parsing_sema/primary_expression.cpp
         src/parsing_sema/postfix_expression.h
         src/parsing_sema/postfix_expression.cpp
         src/parsing_sema/types.h
@@ -88,6 +87,11 @@ add_library(
         src/parsing_sema/multiplicative_expression.h
         src/codegen/expressions.cpp
         src/codegen/expressions.h
+        src/parsing_sema/additive_expression.cpp
+        src/parsing_sema/additive_expression.h
+        src/parsing_sema/expression.h
+        src/parsing_sema/primary_expression.cpp
+        src/parsing_sema/expression.cpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

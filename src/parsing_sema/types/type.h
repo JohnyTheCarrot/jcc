@@ -116,7 +116,8 @@ namespace jcc::parsing_sema::types {
     };
 
     [[nodiscard]]
-    llvm::Value *CastValue(llvm::Value *value, ValueType const &type);
+    llvm::Value *
+    CastValue(llvm::Value *value, ValueType const &from, ValueType const &to);
 
     void PrintTo(ValueType const &type, std::ostream *os);
 

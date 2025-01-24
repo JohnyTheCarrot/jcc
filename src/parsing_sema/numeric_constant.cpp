@@ -36,7 +36,9 @@ namespace jcc::parsing_sema {
         auto const floatingPointValue{static_cast<double>(value)};
         assert(floatingPointValue >= 0.);
 
-        auto const log2Value{std::log2(floatingPointValue)};
+        auto const log2Value{
+                floatingPointValue == 0 ? 0.0 : std::log2(floatingPointValue)
+        };
 
         return static_cast<int>(std::floor(log2Value) + 1);
     }
@@ -139,7 +141,8 @@ namespace jcc::parsing_sema {
             };
 
             return types::IntegerType{
-                    types::BitInteger{numMinBits + isForcedUnsigned}, signedness
+                    types::BitInteger{numMinBits + !isForcedUnsigned},
+                    signedness
             };
         }
 
@@ -215,7 +218,7 @@ namespace jcc::parsing_sema {
             }
 
             if (!isFloat && numberStr.starts_with('0')) {
-                return std::make_pair(RADIX_OCT, numberStr.cbegin() + 1);
+                return std::make_pair(RADIX_OCT, numberStr.cbegin());
             }
 
             return std::make_pair(RADIX_DEC, numberStr.cbegin());

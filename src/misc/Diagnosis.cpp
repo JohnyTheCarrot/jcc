@@ -199,6 +199,8 @@ namespace jcc {
                         "Syntax error: {}",
                         std::get<std::string>(m_Data0.value())
                 );
+            case Kind::PRS_ExpectedRParen:
+                return "Expected right parenthesis.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
         }
@@ -297,21 +299,12 @@ namespace jcc {
                 ostream << fmt::format(
                         fmt::fg(c_ColorNeutral), "{:┄>{}}", "", actualStartChar
                 );
-                ostream << fmt::format(fmt::fg(color), "┠");
-            } else {
-                ostream << fmt::format(fmt::fg(color), "┄");
             }
 
             ostream << fmt::format(
                     fmt::fg(color), "{:─>{}}", "",
-                    std::max(actualEndChar - actualStartChar, 1)
+                    std::max(actualEndChar - actualStartChar + 1, 1)
             );
-
-            if (endChar.has_value()) {
-                ostream << fmt::format(fmt::fg(color), "┨");
-            } else {
-                ostream << fmt::format(fmt::fg(color), "┄");
-            }
 
             ostream << '\n';
         }

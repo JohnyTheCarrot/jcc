@@ -101,14 +101,14 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(
                         "7wb",
                         AstIntegerConstant{
-                                {types::BitInteger{3}, Signedness::Signed},
+                                {types::BitInteger{4}, Signedness::Signed},
                                 7
                         }
                 ),
                 std::make_tuple(
                         "7uwb",
                         AstIntegerConstant{
-                                {types::BitInteger{4}, Signedness::Unsigned},
+                                {types::BitInteger{3}, Signedness::Unsigned},
                                 7
                         }
                 )

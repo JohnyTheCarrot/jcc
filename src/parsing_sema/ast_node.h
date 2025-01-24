@@ -6,8 +6,10 @@
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
+    class AstAdditiveExpression;
+
     class AstMultiplicativeExpression;
-}
+}// namespace jcc::parsing_sema
 
 namespace jcc::parsing_sema {
     class AstIntegerConstant;
@@ -29,6 +31,8 @@ namespace jcc::parsing_sema {
 
         virtual void
         Visit(AstMultiplicativeExpression const *astMultiplicativeExpr) = 0;
+
+        virtual void Visit(AstAdditiveExpression const *astAdditiveExpr) = 0;
     };
 
     class AstExpression {

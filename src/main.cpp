@@ -6,10 +6,9 @@
 
 #include "codegen/expressions.h"
 #include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
-#include "parsing_sema/multiplicative_expression.h"
+#include "parsing_sema/additive_expression.h"
+#include "parsing_sema/expression.h"
 #include "parsing_sema/numeric_constant.h"
-#include "parsing_sema/postfix_expression.h"
-#include "parsing_sema/primary_expression.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "tokenizer/token.h"          // for Token
 
@@ -26,11 +25,11 @@ int main(int argCount, char *args[]) {
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
 
-        // auto token{*preprocessor.begin()};
+        auto startIt{preprocessor.begin()};
 
-        auto const constant{jcc::parsing_sema::ParseMultiplicativeExpression(
-                preprocessor.begin(), preprocessor.end()
-        )};
+        auto const constant{
+                jcc::parsing_sema::ParseExpression(startIt, preprocessor.end())
+        };
         jcc::codegen::ExpressionCodegenVisitor visitor;
 
         constant->Accept(&visitor);
@@ -55,14 +54,6 @@ int main(int argCount, char *args[]) {
         builder.CreateRet(value);
 
         module.print(llvm::outs(), nullptr);
-
-        // std::for_each(
-        //         preprocessor.begin(), preprocessor.end(),
-        //         [](jcc::tokenizer::Token const &token) {
-        //             token.DebugPrintTo(std::cout);
-        //             std::cout << std::endl;
-        //         }
-        // );
     } catch (jcc::FatalCompilerError const &ex) {
         diagnoses.emplace_back(ex.GetDiagnosis());
     } catch (...) { std::cerr << "An internal compiler error occurred."; }

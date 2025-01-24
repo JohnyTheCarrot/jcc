@@ -212,16 +212,20 @@ namespace jcc::parsing_sema::types {
         return m_Type == other.m_Type;
     }
 
-    llvm::Value *CastValue(llvm::Value *value, ValueType const &type) {
+    llvm::Value *
+    CastValue(llvm::Value *value, ValueType const &from, ValueType const &to) {
         auto &builder{CompilerState::GetInstance().GetBuilder()};
 
-        if (type.IsInteger()) {
-            auto const &integerType{std::get<IntegerType>(type.GetInnerType())};
+        if (from.IsInteger() && to.IsInteger()) {
+            auto const &fromIntegerType{std::get<IntegerType>(from.GetInnerType(
+            ))};
+            auto const &toIntegerType{std::get<IntegerType>(to.GetInnerType())};
 
-            return builder.CreateIntCast(
-                    value, type.GetLLVMType(), integerType.IsSigned(),
-                    "arith_int_cast"
-            );
+            if (fromIntegerType.IsSigned()) {
+                return builder.CreateSExt(value, toIntegerType.GetLLVMType());
+            }
+
+            return builder.CreateZExt(value, toIntegerType.GetLLVMType());
         }
 
         throw std::runtime_error{
