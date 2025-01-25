@@ -21,4 +21,8 @@ namespace jcc::parsing_sema {
         static CompilerState instance{};
         return instance;
     }
+
+    bool CompilerState::HasFatalError() const noexcept {
+        return m_HasFatalError;
+    }
 }// namespace jcc::parsing_sema

@@ -7,6 +7,7 @@
 #include <llvm/TargetParser/Host.h>
 
 #include "ast_node.h"
+#include "misc/Diagnosis.h"
 #include "tokenizer/token.h"
 
 namespace jcc::parsing_sema {
@@ -16,9 +17,9 @@ namespace jcc::parsing_sema {
             std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
 
     class CompilerState final {
-        llvm::LLVMContext   m_Context{};
-        llvm::IRBuilder<>   m_Builder{m_Context};
-        llvm::Target const *m_Target{[] {
+        llvm::LLVMContext      m_Context{};
+        llvm::IRBuilder<>      m_Builder{m_Context};
+        llvm::Target const    *m_Target{[] {
             llvm::InitializeAllTargetInfos();
             llvm::InitializeAllTargets();
             auto const targetTriple{llvm::sys::getDefaultTargetTriple()};
@@ -33,6 +34,8 @@ namespace jcc::parsing_sema {
 
             throw std::runtime_error{error};
         }()};
+        std::vector<Diagnosis> m_Diagnoses{};
+        bool                   m_HasFatalError{false};
 
     public:
         [[nodiscard]]
@@ -48,6 +51,19 @@ namespace jcc::parsing_sema {
         llvm::LLVMContext const &GetContext() const noexcept;
 
         static CompilerState &GetInstance();
+
+        template<class... Args>
+            requires std::constructible_from<Diagnosis, Args...>
+        void EmplaceDiagnosis(Args &&...args) {
+            auto const &diag{
+                    m_Diagnoses.emplace_back(std::forward<Args>(args)...)
+            };
+            if (diag.GetClass() == Diagnosis::Class::Error)
+                m_HasFatalError = true;
+        }
+
+        [[nodiscard]]
+        bool HasFatalError() const noexcept;
     };
 }// namespace jcc::parsing_sema
 

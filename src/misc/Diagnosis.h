@@ -70,7 +70,11 @@ namespace jcc {
             PRS_InvalidIntegerLiteral,
             PRS_SyntaxError,
             PRS_ExpectedRParen,
+            PRS_ExpectedExpressionToFollow,
             SEMA_NoCompatibleIntegerType,
+            SEMA_ShiftOperandNotInteger,
+            SEMA_IncompatibleOperands,
+            SEMA_MultOperandMustBeArithmetic,
             TODO,
         };
 
@@ -80,7 +84,7 @@ namespace jcc {
         };
 
         Diagnosis(
-                Span &&span, Class diagClass, Kind kind,
+                Span span, Class diagClass, Kind kind,
                 Data &&data0 = std::nullopt, Data &&data1 = std::nullopt
         ) noexcept;
 

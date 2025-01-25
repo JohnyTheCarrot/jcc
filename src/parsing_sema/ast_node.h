@@ -3,6 +3,7 @@
 
 #include <llvm/IR/Value.h>
 
+#include "misc/Span.h"
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
@@ -39,13 +40,28 @@ namespace jcc::parsing_sema {
         virtual void Visit(AstShiftExpression const *astShiftExpr) = 0;
     };
 
-    class AstExpression {
+    class AstNodeVisitor : public ExpressionVisitor {
+    public:
+        using ExpressionVisitor::ExpressionVisitor;
+    };
+
+    class AstNode {
+        Span m_Span;
+
+    public:
+        explicit AstNode(Span &&span);
+
+        virtual ~AstNode() = default;
+
+        [[nodiscard]]
+        Span const &GetSpan() const;
+    };
+
+    class AstExpression : public AstNode {
         types::ValueType m_Type;
 
     public:
-        virtual ~AstExpression() = default;
-
-        explicit AstExpression(types::ValueType type);
+        AstExpression(Span &&span, types::ValueType type);
 
         virtual void Accept(ExpressionVisitor *visitor) const = 0;
 

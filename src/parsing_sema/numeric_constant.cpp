@@ -8,9 +8,9 @@
 
 namespace jcc::parsing_sema {
     AstIntegerConstant::AstIntegerConstant(
-            types::IntegerType type, IntValue value
+            Span &&span, types::IntegerType type, IntValue value
     )
-        : AstExpression{types::ValueType{type}}
+        : AstExpression{std::move(span), types::ValueType{type}}
         , m_Value{value} {
     }
 
@@ -260,6 +260,8 @@ namespace jcc::parsing_sema {
                 token.m_Span, suffixStart, minBits, radix == RADIX_DEC
         )};
 
-        return std::make_unique<AstIntegerConstant>(suffix, integerValue);
+        return std::make_unique<AstIntegerConstant>(
+                std::move(token.m_Span), suffix, integerValue
+        );
     }// namespace internal
 }// namespace jcc::parsing_sema

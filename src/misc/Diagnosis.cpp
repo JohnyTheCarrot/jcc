@@ -17,7 +17,7 @@
 
 namespace jcc {
     Diagnosis::Diagnosis(
-            Span &&span, Class diagClass, Kind kind, Data &&data0, Data &&data1
+            Span span, Class diagClass, Kind kind, Data &&data0, Data &&data1
     ) noexcept
         : m_Span{std::move(span)}
         , m_Class{diagClass}
@@ -201,8 +201,17 @@ namespace jcc {
                 );
             case Kind::PRS_ExpectedRParen:
                 return "Expected right parenthesis.";
+            case Kind::PRS_ExpectedExpressionToFollow:
+                return "Expected expression to follow.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
+            case Kind::SEMA_ShiftOperandNotInteger:
+                return "Shift operand must be an integer type.";
+            case Kind::SEMA_IncompatibleOperands:
+                return "Incompatible operands.";
+            case Kind::SEMA_MultOperandMustBeArithmetic:
+                return "The operands of a multiplicative expression must be of "
+                       "an arithmetic type.";
         }
 
         assert(false);

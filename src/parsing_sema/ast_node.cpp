@@ -3,8 +3,17 @@
 #include "parser.h"
 
 namespace jcc::parsing_sema {
-    AstExpression::AstExpression(types::ValueType type)
-        : m_Type{std::move(type)} {
+    AstNode::AstNode(Span &&span)
+        : m_Span{std::move(span)} {
+    }
+
+    Span const &AstNode::GetSpan() const {
+        return m_Span;
+    }
+
+    AstExpression::AstExpression(Span &&span, types::ValueType type)
+        : AstNode{std::move(span)}
+        , m_Type{std::move(type)} {
     }
 
     types::ValueType const &AstExpression::GetType() const {

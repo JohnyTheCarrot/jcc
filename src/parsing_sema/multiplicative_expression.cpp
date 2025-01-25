@@ -1,5 +1,6 @@
 #include "multiplicative_expression.h"
 
+#include "binary_expression.h"
 #include "preprocessor/preprocessor_iterator.h"
 #include "primary_expression.h"
 
@@ -8,9 +9,7 @@ namespace jcc::parsing_sema {
             AstExpressionPtr lhs, AstExpressionPtr rhs,
             MultiplicativeOperator op
     )
-        : AstExpression{UsualArithmeticConversions(
-                  lhs->GetType(), rhs->GetType()
-          )}
+        : AstExpression{lhs->GetSpan() + rhs->GetSpan(), UsualArithmeticConversions(lhs->GetType(), rhs->GetType())}
         , m_Lhs{std::move(lhs)}
         , m_Rhs{std::move(rhs)}
         , m_Operator{op} {
@@ -35,62 +34,28 @@ namespace jcc::parsing_sema {
         visitor->Visit(this);
     }
 
+    [[nodiscard]]
+    std::optional<MultiplicativeOperator>
+    GetMultiplicativeOperator(tokenizer::Punctuator punctuator) {
+        switch (punctuator) {
+            case tokenizer::Punctuator::Asterisk:
+                return MultiplicativeOperator::Multiplication;
+            case tokenizer::Punctuator::Slash:
+                return MultiplicativeOperator::Division;
+            case tokenizer::Punctuator::Percent:
+                return MultiplicativeOperator::Modulo;
+            default:
+                return std::nullopt;
+        }
+    }
+
     AstExpressionPtr ParseMultiplicativeExpression(
             preprocessor::PreprocessorIterator       &current,
             preprocessor::PreprocessorIterator const &end
     ) {
-        if (current == end)
-            return nullptr;
-
-        // TODO: supposed to be a cast expression
-        auto lhsExpr{ParsePrimaryExpression(current, end)};
-
-        if (lhsExpr == nullptr)
-            return nullptr;
-
-        while (current != end) {
-            if (tokenizer::Token nextToken{*current};
-                nextToken.Is<tokenizer::Punctuator>()) {
-
-                MultiplicativeOperator op;
-
-                switch (std::get<tokenizer::Punctuator>(nextToken.m_Value)) {
-                    case tokenizer::Punctuator::Asterisk:
-                        op = MultiplicativeOperator::Multiplication;
-                        break;
-                    case tokenizer::Punctuator::Slash:
-                        op = MultiplicativeOperator::Division;
-                        break;
-                    case tokenizer::Punctuator::Percent:
-                        op = MultiplicativeOperator::Modulo;
-                        break;
-                    default:
-                        return lhsExpr;
-                }
-
-                ++current;
-                if (current == end) {
-                    throw std::runtime_error{"Expected expression"};
-                }
-
-                // TODO: supposed to be a cast expression
-                auto rhsExpr{ParsePrimaryExpression(current, end)};
-                if (rhsExpr == nullptr) {
-                    // TODO: Use FatalCompilerError with span info
-                    throw std::runtime_error{"Expected expression"};
-                }
-
-                lhsExpr = std::make_unique<AstMultiplicativeExpression>(
-                        std::move(lhsExpr), std::move(rhsExpr), op
-                );
-                ++current;
-
-                continue;
-            }
-
-            return lhsExpr;
-        }
-
-        return lhsExpr;
+        return ParseBinaryExpression<
+                MultiplicativeOperator, AstMultiplicativeExpression>(
+                GetMultiplicativeOperator, ParsePrimaryExpression, current, end
+        );
     }
 }// namespace jcc::parsing_sema

@@ -14,7 +14,9 @@ namespace jcc::parsing_sema {
         IntValue m_Value;
 
     public:
-        AstIntegerConstant(types::IntegerType type, IntValue value);
+        AstIntegerConstant(
+                Span &&span, types::IntegerType type, IntValue value
+        );
 
         [[nodiscard]]
         IntValue GetValue() const noexcept;

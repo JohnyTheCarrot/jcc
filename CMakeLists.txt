@@ -94,6 +94,9 @@ add_library(
         src/parsing_sema/expression.cpp
         src/parsing_sema/shift_expression.cpp
         src/parsing_sema/shift_expression.h
+        src/parsing_sema/binary_expression.h
+        src/parsing_sema/sema_visitor.cpp
+        src/parsing_sema/sema_visitor.h
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)
