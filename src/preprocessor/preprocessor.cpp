@@ -143,8 +143,7 @@ namespace jcc::preprocessor {
         , m_TokenIter{m_Tokenizer.begin()} {
     }
 
-    TokenizerIteratorPair::TokenizerIteratorPair(TokenizerIteratorPair &&other
-    ) noexcept
+    TokenizerIteratorPair::TokenizerIteratorPair(TokenizerIteratorPair &&other)
         : m_Tokenizer{std::move(other.m_Tokenizer)}
         // The tokenizer iterator is a forward iterator, so it's okay to use .begin()
         , m_TokenIter{m_Tokenizer.begin()} {

@@ -8,7 +8,7 @@
 
 namespace jcc::parsing_sema {
     AstIntegerConstant::AstIntegerConstant(
-            Span &&span, types::IntegerType type, IntValue value
+            Span span, types::IntegerType type, IntValue value
     )
         : AstExpression{std::move(span), types::ValueType{type}}
         , m_Value{value} {
@@ -199,39 +199,161 @@ namespace jcc::parsing_sema {
         }
     }
 
-    std::unique_ptr<AstIntegerConstant>
-    ParseNumericConstant(tokenizer::Token &token) {
-        auto [numberStr]{std::get<tokenizer::PpNumber>(token.m_Value)};
+    AstFloatingConstant::AstFloatingConstant(
+            Span span, types::FloatingType type, FloatingValue value
+    )
+        : AstExpression{std::move(span), types::ValueType{type}}
+        , m_Value{value} {
+    }
 
-        constexpr auto RADIX_HEX{16};
-        constexpr auto RADIX_OCT{8};
-        constexpr auto RADIX_DEC{10};
+    FloatingValue AstFloatingConstant::GetValue() const noexcept {
+        return m_Value;
+    }
 
-        auto const numEnd{std::ranges::find_if(numberStr, IsFloatingPoint)};
-        auto const isFloat{
-                numEnd != numberStr.end() && IsFloatingPoint(*numEnd)
+    void AstFloatingConstant::Accept(ExpressionVisitor *visitor) const {
+        return visitor->Visit(this);
+    }
+
+    constexpr auto RADIX_HEX{16};
+    constexpr auto RADIX_OCT{8};
+    constexpr auto RADIX_DEC{10};
+
+    [[nodiscard]]
+    types::FloatingType
+    ParseFloatingSuffix(Span &suffixSpan, std::string_view suffix) {
+        if (suffix.empty()) {
+            return types::FloatingType{types::StandardFloatingType::Double};
+        }
+
+        if (suffix == "f" || suffix == "F") {
+            return types::FloatingType{types::StandardFloatingType::Float};
+        }
+
+        if (suffix == "l" || suffix == "L") {
+            return types::FloatingType{types::StandardFloatingType::LongDouble};
+        }
+
+        throw FatalCompilerError{
+                Diagnosis::Kind::PRS_UnrecognizedFloatingSuffix,
+                std::move(suffixSpan)
         };
+    }
+
+    [[nodiscard]]
+    types::FloatingType ParseFloatContinued(
+            tokenizer::Token &token, int radix, std::string_view const rest,
+            int &exponent
+    ) {
+        if (radix == RADIX_HEX) {
+            // P-notation
+            throw FatalCompilerError{
+                    Diagnosis::Kind::TODO, std::move(token.m_Span)
+            };
+        }
+
+        // At this point, the next character must be either 'e' or 'E', or it must be the start of a floating-suffix.
+        if (rest.starts_with("e") || rest.starts_with("E")) {
+            std::string_view exponentStart{[&] {
+                std::string_view strView{std::next(rest.cbegin()), rest.cend()};
+                if (strView.starts_with('+'))
+                    strView.remove_prefix(1);
+
+                return strView;
+            }()};
+
+            auto const exponentResult{std::from_chars(
+                    exponentStart.data(),
+                    exponentStart.data() + exponentStart.size(), exponent
+            )};
+            if (exponentResult.ec != std::errc{}) {
+                throw FatalCompilerError{
+                        Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
+                        std::move(token.m_Span)
+                };
+            }
+
+            std::string_view const suffix{exponentResult.ptr, rest.end()};
+            return ParseFloatingSuffix(token.m_Span, suffix);
+        }
+
+        return ParseFloatingSuffix(token.m_Span, rest);
+    }
+
+    AstExpressionPtr ParseFloatingConstant(
+            tokenizer::Token &token, std::string_view numberWithoutSeparators,
+            int radix
+    ) {
+        if (radix == RADIX_OCT) {
+            throw FatalCompilerError{
+                    Diagnosis::Kind::PRS_OctalFloatingPoint,
+                    std::move(token.m_Span)
+            };
+        }
+
+        auto const             fractionalConstantEnd{std::ranges::find_if(
+                numberWithoutSeparators,
+                [&](char c) { return c == 'e' || c == 'E'; }
+        )};
+        std::string_view const fractionalConstant{
+                numberWithoutSeparators.cbegin(), fractionalConstantEnd
+        };
+        double     fractionalValue{};
+        auto const result{std::from_chars(
+                fractionalConstant.data(),
+                fractionalConstant.data() + fractionalConstant.size(),
+                fractionalValue
+        )};
+        if (result.ec != std::errc{}) {
+            throw FatalCompilerError{
+                    Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
+                    std::move(token.m_Span)
+            };
+        }
+
+        // Floating-point literals without a fractional part must have an exponent.
+        // But we don't need to check for that here because such a literal would have been lexed as an integer literal.
+
+        types::FloatingType type{types::StandardFloatingType::Double};
+        int                 exponent{0};
+        if (fractionalConstantEnd != numberWithoutSeparators.cend()) {
+            std::string_view const rest{
+                    fractionalConstantEnd, numberWithoutSeparators.cend()
+            };
+
+            type = ParseFloatContinued(token, radix, rest, exponent);
+        }
+        if (result.ptr != fractionalConstantEnd) {
+            std::string_view const suffix{
+                    result.ptr, numberWithoutSeparators.cend()
+            };
+            type = ParseFloatingSuffix(token.m_Span, suffix);
+        }
+
+        fractionalValue *= std::pow(10., exponent);
+
+        return std::make_unique<AstFloatingConstant>(
+                std::move(token.m_Span), type, fractionalValue
+        );
+    }
+
+    AstExpressionPtr ParseNumericConstant(tokenizer::Token &token) {
+        auto [numberStr]{std::get<tokenizer::PpNumber>(token.m_Value)};
 
         auto const [radix, numStart]{[&] {
             if (numberStr.starts_with("0x")) {
                 return std::make_pair(RADIX_HEX, numberStr.cbegin() + 2);
             }
 
-            if (!isFloat && numberStr.starts_with('0')) {
+            if (numberStr.starts_with('0')) {
                 return std::make_pair(RADIX_OCT, numberStr.cbegin());
             }
 
             return std::make_pair(RADIX_DEC, numberStr.cbegin());
         }()};
 
-        if (isFloat) {
-            throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(token.m_Span)
-            };
-        }
         auto const startOffset{std::distance(numberStr.cbegin(), numStart)};
 
-        // TODO: this likely allows for separators in the middle of suffixes
+        // This does not allow for separators in the middle of suffixes, because we already checked for that in the tokenizer.
         std::string numberWithoutSeparators;
         numberWithoutSeparators.reserve(numberStr.size() - startOffset);
         std::copy_if(
@@ -239,6 +361,18 @@ namespace jcc::parsing_sema {
                 std::back_inserter(numberWithoutSeparators),
                 [](char c) { return c != '\''; }
         );
+
+        auto const numEnd{
+                std::ranges::find_if(numberWithoutSeparators, IsFloatingPoint)
+        };
+        auto const isFloat{
+                numEnd != numberWithoutSeparators.end() &&
+                IsFloatingPoint(*numEnd)
+        };
+
+        if (isFloat) {
+            return ParseFloatingConstant(token, numberWithoutSeparators, radix);
+        }
 
         IntValue   integerValue{};
         auto const result{std::from_chars(
@@ -249,7 +383,7 @@ namespace jcc::parsing_sema {
         if (result.ec != std::errc{}) {
             throw FatalCompilerError{
                     Diagnosis::Kind::PRS_InvalidIntegerLiteral,
-                    Span{token.m_Span}
+                    std::move(token.m_Span)
             };
         }
 

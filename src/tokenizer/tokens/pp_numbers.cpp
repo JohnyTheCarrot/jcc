@@ -12,14 +12,14 @@
 namespace jcc::tokenizer::pp_numbers {
     [[nodiscard]]
     bool GatherDigit(CharIter &charIter, Span &span, std::string &number) {
+        // TODO: This currently allows for a single quote to be after a non-digit character, the standard doesn't allow this.
         switch (charIter->m_Char) {
             case '\'':
                 ++charIter;
 
                 // Make sure the single quote is followed by a digit
                 if (charIter == CharIter::end() ||
-                    (!utils::IsNonDigit(charIter->m_Char) &&
-                     std::isdigit(charIter->m_Char)))
+                    !std::isxdigit(charIter->m_Char))
                     throw FatalCompilerError{
                             Diagnosis::Kind::TK_PreprocessingNumberInvalid,
                             std::move(span)
@@ -33,6 +33,12 @@ namespace jcc::tokenizer::pp_numbers {
             case 'P':
                 number += charIter->m_Char;
                 ++charIter;
+                if (charIter == CharIter::end())
+                    throw FatalCompilerError{
+                            Diagnosis::Kind::TK_PreprocessingNumberInvalid,
+                            std::move(span)
+                    };
+
                 // A pp-number that has eEpP in it doesn't necessarily mean we're going doing the eEpP route
                 number += charIter->m_Char;
                 return true;
@@ -61,6 +67,7 @@ namespace jcc::tokenizer::pp_numbers {
 
         number += charIter->m_Char;
         ++charIter;
+        span.m_End.NextChar();
 
         while (charIter != CharIter::end()) {
             if (auto const hasNext{GatherDigit(charIter, span, number)};
@@ -68,6 +75,7 @@ namespace jcc::tokenizer::pp_numbers {
                 break;
 
             ++charIter;
+            span.m_End.NextChar();
         }
 
         return Token{

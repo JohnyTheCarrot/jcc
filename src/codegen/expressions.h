@@ -8,7 +8,10 @@
 namespace jcc::codegen {
     class ExpressionCodegenVisitor final
         : public parsing_sema::ExpressionVisitor {
-        mutable llvm::Value *m_Value{};
+        llvm::Value *m_Value{};
+
+        std::pair<llvm::Value *, llvm::Value *>
+        PrepareOperands(parsing_sema::AstBinaryExpression const *astExpr);
 
     public:
         void
@@ -25,8 +28,12 @@ namespace jcc::codegen {
         void
         Visit(parsing_sema::AstShiftExpression const *astShiftExpr) override;
 
+        void
+        Visit(parsing_sema::AstFloatingConstant const *astFloatingConst
+        ) override;
+
         [[nodiscard]]
-        llvm::Value *GetValue() const noexcept;
+        llvm::Value *GetValue() noexcept;
     };
 }// namespace jcc::codegen
 

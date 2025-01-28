@@ -1,6 +1,6 @@
 #include "type.h"
 
-#include <cmath>
+#include <iostream>
 #include <magic_enum/magic_enum.hpp>
 
 #include "parsing_sema/parser.h"
@@ -30,6 +30,19 @@ namespace jcc::parsing_sema::types {
 
     void PrintTo(StandardIntegerType const &bitInteger, std::ostream *os) {
         *os << "StandardIntegerType::" << magic_enum::enum_name(bitInteger);
+    }
+
+    IntegerType::IntegerType(Type type, Signedness sign)
+        : m_Type{std::move(type)}
+        , m_Sign{sign} {
+    }
+
+    IntegerType::Type IntegerType::GetType() const noexcept {
+        return m_Type;
+    }
+
+    IntegerType::Signedness IntegerType::GetSignedness() const noexcept {
+        return m_Sign;
     }
 
     bool IntegerType::operator==(IntegerType const &other) const {
@@ -97,6 +110,12 @@ namespace jcc::parsing_sema::types {
         return GetLLVMType(m_Type);
     }
 
+    unsigned IntegerType::GetBitWidth() const {
+        auto const llvmType{GetLLVMType()};
+
+        return llvmType->getIntegerBitWidth();
+    }
+
     int_ranks::IntegerConversionRank IntegerType::GetConversionRank() const {
         if (std::holds_alternative<StandardIntegerType>(m_Type)) {
             return static_cast<int>(std::get<StandardIntegerType>(m_Type));
@@ -114,16 +133,18 @@ namespace jcc::parsing_sema::types {
         auto const numUnsignedIntBits{llvmInt->getIntegerBitWidth()};
 
         // Check if the type is promotable to signed int
-        if (numBits <= numUnsignedIntBits - 1 /* sign bit */)
+        if (numBits < numUnsignedIntBits - 1 /* sign bit */) {
             return IntegerType{
                     Type{StandardIntegerType::Int}, Signedness::Signed
             };
+        }
 
         // Check if the type is promotable to unsigned int
-        if (numBits <= numUnsignedIntBits)
+        if (numBits < numUnsignedIntBits) {
             return IntegerType{
                     Type{StandardIntegerType::Int}, Signedness::Unsigned
             };
+        }
 
         // Type is not promotable to int, leave it as is
         return *this;
@@ -177,8 +198,74 @@ namespace jcc::parsing_sema::types {
 
     void PrintTo(IntegerType type, std::ostream *os) {
         *os << "IntegerType{";
-        std::visit([&os](auto const &t) { PrintTo(t, os); }, type.m_Type);
-        *os << ", " << magic_enum::enum_name(type.m_Sign) << '}';
+        std::visit([&os](auto const &t) { PrintTo(t, os); }, type.GetType());
+        *os << ", " << magic_enum::enum_name(type.GetSignedness()) << '}';
+    }
+
+    void PrintTo(StandardFloatingType floatingType, std::ostream *os) {
+        *os << "StandardFloatingType::" << magic_enum::enum_name(floatingType);
+    }
+
+    FloatingType::FloatingType(Type &&specifier)
+        : m_Type{std::move(specifier)} {
+    }
+
+    llvm::Type *FloatingType::GetLLVMType() const {
+        auto &context{CompilerState::GetInstance().GetContext()};
+
+        if (std::holds_alternative<StandardFloatingType>(m_Type)) {
+            switch (std::get<StandardFloatingType>(m_Type)) {
+                case StandardFloatingType::Float:
+                    return llvm::Type::getFloatTy(context);
+                case StandardFloatingType::Double:
+                    return llvm::Type::getDoubleTy(context);
+                case StandardFloatingType::LongDouble:
+                    return llvm::Type::getX86_FP80Ty(context);
+            }
+
+            assert(false);
+            return nullptr;
+        }
+
+        throw std::runtime_error{
+                "TODO: Implement GetLLVMType for non-standard floating types"
+        };
+    }
+
+    bool FloatingType::operator==(FloatingType const &other) const {
+        return m_Type == other.m_Type;
+    }
+
+    FloatingType::Type FloatingType::GetType() const noexcept {
+        return m_Type;
+    }
+
+    FloatingType
+    FloatingType::UsualArithmeticConversion(FloatingType const &other) const {
+        if (std::holds_alternative<StandardFloatingType>(m_Type) &&
+            std::holds_alternative<StandardFloatingType>(other.m_Type)) {
+            auto const lhs{std::get<StandardFloatingType>(m_Type)};
+            auto const rhs{std::get<StandardFloatingType>(other.m_Type)};
+
+            using Underlying = std::underlying_type_t<StandardFloatingType>;
+            auto const lhsRank{static_cast<Underlying>(lhs)};
+            auto const rhsRank{static_cast<Underlying>(rhs)};
+
+            if (lhsRank >= rhsRank)
+                return *this;
+
+            return other;
+        }
+
+        // TODO: Implement UsualArithmeticConversion for non-standard floating types
+        throw std::runtime_error{"TODO: Implement UsualArithmeticConversion "
+                                 "for non-standard floating types"};
+    }
+
+    void PrintTo(FloatingType const &type, std::ostream *os) {
+        *os << "FloatingType{";
+        std::visit([&os](auto const &t) { PrintTo(t, os); }, type.GetType());
+        *os << '}';
     }
 
     ValueType::ValueType(Type &&type)
@@ -186,7 +273,8 @@ namespace jcc::parsing_sema::types {
     }
 
     bool ValueType::IsArithmetic() const noexcept {
-        if (std::holds_alternative<IntegerType>(m_Type))
+        if (std::holds_alternative<IntegerType>(m_Type) ||
+            std::holds_alternative<FloatingType>(m_Type))
             return true;
 
         // TODO: other arithmetic types
@@ -198,13 +286,17 @@ namespace jcc::parsing_sema::types {
         return std::holds_alternative<IntegerType>(m_Type);
     }
 
+    bool ValueType::IsFloating() const noexcept {
+        return std::holds_alternative<FloatingType>(m_Type);
+    }
+
     llvm::Type *ValueType::GetLLVMType() const {
         return std::visit(
                 [&](auto &&arg) { return arg.GetLLVMType(); }, m_Type
         );
     }
 
-    ValueType::Type const &ValueType::GetInnerType() const noexcept {
+    ValueType::Type const &ValueType::GetType() const noexcept {
         return m_Type;
     }
 
@@ -217,9 +309,8 @@ namespace jcc::parsing_sema::types {
         auto &builder{CompilerState::GetInstance().GetBuilder()};
 
         if (from.IsInteger() && to.IsInteger()) {
-            auto const &fromIntegerType{std::get<IntegerType>(from.GetInnerType(
-            ))};
-            auto const &toIntegerType{std::get<IntegerType>(to.GetInnerType())};
+            auto const &fromIntegerType{std::get<IntegerType>(from.GetType())};
+            auto const &toIntegerType{std::get<IntegerType>(to.GetType())};
 
             if (fromIntegerType.IsSigned()) {
                 return builder.CreateSExt(value, toIntegerType.GetLLVMType());
@@ -234,9 +325,7 @@ namespace jcc::parsing_sema::types {
     }
 
     void PrintTo(ValueType const &type, std::ostream *os) {
-        std::visit(
-                [&os](auto const &t) { PrintTo(t, os); }, type.GetInnerType()
-        );
+        std::visit([&os](auto const &t) { PrintTo(t, os); }, type.GetType());
     }
 
     ValueType
@@ -254,16 +343,32 @@ namespace jcc::parsing_sema::types {
         // TODO: Otherwise, if the corresponding real type of either operand is float, the other operand is converted, without change of type domain, to a type whose corresponding real type is float.
         // TODO: Otherwise, if any of the two types is an enumeration, it is converted to its underlying type.
 
-        if (!std::holds_alternative<IntegerType>(lhs.GetInnerType()) ||
-            !std::holds_alternative<IntegerType>(rhs.GetInnerType()))
-            throw std::runtime_error{
-                    "TODO: Implement UsualArithmeticConversions for "
-                    "non-integer types"
+        if (std::holds_alternative<IntegerType>(lhs.GetType()) &&
+            std::holds_alternative<IntegerType>(rhs.GetType())) {
+            auto const &lhsIntType{std::get<IntegerType>(lhs.GetType())};
+            auto const &rhsIntType{std::get<IntegerType>(rhs.GetType())};
+
+            return ValueType{lhsIntType.UsualArithmeticConversion(rhsIntType)};
+        }
+
+        if (std::holds_alternative<FloatingType>(lhs.GetType()) ^
+            std::holds_alternative<FloatingType>(rhs.GetType())) {
+            if (lhs.IsInteger())
+                return ValueType{std::get<FloatingType>(rhs.GetType())};
+
+            return ValueType{std::get<FloatingType>(lhs.GetType())};
+        }
+
+        if (std::holds_alternative<FloatingType>(lhs.GetType()) &&
+            std::holds_alternative<FloatingType>(rhs.GetType())) {
+            auto const &lhsFloatType{std::get<FloatingType>(lhs.GetType())};
+            auto const &rhsFloatType{std::get<FloatingType>(rhs.GetType())};
+
+            return ValueType{
+                    lhsFloatType.UsualArithmeticConversion(rhsFloatType)
             };
+        }
 
-        auto const &lhsIntType{std::get<IntegerType>(lhs.GetInnerType())};
-        auto const &rhsIntType{std::get<IntegerType>(rhs.GetInnerType())};
-
-        return ValueType{lhsIntType.UsualArithmeticConversion(rhsIntType)};
+        throw std::runtime_error{"TODO: Implement UsualArithmeticConversions"};
     }
 }// namespace jcc::parsing_sema::types

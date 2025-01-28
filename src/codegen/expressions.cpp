@@ -6,13 +6,37 @@
 #include "parsing_sema/shift_expression.h"
 
 namespace jcc::codegen {
+    std::pair<llvm::Value *, llvm::Value *>
+    ExpressionCodegenVisitor::PrepareOperands(
+            parsing_sema::AstBinaryExpression const *astExpr
+    ) {
+        auto const *lhs{astExpr->GetLhs()};
+        auto const *rhs{astExpr->GetRhs()};
+
+        lhs->Accept(this);
+        auto *lhsValue{GetValue()};
+
+        if (lhs->GetType() != astExpr->GetType()) {
+            lhsValue = CastValue(lhsValue, lhs->GetType(), astExpr->GetType());
+        }
+
+        rhs->Accept(this);
+        auto *rhsValue{GetValue()};
+
+        if (rhs->GetType() != astExpr->GetType()) {
+            rhsValue = CastValue(rhsValue, rhs->GetType(), astExpr->GetType());
+        }
+
+        return {lhsValue, rhsValue};
+    }
+
     void ExpressionCodegenVisitor::Visit(
             parsing_sema::AstIntegerConstant const *astIntConst
     ) {
         auto const value{astIntConst->GetValue()};
 
         auto const type{std::get<parsing_sema::types::IntegerType>(
-                astIntConst->GetType().GetInnerType()
+                astIntConst->GetType().GetType()
         )};
 
         auto *llvmType{type.GetLLVMType()};
@@ -24,33 +48,14 @@ namespace jcc::codegen {
             parsing_sema::AstMultiplicativeExpression const
                     *astMultiplicativeExpr
     ) {
-        auto const *lhs{astMultiplicativeExpr->GetLhs()};
-        auto const *rhs{astMultiplicativeExpr->GetRhs()};
-
-        lhs->Accept(this);
-        auto *lhsValue{GetValue()};
-
-        if (lhs->GetType() != astMultiplicativeExpr->GetType()) {
-            lhsValue = CastValue(
-                    lhsValue, lhs->GetType(), astMultiplicativeExpr->GetType()
-            );
-        }
-
-        rhs->Accept(this);
-        auto *rhsValue{GetValue()};
-
-        if (rhs->GetType() != astMultiplicativeExpr->GetType()) {
-            rhsValue = CastValue(
-                    rhsValue, rhs->GetType(), astMultiplicativeExpr->GetType()
-            );
-        }
-
+        auto [lhsValue, rhsValue]{PrepareOperands(astMultiplicativeExpr)};
 
         auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
+        auto const &type{astMultiplicativeExpr->GetType()};
 
-        if (astMultiplicativeExpr->GetType().IsInteger()) {
-            auto const type{std::get<parsing_sema::types::IntegerType>(
-                    astMultiplicativeExpr->GetType().GetInnerType()
+        if (type.IsInteger()) {
+            auto const intType{std::get<parsing_sema::types::IntegerType>(
+                    astMultiplicativeExpr->GetType().GetType()
             )};
 
             switch (astMultiplicativeExpr->GetOperator()) {
@@ -60,7 +65,7 @@ namespace jcc::codegen {
                     );
                     break;
                 case parsing_sema::MultiplicativeOperator::Division:
-                    if (type.IsSigned()) {
+                    if (intType.IsSigned()) {
                         m_Value = builder.CreateSDiv(
                                 lhsValue, rhsValue, "div_result"
                         );
@@ -71,7 +76,7 @@ namespace jcc::codegen {
                     }
                     break;
                 case parsing_sema::MultiplicativeOperator::Modulo:
-                    if (type.IsSigned()) {
+                    if (intType.IsSigned()) {
                         m_Value = builder.CreateSRem(
                                 lhsValue, rhsValue, "mod_result"
                         );
@@ -85,32 +90,33 @@ namespace jcc::codegen {
             return;
         }
 
+        if (type.IsFloating()) {
+            switch (astMultiplicativeExpr->GetOperator()) {
+                case parsing_sema::MultiplicativeOperator::Multiplication:
+                    m_Value = builder.CreateFMul(
+                            lhsValue, rhsValue, "fmult_result"
+                    );
+                    return;
+                case parsing_sema::MultiplicativeOperator::Division:
+                    m_Value = builder.CreateFDiv(
+                            lhsValue, rhsValue, "fdiv_result"
+                    );
+                    return;
+                case parsing_sema::MultiplicativeOperator::Modulo:
+                    assert(false &&
+                           "Floating point modulo not supported, and should "
+                           "have been caught by the semantic analysis.");
+                    break;
+            }
+        }
+
         throw std::runtime_error{"Unsupported multiplicative expression type"};
     }
 
     void ExpressionCodegenVisitor::Visit(
             parsing_sema::AstAdditiveExpression const *astAdditiveExpr
     ) {
-        auto const *lhs{astAdditiveExpr->GetLhs()};
-        auto const *rhs{astAdditiveExpr->GetRhs()};
-
-        lhs->Accept(this);
-        auto *lhsValue{GetValue()};
-
-        if (lhs->GetType() != astAdditiveExpr->GetType()) {
-            lhsValue = CastValue(
-                    lhsValue, lhs->GetType(), astAdditiveExpr->GetType()
-            );
-        }
-
-        rhs->Accept(this);
-        auto *rhsValue{GetValue()};
-
-        if (rhs->GetType() != astAdditiveExpr->GetType()) {
-            rhsValue = CastValue(
-                    rhsValue, rhs->GetType(), astAdditiveExpr->GetType()
-            );
-        }
+        auto [lhsValue, rhsValue]{PrepareOperands(astAdditiveExpr)};
 
         auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
 
@@ -128,32 +134,30 @@ namespace jcc::codegen {
             return;
         }
 
+        if (astAdditiveExpr->GetType().IsFloating()) {
+            switch (astAdditiveExpr->GetOperator()) {
+                case parsing_sema::AdditiveOperator::Addition:
+                    m_Value = builder.CreateFAdd(
+                            lhsValue, rhsValue, "fadd_result"
+                    );
+                    break;
+                case parsing_sema::AdditiveOperator::Subtraction:
+                    m_Value = builder.CreateFSub(
+                            lhsValue, rhsValue, "fsub_result"
+                    );
+                    break;
+            }
+
+            return;
+        }
+
         throw std::runtime_error{"Unsupported additive expression type"};
     }
 
     void ExpressionCodegenVisitor::Visit(
             parsing_sema::AstShiftExpression const *astShiftExpr
     ) {
-        auto const *lhs{astShiftExpr->GetLhs()};
-        auto const *rhs{astShiftExpr->GetRhs()};
-
-        lhs->Accept(this);
-        auto *lhsValue{GetValue()};
-
-        if (lhs->GetType() != astShiftExpr->GetType()) {
-            lhsValue = CastValue(
-                    lhsValue, lhs->GetType(), astShiftExpr->GetType()
-            );
-        }
-
-        rhs->Accept(this);
-        auto *rhsValue{GetValue()};
-
-        if (rhs->GetType() != astShiftExpr->GetType()) {
-            rhsValue = CastValue(
-                    rhsValue, rhs->GetType(), astShiftExpr->GetType()
-            );
-        }
+        auto [lhsValue, rhsValue]{PrepareOperands(astShiftExpr)};
 
         auto &builder{parsing_sema::CompilerState::GetInstance().GetBuilder()};
 
@@ -175,7 +179,21 @@ namespace jcc::codegen {
         throw std::runtime_error{"Unsupported additive expression type"};
     }
 
-    llvm::Value *ExpressionCodegenVisitor::GetValue() const noexcept {
+    void ExpressionCodegenVisitor::Visit(
+            parsing_sema::AstFloatingConstant const *astFloatingConst
+    ) {
+        auto const value{astFloatingConst->GetValue()};
+
+        auto const type{std::get<parsing_sema::types::FloatingType>(
+                astFloatingConst->GetType().GetType()
+        )};
+
+        auto *llvmType{type.GetLLVMType()};
+
+        m_Value = llvm::ConstantFP::get(llvmType, value);
+    }
+
+    llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {
         auto const copy{m_Value};
         m_Value = nullptr;
 

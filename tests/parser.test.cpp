@@ -37,10 +37,17 @@ TEST_P(IntegerConstantParserTest, Suffixes) {
     EXPECT_EQ(*suffix, expected);
 }
 
+jcc::Span const c_NullSpan{
+        nullptr, jcc::SpanMarker{}, jcc::SpanMarker{}, nullptr
+};
+
 // NOTE: Please make sure the `num` is a valid integer literal, NOT an expression.
 #define ICP_RULE(num, type, sign)                                              \
     std::make_tuple(                                                           \
-            #num, AstIntegerConstant{types::IntegerType{type, sign}, num}      \
+            #num,                                                              \
+            AstIntegerConstant{                                                \
+                    c_NullSpan, types::IntegerType{type, sign}, num            \
+            }                                                                  \
     )
 
 INSTANTIATE_TEST_SUITE_P(
@@ -87,6 +94,10 @@ INSTANTIATE_TEST_SUITE_P(
                         Signedness::Unsigned
                 ),
                 ICP_RULE(
+                        0xFFFF'FFFF, types::StandardIntegerType::Int,
+                        Signedness::Unsigned
+                ),
+                ICP_RULE(
                         4294967296 /* UINT_MAX + 1 */,
                         types::StandardIntegerType::Long, Signedness::Signed
                 ),
@@ -101,6 +112,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(
                         "7wb",
                         AstIntegerConstant{
+                                c_NullSpan,
                                 {types::BitInteger{4}, Signedness::Signed},
                                 7
                         }
@@ -108,6 +120,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_tuple(
                         "7uwb",
                         AstIntegerConstant{
+                                c_NullSpan,
                                 {types::BitInteger{3}, Signedness::Unsigned},
                                 7
                         }

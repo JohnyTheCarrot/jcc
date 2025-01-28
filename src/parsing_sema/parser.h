@@ -34,10 +34,12 @@ namespace jcc::parsing_sema {
 
             throw std::runtime_error{error};
         }()};
-        std::vector<Diagnosis> m_Diagnoses{};
-        bool                   m_HasFatalError{false};
+        std::vector<Diagnosis> m_ErrorDiagnoses{};
+        std::vector<Diagnosis> m_WarningDiagnoses{};
 
     public:
+        ~CompilerState();
+
         [[nodiscard]]
         llvm::IRBuilder<> &GetBuilder() noexcept;
 
@@ -55,11 +57,14 @@ namespace jcc::parsing_sema {
         template<class... Args>
             requires std::constructible_from<Diagnosis, Args...>
         void EmplaceDiagnosis(Args &&...args) {
-            auto const &diag{
-                    m_Diagnoses.emplace_back(std::forward<Args>(args)...)
-            };
-            if (diag.GetClass() == Diagnosis::Class::Error)
-                m_HasFatalError = true;
+            Diagnosis diagnosis{std::forward<Args>(args)...};
+
+            if (diagnosis.GetClass() == Diagnosis::Class::Error) {
+                m_ErrorDiagnoses.emplace_back(std::move(diagnosis));
+                return;
+            }
+
+            m_WarningDiagnoses.emplace_back(std::move(diagnosis));
         }
 
         [[nodiscard]]

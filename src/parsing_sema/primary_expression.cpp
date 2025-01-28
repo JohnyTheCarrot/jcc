@@ -21,6 +21,7 @@ namespace jcc::parsing_sema {
                         std::move(firstToken.m_Span)
                 };
             }
+            result->m_Span = firstToken.m_Span + current->m_Span;
             ++current;
 
             return result;

@@ -7,6 +7,8 @@
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
+    class AstFloatingConstant;
+
     class AstShiftExpression;
 
     class AstAdditiveExpression;
@@ -38,6 +40,8 @@ namespace jcc::parsing_sema {
         virtual void Visit(AstAdditiveExpression const *astAdditiveExpr) = 0;
 
         virtual void Visit(AstShiftExpression const *astShiftExpr) = 0;
+
+        virtual void Visit(AstFloatingConstant const *astFloatingConst) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {
@@ -45,16 +49,12 @@ namespace jcc::parsing_sema {
         using ExpressionVisitor::ExpressionVisitor;
     };
 
-    class AstNode {
+    struct AstNode {
         Span m_Span;
 
-    public:
         explicit AstNode(Span &&span);
 
         virtual ~AstNode() = default;
-
-        [[nodiscard]]
-        Span const &GetSpan() const;
     };
 
     class AstExpression : public AstNode {
@@ -70,6 +70,17 @@ namespace jcc::parsing_sema {
     };
 
     using AstExpressionPtr = std::unique_ptr<AstExpression>;
+
+    class AstBinaryExpression : public AstExpression {
+    public:
+        using AstExpression::AstExpression;
+
+        [[nodiscard]]
+        virtual AstExpressionPtr::pointer GetLhs() const noexcept = 0;
+
+        [[nodiscard]]
+        virtual AstExpressionPtr::pointer GetRhs() const noexcept = 0;
+    };
 }// namespace jcc::parsing_sema
 
 #endif//AST_NODE_H

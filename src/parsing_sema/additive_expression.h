@@ -11,7 +11,7 @@ namespace jcc::preprocessor {
 namespace jcc::parsing_sema {
     enum class AdditiveOperator { Addition, Subtraction };
 
-    class AstAdditiveExpression final : public AstExpression {
+    class AstAdditiveExpression final : public AstBinaryExpression {
         AstExpressionPtr m_Lhs;
         AstExpressionPtr m_Rhs;
         AdditiveOperator m_Operator;
@@ -22,10 +22,10 @@ namespace jcc::parsing_sema {
         );
 
         [[nodiscard]]
-        AstExpressionPtr::pointer GetLhs() const noexcept;
+        AstExpressionPtr::pointer GetLhs() const noexcept override;
 
         [[nodiscard]]
-        AstExpressionPtr::pointer GetRhs() const noexcept;
+        AstExpressionPtr::pointer GetRhs() const noexcept override;
 
         [[nodiscard]]
         AdditiveOperator GetOperator() const noexcept;

@@ -9,7 +9,7 @@ namespace jcc::parsing_sema {
     AstShiftExpression::AstShiftExpression(
             AstExpressionPtr lhs, AstExpressionPtr rhs, ShiftOperator op
     )
-        : AstExpression{lhs->GetSpan() + lhs->GetSpan(), UsualArithmeticConversions(lhs->GetType(), rhs->GetType())}
+        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, UsualArithmeticConversions(lhs->GetType(), rhs->GetType())}
         , m_Lhs{std::move(lhs)}
         , m_Rhs{std::move(rhs)}
         , m_Operator{op} {

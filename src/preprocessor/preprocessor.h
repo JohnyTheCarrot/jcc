@@ -29,7 +29,7 @@ namespace jcc::preprocessor {
 
         TokenizerIteratorPair(TokenizerIteratorPair const &) = delete;
 
-        TokenizerIteratorPair(TokenizerIteratorPair &&) noexcept;
+        TokenizerIteratorPair(TokenizerIteratorPair &&);
 
         [[nodiscard]]
         tokenizer::TokenizerIterator &GetTokenIter() noexcept;
@@ -102,8 +102,9 @@ namespace jcc::preprocessor {
             requires IsPreprocessorIterator<It> ||
                      std::same_as<It, InternalPreprocessorIterator>
         [[nodiscard]]
-        It Until(std::function<bool(tokenizer::Token const &)> const
-                         &untilCondition) {
+        It
+        Until(std::function<bool(tokenizer::Token const &)> const
+                      &untilCondition) {
             return It::Until(untilCondition);
         }
 

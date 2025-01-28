@@ -7,10 +7,6 @@ namespace jcc::parsing_sema {
         : m_Span{std::move(span)} {
     }
 
-    Span const &AstNode::GetSpan() const {
-        return m_Span;
-    }
-
     AstExpression::AstExpression(Span &&span, types::ValueType type)
         : AstNode{std::move(span)}
         , m_Type{std::move(type)} {

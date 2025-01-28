@@ -7,16 +7,13 @@
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
-    using IntValue      = std::int64_t;
-    using NumConstValue = std::variant<IntValue, double>;
+    using IntValue = std::int64_t;
 
     class AstIntegerConstant final : public AstExpression {
         IntValue m_Value;
 
     public:
-        AstIntegerConstant(
-                Span &&span, types::IntegerType type, IntValue value
-        );
+        AstIntegerConstant(Span span, types::IntegerType type, IntValue value);
 
         [[nodiscard]]
         IntValue GetValue() const noexcept;
@@ -29,9 +26,24 @@ namespace jcc::parsing_sema {
 
     void PrintTo(AstIntegerConstant const &astIntConst, std::ostream *os);
 
+    using FloatingValue = double;
+
+    class AstFloatingConstant final : public AstExpression {
+        FloatingValue m_Value;
+
+    public:
+        AstFloatingConstant(
+                Span span, types::FloatingType type, FloatingValue value
+        );
+
+        [[nodiscard]]
+        FloatingValue GetValue() const noexcept;
+
+        void Accept(ExpressionVisitor *visitor) const override;
+    };
+
     [[nodiscard]]
-    std::unique_ptr<AstIntegerConstant>
-    ParseNumericConstant(tokenizer::Token &token);
+    AstExpressionPtr ParseNumericConstant(tokenizer::Token &token);
 }// namespace jcc::parsing_sema
 
 #endif//NUMERIC_CONSTANT_H

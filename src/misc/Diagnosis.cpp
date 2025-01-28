@@ -190,6 +190,8 @@ namespace jcc {
                 return "Expected identifier in #undef directive.";
             case Kind::PRS_UnrecognizedIntegerSuffix:
                 return "Unrecognized integer suffix.";
+            case Kind::PRS_UnrecognizedFloatingSuffix:
+                return "Unrecognized floating point suffix.";
             case Kind::PRS_InvalidFloatingPointLiteral:
                 return "Invalid floating point literal.";
             case Kind::PRS_InvalidIntegerLiteral:
@@ -203,12 +205,17 @@ namespace jcc {
                 return "Expected right parenthesis.";
             case Kind::PRS_ExpectedExpressionToFollow:
                 return "Expected expression to follow.";
+            case Kind::PRS_OctalFloatingPoint:
+                return "Octal floating point literals are not allowed.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
             case Kind::SEMA_ShiftOperandNotInteger:
-                return "Shift operand must be an integer type.";
+                return "Shift expression operands must both be integer types.";
             case Kind::SEMA_IncompatibleOperands:
                 return "Incompatible operands.";
+            case Kind::SEMA_ModuloOperandsMustBeIntegers:
+                return "The operands of a modulo expression must both be "
+                       "integer types.";
             case Kind::SEMA_MultOperandMustBeArithmetic:
                 return "The operands of a multiplicative expression must be of "
                        "an arithmetic type.";

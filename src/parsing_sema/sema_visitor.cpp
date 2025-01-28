@@ -17,20 +17,37 @@ namespace jcc::parsing_sema {
         auto &compilerState{CompilerState::GetInstance()};
 
         auto const lhs{astMultiplicativeExpr->GetLhs()};
+        lhs->Accept(this);
 
-        if (auto const lhsType{lhs->GetType()}; !lhsType.IsArithmetic()) {
+        auto const lhsType{lhs->GetType()};
+
+        if (!lhsType.IsArithmetic()) {
             compilerState.EmplaceDiagnosis(
-                    lhs->GetSpan(), Diagnosis::Class::Error,
+                    lhs->m_Span, Diagnosis::Class::Error,
                     Diagnosis::Kind::SEMA_MultOperandMustBeArithmetic
             );
         }
 
         auto const rhs{astMultiplicativeExpr->GetRhs()};
+        rhs->Accept(this);
 
-        if (auto const rhsType{rhs->GetType()}; !rhsType.IsArithmetic()) {
+        auto const rhsType{rhs->GetType()};
+
+        if (!rhsType.IsArithmetic()) {
             compilerState.EmplaceDiagnosis(
-                    rhs->GetSpan(), Diagnosis::Class::Error,
+                    rhs->m_Span, Diagnosis::Class::Error,
                     Diagnosis::Kind::SEMA_MultOperandMustBeArithmetic
+            );
+        }
+
+        if (astMultiplicativeExpr->GetOperator() ==
+            MultiplicativeOperator::Modulo) {
+            if (lhsType.IsInteger() && rhsType.IsInteger())
+                return;// OK
+
+            compilerState.EmplaceDiagnosis(
+                    astMultiplicativeExpr->m_Span, Diagnosis::Class::Error,
+                    Diagnosis::Kind::SEMA_ModuloOperandsMustBeIntegers
             );
         }
     }
@@ -38,9 +55,14 @@ namespace jcc::parsing_sema {
     void SemaVisitor::Visit(AstAdditiveExpression const *astAdditiveExpr) {
         auto &compilerState{CompilerState::GetInstance()};
 
-        auto const  lhs{astAdditiveExpr->GetLhs()};
+        auto const lhs{astAdditiveExpr->GetLhs()};
+        lhs->Accept(this);
+
         auto const &lhsType{lhs->GetType()};
-        auto const  rhs{astAdditiveExpr->GetRhs()};
+
+        auto const rhs{astAdditiveExpr->GetRhs()};
+        rhs->Accept(this);
+
         auto const &rhsType{rhs->GetType()};
 
         if (astAdditiveExpr->GetOperator() == AdditiveOperator::Addition) {
@@ -49,7 +71,7 @@ namespace jcc::parsing_sema {
 
             // TODO: If one of the operands is a pointer, the other must be an integer.
             compilerState.EmplaceDiagnosis(
-                    astAdditiveExpr->GetSpan(), Diagnosis::Class::Error,
+                    astAdditiveExpr->m_Span, Diagnosis::Class::Error,
                     Diagnosis::Kind::SEMA_IncompatibleOperands
             );
             return;
@@ -61,7 +83,7 @@ namespace jcc::parsing_sema {
 
         // TODO: Either both operands shall have integer type or the left operand shall have pointer type and the right operand shall have integer type.
         compilerState.EmplaceDiagnosis(
-                astAdditiveExpr->GetSpan(), Diagnosis::Class::Error,
+                astAdditiveExpr->m_Span, Diagnosis::Class::Error,
                 Diagnosis::Kind::SEMA_IncompatibleOperands
         );
     }
@@ -69,17 +91,26 @@ namespace jcc::parsing_sema {
     void SemaVisitor::Visit(AstShiftExpression const *astShiftExpr) {
         auto &compilerState{CompilerState::GetInstance()};
 
-        auto const  lhs{astShiftExpr->GetLhs()};
+        auto const lhs{astShiftExpr->GetLhs()};
+        lhs->Accept(this);
+
         auto const &lhsType{lhs->GetType()};
-        auto const  rhs{astShiftExpr->GetRhs()};
+
+        auto const rhs{astShiftExpr->GetRhs()};
+        rhs->Accept(this);
+
         auto const &rhsType{rhs->GetType()};
 
         if (lhsType.IsInteger() && rhsType.IsInteger())
             return;
 
         compilerState.EmplaceDiagnosis(
-                astShiftExpr->GetSpan(), Diagnosis::Class::Error,
-                Diagnosis::Kind::SEMA_IncompatibleOperands
+                astShiftExpr->m_Span, Diagnosis::Class::Error,
+                Diagnosis::Kind::SEMA_ShiftOperandNotInteger
         );
+    }
+
+    void SemaVisitor::Visit(AstFloatingConstant const *) {
+        // Nothing to do here
     }
 }// namespace jcc::parsing_sema

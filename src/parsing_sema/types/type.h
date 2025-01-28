@@ -52,7 +52,8 @@ namespace jcc::parsing_sema::types {
 
     void PrintTo(StandardIntegerType const &bitInteger, std::ostream *os);
 
-    struct IntegerType final {
+    class IntegerType final {
+    public:
         enum class Signedness {
             Signed,
             Unsigned,
@@ -60,8 +61,13 @@ namespace jcc::parsing_sema::types {
         };
         using Type = std::variant<StandardIntegerType, BitInteger>;
 
-        Type       m_Type;
-        Signedness m_Sign;
+        IntegerType(Type type, Signedness sign);
+
+        [[nodiscard]]
+        Type GetType() const noexcept;
+
+        [[nodiscard]]
+        Signedness GetSignedness() const noexcept;
 
         [[nodiscard]]
         bool operator==(IntegerType const &other) const;
@@ -76,6 +82,9 @@ namespace jcc::parsing_sema::types {
         llvm::Type *GetLLVMType() const;
 
         [[nodiscard]]
+        unsigned GetBitWidth() const;
+
+        [[nodiscard]]
         int_ranks::IntegerConversionRank GetConversionRank() const;
 
         [[nodiscard]]
@@ -86,13 +95,45 @@ namespace jcc::parsing_sema::types {
 
         [[nodiscard]]
         IntegerType UsualArithmeticConversion(IntegerType const &other) const;
+
+    private:
+        Type       m_Type;
+        Signedness m_Sign;
     };
 
     void PrintTo(IntegerType type, std::ostream *os);
 
+    enum class StandardFloatingType { Float = 0, Double = 1, LongDouble = 2 };
+
+    void PrintTo(StandardFloatingType floatingType, std::ostream *os);
+
+    class FloatingType final {
+    public:
+        using Type = std::variant<StandardFloatingType>;
+
+        explicit FloatingType(Type &&specifier);
+
+        [[nodiscard]]
+        llvm::Type *GetLLVMType() const;
+
+        [[nodiscard]]
+        bool operator==(FloatingType const &other) const;
+
+        [[nodiscard]]
+        Type GetType() const noexcept;
+
+        [[nodiscard]]
+        FloatingType UsualArithmeticConversion(FloatingType const &other) const;
+
+    private:
+        Type m_Type;
+    };
+
+    void PrintTo(FloatingType const &type, std::ostream *os);
+
     class ValueType final {
     public:
-        using Type = std::variant<IntegerType>;
+        using Type = std::variant<IntegerType, FloatingType>;
 
         explicit ValueType(Type &&type);
 
@@ -103,10 +144,13 @@ namespace jcc::parsing_sema::types {
         bool IsInteger() const noexcept;
 
         [[nodiscard]]
+        bool IsFloating() const noexcept;
+
+        [[nodiscard]]
         llvm::Type *GetLLVMType() const;
 
         [[nodiscard]]
-        Type const &GetInnerType() const noexcept;
+        Type const &GetType() const noexcept;
 
         [[nodiscard]]
         bool operator==(ValueType const &other) const;

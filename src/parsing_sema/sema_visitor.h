@@ -15,6 +15,8 @@ namespace jcc::parsing_sema {
         void Visit(AstAdditiveExpression const *astAdditiveExpr) override;
 
         void Visit(AstShiftExpression const *astShiftExpr) override;
+
+        void Visit(AstFloatingConstant const *astFloatingConst) override;
     };
 }// namespace jcc::parsing_sema
 
