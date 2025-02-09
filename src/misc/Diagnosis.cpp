@@ -42,35 +42,10 @@ namespace jcc {
     }
 
     void Diagnosis::JumpStreamToStartLine() const {
-        m_Span.m_IStream->seekg(std::ios::beg);
-
-        for (int i{1}; i < m_Span.m_Start.m_LineNumber; ++i) {
-            m_Span.m_IStream->ignore(
-                    std::numeric_limits<std::streamsize>::max(), '\n'
-            );
-        }
     }
 
     std::string Diagnosis::GetDiagMessage() const {
         switch (m_Kind) {
-            case Kind::TK_StrUnterminated:
-                return "String literal was not terminated.";
-            case Kind::TK_CharUnterminated:
-                return "Character literal was not terminated.";
-            case Kind::TK_HeaderNameUnterminated:
-                return "Header name was not terminated.";
-            case Kind::TK_CharNoValue:
-                return "Character literal has no value.";
-            case Kind::TK_CharOutOfRange:
-                return "Character literal is out of range, its value will "
-                       "be truncated.";
-            case Kind::TK_CharHexNoDigits:
-                return "Hexadecimal character literal has no digits.";
-            case Kind::TK_UTFCharMoreThanOneChar:
-                return "A UTF-8, UTF-16, or UTF-32 character literal must "
-                       "contain exactly one character.";
-            case Kind::TK_EscapeSequenceValueTooLarge:
-                return "Escape sequence value is too large.";
             case Kind::TK_IntegerCharMoreThanMaxChars:
                 return "Character literal has too many characters.";
             case Kind::TK_OctalEscapeSequenceTooLarge:
@@ -226,65 +201,7 @@ namespace jcc {
                "bug.";
     }
 
-    void Diagnosis::Print(std::ostream &ostream) const {
-        using namespace diagnostic_utils;
-
-        fmt::color const color{GetClassColor(m_Class)};
-        char const      *name{GetClassName(m_Class)};
-
-        ostream << fmt::format(
-                fmt::fg(c_ColorNeutral), "In file {}\n",
-                fmt::styled(*m_Span.m_FileName, fmt::fg(fmt::color::cyan))
-        );
-        ostream << fmt::format(fmt::fg(color), "{}: ", name) << GetDiagMessage()
-                << "\n\n";
-
-        m_Span.m_IStream->clear();
-        auto const streamPos{m_Span.m_IStream->tellg()};
-        JumpStreamToStartLine();
-
-        std::string line;
-        std::getline(*m_Span.m_IStream, line);
-
-        if (m_Span.m_Start.m_LineNumber == m_Span.m_End.m_LineNumber) {
-            OutputLine(ostream, m_Span.m_Start.m_LineNumber, line);
-            OutputHighlight(
-                    ostream, m_Span.m_Start.m_RealCharacterIndex,
-                    m_Span.m_End.m_RealCharacterIndex,
-                    static_cast<int>(line.size()), m_Class
-            );
-
-            m_Span.m_IStream->seekg(streamPos, std::ios::beg);
-
-            return;
-        }
-
-        OutputLine(ostream, m_Span.m_Start.m_LineNumber, line);
-        OutputHighlight(
-                ostream, m_Span.m_Start.m_RealCharacterIndex, std::nullopt,
-                static_cast<int>(line.size()), m_Class
-        );
-
-        for (int lineNum{m_Span.m_Start.m_LineNumber + 1};
-             lineNum < m_Span.m_End.m_LineNumber; ++lineNum) {
-            std::getline(*m_Span.m_IStream, line);
-
-            OutputLine(ostream, lineNum, line);
-            OutputHighlight(
-                    ostream, std::nullopt, std::nullopt,
-                    static_cast<int>(line.size()), m_Class
-            );
-        }
-
-        std::getline(*m_Span.m_IStream, line);
-
-        OutputLine(ostream, m_Span.m_End.m_LineNumber, line);
-        OutputHighlight(
-                ostream, std::nullopt, m_Span.m_End.m_RealCharacterIndex,
-                static_cast<int>(line.size()), m_Class
-        );
-
-        m_Span.m_IStream->seekg(streamPos, std::ios::beg);
+    void Diagnosis::Print(std::ostream &) const {
     }
 
     namespace diagnostic_utils {
@@ -326,22 +243,10 @@ namespace jcc {
         }
     }// namespace diagnostic_utils
 
-    FatalCompilerError::FatalCompilerError(
-            Diagnosis::Kind kind, Span span, OptionalData &&data1,
-            OptionalData &&data2
-    ) noexcept
-        : m_Diagnosis{std::move(span), Diagnosis::Class::Error, kind, std::move(data1), std::move(data2)}
-        , m_Message{std::format(
-                  "Fatal compiler error: {}", magic_enum::enum_name(kind)
-          )} {
-    }
-
-    Diagnosis const &FatalCompilerError::GetDiagnosis() const noexcept {
-        return m_Diagnosis;
-    }
+    FatalCompilerError::FatalCompilerError() noexcept = default;
 
     char const *FatalCompilerError::what() const noexcept {
-        return m_Message.c_str();
+        return "fatal compiler error";
     }
 
     std::ostream &operator<<(std::ostream &os, Diagnosis::Kind kind) {

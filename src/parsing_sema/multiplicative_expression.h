@@ -12,21 +12,13 @@ namespace jcc::parsing_sema {
     enum class MultiplicativeOperator { Multiplication, Division, Modulo };
 
     class AstMultiplicativeExpression final : public AstBinaryExpression {
-        AstExpressionPtr       m_Lhs;
-        AstExpressionPtr       m_Rhs;
         MultiplicativeOperator m_Operator;
 
     public:
         AstMultiplicativeExpression(
                 AstExpressionPtr lhs, AstExpressionPtr rhs,
-                MultiplicativeOperator op
+                MultiplicativeOperator op, mjolnir::Span opSpan
         );
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetLhs() const noexcept override;
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetRhs() const noexcept override;
 
         [[nodiscard]]
         MultiplicativeOperator GetOperator() const noexcept;

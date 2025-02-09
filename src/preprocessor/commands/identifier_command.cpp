@@ -20,15 +20,17 @@ namespace jcc::preprocessor::commands {
         auto const [value, span]{preprocessor.GetNextPreprocessorToken().m_Token
         };
         if (!std::holds_alternative<tokenizer::Punctuator>(value))
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_MacroExpectedLParen, span
+                    // Diagnosis::Kind::PP_MacroExpectedLParen, span
             };
 
         if (auto const punctuator{std::get<tokenizer::Punctuator>(value)};
             punctuator != tokenizer::Punctuator::LeftParenthesis &&
             punctuator != tokenizer::Punctuator::PpLeftParenthesis)
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_MacroExpectedLParen, span
+                    // Diagnosis::Kind::PP_MacroExpectedLParen, span
             };
 
         macro::FnMacroArguments arguments{};
@@ -61,9 +63,11 @@ namespace jcc::preprocessor::commands {
                     arguments.emplace(
                             currentArgName, std::move(argumentTokens)
                     );
-                } else if (!fnMacro.m_ParameterList.empty() && !fnMacro.m_IsVA) {
+                } else if (!fnMacro.m_ParameterList.empty() &&
+                           !fnMacro.m_IsVA) {
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::PP_MacroTooManyArgs, span
+                            // Diagnosis::Kind::PP_MacroTooManyArgs, span
                     };
                 }
 
@@ -80,8 +84,9 @@ namespace jcc::preprocessor::commands {
         auto const vaArgsIter{arguments.find(std::string{VaArgs})};
         // if we've got variadic arguments AND the macro is not variadic, it means we've got too many arguments
         if (vaArgsIter != arguments.end() && !fnMacro.m_IsVA)
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_MacroTooManyArgs, span
+                    // Diagnosis::Kind::PP_MacroTooManyArgs, span
             };
 
         if (vaArgsIter == arguments.end() && fnMacro.m_IsVA)
@@ -90,7 +95,10 @@ namespace jcc::preprocessor::commands {
             );// add empty variadic arguments
 
         if (arguments.size() < fnMacro.m_ParameterList.size())
-            throw FatalCompilerError{Diagnosis::Kind::PP_MacroTooFewArgs, span};
+            // TODO: diagnosis
+            throw FatalCompilerError{
+                    // Diagnosis::Kind::PP_MacroTooFewArgs, span
+            };
 
         return arguments;
     }
@@ -105,9 +113,7 @@ namespace jcc::preprocessor::commands {
         auto const ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>(
         )};
 
-        for (auto &ppToken : std::ranges::subrange(ppItStart, ppItEnd)) {
-            auto &[token, isFromMacro]{ppToken};
-
+        for (auto &[token, isFromMacro] : std::ranges::subrange(ppItStart, ppItEnd)) {
             if (!isFromMacro &&
                 std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
                 switch (std::get<tokenizer::Punctuator>(token.m_Value)) {
@@ -132,8 +138,9 @@ namespace jcc::preprocessor::commands {
             argumentTokens.emplace_back(std::move(token));
         }
 
+        // TODO: diagnosis
         throw FatalCompilerError{
-                Diagnosis::Kind::UnexpectedEOF, preprocessor.GetCurrentSpan()
+                // Diagnosis::Kind::UnexpectedEOF, preprocessor.GetCurrentSpan()
         };
     }
 
@@ -169,7 +176,8 @@ namespace jcc::preprocessor::commands {
                 return macro::MacroInvocation{.m_MacroName = identifierContent};
             }()};
 
-            preprocessor.GetMacroStore().InvokeMacro(std::move(macroInvocation)
+            preprocessor.GetMacroStore().InvokeMacro(
+                    std::move(macroInvocation)
             );
 
             return preprocessor.GetNextPreprocessorToken(

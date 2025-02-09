@@ -16,9 +16,10 @@ namespace jcc::preprocessor::commands {
     IfdefCommand::ExecuteCondition(bool isIfndef, Preprocessor &preprocessor) {
         auto ident{preprocessor.SimpleTokenRead()};
         if (!ident.m_Token.Is<tokenizer::Identifier>()) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_CondExpectedIdentifier,
-                    std::move(ident.m_Token.m_Span)
+                    // Diagnosis::Kind::PP_CondExpectedIdentifier,
+                    // std::move(ident.m_Token.m_Span)
             };
         }
         auto const identStr{
@@ -54,8 +55,9 @@ namespace jcc::preprocessor::commands {
                 return;
 
             case tokenizer::Directive::If:
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::TODO, preprocessor.GetCurrentSpan()
+                        // Diagnosis::Kind::TODO, preprocessor.GetCurrentSpan()
                 };
             default:
                 assert(false);
@@ -71,9 +73,8 @@ namespace jcc::preprocessor::commands {
 
     IfdefCommand::~IfdefCommand() = default;
 
-    std::optional<PreprocessorToken>
-    IfdefCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&)
-            const {
+    std::optional<PreprocessorToken> IfdefCommand::
+            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
         preprocessor.PushConditional();
 
         ExecuteCondition(m_IsIfndef, preprocessor);

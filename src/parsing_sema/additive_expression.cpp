@@ -6,20 +6,11 @@
 
 namespace jcc::parsing_sema {
     AstAdditiveExpression::AstAdditiveExpression(
-            AstExpressionPtr lhs, AstExpressionPtr rhs, AdditiveOperator op
+            AstExpressionPtr lhs, AstExpressionPtr rhs, AdditiveOperator op,
+            mjolnir::Span opSpan
     )
-        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, UsualArithmeticConversions(lhs->GetType(), rhs->GetType())}
-        , m_Lhs{std::move(lhs)}
-        , m_Rhs{std::move(rhs)}
+        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, std::move(lhs), std::move(rhs), opSpan}
         , m_Operator{op} {
-    }
-
-    AstExpressionPtr::pointer AstAdditiveExpression::GetLhs() const noexcept {
-        return m_Lhs.get();
-    }
-
-    AstExpressionPtr::pointer AstAdditiveExpression::GetRhs() const noexcept {
-        return m_Rhs.get();
     }
 
     AdditiveOperator AstAdditiveExpression::GetOperator() const noexcept {

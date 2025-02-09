@@ -157,8 +157,8 @@ namespace jcc::tokenizer::static_tokens {
     StaticTokenTokenizationResult
     TokenizeKeywordsAndDirectives(CharIter &charIter) {
         Span span{
-                charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()
+                charIter.GetSource(),
+                {charIter.GetCurrentPos(), charIter.GetCurrentPos()}
         };
         std::string                   identifierBuf{};
         KeywDirTokenTrie const       *currentNode{&c_TokenTrie};
@@ -179,7 +179,7 @@ namespace jcc::tokenizer::static_tokens {
                 trieResult = leaf->m_Value;
             }
 
-            span.m_End = spanMarker;
+            span.m_Span.set_end(spanMarker);
 
             if (!std::isspace(character))
                 currentNode = node;
@@ -195,16 +195,16 @@ namespace jcc::tokenizer::static_tokens {
             !trieResult.has_value(
             ))// if we haven't reached the end of the trie or there's no trie result
             return {.valueOrString = std::move(identifierBuf),
-                    .endMarker     = span.m_End};
+                    .endPos        = span.m_Span.end()};
 
         return {.valueOrString = TrieResultToTokenValue(trieResult.value()),
-                .endMarker     = span.m_End};
+                .endPos        = span.m_Span.end()};
     }
 
     StaticTokenTokenizationResult TokenizePunctuators(CharIter &charIter) {
         Span span{
-                charIter.GetFileName(), charIter.GetCurrentSpanMarker(),
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()
+                charIter.GetSource(),
+                {charIter.GetCurrentPos(), charIter.GetCurrentPos()}
         };
         PunctuatorTokenTrie const    *currentNode{&c_PunctuatorTrie};
         std::optional<TokenTrieValue> trieResult{};
@@ -218,7 +218,7 @@ namespace jcc::tokenizer::static_tokens {
                 trieResult = leaf->m_Value;
             }
 
-            span.m_End = spanMarker;
+            span.m_Span.set_end(spanMarker);
 
             if (!std::isspace(character))
                 currentNode = node;
@@ -230,15 +230,17 @@ namespace jcc::tokenizer::static_tokens {
             }
 
             ++charIter;
+            span.m_Span.expand();
         }
 
         if (!trieResult.has_value())
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TK_PartialTokenEncountered, std::move(span)
+                    // Diagnosis::Kind::TK_PartialTokenEncountered, std::move(span)
             };
 
         return {.valueOrString = TrieResultToTokenValue(trieResult.value()),
-                .endMarker     = span.m_End};
+                .endPos        = span.m_Span.end()};
     }
 
     StaticTokenTokenizationResult Tokenize(CharIter &charIter) {

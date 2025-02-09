@@ -1,54 +1,25 @@
 #include "Span.h"
 
+#include <mjolnir/source.hpp>
 #include <ostream>// for basic_ostream, basic_ostream::operator<<
 #include <utility>// for move
 
 #include "gtest/gtest.h"// for PrintToString
 
 namespace jcc {
-    bool SpanMarker::operator==(SpanMarker const &other) const noexcept {
-        return m_LineNumber == other.m_LineNumber &&
-               m_CharacterIndex == other.m_CharacterIndex &&
-               m_RealCharacterIndex == other.m_RealCharacterIndex;
-    }
-
-    SpanMarker SpanMarker::operator-(int value) const {
-        SpanMarker copy{*this};
-
-        copy.m_CharacterIndex -= value;
-        copy.m_RealCharacterIndex -= value;
-
-        return copy;
-    }
-
-    void SpanMarker::NextChar(bool shouldIncrementReal, int number) noexcept {
-        m_CharacterIndex += number;
-        if (shouldIncrementReal)
-            m_RealCharacterIndex += number;
-    }
-
-    void SpanMarker::NextLine() noexcept {
-        ++m_LineNumber;
-        m_CharacterIndex     = FIRST_CHAR - 1;
-        m_RealCharacterIndex = FIRST_CHAR - 2;
-    }
-
     Span::Span(
-            std::shared_ptr<std::string> fileName, SpanMarker const &start,
-            SpanMarker const &end, std::istream *inputStream
+            std::shared_ptr<diagnostics::Source> source, mjolnir::Span span
     ) noexcept
-        : m_FileName{std::move(fileName)}
-        , m_Start{start}
-        , m_End{end}
-        , m_IStream{inputStream} {
+        : m_Span{span}
+        , m_Source{std::move(source)} {
     }
 
     bool Span::operator==(Span const &other) const noexcept {
-        return m_Start == other.m_Start && m_End == other.m_End;
+        return m_Span == other.m_Span && m_Source == other.m_Source;
     }
 
     Span Span::operator+(Span const &other) const noexcept {
-        return {m_FileName, m_Start, other.m_End, m_IStream};
+        return {m_Source, m_Span + other.m_Span};
     }
 
     Span const &Span::operator+=(Span const &other) noexcept {
@@ -56,18 +27,8 @@ namespace jcc {
         return *this;
     }
 
-    void PrintTo(SpanMarker const &spanMarker, std::ostream *os) {
-        *os << spanMarker.m_LineNumber << ':' << spanMarker.m_CharacterIndex
-            << " (real: " << spanMarker.m_RealCharacterIndex << ')';
-    }
-
-    std::ostream &operator<<(std::ostream &os, SpanMarker const &spanMarker) {
-        os << spanMarker.m_LineNumber << ':' << spanMarker.m_CharacterIndex;
-        return os;
-    }
-
     void PrintTo(Span const &span, std::ostream *os) {
-        *os << testing::PrintToString(span.m_Start) << " - "
-            << testing::PrintToString(span.m_End);
+        *os << '[' << span.m_Source->m_Source.get_name() << ": "
+            << span.m_Span.start() << ':' << span.m_Span.end() << ']';
     }
 }// namespace jcc

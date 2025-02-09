@@ -19,7 +19,7 @@ namespace jcc::tokenizer::static_tokens {
         using ValueOrString = std::variant<Token::Value, std::string>;
 
         ValueOrString valueOrString{};
-        SpanMarker    endMarker{};
+        std::size_t   endPos{};
     };
 
     [[nodiscard]]

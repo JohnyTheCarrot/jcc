@@ -5,6 +5,8 @@
 #include <limits>
 #include <type_traits>
 
+// TODO: make this file read out from LLVM
+
 namespace jcc::compiler_data_types {
     template<typename Type>
     struct TypeInfo final : std::numeric_limits<Type> {
@@ -31,7 +33,7 @@ namespace jcc::compiler_data_types {
     using WChar  = Char8;
     using Char16 = UintLeast16_T;// equal per the standard
     using Char32 = UintLeast32_T;// equal per the standard
-    using Int    = TypeInfo<int16_t>;
+    using Int    = TypeInfo<int32_t>;
 }// namespace jcc::compiler_data_types
 
 #endif//JCC_COMPILER_DATA_TYPES_H

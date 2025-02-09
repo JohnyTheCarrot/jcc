@@ -58,8 +58,9 @@ namespace jcc::parsing_sema {
 
         if (token.Is<tokenizer::CharacterConstant>()) {
             // TODO: Character constant
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(token.m_Span)
+                    // Diagnosis::Kind::TODO, std::move(token.m_Span)
             };
         }
 

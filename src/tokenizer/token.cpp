@@ -184,7 +184,7 @@ namespace jcc::tokenizer {
             return std::get<SpecialPurpose>(m_Value);
 
         assert(false);
-        return SpecialPurpose::Error;
+        throw std::logic_error{"Unknown token type"};
     }
 
     bool Token::operator==(Token const &other) const {

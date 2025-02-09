@@ -8,15 +8,13 @@ namespace jcc {
         class CharIter;
         enum class ConstantPrefix;
     }// namespace tokenizer
-    struct SpanMarker;
 }// namespace jcc
 
 namespace jcc::tokenizer::escape_sequences {
     [[nodiscard]]
     // The caller is expected to have already consumed the backslash.
     compiler_data_types::Char32::type Tokenize(
-            CharIter &charIter, SpanMarker const &backslashMarker,
-            ConstantPrefix prefix
+            CharIter &charIter, std::size_t backslashPos, ConstantPrefix prefix
     );
 }// namespace jcc::tokenizer::escape_sequences
 

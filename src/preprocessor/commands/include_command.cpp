@@ -15,24 +15,25 @@ namespace jcc::preprocessor::commands {
 
     IncludeCommand::~IncludeCommand() = default;
 
-    std::optional<PreprocessorToken>
-    IncludeCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&)
-            const {
+    std::optional<PreprocessorToken> IncludeCommand::
+            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
         // TODO: #include <header>, there is no support for this yet.
         auto const nextToken{preprocessor.SimpleTokenRead().m_Token};
 
         if (!nextToken.Is<tokenizer::StringConstant>()) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_InclDirectiveExpectedHeaderName,
-                    nextToken.m_Span
+                    // Diagnosis::Kind::PP_InclDirectiveExpectedHeaderName,
+                    // nextToken.m_Span
             };
         }
 
         if (auto const newlineToken{preprocessor.SimpleTokenRead().m_Token};
             !newlineToken.Is(tokenizer::SpecialPurpose::NewLine)) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_DirectiveExpectedNewline,
-                    newlineToken.m_Span
+                    // Diagnosis::Kind::PP_DirectiveExpectedNewline,
+                    // newlineToken.m_Span
             };
         }
 

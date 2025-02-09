@@ -1,6 +1,8 @@
 #include "sema_visitor.h"
 
 #include "additive_expression.h"
+#include "diagnostics/variants/sema_modulo_int.h"
+#include "diagnostics/variants/sema_mult_arithmetic.h"
 #include "multiplicative_expression.h"
 #include "shift_expression.h"
 
@@ -34,9 +36,10 @@ namespace jcc::parsing_sema {
         auto const rhsType{rhs->GetType()};
 
         if (!rhsType.IsArithmetic()) {
-            compilerState.EmplaceDiagnosis(
-                    rhs->m_Span, Diagnosis::Class::Error,
-                    Diagnosis::Kind::SEMA_MultOperandMustBeArithmetic
+            compilerState.EmplaceDiagnostic<diagnostics::SemaMultArithmetic>(
+                    lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                    rhs->m_Span.m_Span, astMultiplicativeExpr->GetOpSpan(),
+                    lhsType, rhsType
             );
         }
 
@@ -45,9 +48,10 @@ namespace jcc::parsing_sema {
             if (lhsType.IsInteger() && rhsType.IsInteger())
                 return;// OK
 
-            compilerState.EmplaceDiagnosis(
-                    astMultiplicativeExpr->m_Span, Diagnosis::Class::Error,
-                    Diagnosis::Kind::SEMA_ModuloOperandsMustBeIntegers
+            compilerState.EmplaceDiagnostic<diagnostics::SemaModuloInt>(
+                    lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                    rhs->m_Span.m_Span, astMultiplicativeExpr->GetOpSpan(),
+                    lhsType, rhsType
             );
         }
     }

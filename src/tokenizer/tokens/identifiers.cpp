@@ -9,9 +9,9 @@
 
 namespace jcc::tokenizer::identifiers {
     [[nodiscard]]
-    std::optional<SpanMarker>
+    std::optional<std::size_t>
     CollectRestOfIdentifier(CharIter &charIter, std::string &identifier) {
-        std::optional<SpanMarker> lastSpanMarker{};
+        std::optional<std::size_t> lastSpanMarker{};
 
         while (charIter != CharIter::c_UntilNewline) {
             auto const [spanMarker, character, isSentinel]{*charIter};
@@ -31,31 +31,27 @@ namespace jcc::tokenizer::identifiers {
     Tokenize(CharIter const &charIter, IdentifierTokenStart const &tokenStart) {
         if (charIter == CharIter::end()) {
             Span span{
-                    charIter.GetFileName(), tokenStart.m_Start,
-                    charIter.GetSentinel().m_LastSpanMarker, charIter.GetInput()
+                    charIter.GetSource(),
+                    {tokenStart.m_Start, charIter.GetSentinel().m_LastPos}
             };
 
             // check if identifier contains a backslash
             if (tokenStart.m_Identifier.find('\\') != std::string::npos)
                 // TODO: Universal character names
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::TODO, std::move(span)
+                        // Diagnosis::Kind::TODO, std::move(span)
                 };
             return Token{
                     .m_Value = Identifier{tokenStart.m_Identifier},
-                    .m_Span  = std::move(span)
+                    .m_Span  = span
             };
         }
 
         std::string identifier{};
-        auto const &[partialIdentifier, identifierStart, identifierStartPos]{
-                tokenStart
-        };
+        auto const &[partialIdentifier, identifierStart]{tokenStart};
 
-        Span span{
-                charIter.GetFileName(), identifierStart, identifierStart,
-                charIter.GetInput()
-        };
+        Span span{charIter.GetSource(), {identifierStart, identifierStart}};
 
         identifier.reserve(partialIdentifier.length());
         std::ranges::move(partialIdentifier, std::back_inserter(identifier));
@@ -63,12 +59,13 @@ namespace jcc::tokenizer::identifiers {
         // check if identifier contains a backslash
         if (identifier.find('\\') != std::string::npos)
             // TODO: Universal character names
-            throw FatalCompilerError{Diagnosis::Kind::TODO, std::move(span)};
+            // TODO: diagnosis
+            throw FatalCompilerError{
+                    // Diagnosis::Kind::TODO, std::move(span)
+            };
 
         Identifier identToken{std::move(identifier)};
 
-        return Token{
-                .m_Value = std::move(identToken), .m_Span = std::move(span)
-        };
+        return Token{.m_Value = std::move(identToken), .m_Span = span};
     }
 }// namespace jcc::tokenizer::identifiers

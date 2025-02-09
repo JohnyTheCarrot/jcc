@@ -12,18 +12,16 @@
 #include "utils.h"              // for ReadSingleCharacter, ConstantType
 
 namespace jcc::tokenizer::string_literals {
-    Token Tokenize(
-            CharIter &charIter, ConstantPrefix prefix,
-            SpanMarker const &startMarker
-    ) {
+    Token
+    Tokenize(CharIter &charIter, ConstantPrefix prefix, std::size_t startPos) {
         if (charIter == CharIter::end()) {
-            Span span{
-                    charIter.GetFileName(), startMarker,
-                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
-            };
+            // Span span{
+            //         charIter.GetSource(), {startPos, charIter.GetCurrentPos()}
+            // };
 
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, std::move(span)
+                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
             };
         }
 
@@ -45,24 +43,24 @@ namespace jcc::tokenizer::string_literals {
         std::string strContents{};
         while (true) {
             auto const chOptional{utils::ReadSingleCharacter(
-                    charIter, prefix, startMarker, utils::ConstantType::String
+                    charIter, prefix, startPos, utils::ConstantType::String
             )};
             if (!chOptional.has_value())
                 break;
 
-            strContents.push_back(static_cast<char>(
-                    chOptional.value() & std::numeric_limits<char>::max()
-            ));
+            strContents.push_back(
+                    static_cast<char>(
+                            chOptional.value() &
+                            std::numeric_limits<char>::max()
+                    )
+            );
         }
 
-        Span span{
-                charIter.GetFileName(), startMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()
-        };
+        Span span{charIter.GetSource(), {startPos, charIter.GetCurrentPos()}};
 
         return Token{
                 .m_Value = StringConstant{std::move(strContents), prefix},
-                .m_Span  = std::move(span)
+                .m_Span  = span
         };
     }
 }// namespace jcc::tokenizer::string_literals

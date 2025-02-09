@@ -14,13 +14,12 @@ namespace jcc::tokenizer {
 
 namespace jcc::tokenizer::identifiers {
     [[nodiscard]]
-    std::optional<SpanMarker>
+    std::optional<std::size_t>
     CollectRestOfIdentifier(CharIter &charIter, std::string &identifier);
 
     struct IdentifierTokenStart final {
-        std::string    m_Identifier{};
-        SpanMarker     m_Start{};
-        std::streampos m_StartPos{};
+        std::string m_Identifier{};
+        std::size_t m_Start{};
     };
 
     [[nodiscard]]

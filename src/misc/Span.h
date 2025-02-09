@@ -2,43 +2,20 @@
 #define JCC_SPAN_H
 
 #include <iosfwd>// for ostream, istream
-#include <memory>// for shared_ptr
-#include <string>// for string
+#include <memory>
+#include <mjolnir/span.hpp>
+
+#include "diagnostics/source.h"
 
 namespace jcc {
-    struct SpanMarker final {
-        static constexpr int FIRST_LINE{1}, FIRST_CHAR{1};
-
-        int m_LineNumber{FIRST_LINE};
-        int m_CharacterIndex{FIRST_CHAR};
-        int m_RealCharacterIndex{0};
-
-        void NextChar(bool shouldIncrementReal = true, int number = 1) noexcept;
-
-        void NextLine() noexcept;
-
-        bool operator==(SpanMarker const &other) const noexcept;
-
-        friend void PrintTo(SpanMarker const &spanMarker, std::ostream *os);
-
-        friend std::ostream &
-        operator<<(std::ostream &os, SpanMarker const &spanMarker);
-
-        [[nodiscard]]
-        SpanMarker operator-(int value) const;
-    };
-
     struct Span final {
-        std::shared_ptr<std::string> m_FileName;
-        SpanMarker                   m_Start{}, m_End{};
-        std::istream                *m_IStream;
+        mjolnir::Span                        m_Span;
+        std::shared_ptr<diagnostics::Source> m_Source{nullptr};
 
-        Span(std::shared_ptr<std::string> fileName, SpanMarker const &start,
-             SpanMarker const &end, std::istream *inputStream) noexcept;
+        Span(std::shared_ptr<diagnostics::Source> source,
+             mjolnir::Span                        span) noexcept;
 
         bool operator==(Span const &other) const noexcept;
-
-        friend void PrintTo(Span const &span, std::ostream *os);
 
         [[nodiscard]]
         Span operator+(Span const &other) const noexcept;
@@ -46,6 +23,8 @@ namespace jcc {
         [[nodiscard]]
         Span const &operator+=(Span const &other) noexcept;
     };
+
+    void PrintTo(Span const &span, std::ostream *os);
 }// namespace jcc
 
 #endif//JCC_SPAN_H

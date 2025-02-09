@@ -3,16 +3,6 @@
 #include <iostream>
 
 namespace jcc::parsing_sema {
-    CompilerState::~CompilerState() {
-        for (auto const &diagnosis : m_WarningDiagnoses) {
-            std::cout << diagnosis.GetMessage() << '\n';
-        }
-
-        for (auto const &diagnosis : m_ErrorDiagnoses) {
-            std::cout << diagnosis.GetMessage() << '\n';
-        }
-    }
-
     llvm::IRBuilder<> &CompilerState::GetBuilder() noexcept {
         return m_Builder;
     }
@@ -35,6 +25,12 @@ namespace jcc::parsing_sema {
     }
 
     bool CompilerState::HasFatalError() const noexcept {
-        return !m_ErrorDiagnoses.empty();
+        return m_HasFatalError;
+    }
+
+    void CompilerState::PrintDiagnostics(std::ostream &ostream) const {
+        for (auto const &diagnosis : m_Diagnostics) {
+            diagnosis->Print(ostream);
+        }
     }
 }// namespace jcc::parsing_sema

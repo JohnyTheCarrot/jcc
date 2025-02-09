@@ -3,10 +3,6 @@
 
 #include "tokenizer/token.h"// for ConstantPrefix (ptr only), Token
 
-namespace jcc {
-    struct SpanMarker;
-}// namespace jcc
-
 namespace jcc::tokenizer {
     class CharIter;
 }
@@ -16,7 +12,7 @@ namespace jcc::tokenizer::string_literals {
     // The caller is expected to have already consumed the opening double quote.
     Token Tokenize(
             CharIter &charIter, ConstantPrefix prefix,
-            SpanMarker const &startMarker
+            std::size_t startPos
     );
 }
 

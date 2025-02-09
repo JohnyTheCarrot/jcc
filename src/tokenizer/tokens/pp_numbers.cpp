@@ -11,7 +11,8 @@
 
 namespace jcc::tokenizer::pp_numbers {
     [[nodiscard]]
-    bool GatherDigit(CharIter &charIter, Span &span, std::string &number) {
+    bool
+    GatherDigit(CharIter &charIter, std::size_t &end, std::string &number) {
         // TODO: This currently allows for a single quote to be after a non-digit character, the standard doesn't allow this.
         switch (charIter->m_Char) {
             case '\'':
@@ -20,12 +21,14 @@ namespace jcc::tokenizer::pp_numbers {
                 // Make sure the single quote is followed by a digit
                 if (charIter == CharIter::end() ||
                     !std::isxdigit(charIter->m_Char))
+                    // TODO: Diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::TK_PreprocessingNumberInvalid,
-                            std::move(span)
+                            // Diagnosis::Kind::TK_PreprocessingNumberInvalid,
+                            // std::move(span)
                     };
 
                 number += charIter->m_Char;
+                ++end;
                 return true;
             case 'e':
             case 'E':
@@ -34,13 +37,15 @@ namespace jcc::tokenizer::pp_numbers {
                 number += charIter->m_Char;
                 ++charIter;
                 if (charIter == CharIter::end())
+                    // TODO: Diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::TK_PreprocessingNumberInvalid,
-                            std::move(span)
+                            // Diagnosis::Kind::TK_PreprocessingNumberInvalid,
+                            // std::move(span)
                     };
 
                 // A pp-number that has eEpP in it doesn't necessarily mean we're going doing the eEpP route
                 number += charIter->m_Char;
+                ++end;
                 return true;
             case '.':
                 number += charIter->m_Char;
@@ -58,29 +63,28 @@ namespace jcc::tokenizer::pp_numbers {
         return true;
     }
 
-    Token
-    Tokenize(CharIter &charIter, SpanMarker const &start, bool startsWithDot) {
+    Token Tokenize(CharIter &charIter, std::size_t start, bool startsWithDot) {
         // In order to have reached this point, we must have already consumed a digit.
         // We therefore know that charIter must be a digit and cannot be at the end of the input.
         std::string number{startsWithDot ? "." : ""};
-        Span span{charIter.GetFileName(), start, start, charIter.GetInput()};
+        std::size_t end{start};
 
         number += charIter->m_Char;
         ++charIter;
-        span.m_End.NextChar();
+        ++end;
 
         while (charIter != CharIter::end()) {
-            if (auto const hasNext{GatherDigit(charIter, span, number)};
+            if (auto const hasNext{GatherDigit(charIter, end, number)};
                 !hasNext)
                 break;
 
             ++charIter;
-            span.m_End.NextChar();
+            ++end;
         }
 
         return Token{
                 .m_Value = PpNumber{std::move(number)},
-                .m_Span  = std::move(span)
+                .m_Span  = Span{charIter.GetSource(), {start, end}}
         };
     }
 }// namespace jcc::tokenizer::pp_numbers

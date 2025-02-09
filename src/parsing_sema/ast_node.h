@@ -72,14 +72,24 @@ namespace jcc::parsing_sema {
     using AstExpressionPtr = std::unique_ptr<AstExpression>;
 
     class AstBinaryExpression : public AstExpression {
+        AstExpressionPtr m_Lhs;
+        AstExpressionPtr m_Rhs;
+        mjolnir::Span    m_OpSpan;
+
     public:
-        using AstExpression::AstExpression;
+        AstBinaryExpression(
+                Span &&span, AstExpressionPtr lhs, AstExpressionPtr rhs,
+                mjolnir::Span opSpan
+        );
 
         [[nodiscard]]
-        virtual AstExpressionPtr::pointer GetLhs() const noexcept = 0;
+        AstExpressionPtr::pointer GetLhs() const noexcept;
 
         [[nodiscard]]
-        virtual AstExpressionPtr::pointer GetRhs() const noexcept = 0;
+        AstExpressionPtr::pointer GetRhs() const noexcept;
+
+        [[nodiscard]]
+        mjolnir::Span GetOpSpan() const noexcept;
     };
 }// namespace jcc::parsing_sema
 

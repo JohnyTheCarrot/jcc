@@ -11,20 +11,13 @@ namespace jcc::parsing_sema {
     enum class ShiftOperator { Left, Right };
 
     class AstShiftExpression final : public AstBinaryExpression {
-        AstExpressionPtr m_Lhs;
-        AstExpressionPtr m_Rhs;
-        ShiftOperator    m_Operator;
+        ShiftOperator m_Operator;
 
     public:
         AstShiftExpression(
-                AstExpressionPtr lhs, AstExpressionPtr rhs, ShiftOperator op
+                AstExpressionPtr lhs, AstExpressionPtr rhs, ShiftOperator op,
+                mjolnir::Span opSpan
         );
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetLhs() const noexcept override;
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetRhs() const noexcept override;
 
         [[nodiscard]]
         ShiftOperator GetOperator() const noexcept;

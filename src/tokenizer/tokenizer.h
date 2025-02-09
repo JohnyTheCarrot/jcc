@@ -3,11 +3,15 @@
 
 #include <exception>// for exception
 #include <fstream>  // for basic_ifstream, ifstream
-#include <optional> // for optional
-#include <string>   // for string
-#include <variant>  // for variant
+#include <mjolnir/source.hpp>
+#include <optional>// for optional
+#include <sstream>
+#include <string> // for string
+#include <variant>// for variant
 
-#include "char_iter.h"           // for CharIter
+#include "char_iter.h"// for CharIter
+#include "diagnostics/diagnostics.h"
+#include "diagnostics/source.h"
 #include "misc/Span.h"           // for Span, SpanMarker
 #include "tokenizer/token.h"     // for Token
 #include "tokenizer_iterator.h"  // for TokenizerIterator
@@ -18,18 +22,14 @@ namespace jcc::tokenizer {
 
     class Tokenizer final {
         // Dependent on whether we own the input stream or not.
-        using InputPtr =
-                std::variant<std::unique_ptr<std::istream>, std::istream *>;
 
-        InputPtr m_Input;
-        CharIter m_CharIter;
-
-        [[nodiscard]]
-        std::istream &GetStream() const;
+        std::shared_ptr<diagnostics::Source> m_Source;
+        std::istringstream                   m_Input;
+        CharIter                             m_CharIter;
 
         struct TrieTraversalResult final {
             std::variant<Token::Value, std::string> valueOrString{};
-            SpanMarker                              endMarker{};
+            std::size_t                             endPos{};
         };
 
         bool SkipWhitespace();
@@ -47,10 +47,6 @@ namespace jcc::tokenizer {
 
     public:
         explicit Tokenizer(std::string const &fileName);
-
-        explicit Tokenizer(std::istream &input);
-
-        Tokenizer(Tokenizer const &) = delete;
 
         Tokenizer(Tokenizer &&) noexcept;
 
@@ -72,6 +68,9 @@ namespace jcc::tokenizer {
 
         [[nodiscard]]
         Token SkipUntilConditionEnd();
+
+        [[nodiscard]]
+        mjolnir::Source const &GetSource() const noexcept;
     };
 }// namespace jcc::tokenizer
 

@@ -6,8 +6,11 @@
 #include <utility>  // for move
 #include <vector>   // for vector, allocator
 
-#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
-#include "misc/Span.h"                         // for Span
+#include "diagnostics/variants/custom_diagnostic.hpp"
+#include "diagnostics/variants/diagnostic_directive_no_tokens.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
+#include "misc/Span.h"     // for Span
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/preprocessor.h"         // for Preprocessor
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator...
@@ -33,10 +36,17 @@ namespace jcc::preprocessor::commands {
                 std::back_inserter(tokens)
         );
 
-        if (tokens.empty())
-            throw jcc::FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, directive.m_Span
-            };
+        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+        if (tokens.empty()) {
+            compilerState.EmplaceDiagnostic<
+                    diagnostics::DiagnosticDirectiveNoTokens>(
+                    directive.m_Span.m_Source,
+                    diagnostics::DiagnosticDirectiveKind::Error,
+                    directive.m_Span.m_Span
+            );
+
+            return std::nullopt;
+        }
 
         auto const [_, lastTokenSpan]{tokens.back()};
         std::stringstream ss;
@@ -44,12 +54,10 @@ namespace jcc::preprocessor::commands {
                 tokens, std::ostream_iterator<tokenizer::Token>{ss, " "}
         );
 
-        Diagnosis diag{
-                directive.m_Span + lastTokenSpan, Diagnosis::Class::Warning,
-                Diagnosis::Kind::PP_Custom, ss.str()
-        };
-
-        preprocessor.EmitWarning(std::move(diag));
+        compilerState.EmplaceDiagnostic<diagnostics::CustomDiagnostic>(
+                directive.m_Span.m_Source, directive.m_Span.m_Span, ss.str(),
+                mjolnir::BasicReportKind::Warning
+        );
 
         return std::nullopt;
     }

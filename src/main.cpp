@@ -21,6 +21,7 @@ int main(int argCount, char *args[]) {
     std::string filePath{args[1]};
 
     jcc::Diagnosis::Vec diagnoses;
+    auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
 
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
@@ -33,41 +34,44 @@ int main(int argCount, char *args[]) {
                 jcc::parsing_sema::ParseExpression(startIt, preprocessor.end())
         };
         jcc::parsing_sema::SemaVisitor semaVisitor;
-        constant->Accept(&semaVisitor);
+        if (constant != nullptr) {
+            constant->Accept(&semaVisitor);
 
-        if (!compilerState.HasFatalError()) {
-            jcc::codegen::ExpressionCodegenVisitor codegenVisitor;
+            if (!compilerState.HasFatalError()) {
+                jcc::codegen::ExpressionCodegenVisitor codegenVisitor;
 
-            constant->Accept(&codegenVisitor);
-            auto *value{codegenVisitor.GetValue()};
-            auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
-            auto &context{compState.GetContext()};
-            auto &builder{compState.GetBuilder()};
+                constant->Accept(&codegenVisitor);
+                auto *value{codegenVisitor.GetValue()};
+                auto &context{compState.GetContext()};
+                auto &builder{compState.GetBuilder()};
 
-            llvm::Module module(filePath, context);
+                llvm::Module module(filePath, context);
 
-            llvm::FunctionType *fnType{
-                    llvm::FunctionType::get(value->getType(), false)
-            };
+                llvm::FunctionType *fnType{
+                        llvm::FunctionType::get(value->getType(), false)
+                };
 
-            llvm::Function *fn{llvm::Function::Create(
-                    fnType, llvm::Function::ExternalLinkage, "test", module
-            )};
+                llvm::Function *fn{llvm::Function::Create(
+                        fnType, llvm::Function::ExternalLinkage, "test", module
+                )};
 
-            llvm::BasicBlock *entry =
-                    llvm::BasicBlock::Create(context, "entry", fn);
-            builder.SetInsertPoint(entry);
-            builder.CreateRet(value);
+                llvm::BasicBlock *entry =
+                        llvm::BasicBlock::Create(context, "entry", fn);
+                builder.SetInsertPoint(entry);
+                builder.CreateRet(value);
 
-            module.print(llvm::outs(), nullptr);
+                module.print(llvm::outs(), nullptr);
+            }
         }
-    } catch (jcc::FatalCompilerError const &ex) {
-        diagnoses.emplace_back(ex.GetDiagnosis());
+    } catch (jcc::FatalCompilerError const &) {
+        std::cerr << "A fatal compiler error occurred." << std::endl;
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
     for (auto const &diagnosis : diagnoses) {
         std::cout << diagnosis.GetMessage() << '\n';
     }
+
+    compState.PrintDiagnostics(std::cout);
 
     return 0;
 }

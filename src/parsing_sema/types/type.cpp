@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <magic_enum/magic_enum.hpp>
+#include <sstream>
 
 #include "parsing_sema/parser.h"
 
@@ -25,11 +26,30 @@ namespace jcc::parsing_sema::types {
     }
 
     void PrintTo(BitInteger const &bitInteger, std::ostream *os) {
-        *os << "BitInteger{" << bitInteger.GetBitWidth() << '}';
+        *os << "_BitInt(" << bitInteger.GetBitWidth() << ')';
     }
 
     void PrintTo(StandardIntegerType const &bitInteger, std::ostream *os) {
-        *os << "StandardIntegerType::" << magic_enum::enum_name(bitInteger);
+        switch (bitInteger) {
+            case StandardIntegerType::Bool:
+                *os << "bool";
+                break;
+            case StandardIntegerType::Char:
+                *os << "char";
+                break;
+            case StandardIntegerType::Short:
+                *os << "short";
+                break;
+            case StandardIntegerType::Int:
+                *os << "int";
+                break;
+            case StandardIntegerType::Long:
+                *os << "long";
+                break;
+            case StandardIntegerType::LongLong:
+                *os << "long long";
+                break;
+        }
     }
 
     IntegerType::IntegerType(Type type, Signedness sign)
@@ -197,13 +217,35 @@ namespace jcc::parsing_sema::types {
     }
 
     void PrintTo(IntegerType type, std::ostream *os) {
-        *os << "IntegerType{";
+        switch (type.GetSignedness()) {
+            case IntegerType::Signedness::Signed:
+                *os << "signed ";
+                break;
+            case IntegerType::Signedness::Unsigned:
+                *os << "unsigned ";
+                break;
+            default:
+                break;
+        }
+
         std::visit([&os](auto const &t) { PrintTo(t, os); }, type.GetType());
-        *os << ", " << magic_enum::enum_name(type.GetSignedness()) << '}';
     }
 
     void PrintTo(StandardFloatingType floatingType, std::ostream *os) {
-        *os << "StandardFloatingType::" << magic_enum::enum_name(floatingType);
+        switch (floatingType) {
+            case StandardFloatingType::Float:
+                *os << "float";
+                break;
+            case StandardFloatingType::Double:
+                *os << "double";
+                break;
+            case StandardFloatingType::LongDouble:
+                *os << "long double";
+                break;
+            default:
+                *os << "(unknown floating type)";
+                break;
+        }
     }
 
     FloatingType::FloatingType(Type &&specifier)
@@ -263,9 +305,7 @@ namespace jcc::parsing_sema::types {
     }
 
     void PrintTo(FloatingType const &type, std::ostream *os) {
-        *os << "FloatingType{";
         std::visit([&os](auto const &t) { PrintTo(t, os); }, type.GetType());
-        *os << '}';
     }
 
     ValueType::ValueType(Type &&type)
@@ -302,6 +342,14 @@ namespace jcc::parsing_sema::types {
 
     bool ValueType::operator==(ValueType const &other) const {
         return m_Type == other.m_Type;
+    }
+
+    std::string ValueType::ToString() const {
+        std::ostringstream oss;
+
+        PrintTo(*this, &oss);
+
+        return oss.str();
     }
 
     llvm::Value *

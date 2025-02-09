@@ -14,9 +14,8 @@ namespace jcc::preprocessor::commands {
 
     ElseCommand::~ElseCommand() = default;
 
-    std::optional<PreprocessorToken>
-    ElseCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&)
-            const {
+    std::optional<PreprocessorToken> ElseCommand::
+            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
         // if we reached this point, we know that the previous condition was met, and we must skip the next group
         auto const conditionEnd{preprocessor.SkipUntilConditionEnd()};
 
@@ -27,9 +26,10 @@ namespace jcc::preprocessor::commands {
             case tokenizer::Directive::Endif:
                 return std::nullopt;
             default:
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::PP_ExpectedEndif,
-                        preprocessor.GetCurrentSpan()
+                        // Diagnosis::Kind::PP_ExpectedEndif,
+                        // preprocessor.GetCurrentSpan()
                 };
         }
     }

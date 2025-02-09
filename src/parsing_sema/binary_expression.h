@@ -16,7 +16,7 @@ namespace jcc::parsing_sema {
 
     template<typename Op, typename Node>
         requires std::is_constructible_v<
-                Node, AstExpressionPtr, AstExpressionPtr, Op>
+                Node, AstExpressionPtr, AstExpressionPtr, Op, mjolnir::Span>
     [[nodiscard]]
     AstExpressionPtr ParseBinaryExpression(
             std::function<std::optional<Op>(tokenizer::Punctuator)> const &opFn,
@@ -45,22 +45,25 @@ namespace jcc::parsing_sema {
 
                 ++current;
                 if (current == end) {
+                    // TODO: Diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::PRS_ExpectedExpressionToFollow,
-                            std::move(nextToken.m_Span)
+                            // Diagnosis::Kind::PRS_ExpectedExpressionToFollow,
+                            // std::move(nextToken.m_Span)
                     };
                 }
 
                 auto rhsExpr{parseChild(current, end)};
                 if (rhsExpr == nullptr) {
+                    // TODO: Diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::PRS_ExpectedExpressionToFollow,
-                            std::move(nextToken.m_Span)
+                            // Diagnosis::Kind::PRS_ExpectedExpressionToFollow,
+                            // std::move(nextToken.m_Span)
                     };
                 }
 
                 lhsExpr = std::make_unique<Node>(
-                        std::move(lhsExpr), std::move(rhsExpr), op.value()
+                        std::move(lhsExpr), std::move(rhsExpr), op.value(),
+                        nextToken.m_Span.m_Span
                 );
 
                 continue;

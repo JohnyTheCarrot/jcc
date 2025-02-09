@@ -16,9 +16,10 @@ namespace jcc::parsing_sema {
             auto result{ParseExpression(current, end)};
             if (current == end ||
                 !current->Is(tokenizer::Punctuator::RightParenthesis)) {
+                // TODO: Diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::PRS_ExpectedRParen,
-                        std::move(firstToken.m_Span)
+                        // Diagnosis::Kind::PRS_ExpectedRParen,
+                        // std::move(firstToken.m_Span)
                 };
             }
             result->m_Span = firstToken.m_Span + current->m_Span;
@@ -29,22 +30,25 @@ namespace jcc::parsing_sema {
 
         if (firstToken.Is(tokenizer::Keyword::Generic)) {
             // TODO: Generic selection
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
+                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
             };
         }
 
         if (firstToken.Is<tokenizer::Identifier>()) {
             // TODO: Identifier
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
+                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
             };
         }
 
         if (firstToken.Is<tokenizer::StringConstant>()) {
             // TODO: String literal
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
+                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
             };
         }
 

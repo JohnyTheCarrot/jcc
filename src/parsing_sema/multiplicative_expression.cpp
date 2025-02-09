@@ -7,22 +7,10 @@
 namespace jcc::parsing_sema {
     AstMultiplicativeExpression::AstMultiplicativeExpression(
             AstExpressionPtr lhs, AstExpressionPtr rhs,
-            MultiplicativeOperator op
+            MultiplicativeOperator op, mjolnir::Span opSpan
     )
-        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, UsualArithmeticConversions(lhs->GetType(), rhs->GetType())}
-        , m_Lhs{std::move(lhs)}
-        , m_Rhs{std::move(rhs)}
+        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, std::move(lhs), std::move(rhs), opSpan}
         , m_Operator{op} {
-    }
-
-    AstExpressionPtr::pointer
-    AstMultiplicativeExpression::GetLhs() const noexcept {
-        return m_Lhs.get();
-    }
-
-    AstExpressionPtr::pointer
-    AstMultiplicativeExpression::GetRhs() const noexcept {
-        return m_Rhs.get();
     }
 
     MultiplicativeOperator

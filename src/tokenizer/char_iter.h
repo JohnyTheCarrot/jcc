@@ -1,39 +1,37 @@
 #ifndef CHAR_ITER_H
 #define CHAR_ITER_H
 
-#include <iosfwd>     // for istream, ostream
-#include <iterator>   // for input_iterator, input_iterator_tag
-#include <memory>     // for shared_ptr
-#include <string>     // for string
-#include <string_view>// for string_view
-#include <variant>    // for variant
+#include <iosfwd>  // for istream, ostream
+#include <iterator>// for input_iterator, input_iterator_tag
+#include <memory>  // for shared_ptr
+#include <variant> // for variant
 
-#include "misc/Span.h"// for SpanMarker
+#include "diagnostics/diagnostics.h"
+#include "diagnostics/source.h"
 
 namespace jcc::tokenizer {
     struct CharInfo final {
-        SpanMarker m_SpanMarker{};
-        char       m_Char{};
-        bool       m_IsSentinel{false};
+        std::size_t m_Pos{};
+        char        m_Char{};
+        bool        m_IsSentinel{false};
 
         [[nodiscard]]
-        bool
-        operator==(CharInfo const &other) const;
+        bool operator==(CharInfo const &other) const;
 
         friend void PrintTo(CharInfo const &charInfo, std::ostream *os);
     };
 
     class CharIter final {
         struct Sentinel final {
-            SpanMarker m_LastSpanMarker{};
+            std::size_t m_LastPos{};
         };
 
         using CurrentChar = std::variant<CharInfo, Sentinel>;
 
-        std::istream                *m_Input{};
-        std::shared_ptr<std::string> m_FileName{};
-        CurrentChar                  m_CurrentChar{Sentinel{}};
-        SpanMarker                   m_CurrentSpanMarker{};
+        std::istream                        *m_Input{};
+        std::shared_ptr<diagnostics::Source> m_Source{};
+        CurrentChar                          m_CurrentChar{Sentinel{}};
+        std::size_t                          m_CurrentPos{};
 
         [[nodiscard]]
         bool Next();
@@ -48,7 +46,9 @@ namespace jcc::tokenizer {
 
         CharIter();
 
-        CharIter(std::istream &input, std::string_view fileName);
+        CharIter(
+                std::istream &input, std::shared_ptr<diagnostics::Source> source
+        );
 
         explicit CharIter(char until);
 
@@ -58,21 +58,19 @@ namespace jcc::tokenizer {
         std::istream *GetInput() const;
 
         [[nodiscard]]
-        std::shared_ptr<std::string> const &GetFileName() const;
+        std::shared_ptr<diagnostics::Source> GetSource() const;
 
         [[nodiscard]]
         Sentinel const &GetSentinel() const;
 
         [[nodiscard]]
-        SpanMarker const &GetCurrentSpanMarker() const;
+        std::size_t GetCurrentPos() const;
 
         [[nodiscard]]
-        value_type
-        operator*() const;
+        value_type operator*() const;
 
         [[nodiscard]]
-        pointer
-        operator->() const;
+        pointer operator->() const;
 
         CharIter &operator++();
 
@@ -84,12 +82,10 @@ namespace jcc::tokenizer {
         static CharIter end();
 
         [[nodiscard]]
-        bool
-        operator==(CharIter const &other) const;
+        bool operator==(CharIter const &other) const;
 
         [[nodiscard]]
-        bool
-        operator!=(CharIter const &other) const;
+        bool operator!=(CharIter const &other) const;
 
         static CharIter const c_UntilNewline;
     };

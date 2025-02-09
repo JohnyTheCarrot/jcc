@@ -38,8 +38,9 @@ namespace jcc::parsing_sema {
                 case tokenizer::Punctuator::Arrow:
                 case tokenizer::Punctuator::PlusPlus:
                 case tokenizer::Punctuator::MinusMinus:
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::TODO, std::move(nextToken.m_Span)
+                            // Diagnosis::Kind::TODO, std::move(nextToken.m_Span)
                     };
                 default:
                     break;

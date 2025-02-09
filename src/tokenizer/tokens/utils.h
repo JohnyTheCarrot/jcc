@@ -23,8 +23,8 @@ namespace jcc::tokenizer::utils {
     // for character constants and string literals
     [[nodiscard]]
     std::optional<compiler_data_types::Char32::type> ReadSingleCharacter(
-            CharIter &charIter, ConstantPrefix prefix,
-            SpanMarker const &startMarker, ConstantType constantType
+            CharIter &charIter, ConstantPrefix prefix, std::size_t startPos,
+            ConstantType constantType
     );
 
     [[nodiscard]]

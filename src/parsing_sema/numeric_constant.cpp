@@ -50,7 +50,7 @@ namespace jcc::parsing_sema {
      */
     [[nodiscard]]
     types::IntegerType ChooseSmallestCompatible(
-            Span &intSpan, std::span<types::StandardIntegerType const> types,
+            Span &, std::span<types::StandardIntegerType const> types,
             unsigned numBits, SignPossibilities signPossibilities
     ) {
         using namespace magic_enum::bitwise_operators;
@@ -78,16 +78,17 @@ namespace jcc::parsing_sema {
             }
         }
 
+        // TODO: Diagnosis
         throw FatalCompilerError{
-                Diagnosis::Kind::SEMA_NoCompatibleIntegerType,
-                std::move(intSpan)
+                // Diagnosis::Kind::SEMA_NoCompatibleIntegerType,
+                // std::move(intSpan)
         };
     }
 
     [[nodiscard]]
     types::IntegerType ParseIntegerType(
-            Span &intSpan, Span &suffixSpan, std::string_view typeSuffix,
-            int numMinBits, bool isDecimal, bool isForcedUnsigned
+            Span &intSpan, Span &, std::string_view typeSuffix, int numMinBits,
+            bool isDecimal, bool isForcedUnsigned
     ) {
         auto signPossibilities{
                 isForcedUnsigned ? SignPossibilities::Unsigned
@@ -146,9 +147,10 @@ namespace jcc::parsing_sema {
             };
         }
 
+        // TODO: Diagnosis
         throw FatalCompilerError{
-                Diagnosis::Kind::PRS_UnrecognizedIntegerSuffix,
-                std::move(suffixSpan)
+                // Diagnosis::Kind::PRS_UnrecognizedIntegerSuffix,
+                // std::move(suffixSpan)
         };
     }
 
@@ -156,9 +158,11 @@ namespace jcc::parsing_sema {
             Span &completeSpan, std::string_view string_view,
             int numMinBitsNoSign, bool isDecimal
     ) {
-        Span suffixSpan{completeSpan};
-        suffixSpan.m_Start =
-                completeSpan.m_End - (static_cast<int>(string_view.size()) - 1);
+        Span suffixSpan{
+                completeSpan.m_Source,
+                {completeSpan.m_Span.end() - string_view.size() - 1,
+                 completeSpan.m_Span.end()}
+        };
 
         if (string_view.starts_with('u') || string_view.starts_with('U')) {
             std::string_view const typeSuffix{
@@ -219,8 +223,7 @@ namespace jcc::parsing_sema {
     constexpr auto RADIX_DEC{10};
 
     [[nodiscard]]
-    types::FloatingType
-    ParseFloatingSuffix(Span &suffixSpan, std::string_view suffix) {
+    types::FloatingType ParseFloatingSuffix(Span &, std::string_view suffix) {
         if (suffix.empty()) {
             return types::FloatingType{types::StandardFloatingType::Double};
         }
@@ -233,9 +236,10 @@ namespace jcc::parsing_sema {
             return types::FloatingType{types::StandardFloatingType::LongDouble};
         }
 
+        // TODO: Diagnosis
         throw FatalCompilerError{
-                Diagnosis::Kind::PRS_UnrecognizedFloatingSuffix,
-                std::move(suffixSpan)
+                // Diagnosis::Kind::PRS_UnrecognizedFloatingSuffix,
+                // std::move(suffixSpan)
         };
     }
 
@@ -246,8 +250,9 @@ namespace jcc::parsing_sema {
     ) {
         if (radix == RADIX_HEX) {
             // P-notation
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TODO, std::move(token.m_Span)
+                    // Diagnosis::Kind::TODO, std::move(token.m_Span)
             };
         }
 
@@ -266,9 +271,10 @@ namespace jcc::parsing_sema {
                     exponentStart.data() + exponentStart.size(), exponent
             )};
             if (exponentResult.ec != std::errc{}) {
+                // TODO: Diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
-                        std::move(token.m_Span)
+                        // Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
+                        // std::move(token.m_Span)
                 };
             }
 
@@ -284,9 +290,10 @@ namespace jcc::parsing_sema {
             int radix
     ) {
         if (radix == RADIX_OCT) {
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PRS_OctalFloatingPoint,
-                    std::move(token.m_Span)
+                    // Diagnosis::Kind::PRS_OctalFloatingPoint,
+                    // std::move(token.m_Span)
             };
         }
 
@@ -304,9 +311,10 @@ namespace jcc::parsing_sema {
                 fractionalValue
         )};
         if (result.ec != std::errc{}) {
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
-                    std::move(token.m_Span)
+                    // Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
+                    // std::move(token.m_Span)
             };
         }
 
@@ -381,9 +389,10 @@ namespace jcc::parsing_sema {
                 integerValue, radix
         )};
         if (result.ec != std::errc{}) {
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PRS_InvalidIntegerLiteral,
-                    std::move(token.m_Span)
+                    // Diagnosis::Kind::PRS_InvalidIntegerLiteral,
+                    // std::move(token.m_Span)
             };
         }
 

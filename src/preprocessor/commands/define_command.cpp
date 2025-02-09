@@ -43,16 +43,18 @@ namespace jcc::preprocessor::commands {
         while (true) {
             if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
                 if (!token.Is(tokenizer::Punctuator::Ellipsis))
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::PP_MacroExpectedIdentifier,
-                            token.m_Span
+                            // Diagnosis::Kind::PP_MacroExpectedIdentifier,
+                            // token.m_Span
                     };
 
                 token = preprocessor.GetNextPreprocessorToken().m_Token;
                 if (!token.Is(tokenizer::Punctuator::RightParenthesis)) {
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::PP_MacroEllipsisNotLast,
-                            token.m_Span
+                            // Diagnosis::Kind::PP_MacroEllipsisNotLast,
+                            // token.m_Span
                     };
                 }
 
@@ -63,9 +65,10 @@ namespace jcc::preprocessor::commands {
 
             token = preprocessor.GetNextPreprocessorToken().m_Token;
             if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
-                        token.m_Span
+                        // Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
+                        // token.m_Span
                 };
             }
 
@@ -77,9 +80,10 @@ namespace jcc::preprocessor::commands {
             }
 
             if (punctuator != tokenizer::Punctuator::Comma) {
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
-                        token.m_Span
+                        // Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
+                        // token.m_Span
                 };
             }
 
@@ -124,16 +128,9 @@ namespace jcc::preprocessor::commands {
 
     DefineCommand::~DefineCommand() = default;
 
-    std::optional<PreprocessorToken>
-    DefineCommand::Execute(Preprocessor &preprocessor, tokenizer::Token &&)
-            const {
+    std::optional<PreprocessorToken> DefineCommand::
+            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
         auto nextToken{preprocessor.SimpleTokenRead().m_Token};
-
-        if (nextToken.Is(tokenizer::SpecialPurpose::Error)) {
-            throw FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, nextToken.m_Span
-            };
-        }
 
         auto const isIdent{
                 std::holds_alternative<tokenizer::Identifier>(nextToken.m_Value)
@@ -143,24 +140,27 @@ namespace jcc::preprocessor::commands {
         };
 
         if (!isIdent && !isKeyword) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_MacroExpectedIdentifier,
-                    nextToken.m_Span
+                    // Diagnosis::Kind::PP_MacroExpectedIdentifier,
+                    // nextToken.m_Span
             };
         }
 
         std::string macroName{
                 isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value)
                                   .m_Name
-                        : KeywordToString(std::get<tokenizer::Keyword>(
-                                  nextToken.m_Value
-                          ))
+                        : KeywordToString(
+                                  std::get<tokenizer::Keyword>(nextToken.m_Value
+                                  )
+                          )
         };
 
         if (preprocessor.GetMacroStore().IsMacroDefined(macroName)) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_IllegalMacroRedefinition,
-                    nextToken.m_Span
+                    // Diagnosis::Kind::PP_IllegalMacroRedefinition,
+                    // nextToken.m_Span
             };
         }
 

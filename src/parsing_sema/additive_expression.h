@@ -12,20 +12,13 @@ namespace jcc::parsing_sema {
     enum class AdditiveOperator { Addition, Subtraction };
 
     class AstAdditiveExpression final : public AstBinaryExpression {
-        AstExpressionPtr m_Lhs;
-        AstExpressionPtr m_Rhs;
         AdditiveOperator m_Operator;
 
     public:
         AstAdditiveExpression(
-                AstExpressionPtr lhs, AstExpressionPtr rhs, AdditiveOperator op
+                AstExpressionPtr lhs, AstExpressionPtr rhs, AdditiveOperator op,
+                mjolnir::Span opSpan
         );
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetLhs() const noexcept override;
-
-        [[nodiscard]]
-        AstExpressionPtr::pointer GetRhs() const noexcept override;
 
         [[nodiscard]]
         AdditiveOperator GetOperator() const noexcept;

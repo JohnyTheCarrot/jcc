@@ -5,14 +5,19 @@
 #include <utility>                   // for move
 #include <variant>                   // for variant
 
-#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
-#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "diagnostics/variants/escape_seq_too_large.hpp"
+#include "diagnostics/variants/hex_escape_empty.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "misc/Span.h"     // for Span, SpanMarker (ptr only)
+#include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "tokenizer/token.h"    // for GetConstantPrefixRange, Consta...
 
 namespace jcc::tokenizer::escape_sequences {
+    using Character = std::uint8_t;
+
     [[nodiscard]]
-    std::optional<char> SimpleEscapeSequence(char c) {
+    std::optional<Character> SimpleEscapeSequence(Character c) {
         switch (c) {
             case '\'':
             case '"':
@@ -39,7 +44,7 @@ namespace jcc::tokenizer::escape_sequences {
     }
 
     [[nodiscard]]
-    std::optional<char> GetOctalDigit(char c) {
+    std::optional<Character> GetOctalDigit(Character c) {
         switch (c) {
             case '0':
                 return '\0';
@@ -63,13 +68,29 @@ namespace jcc::tokenizer::escape_sequences {
     }
 
     [[nodiscard]]
-    char OctalEscapeSequence(char firstDigit, CharIter &charIter) {
+    Character OctalEscapeSequence(Character firstDigit, CharIter &charIter) {
         constexpr char MAX_OCTAL_DIGIT_BITS{3};
 
-        char       result{GetOctalDigit(firstDigit).value()};
-        auto const addDigit{[&result](char digit) {
-            result <<= MAX_OCTAL_DIGIT_BITS;
-            result |= digit;
+        Character  result{GetOctalDigit(firstDigit).value()};
+        auto const addDigit{[&result, &charIter](Character digit) {
+            std::uint64_t result64{static_cast<std::uint64_t>(result)};
+            result64 <<= MAX_OCTAL_DIGIT_BITS;
+            result64 |= digit;
+
+            if (result64 & ~std::numeric_limits<std::uint8_t>::max()) {
+                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+
+                mjolnir::Span span{
+                        charIter.GetCurrentPos(), charIter.GetCurrentPos() + 1
+                };
+
+                compilerState.EmplaceTemporarilyFatalDiagnostic<
+                        diagnostics::EscapeSeqTooLarge>(
+                        charIter.GetSource(), span
+                );
+            }
+
+            result = static_cast<Character>(result64);
         }};
 
         if (charIter == CharIter::end()) {
@@ -144,62 +165,56 @@ namespace jcc::tokenizer::escape_sequences {
     }
 
     [[nodiscard]]
-    int HexadecimalEscapeSequence(
-            CharIter &charIter, SpanMarker const &backslashMarker
-    ) {
+    int
+    HexadecimalEscapeSequence(CharIter &charIter, std::size_t backslashPos) {
         constexpr int MAX_HEX_DIGIT_BITS{4};
 
-        int        result{0};
-        auto const addDigit{[&result](int digit) {
-            result <<= MAX_HEX_DIGIT_BITS;
-            result |= digit;
+        std::uint32_t result{0};
+        auto const    addDigit{[&result, &charIter](Character digit) {
+            std::uint64_t result64{static_cast<std::uint64_t>(result)};
+            result64 <<= MAX_HEX_DIGIT_BITS;
+            result64 |= digit;
+
+            if (result64 & ~static_cast<std::uint64_t>(
+                                   std::numeric_limits<std::uint32_t>::max()
+                           )) {
+                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+
+                mjolnir::Span span{
+                        charIter.GetCurrentPos(), charIter.GetCurrentPos() + 1
+                };
+
+                compilerState.EmplaceTemporarilyFatalDiagnostic<
+                           diagnostics::EscapeSeqTooLarge>(
+                        charIter.GetSource(), span
+                );
+            }
+
+            result = static_cast<std::uint32_t>(result64);
         }};
 
-        if (charIter == CharIter::end()) {
-            Span span{
-                    charIter.GetFileName(), backslashMarker,
-                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
-            };
+        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
 
-            throw FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, std::move(span)
-            };
+        if (charIter == CharIter::end()) {
+            mjolnir::Span span{backslashPos, charIter.GetCurrentPos()};
+
+            compilerState.EmplaceTemporarilyFatalDiagnostic<
+                    diagnostics::HexEscapeEmpty>(charIter.GetSource(), span);
         }
 
         if (auto const firstDigit{GetHexadecimalDigit(charIter->m_Char)};
             firstDigit.has_value()) {
             result = firstDigit.value();
         } else {
-            Span span{
-                    charIter.GetFileName(), backslashMarker,
-                    charIter.GetCurrentSpanMarker(), charIter.GetInput()
-            };
+            mjolnir::Span span{backslashPos, charIter.GetCurrentPos()};
 
-            throw FatalCompilerError{
-                    Diagnosis::Kind::TK_CharHexNoDigits, std::move(span),
-                    charIter->m_Char
-            };
+            compilerState.EmplaceTemporarilyFatalDiagnostic<
+                    diagnostics::HexEscapeEmpty>(charIter.GetSource(), span);
         }
 
-        int digitIdx{0};
         while (++charIter != CharIter::end()) {
-            constexpr int N_INT_HEX_DIGITS{8};
-
             if (auto const digit{GetHexadecimalDigit(charIter->m_Char)};
                 digit.has_value()) {
-                // We check for equal to because we already added the first digit
-                if (++digitIdx == N_INT_HEX_DIGITS) {
-                    Span span{
-                            charIter.GetFileName(), backslashMarker,
-                            charIter.GetCurrentSpanMarker(), charIter.GetInput()
-                    };
-
-                    throw FatalCompilerError{
-                            Diagnosis::Kind::TK_EscapeSequenceValueTooLarge,
-                            std::move(span)
-                    };
-                }
-
                 addDigit(digit.value());
             } else {
                 break;
@@ -212,29 +227,32 @@ namespace jcc::tokenizer::escape_sequences {
     [[nodiscard]]
     compiler_data_types::Char32::type ValidateEscapeSequenceSize(
             compiler_data_types::Char32::type result, ConstantPrefix prefix,
-            Span &span
+            Span const &span
     ) {
         if (auto const [min, max]{GetConstantPrefixRange(prefix)};
-            result < min || result > max)
-            throw FatalCompilerError{
-                    Diagnosis::Kind::TK_EscapeSequenceValueTooLarge,
-                    std::move(span)
-            };
+            result < min || result > max) {
+            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+
+            compilerState.EmplaceTemporarilyFatalDiagnostic<
+                    diagnostics::EscapeSeqTooLarge>(span.m_Source, span.m_Span);
+        }
 
         return result;
     }
 
     compiler_data_types::Char32::type
-    TokenizeNoSizeCheck(CharIter &charIter, SpanMarker const &backslashMarker) {
+    TokenizeNoSizeCheck(CharIter &charIter, std::size_t backslashPos) {
         if (charIter == CharIter::end()) {
-            SpanMarker const &currentMarker{charIter.GetCurrentSpanMarker()};
-            Span              span{
-                    charIter.GetFileName(), currentMarker, currentMarker,
-                    charIter.GetInput()
+            auto currentPos{charIter.GetCurrentPos()};
+            Span span{// charIter.GetFileName(), currentMarker, currentMarker,
+                      // charIter.GetInput()
+                      charIter.GetSource(),
+                      {currentPos, currentPos}
             };
 
+            // TODO: Diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, std::move(span)
+                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
             };
         }
 
@@ -251,31 +269,30 @@ namespace jcc::tokenizer::escape_sequences {
         }
 
         if (c == 'x') {
-            return HexadecimalEscapeSequence(charIter, backslashMarker);
+            return HexadecimalEscapeSequence(charIter, backslashPos);
         }
 
         Span span{
-                charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()
+                charIter.GetSource(), {backslashPos, charIter.GetCurrentPos()}
         };
 
         if (c == 'u' || c == 'U') {
-            throw FatalCompilerError{Diagnosis::Kind::TODO, std::move(span)};
+            // TODO: Universal character names
+            throw FatalCompilerError{};
         }
 
+        // TODO: Diagnosis
         throw FatalCompilerError{
-                Diagnosis::Kind::TK_UnknownEscapeSequence, std::move(span), c
+                // Diagnosis::Kind::TK_UnknownEscapeSequence, std::move(span), c
         };
     }
 
     compiler_data_types::Char32::type Tokenize(
-            CharIter &charIter, SpanMarker const &backslashMarker,
-            ConstantPrefix prefix
+            CharIter &charIter, std::size_t backslashPos, ConstantPrefix prefix
     ) {
-        auto const result{TokenizeNoSizeCheck(charIter, backslashMarker)};
-        Span       span{
-                charIter.GetFileName(), backslashMarker,
-                charIter.GetCurrentSpanMarker(), charIter.GetInput()
+        auto const result{TokenizeNoSizeCheck(charIter, backslashPos)};
+        Span const span{
+                charIter.GetSource(), {backslashPos, charIter.GetCurrentPos()}
         };
 
         return ValidateEscapeSequenceSize(result, prefix, span);

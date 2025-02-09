@@ -89,8 +89,7 @@ namespace jcc::preprocessor {
         }
 
         [[nodiscard]]
-        bool
-        operator==(Super const &other) const noexcept {
+        bool operator==(Super const &other) const noexcept {
             if (std::holds_alternative<UntilCondition>(other.m_Token)) {
                 if (!std::holds_alternative<tokenizer::Token>(m_Token))
                     return true;// both are special purpose
@@ -125,8 +124,7 @@ namespace jcc::preprocessor {
         }
 
         [[nodiscard]]
-        bool
-        operator!=(Super const &other) const noexcept {
+        bool operator!=(Super const &other) const noexcept {
             return !(*this == other);
         }
     };
@@ -151,7 +149,7 @@ namespace jcc::preprocessor {
         tokenizer::Token GetNextToken() const;
     };
 
-    static_assert(std::input_iterator<PreprocessorIterator>);
+    static_assert(IsPreprocessorIterator<PreprocessorIterator>);
 
     class PreprocessorIteratorNoCommands final
         : public BasePreprocessorIterator<PreprocessorIteratorNoCommands> {
@@ -162,7 +160,7 @@ namespace jcc::preprocessor {
         tokenizer::Token GetNextToken() const;
     };
 
-    static_assert(std::input_iterator<PreprocessorIteratorNoCommands>);
+    static_assert(IsPreprocessorIterator<PreprocessorIteratorNoCommands>);
 
     class InternalPreprocessorIterator final {
         mutable Preprocessor *m_pPreprocessor{};
@@ -193,20 +191,19 @@ namespace jcc::preprocessor {
         InternalPreprocessorIterator &operator++();
 
         [[nodiscard]]
-        InternalPreprocessorIterator
-        operator++(int);
+        InternalPreprocessorIterator operator++(int);
 
         InternalPreprocessorIterator begin() const;
 
         static InternalPreprocessorIterator end();
 
         [[nodiscard]]
-        bool
-        operator==(InternalPreprocessorIterator const &other) const noexcept;
+        bool operator==(InternalPreprocessorIterator const &other
+        ) const noexcept;
 
         [[nodiscard]]
-        bool
-        operator!=(InternalPreprocessorIterator const &other) const noexcept;
+        bool operator!=(InternalPreprocessorIterator const &other
+        ) const noexcept;
     };
 
     static_assert(std::input_iterator<InternalPreprocessorIterator>);

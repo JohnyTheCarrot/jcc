@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 add_library(
         jcc_core STATIC
         src/misc/Diagnosis.h
@@ -97,6 +99,32 @@ add_library(
         src/parsing_sema/binary_expression.h
         src/parsing_sema/sema_visitor.cpp
         src/parsing_sema/sema_visitor.h
+        src/diagnostics/diagnostics.cpp
+        src/diagnostics/diagnostics.h
+        src/diagnostics/variants/sema_mult_arithmetic.cpp
+        src/diagnostics/variants/sema_mult_arithmetic.h
+        src/diagnostics/variants/sema_modulo_int.cpp
+        src/diagnostics/variants/sema_modulo_int.h
+        src/diagnostics/source.h
+        src/diagnostics/source.cpp
+        src/diagnostics/variants/untermed_string.cpp
+        src/diagnostics/variants/untermed_string.h
+        src/diagnostics/variants/untermed_char.cpp
+        src/diagnostics/variants/untermed_char.h
+        src/diagnostics/variants/char_const_empty.cpp
+        src/diagnostics/variants/char_const_empty.h
+        src/diagnostics/variants/hex_escape_empty.cpp
+        src/diagnostics/variants/hex_escape_empty.hpp
+        src/diagnostics/variants/diagnostic_directive_no_tokens.cpp
+        src/diagnostics/variants/diagnostic_directive_no_tokens.hpp
+        src/diagnostics/variants/custom_diagnostic.cpp
+        src/diagnostics/variants/custom_diagnostic.hpp
+        src/diagnostics/variants/utf8_too_many_chars.cpp
+        src/diagnostics/variants/utf8_too_many_chars.hpp
+        src/diagnostics/variants/escape_seq_too_large.cpp
+        src/diagnostics/variants/escape_seq_too_large.hpp
+        src/diagnostics/variants/multi_byte_char_impl_def.cpp
+        src/diagnostics/variants/multi_byte_char_impl_def.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)
@@ -119,11 +147,25 @@ FetchContent_Declare(
         URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
 )
 
+
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
+
+# Mjolnir
+FetchContent_Declare(
+        mjolnir
+        GIT_REPOSITORY https://github.com/JohnyTheCarrot/mjolnir.git
+        GIT_TAG fe1e957606e5ea13c898d0c94e181515fe37cba2
+)
+
+FetchContent_MakeAvailable(mjolnir)
+
+add_dependencies(jcc_core mjolnir)
+target_link_libraries(jcc_core mjolnir)
+target_include_directories(jcc_core PUBLIC ${mjolnir_SOURCE_DIR}/include)
 
 add_executable(${TEST_PROJECT_NAME}
         tests/preprocessor.test.cpp

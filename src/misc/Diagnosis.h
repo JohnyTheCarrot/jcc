@@ -9,6 +9,7 @@
 #include <variant>    // for variant
 #include <vector>     // for vector
 
+#include "diagnostics/diagnostics.h"
 #include "Span.h"// for Span
 
 namespace jcc {
@@ -18,16 +19,8 @@ namespace jcc {
         using Data = std::optional<std::variant<char, std::string>>;
 
         enum class Kind {
-            TK_StrUnterminated,
-            TK_CharUnterminated,
-            TK_HeaderNameUnterminated,
-            TK_CharNoValue,
-            TK_CharOutOfRange,
-            TK_CharHexNoDigits,
-            TK_UTFCharMoreThanOneChar,
             TK_IntegerCharMoreThanMaxChars,
             TK_OctalEscapeSequenceTooLarge,
-            TK_EscapeSequenceValueTooLarge,
             TK_UnknownEscapeSequence,
             TK_PreprocessingNumberInvalid,
             UnexpectedEOF,
@@ -151,20 +144,8 @@ namespace jcc {
     }// namespace diagnostic_utils
 
     class FatalCompilerError final : public std::exception {
-        using OptionalData = Diagnosis::Data;
-
-        Diagnosis   m_Diagnosis;
-        std::string m_Message;
-
     public:
-        FatalCompilerError(
-                Diagnosis::Kind kind, Span span,
-                OptionalData &&data1 = std::nullopt,
-                OptionalData &&data2 = std::nullopt
-        ) noexcept;
-
-        [[nodiscard]]
-        Diagnosis const &GetDiagnosis() const noexcept;
+        FatalCompilerError() noexcept;
 
         [[nodiscard]]
         char const *what() const noexcept override;

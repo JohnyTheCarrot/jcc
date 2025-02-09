@@ -155,6 +155,9 @@ namespace jcc::parsing_sema::types {
         [[nodiscard]]
         bool operator==(ValueType const &other) const;
 
+        [[nodiscard]]
+        std::string ToString() const;
+
     private:
         Type m_Type;
     };

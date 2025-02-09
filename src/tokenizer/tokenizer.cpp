@@ -16,13 +16,6 @@
 #include "tokens/string_literals.h"      // for Tokenize
 
 namespace jcc::tokenizer {
-    std::istream &Tokenizer::GetStream() const {
-        if (std::holds_alternative<std::unique_ptr<std::istream>>(m_Input))
-            return *std::get<std::unique_ptr<std::istream>>(m_Input);
-
-        return *std::get<std::istream *>(m_Input);
-    }
-
     bool Tokenizer::SkipWhitespace() {
         auto newIt{std::find_if_not(
                 m_CharIter, CharIter::c_UntilNewline,
@@ -32,7 +25,7 @@ namespace jcc::tokenizer {
         )};
 
         bool const didSkipWhitespace{m_CharIter != newIt};
-        m_CharIter = std::move(newIt);
+        m_CharIter = newIt;
 
         return didSkipWhitespace;
     }
@@ -44,17 +37,20 @@ namespace jcc::tokenizer {
     void Tokenizer::SkipBlockComment(Span &span) {
         while (true) {
             if (m_CharIter == CharIter::end()) {
-                span.m_End = m_CharIter.GetSentinel().m_LastSpanMarker;
+                span.m_Span.set_end(m_CharIter.GetSentinel().m_LastPos);
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::UnexpectedEOF, std::move(span)
+                        // Diagnosis::Kind::UnexpectedEOF, std::move(span)
                 };
             }
             if (m_CharIter->m_Char == '*') {
                 ++m_CharIter;
                 if (m_CharIter == CharIter::end()) {
-                    span.m_End = m_CharIter.GetSentinel().m_LastSpanMarker;
+                    span.m_Span.set_end(m_CharIter.GetSentinel().m_LastPos);
+
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::UnexpectedEOF, std::move(span)
+                            // Diagnosis::Kind::UnexpectedEOF, std::move(span)
                     };
                 }
 
@@ -75,9 +71,10 @@ namespace jcc::tokenizer {
     ) {
         auto const tokenValue{[&]() -> Token::Value {
             if (!std::holds_alternative<Token::Value>(valueOrString))
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
-                        m_CharIter->m_Char
+                        // Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
+                        // m_CharIter->m_Char
                 };
 
             auto value{std::get<Token::Value>(valueOrString)};
@@ -96,7 +93,9 @@ namespace jcc::tokenizer {
                 punctuator == Punctuator::Dot &&
                 m_CharIter != CharIter::end() &&
                 std::isdigit(m_CharIter->m_Char)) {
-                return pp_numbers::Tokenize(m_CharIter, span.m_Start, true);
+                return pp_numbers::Tokenize(
+                        m_CharIter, span.m_Span.start(), true
+                );
             }
         }
 
@@ -118,26 +117,31 @@ namespace jcc::tokenizer {
     }
 
     Tokenizer::Tokenizer(std::string const &fileName)
-        : m_Input{[&] {
-            auto ifstream{std::make_unique<std::ifstream>(fileName)};
+        : m_Source{std::make_shared<diagnostics::Source>(
+                  [&] {
+                      auto const ifstream{
+                              std::make_unique<std::ifstream>(fileName)
+                      };
 
-            if (!ifstream->is_open())
-                throw TokenizerFileOpenFailure{};
+                      if (!ifstream->is_open())
+                          throw TokenizerFileOpenFailure{};
 
-            return ifstream;
-        }()}
-        , m_CharIter{GetStream(), fileName} {
-    }
-
-    Tokenizer::Tokenizer(std::istream &input)
-        : m_Input{&input}
-        , m_CharIter{GetStream(), "stdin"} {
+                      return std::string{
+                              std::istreambuf_iterator{*ifstream},
+                              std::istreambuf_iterator<char>{}
+                      };
+                  }(),
+                  fileName
+          )}
+        , m_Input{m_Source->m_Buffer}
+        , m_CharIter{m_Input, m_Source} {
     }
 
     Tokenizer::Tokenizer(Tokenizer &&other) noexcept
-        : m_Input{std::move(other.m_Input)}
-        , m_CharIter{std::move(other.m_CharIter)} {
-        m_CharIter.SetInput(GetStream());
+        : m_Source{std::move(other.m_Source)}
+        , m_Input{std::move(other.m_Input)}
+        , m_CharIter{other.m_CharIter} {
+        m_CharIter.SetInput(m_Input);
     }
 
     Tokenizer &Tokenizer::operator=(Tokenizer &&other) noexcept {
@@ -146,7 +150,7 @@ namespace jcc::tokenizer {
 
         m_Input    = std::move(other.m_Input);
         m_CharIter = std::move(other.m_CharIter);
-        m_CharIter.SetInput(GetStream());
+        m_CharIter.SetInput(m_Input);
 
         return *this;
     }
@@ -162,30 +166,30 @@ namespace jcc::tokenizer {
             return std::nullopt;
 
         Span span{
-                m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()
+                m_CharIter.GetSource(),
+                {m_CharIter.GetCurrentPos(), m_CharIter.GetCurrentPos()}
         };
 
         switch (m_CharIter->m_Char) {
             case '\n':
                 ++m_CharIter;
-                return Token{SpecialPurpose::NewLine, std::move(span)};
+                return Token{SpecialPurpose::NewLine, span};
             case '\'':
                 ++m_CharIter;
                 return character_constants::Tokenize(
-                        m_CharIter, ConstantPrefix::None, span.m_Start
+                        m_CharIter, ConstantPrefix::None, span.m_Span.start()
                 );
             case '"':
                 ++m_CharIter;
                 return string_literals::Tokenize(
-                        m_CharIter, ConstantPrefix::None, span.m_Start
+                        m_CharIter, ConstantPrefix::None, span.m_Span.start()
                 );
             default:
                 break;
         }
 
         if (m_CharIter != CharIter::end() && std::isdigit(m_CharIter->m_Char)) {
-            return pp_numbers::Tokenize(m_CharIter, span.m_Start, false);
+            return pp_numbers::Tokenize(m_CharIter, span.m_Span.start(), false);
         }
 
         bool const couldBeIdentifier{
@@ -193,14 +197,15 @@ namespace jcc::tokenizer {
         };
         auto [valueOrString,
               trieResultEndMarker]{static_tokens::Tokenize(m_CharIter)};
-        span.m_End = trieResultEndMarker;
+        span.m_Span.set_end(trieResultEndMarker);
 
         if (std::holds_alternative<std::string>(valueOrString)) {
             auto identifier{std::get<std::string>(valueOrString)};
 
-            span.m_End =
+            span.m_Span.set_end(
                     identifiers::CollectRestOfIdentifier(m_CharIter, identifier)
-                            .value_or(span.m_End);
+                            .value_or(span.m_Span.end())
+            );
 
             if (m_CharIter != CharIter::end()) {
                 auto const nextChar{m_CharIter->m_Char};
@@ -209,7 +214,7 @@ namespace jcc::tokenizer {
                     ++m_CharIter;
                     ConstantPrefix const prefix{ToConstantPrefix(identifier)};
                     return character_constants::Tokenize(
-                            m_CharIter, prefix, span.m_Start
+                            m_CharIter, prefix, span.m_Span.start()
                     );
                 }
 
@@ -217,7 +222,7 @@ namespace jcc::tokenizer {
                     ++m_CharIter;
                     ConstantPrefix const prefix{ToConstantPrefix(identifier)};
                     return string_literals::Tokenize(
-                            m_CharIter, prefix, span.m_Start
+                            m_CharIter, prefix, span.m_Span.start()
                     );
                 }
             }
@@ -227,7 +232,7 @@ namespace jcc::tokenizer {
                         m_CharIter,
                         identifiers::IdentifierTokenStart{
                                 .m_Identifier = std::move(identifier),
-                                .m_Start      = span.m_Start,
+                                .m_Start      = span.m_Span.start(),
                         }
                 );
         }
@@ -244,8 +249,8 @@ namespace jcc::tokenizer {
     }
 
     Span Tokenizer::GetLastSpan() const {
-        return {m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
-                m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()};
+        return {m_CharIter.GetSource(),
+                {m_CharIter.GetCurrentPos(), m_CharIter.GetCurrentPos()}};
     }
 
     Token Tokenizer::SkipUntilConditionEnd() {
@@ -255,13 +260,16 @@ namespace jcc::tokenizer {
             SkipWhitespace();
 
             if (m_CharIter == CharIter::end())
+                // TODO: diagnosis
                 throw FatalCompilerError{
-                        Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                        // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
                 };
 
             Span span{
-                    m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
-                    m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()
+                    // m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
+                    // m_CharIter.GetCurrentSpanMarker(), m_CharIter.GetInput()
+                    m_CharIter.GetSource(),
+                    {m_CharIter.GetCurrentPos(), m_CharIter.GetCurrentPos()}
             };
 
             if (m_CharIter->m_Char == '#') {
@@ -280,7 +288,7 @@ namespace jcc::tokenizer {
                     continue;
                 }
 
-                span.m_End = token.endMarker;
+                span.m_Span.set_end(token.endPos);
 
                 switch (std::get<Directive>(directive)) {
                     case Directive::If:
@@ -307,15 +315,17 @@ namespace jcc::tokenizer {
                 while (m_CharIter != CharIter::c_UntilNewline) ++m_CharIter;
 
                 if (m_CharIter == CharIter::end())
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                            // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
                     };
 
                 ++m_CharIter;
 
                 if (m_CharIter == CharIter::end())
+                    // TODO: diagnosis
                     throw FatalCompilerError{
-                            Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
+                            // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
                     };
             }
         }

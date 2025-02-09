@@ -215,7 +215,6 @@ namespace jcc::tokenizer {
 
     enum class SpecialPurpose {
         EndOfFile,
-        Error,
         NewLine,
         LineComment,
         BlockComment,

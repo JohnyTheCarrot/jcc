@@ -12,31 +12,31 @@ namespace jcc::tokenizer {
     CharIter const CharIter::c_UntilNewline{'\n'};
 
     bool CharInfo::operator==(CharInfo const &other) const {
-        return m_Char == other.m_Char && m_SpanMarker == other.m_SpanMarker;
+        return m_Char == other.m_Char && m_Pos == other.m_Pos;
     }
 
     bool CharIter::Next() {
         if (char next{}; m_Input->get(next).good()) {
             if (std::holds_alternative<Sentinel>(m_CurrentChar)) {
-                m_CurrentChar = CharInfo{m_CurrentSpanMarker, next, false};
+                m_CurrentChar = CharInfo{m_CurrentPos, next, false};
                 return true;
             }
 
-            m_CurrentSpanMarker.NextChar();
+            ++m_CurrentPos;
 
             auto &[spanMarker, character,
                    isSentinel]{std::get<value_type>(m_CurrentChar)};
             character  = next;
-            spanMarker = m_CurrentSpanMarker;
+            spanMarker = m_CurrentPos;
 
             return true;
         }
 
-        auto const lastSpanMarker{[this] {
+        auto const lastSpanMarker{[this]() -> std::size_t {
             if (std::holds_alternative<CharInfo>(m_CurrentChar))
-                return std::get<CharInfo>(m_CurrentChar).m_SpanMarker;
+                return std::get<CharInfo>(m_CurrentChar).m_Pos;
 
-            return SpanMarker{};
+            return 0;
         }()};
 
         m_CurrentChar = Sentinel{lastSpanMarker};
@@ -45,25 +45,27 @@ namespace jcc::tokenizer {
 
     CharInfo CharIter::Expect(char c) {
         if (!Next()) {
-            auto const lastSpanMarker{
-                    std::get<Sentinel>(m_CurrentChar).m_LastSpanMarker
-            };
-            Span span{m_FileName, lastSpanMarker, lastSpanMarker, m_Input};
+            // auto const lastSpanMarker{
+            //         std::get<Sentinel>(m_CurrentChar).m_LastPos
+            // };
+            // Span span{*m_Source, {lastSpanMarker, lastSpanMarker}};
 
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::UnexpectedEOF, std::move(span)
+                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
             };
         }
 
-        if (auto const [spanMarker, character, isSentinel]{
+        if (auto const [pos, character, isSentinel]{
                     std::get<value_type>(m_CurrentChar)
             };
             character != c) {
-            Span span{m_FileName, spanMarker, spanMarker, m_Input};
+            // Span span{*m_Source, {pos, pos}};
 
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
-                    character
+                    // Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
+                    // character
             };
         }
 
@@ -72,9 +74,11 @@ namespace jcc::tokenizer {
 
     CharIter::CharIter() = default;
 
-    CharIter::CharIter(std::istream &input, std::string_view fileName)
+    CharIter::CharIter(
+            std::istream &input, std::shared_ptr<diagnostics::Source> source
+    )
         : m_Input{&input}
-        , m_FileName{std::make_shared<std::string>(fileName)} {
+        , m_Source{std::move(source)} {
         ++(*this);
     }
 
@@ -90,20 +94,20 @@ namespace jcc::tokenizer {
         return m_Input;
     }
 
-    std::shared_ptr<std::string> const &CharIter::GetFileName() const {
-        return m_FileName;
+    std::shared_ptr<diagnostics::Source> CharIter::GetSource() const {
+        return m_Source;
     }
 
     CharIter::Sentinel const &CharIter::GetSentinel() const {
         return std::get<Sentinel>(m_CurrentChar);
     }
 
-    SpanMarker const &CharIter::GetCurrentSpanMarker() const {
+    std::size_t CharIter::GetCurrentPos() const {
         if (std::holds_alternative<CharInfo>(m_CurrentChar)) {
-            return std::get<CharInfo>(m_CurrentChar).m_SpanMarker;
+            return std::get<CharInfo>(m_CurrentChar).m_Pos;
         }
 
-        return std::get<Sentinel>(m_CurrentChar).m_LastSpanMarker;
+        return std::get<Sentinel>(m_CurrentChar).m_LastPos;
     }
 
     CharIter::value_type CharIter::operator*() const {
@@ -124,27 +128,23 @@ namespace jcc::tokenizer {
                     nextChar.m_Char) {
                 case '\r':
                     Expect('\n');
-                    m_CurrentSpanMarker.NextLine();
                     return *this;
                 case '\n':
                     m_CurrentChar = nextChar;
-                    m_CurrentSpanMarker.NextLine();
                     return *this;
                 case '\t':
                     // See the following SO post for context. https://stackoverflow.com/a/13094734
                     // We're going up to 7 because the tab is already the first character
-                    nextChar.m_SpanMarker.NextChar(false, 7);
+                    m_CurrentPos += 7;
                     return *this;
                 case '\\':
                     switch (auto const next{m_Input->peek()}; next) {
                         case '\r':
                             m_Input->get();
                             Expect('\n');
-                            m_CurrentSpanMarker.NextLine();
                             break;
                         case '\n':
                             m_Input->get();
-                            m_CurrentSpanMarker.NextLine();
                             break;
                         default:
                             return *this;
@@ -163,7 +163,7 @@ namespace jcc::tokenizer {
     }
 
     CharIter CharIter::begin() const {
-        return CharIter{*m_Input, *m_FileName};
+        return CharIter{*m_Input, m_Source};
     }
 
     CharIter CharIter::end() {
@@ -209,9 +209,8 @@ namespace jcc::tokenizer {
 
     void PrintTo(CharInfo const &charInfo, std::ostream *os) {
         *os << std::format(
-                "CharInfo{{m_Char: {}, m_SpanMarker: {}}}",
-                testing::PrintToString(charInfo.m_Char),
-                testing::PrintToString(charInfo.m_SpanMarker)
+                "CharInfo{{m_Char: {}, m_Pos: {}}}",
+                testing::PrintToString(charInfo.m_Char), charInfo.m_Pos
         );
     }
 }// namespace jcc::tokenizer

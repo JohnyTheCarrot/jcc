@@ -44,9 +44,10 @@ namespace jcc::preprocessor {
 
     void Preprocessor::PopConditional() {
         if (m_ConditionalDepth == 0) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_OrphanedConditionalClosure,
-                    GetCurrentSpan()
+                    // Diagnosis::Kind::PP_OrphanedConditionalClosure,
+                    // GetCurrentSpan()
             };
         }
 
@@ -61,7 +62,6 @@ namespace jcc::preprocessor {
                 std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
                 switch (std::get<tokenizer::SpecialPurpose>(token)) {
                     case tokenizer::SpecialPurpose::EndOfFile:
-                    case tokenizer::SpecialPurpose::Error:
                         return ppToken;
                     default:
                         break;
@@ -192,19 +192,6 @@ namespace jcc::preprocessor {
         , m_pDiagnoses{&diagnoses} {
     }
 
-    Preprocessor::Preprocessor(std::istream &input, Diagnosis::Vec &diagnoses)
-        : m_TokenizerStack{[&] {
-            tokenizer::Tokenizer  tokenizer{input};
-            TokenizerIteratorPair pair{std::move(tokenizer)};
-
-            std::stack<TokenizerIteratorPair> stack;
-            stack.push(std::move(pair));
-
-            return stack;
-        }()}
-        , m_pDiagnoses{&diagnoses} {
-    }
-
     void Preprocessor::OpenHeader(std::string_view filename) {
         try {
             auto &top{m_TokenizerStack.emplace(
@@ -212,9 +199,10 @@ namespace jcc::preprocessor {
             )};
             ++top.GetTokenIter();
         } catch (tokenizer::TokenizerFileOpenFailure const &) {
+            // TODO: diagnosis
             throw FatalCompilerError{
-                    Diagnosis::Kind::PP_InclDirectiveFileOpenFailed,
-                    GetCurrentSpan()
+                    // Diagnosis::Kind::PP_InclDirectiveFileOpenFailed,
+                    // GetCurrentSpan()
             };
         }
     }
