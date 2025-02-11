@@ -17,7 +17,9 @@ namespace jcc::preprocessor::commands {
     class IfdefCommand final : public Command {
         bool m_IsIfndef;
 
-        static void ExecuteCondition(bool isIfndef, Preprocessor &preprocessor);
+        static void ExecuteCondition(
+                bool isIfndef, Preprocessor &preprocessor, Span const &span
+        );
 
     public:
         explicit IfdefCommand(CommandMap &map, bool isIfndef = false);

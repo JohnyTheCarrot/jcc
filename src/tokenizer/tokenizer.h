@@ -2,9 +2,7 @@
 #define JCC_TOKENIZER_H
 
 #include <exception>// for exception
-#include <fstream>  // for basic_ifstream, ifstream
-#include <mjolnir/source.hpp>
-#include <optional>// for optional
+#include <optional> // for optional
 #include <sstream>
 #include <string> // for string
 #include <variant>// for variant
@@ -67,7 +65,7 @@ namespace jcc::tokenizer {
         Span GetLastSpan() const;
 
         [[nodiscard]]
-        Token SkipUntilConditionEnd();
+        std::optional<Token> SkipUntilConditionEnd();
 
         [[nodiscard]]
         mjolnir::Source const &GetSource() const noexcept;

@@ -1,11 +1,11 @@
-#include "sema_mult_arithmetic.h"
+#include "mult_non_arithmetic.hpp"
 
 #include <utility>
 
 namespace jcc::diagnostics {
-    SemaMultArithmetic::SemaMultArithmetic(
-            std::shared_ptr<Source> source, mjolnir::Span const &lhsSpan,
-            mjolnir::Span const &rhsSpan, mjolnir::Span const &opSpan,
+    MultNonArithmetic::MultNonArithmetic(
+            std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
+            mjolnir::Span rhsSpan, mjolnir::Span opSpan,
             parsing_sema::types::ValueType const &lhsType,
             parsing_sema::types::ValueType const &rhsType
     )
@@ -20,7 +20,7 @@ namespace jcc::diagnostics {
           } {
     }
 
-    void SemaMultArithmetic::Print(std::ostream &ostream) const {
+    void MultNonArithmetic::Print(std::ostream &ostream) const {
         constexpr auto lhsColor{mjolnir::colors::light_cyan};
         constexpr auto rhsColor{mjolnir::colors::light_magenta};
 
@@ -30,6 +30,7 @@ namespace jcc::diagnostics {
                         "of "
                         "an arithmetic type."
                 )
+                .with_label(mjolnir::Label{GetOpSpan()})
                 .with_label(
                         mjolnir::Label{GetLhsSpan()}
                                 .with_message(

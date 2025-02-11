@@ -116,7 +116,7 @@ namespace jcc::preprocessor {
         Span GetCurrentSpan() const noexcept;
 
         [[nodiscard]]
-        tokenizer::Token SkipUntilConditionEnd();
+        std::optional<tokenizer::Token> SkipUntilConditionEnd();
 
         void PushConditional();
 

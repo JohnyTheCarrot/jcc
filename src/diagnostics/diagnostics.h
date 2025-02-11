@@ -51,10 +51,10 @@ namespace jcc::diagnostics {
     public:
         BinaryDiagnostic(
                 mjolnir::ReportKind   &&reportKind,
-                std::shared_ptr<Source> source, mjolnir::Span const &lhsSpan,
-                mjolnir::Span const &rhsSpan, mjolnir::Span const &opSpan,
-                parsing_sema::types::ValueType const &lhsType,
-                parsing_sema::types::ValueType const &rhsType
+                std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
+                mjolnir::Span rhsSpan, mjolnir::Span opSpan,
+                parsing_sema::types::ValueType lhsType,
+                parsing_sema::types::ValueType rhsType
         );
 
     protected:

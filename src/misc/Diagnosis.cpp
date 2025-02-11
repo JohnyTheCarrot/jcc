@@ -4,18 +4,62 @@
 #include <cassert>                  // for assert
 #include <fmt/color.h>              // for format, fg, styled, color, emph...
 #include <format>                   // for format, format_string
-#include <limits>                   // for numeric_limits
 #include <magic_enum/magic_enum.hpp>// for enum_name
-#include <memory>                   // for __shared_ptr_access, shared_ptr
 #include <sstream>                  // for basic_ostream, basic_istream
 #include <string_view>              // for basic_string_view, operator<<
 #include <utility>                  // for move
 
-#include "fmt/core.h"  // for format, format_string
-#include "fmt/format.h"// for buffer::append
-#include "misc/Span.h" // for Span, SpanMarker
+#include "fmt/core.h" // for format, format_string
+#include "misc/Span.h"// for Span, SpanMarker
 
 namespace jcc {
+    enum class Diagnosis::Kind {
+        UnexpectedEOF,
+        TK_PartialTokenEncountered,
+        TK_UnknownDirective,
+        TK_EscapeExpectedNewline,
+        TK_InvalidBaseDigit,
+        TK_UnexpectedIntSuffixChar,
+        TK_InvalidUniversalCharacterName,
+        TK_IllegalUniversalCharacterName,
+        TK_IllegalBackslash,
+        TK_ExpectedHeaderName,
+        TK_DirectiveNotAloneOnLine,
+        TK_UnexpectedChar,
+        PP_InclDirectiveFileOpenFailed,
+        PP_InclDirectiveExpectedHeaderName,
+        PP_DirectiveExpectedNewline,
+        PP_MacroExpectedIdentifier,
+        PP_MacroExpectedCommaOrRParen,
+        PP_MacroEllipsisNotLast,
+        PP_MacroExpectedLParen,
+        PP_MacroTooFewArgs,
+        PP_MacroTooManyArgs,
+        PP_IllegalMacroRedefinition,
+        PP_IllegalMacroParameterToken,
+        PP_UnterminatedMacroParameterList,
+        PP_UnterminatedMacroInvocation,
+        PP_UnexpectedMacroInvocationArgumentCount,
+        PP_MacroDefinedInTermsOfItself,
+        PP_HashNotFollowedByParameter,
+        PP_DirectiveNotAloneOnLine,
+        PP_CondExpectedIdentifier,
+        PP_OrphanedConditionalClosure,
+        PP_ExpectedEndif,
+        PP_UndefExpectedIdentifier,
+        PP_Custom,
+        PRS_UnrecognizedIntegerSuffix,
+        PRS_InvalidFloatingPointLiteral,
+        PRS_UnrecognizedFloatingSuffix,
+        PRS_InvalidIntegerLiteral,
+        PRS_SyntaxError,
+        PRS_ExpectedRParen,
+        PRS_ExpectedExpressionToFollow,
+        PRS_OctalFloatingPoint,
+        SEMA_NoCompatibleIntegerType,
+        TODO,
+    };
+
     Diagnosis::Diagnosis(
             Span span, Class diagClass, Kind kind, Data &&data0, Data &&data1
     ) noexcept
@@ -27,7 +71,7 @@ namespace jcc {
         std::stringstream ss;
         Print(ss);
         m_Message = ss.str();
-    }
+    }// namespace jcc
 
     std::string const &Diagnosis::GetMessage() const noexcept {
         return m_Message;
@@ -46,15 +90,6 @@ namespace jcc {
 
     std::string Diagnosis::GetDiagMessage() const {
         switch (m_Kind) {
-            case Kind::TK_IntegerCharMoreThanMaxChars:
-                return "Character literal has too many characters.";
-            case Kind::TK_OctalEscapeSequenceTooLarge:
-                return "Octal escape sequence is too large.";
-            case Kind::TK_UnknownEscapeSequence:
-                return std::format(
-                        "Unknown escape sequence '\\{}'.",
-                        std::get<char>(m_Data0.value())
-                );
             case Kind::UnexpectedEOF:
                 return "Unexpected end of file.";
             case Kind::TK_PartialTokenEncountered:
@@ -73,11 +108,6 @@ namespace jcc {
                 );
             case Kind::TK_EscapeExpectedNewline:
                 return "Expected newline after \\.";
-            case Kind::TK_Unrecognized:
-                return std::format(
-                        "Unrecognized token '{}'.",
-                        std::get<char>(m_Data0.value())
-                );
             case Kind::TK_InvalidBaseDigit:
                 return std::format(
                         "Invalid base digit \'{}\'.",
@@ -142,8 +172,6 @@ namespace jcc {
                        "keyword upon expansion. Was this intended?";
             case Kind::PP_HashNotFollowedByParameter:
                 return "'#' not followed by a macro parameter.";
-            case Kind::TK_PreprocessingNumberInvalid:
-                return "Invalid preprocessing number.";
             case Kind::PP_DirectiveNotAloneOnLine:
                 return "Preprocessor directive must be the only item on a "
                        "line.";
@@ -184,16 +212,6 @@ namespace jcc {
                 return "Octal floating point literals are not allowed.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
-            case Kind::SEMA_ShiftOperandNotInteger:
-                return "Shift expression operands must both be integer types.";
-            case Kind::SEMA_IncompatibleOperands:
-                return "Incompatible operands.";
-            case Kind::SEMA_ModuloOperandsMustBeIntegers:
-                return "The operands of a modulo expression must both be "
-                       "integer types.";
-            case Kind::SEMA_MultOperandMustBeArithmetic:
-                return "The operands of a multiplicative expression must be of "
-                       "an arithmetic type.";
         }
 
         assert(false);

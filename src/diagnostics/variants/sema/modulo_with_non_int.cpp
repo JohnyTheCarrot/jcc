@@ -1,11 +1,11 @@
-#include "sema_modulo_int.h"
+#include "modulo_with_non_int.hpp"
 
 #include <utility>
 
 namespace jcc::diagnostics {
-    SemaModuloInt::SemaModuloInt(
-            std::shared_ptr<Source> source, mjolnir::Span const &lhsSpan,
-            mjolnir::Span const &rhsSpan, mjolnir::Span const &opSpan,
+    ModuloWithNonInt::ModuloWithNonInt(
+            std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
+            mjolnir::Span rhsSpan, mjolnir::Span opSpan,
             parsing_sema::types::ValueType const &lhsType,
             parsing_sema::types::ValueType const &rhsType
     )
@@ -20,14 +20,15 @@ namespace jcc::diagnostics {
           } {
     }
 
-    void SemaModuloInt::Print(std::ostream &ostream) const {
+    void ModuloWithNonInt::Print(std::ostream &ostream) const {
         constexpr auto lhsColor{mjolnir::colors::light_cyan};
         constexpr auto rhsColor{mjolnir::colors::light_magenta};
 
-        StartReport().with_message(
-                      "The operands of a modulo expression must both be "
-                      "integer types."
-        )
+        StartReport()
+                .with_message(
+                        "Both operands in a modulo expression must be of "
+                        "integer types."
+                )
                 .with_label(mjolnir::Label{GetOpSpan()})
                 .with_label(
                         mjolnir::Label{GetLhsSpan()}

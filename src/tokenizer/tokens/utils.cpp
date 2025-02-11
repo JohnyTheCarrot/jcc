@@ -2,8 +2,8 @@
 
 #include <cctype>// for isalpha
 
-#include "diagnostics/variants/untermed_char.h"
-#include "diagnostics/variants/untermed_string.h"
+#include "diagnostics/variants/tk_pp/untermed_char.h"
+#include "diagnostics/variants/tk_pp/untermed_string.h"
 #include "escape_sequences.h"// for Tokenize
 #include "misc/Diagnosis.h"  // for Diagnosis, FatalCompilerError
 #include "misc/Span.h"       // for Span, SpanMarker (ptr only)

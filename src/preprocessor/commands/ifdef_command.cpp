@@ -4,7 +4,11 @@
 #include <utility>// for move
 #include <variant>// for get
 
-#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
+#include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
+#include "diagnostics/variants/todo.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor
@@ -12,15 +16,24 @@
 #include "tokenizer/token.h"                   // for Identifier, Directive
 
 namespace jcc::preprocessor::commands {
-    void
-    IfdefCommand::ExecuteCondition(bool isIfndef, Preprocessor &preprocessor) {
+    void IfdefCommand::ExecuteCondition(
+            bool isIfndef, Preprocessor &preprocessor, Span const &span
+    ) {
         auto ident{preprocessor.SimpleTokenRead()};
         if (!ident.m_Token.Is<tokenizer::Identifier>()) {
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_CondExpectedIdentifier,
-                    // std::move(ident.m_Token.m_Span)
-            };
+            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto const tokenSpan{[&] {
+                auto const tkSpan{ident.m_Token.m_Span.m_Span};
+
+                return tkSpan.empty()
+                             ? mjolnir::Span{tkSpan.start() - 1, tkSpan.start()}
+                             : tkSpan;
+            }()};
+
+            compilerState.EmplaceFatalDiagnostic<
+                    diagnostics::PpConditionalExpectedIdent>(
+                    span.m_Source, span.m_Span, tokenSpan
+            );
         }
         auto const identStr{
                 std::get<tokenizer::Identifier>(ident.m_Token.m_Value).m_Name
@@ -36,8 +49,18 @@ namespace jcc::preprocessor::commands {
 
         auto const conditionEnd{preprocessor.SkipUntilConditionEnd()};
 
-        auto const directive{std::get<tokenizer::Directive>(conditionEnd.m_Value
-        )};
+        if (!conditionEnd.has_value()) {
+            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            compilerState.EmplaceFatalDiagnostic<
+                    diagnostics::PpConditionalNotTerminated>(
+                    span.m_Source, span.m_Span,
+                    preprocessor.GetCurrentSpan().m_Span
+            );
+        }
+
+        auto const directive{
+                std::get<tokenizer::Directive>(conditionEnd->m_Value)
+        };
 
         switch (directive) {
             case tokenizer::Directive::Endif:
@@ -45,20 +68,22 @@ namespace jcc::preprocessor::commands {
                 return;
             case tokenizer::Directive::Elifdef:
                 ++preprocessor.Current<PreprocessorIteratorNoCommands>();
-                ExecuteCondition(false, preprocessor);
+                ExecuteCondition(false, preprocessor, span);
                 return;
             case tokenizer::Directive::Elifndef:
                 ++preprocessor.Current<PreprocessorIteratorNoCommands>();
-                ExecuteCondition(true, preprocessor);
+                ExecuteCondition(true, preprocessor, span);
                 return;
             case tokenizer::Directive::Else:
                 return;
 
-            case tokenizer::Directive::If:
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::TODO, preprocessor.GetCurrentSpan()
-                };
+            case tokenizer::Directive::If: {
+                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+                compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                        conditionEnd->m_Span.m_Source,
+                        conditionEnd->m_Span.m_Span
+                );
+            }
             default:
                 assert(false);
                 return;
@@ -73,11 +98,12 @@ namespace jcc::preprocessor::commands {
 
     IfdefCommand::~IfdefCommand() = default;
 
-    std::optional<PreprocessorToken> IfdefCommand::
-            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
+    std::optional<PreprocessorToken> IfdefCommand::Execute(
+            Preprocessor &preprocessor, tokenizer::Token &&token
+    ) const {
         preprocessor.PushConditional();
 
-        ExecuteCondition(m_IsIfndef, preprocessor);
+        ExecuteCondition(m_IsIfndef, preprocessor, token.m_Span);
         return std::nullopt;
     }
 }// namespace jcc::preprocessor::commands

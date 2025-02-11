@@ -6,8 +6,8 @@
 #include <utility>  // for move
 #include <vector>   // for vector, allocator
 
-#include "diagnostics/variants/custom_diagnostic.hpp"
-#include "diagnostics/variants/diagnostic_directive_no_tokens.hpp"
+#include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
+#include "diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp"
 #include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
 #include "misc/Span.h"     // for Span
 #include "parsing_sema/parser.h"

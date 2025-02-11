@@ -140,7 +140,7 @@ namespace jcc::tokenizer {
     Tokenizer::Tokenizer(Tokenizer &&other) noexcept
         : m_Source{std::move(other.m_Source)}
         , m_Input{std::move(other.m_Input)}
-        , m_CharIter{other.m_CharIter} {
+        , m_CharIter{std::move(other.m_CharIter)} {
         m_CharIter.SetInput(m_Input);
     }
 
@@ -250,20 +250,23 @@ namespace jcc::tokenizer {
 
     Span Tokenizer::GetLastSpan() const {
         return {m_CharIter.GetSource(),
-                {m_CharIter.GetCurrentPos(), m_CharIter.GetCurrentPos()}};
+                {m_CharIter.GetCurrentPos() - 1, m_CharIter.GetCurrentPos()}};
     }
 
-    Token Tokenizer::SkipUntilConditionEnd() {
+    std::optional<Token> Tokenizer::SkipUntilConditionEnd() {
         int conditionDepth{1};
 
         while (true) {
             SkipWhitespace();
 
-            if (m_CharIter == CharIter::end())
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
-                };
+            if (m_CharIter == CharIter::end()) {
+                return std::nullopt;
+            }
+
+            if (m_CharIter->m_Char == '\n') {
+                ++m_CharIter;
+                continue;
+            }
 
             Span span{
                     // m_CharIter.GetFileName(), m_CharIter.GetCurrentSpanMarker(),
@@ -314,20 +317,18 @@ namespace jcc::tokenizer {
                 // read until newline
                 while (m_CharIter != CharIter::c_UntilNewline) ++m_CharIter;
 
-                if (m_CharIter == CharIter::end())
-                    // TODO: diagnosis
-                    throw FatalCompilerError{
-                            // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
-                    };
+                if (m_CharIter == CharIter::end()) {
+                    return std::nullopt;
+                }
 
                 ++m_CharIter;
 
-                if (m_CharIter == CharIter::end())
-                    // TODO: diagnosis
-                    throw FatalCompilerError{
-                            // Diagnosis::Kind::UnexpectedEOF, GetLastSpan()
-                    };
+                if (m_CharIter == CharIter::end()) {
+                    return std::nullopt;
+                }
             }
         }
+
+        assert(false);
     }
 }// namespace jcc::tokenizer

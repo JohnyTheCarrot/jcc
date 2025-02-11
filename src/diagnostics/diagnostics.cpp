@@ -39,10 +39,9 @@ namespace jcc::diagnostics {
 
     BinaryDiagnostic::BinaryDiagnostic(
             mjolnir::ReportKind &&kind, std::shared_ptr<Source> source,
-            mjolnir::Span const &lhsSpan, mjolnir::Span const &rhsSpan,
-            mjolnir::Span const                  &opSpan,
-            parsing_sema::types::ValueType const &lhsType,
-            parsing_sema::types::ValueType const &rhsType
+            mjolnir::Span lhsSpan, mjolnir::Span rhsSpan, mjolnir::Span opSpan,
+            parsing_sema::types::ValueType lhsType,
+            parsing_sema::types::ValueType rhsType
     )
         : DiagnosticData{std::move(source), lhsSpan.start(), std::move(kind)}
         , m_LhsSpan{lhsSpan}

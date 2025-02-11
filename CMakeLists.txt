@@ -101,30 +101,44 @@ add_library(
         src/parsing_sema/sema_visitor.h
         src/diagnostics/diagnostics.cpp
         src/diagnostics/diagnostics.h
-        src/diagnostics/variants/sema_mult_arithmetic.cpp
-        src/diagnostics/variants/sema_mult_arithmetic.h
-        src/diagnostics/variants/sema_modulo_int.cpp
-        src/diagnostics/variants/sema_modulo_int.h
+        src/diagnostics/variants/sema/mult_non_arithmetic.cpp
+        src/diagnostics/variants/sema/mult_non_arithmetic.hpp
+        src/diagnostics/variants/sema/modulo_with_non_int.cpp
+        src/diagnostics/variants/sema/modulo_with_non_int.hpp
         src/diagnostics/source.h
         src/diagnostics/source.cpp
-        src/diagnostics/variants/untermed_string.cpp
-        src/diagnostics/variants/untermed_string.h
-        src/diagnostics/variants/untermed_char.cpp
-        src/diagnostics/variants/untermed_char.h
-        src/diagnostics/variants/char_const_empty.cpp
-        src/diagnostics/variants/char_const_empty.h
-        src/diagnostics/variants/hex_escape_empty.cpp
-        src/diagnostics/variants/hex_escape_empty.hpp
-        src/diagnostics/variants/diagnostic_directive_no_tokens.cpp
-        src/diagnostics/variants/diagnostic_directive_no_tokens.hpp
-        src/diagnostics/variants/custom_diagnostic.cpp
-        src/diagnostics/variants/custom_diagnostic.hpp
-        src/diagnostics/variants/utf8_too_many_chars.cpp
-        src/diagnostics/variants/utf8_too_many_chars.hpp
-        src/diagnostics/variants/escape_seq_too_large.cpp
-        src/diagnostics/variants/escape_seq_too_large.hpp
-        src/diagnostics/variants/multi_byte_char_impl_def.cpp
-        src/diagnostics/variants/multi_byte_char_impl_def.hpp
+        src/diagnostics/variants/tk_pp/untermed_string.cpp
+        src/diagnostics/variants/tk_pp/untermed_string.h
+        src/diagnostics/variants/tk_pp/untermed_char.cpp
+        src/diagnostics/variants/tk_pp/untermed_char.h
+        src/diagnostics/variants/tk_pp/char_const_empty.cpp
+        src/diagnostics/variants/tk_pp/char_const_empty.h
+        src/diagnostics/variants/tk_pp/hex_escape_empty.cpp
+        src/diagnostics/variants/tk_pp/hex_escape_empty.hpp
+        src/diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.cpp
+        src/diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp
+        src/diagnostics/variants/tk_pp/custom_diagnostic.cpp
+        src/diagnostics/variants/tk_pp/custom_diagnostic.hpp
+        src/diagnostics/variants/tk_pp/utf8_too_many_chars.cpp
+        src/diagnostics/variants/tk_pp/utf8_too_many_chars.hpp
+        src/diagnostics/variants/tk_pp/escape_seq_too_large.cpp
+        src/diagnostics/variants/tk_pp/escape_seq_too_large.hpp
+        src/diagnostics/variants/tk_pp/multi_byte_char_impl_def.cpp
+        src/diagnostics/variants/tk_pp/multi_byte_char_impl_def.hpp
+        src/diagnostics/variants/tk_pp/char_const_gt_4_chars.cpp
+        src/diagnostics/variants/tk_pp/char_const_gt_4_chars.hpp
+        src/diagnostics/variants/tk_pp/unknown_escape_seq.cpp
+        src/diagnostics/variants/tk_pp/unknown_escape_seq.hpp
+        src/diagnostics/variants/todo.cpp
+        src/diagnostics/variants/todo.hpp
+        src/diagnostics/variants/sema/shift_operand_non_int.cpp
+        src/diagnostics/variants/sema/shift_operand_non_int.hpp
+        src/diagnostics/variants/tk_pp/pp_conditional_not_terminated.cpp
+        src/diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp
+        src/diagnostics/variants/tk_pp/pp_conditional_expected_ident.cpp
+        src/diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp
+        src/diagnostics/variants/tk_pp/pp_number_invalid.cpp
+        src/diagnostics/variants/tk_pp/pp_number_invalid.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

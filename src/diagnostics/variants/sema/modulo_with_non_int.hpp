@@ -4,11 +4,11 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class SemaModuloInt final : public BinaryDiagnostic {
+    class ModuloWithNonInt final : public BinaryDiagnostic {
     public:
-        SemaModuloInt(
-                std::shared_ptr<Source> source, mjolnir::Span const &lhsSpan,
-                mjolnir::Span const &rhsSpan, mjolnir::Span const &opSpan,
+        ModuloWithNonInt(
+                std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
+                mjolnir::Span rhsSpan, mjolnir::Span opSpan,
                 parsing_sema::types::ValueType const &lhsType,
                 parsing_sema::types::ValueType const &rhsType
         );

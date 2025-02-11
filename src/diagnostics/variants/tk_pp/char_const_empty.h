@@ -1,6 +1,8 @@
 #ifndef CHAR_CONST_EMPTY_H
 #define CHAR_CONST_EMPTY_H
 
+#include <mjolnir/span.hpp>
+
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {

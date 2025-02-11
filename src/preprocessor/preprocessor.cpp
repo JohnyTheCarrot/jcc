@@ -33,7 +33,7 @@ namespace jcc::preprocessor {
         return m_TokenizerStack.top().GetTokenizer().GetLastSpan();
     }
 
-    tokenizer::Token Preprocessor::SkipUntilConditionEnd() {
+    std::optional<tokenizer::Token> Preprocessor::SkipUntilConditionEnd() {
         auto &tokenizer{m_TokenizerStack.top().GetTokenizer()};
         return tokenizer.SkipUntilConditionEnd();
     }
@@ -77,9 +77,9 @@ namespace jcc::preprocessor {
                             .GetCommandMap()
             };
 
-            if (auto const command{commandMap.find(valueType)};
-                command != commandMap.end()) {
-                if (auto result{command->second->Execute(
+            if (auto const commandIt{commandMap.find(valueType)};
+                commandIt != commandMap.end()) {
+                if (auto result{commandIt->second->Execute(
                             *this, std::move(ppToken.m_Token)
                     )};
                     result.has_value())
@@ -147,6 +147,7 @@ namespace jcc::preprocessor {
         : m_Tokenizer{std::move(other.m_Tokenizer)}
         // The tokenizer iterator is a forward iterator, so it's okay to use .begin()
         , m_TokenIter{m_Tokenizer.begin()} {
+        // TODO: why are we incrementing the iterator here?
         ++m_TokenIter;
     }
 

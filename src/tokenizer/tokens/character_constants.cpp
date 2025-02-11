@@ -4,9 +4,10 @@
 #include <optional>// for optional
 #include <vector>  // for vector
 
-#include "diagnostics/variants/char_const_empty.h"
-#include "diagnostics/variants/multi_byte_char_impl_def.hpp"
-#include "diagnostics/variants/utf8_too_many_chars.hpp"
+#include "diagnostics/variants/tk_pp/char_const_empty.h"
+#include "diagnostics/variants/tk_pp/char_const_gt_4_chars.hpp"
+#include "diagnostics/variants/tk_pp/multi_byte_char_impl_def.hpp"
+#include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
 #include "misc/compiler_data_types.h"// for Char32, Int
 #include "misc/Diagnosis.h"          // for Diagnosis, FatalCompilerError
 #include "misc/Span.h"               // for Span, SpanMarker (ptr only)
@@ -80,13 +81,11 @@ namespace jcc::tokenizer::character_constants {
 
         // The value of a multi-character integer character constant is implementation-defined.
         // This compiler allows as many characters as there are bytes in the integer type.
-        // FIXME: for unicode, characters.size() is not the same as the number of bytes
         if (characters.size() > implMaxCharsInCharLiteral) {
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TK_IntegerCharMoreThanMaxChars,
-                    // std::move(span)
-            };
+            compilerState.EmplaceTemporarilyFatalDiagnostic<
+                    diagnostics::CharConstGt4Chars>(
+                    charIter.GetSource(), span.m_Span
+            );
         }
 
         auto const result{std::accumulate(
