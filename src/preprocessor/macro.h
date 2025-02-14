@@ -16,30 +16,40 @@ namespace jcc::preprocessor::macro {
         TokenList m_ReplacementList{};
 
         [[nodiscard]]
-        bool
-        operator==(ReplacementList const &other) const noexcept;
+        bool operator==(ReplacementList const &other) const noexcept;
     };
 
     struct ObjectLikeMacro final {
-        std::string     m_MacroName{};
-        ReplacementList m_ReplacementList{};
+        std::string     m_MacroName;
+        Span            m_Span;
+        ReplacementList m_ReplacementList;
+
+        ObjectLikeMacro(
+                std::string macroName, Span span,
+                ReplacementList replacementList
+        );
 
         [[nodiscard]]
-        bool
-        operator==(ObjectLikeMacro const &other) const noexcept;
+        bool operator==(ObjectLikeMacro const &other) const noexcept;
     };
 
     struct FunctionLikeMacro final {
         using ParameterList = std::vector<tokenizer::Identifier>;
 
-        std::string     m_MacroName{};
-        ReplacementList m_ReplacementList{};
-        ParameterList   m_ParameterList{};
-        bool            m_IsVA{};
+        std::string     m_MacroName;
+        Span            m_Span;
+        ReplacementList m_ReplacementList;
+        ParameterList   m_ParameterList;
+        bool            m_IsVA;
+
+        FunctionLikeMacro(
+                std::string macroName, Span span,
+                ReplacementList &&replacementList,
+                ParameterList &&parameterList, bool isVA
+        );
 
         [[nodiscard]]
-        bool
-        operator==(FunctionLikeMacro const &other) const noexcept;
+        bool operator==(FunctionLikeMacro const &other) const noexcept;
     };
 
     using Macro = std::variant<ObjectLikeMacro, FunctionLikeMacro>;

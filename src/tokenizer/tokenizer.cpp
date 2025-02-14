@@ -231,8 +231,8 @@ namespace jcc::tokenizer {
                 return identifiers::Tokenize(
                         m_CharIter,
                         identifiers::IdentifierTokenStart{
-                                .m_Identifier = std::move(identifier),
-                                .m_Start      = span.m_Span.start(),
+                                std::move(identifier),
+                                span.m_Span,
                         }
                 );
         }

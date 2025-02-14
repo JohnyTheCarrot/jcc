@@ -6,6 +6,9 @@
 #include <utility>      // for move, pair
 #include <variant>      // for get, holds_alternative
 
+#include "diagnostics/variants/tk_pp/escape_without_newline.hpp"
+#include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for PreprocessorCommandS...
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
@@ -44,11 +47,13 @@ namespace jcc::preprocessor {
 
     void Preprocessor::PopConditional() {
         if (m_ConditionalDepth == 0) {
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_OrphanedConditionalClosure,
-                    // GetCurrentSpan()
-            };
+            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            // TODO: find a better span
+            auto span{GetCurrentSpan()};
+            compilerState.EmplaceDiagnostic<diagnostics::OrphanedEndif>(
+                    std::move(span.m_Source), span.m_Span
+            );
+            return;
         }
 
         --m_ConditionalDepth;
@@ -63,6 +68,17 @@ namespace jcc::preprocessor {
                 switch (std::get<tokenizer::SpecialPurpose>(token)) {
                     case tokenizer::SpecialPurpose::EndOfFile:
                         return ppToken;
+                    case tokenizer::SpecialPurpose::InvalidEscape: {
+                        auto &compilerState{
+                                parsing_sema::CompilerState::GetInstance()
+                        };
+                        compilerState.EmplaceDiagnostic<
+                                diagnostics::EscapeWithoutNewline>(
+                                ppToken.m_Token.m_Span.m_Source,
+                                ppToken.m_Token.m_Span.m_Span
+                        );
+                        continue;
+                    }
                     default:
                         break;
                 }

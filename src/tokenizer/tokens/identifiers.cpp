@@ -27,13 +27,17 @@ namespace jcc::tokenizer::identifiers {
         return lastSpanMarker;
     }
 
+    IdentifierTokenStart::IdentifierTokenStart(
+            std::string identifier, mjolnir::Span span
+    )
+        : m_Identifier{std::move(identifier)}
+        , m_Span{span} {
+    }
+
     Token
-    Tokenize(CharIter const &charIter, IdentifierTokenStart const &tokenStart) {
+    Tokenize(CharIter const &charIter, IdentifierTokenStart &&tokenStart) {
         if (charIter == CharIter::end()) {
-            Span span{
-                    charIter.GetSource(),
-                    {tokenStart.m_Start, charIter.GetSentinel().m_LastPos}
-            };
+            Span const span{charIter.GetSource(), tokenStart.m_Span};
 
             // check if identifier contains a backslash
             if (tokenStart.m_Identifier.find('\\') != std::string::npos)
@@ -48,13 +52,11 @@ namespace jcc::tokenizer::identifiers {
             };
         }
 
-        std::string identifier{};
-        auto const &[partialIdentifier, identifierStart]{tokenStart};
+        auto &[partialIdentifier, identifierStart]{tokenStart};
 
-        Span span{charIter.GetSource(), {identifierStart, identifierStart}};
+        Span span{charIter.GetSource(), tokenStart.m_Span};
 
-        identifier.reserve(partialIdentifier.length());
-        std::ranges::move(partialIdentifier, std::back_inserter(identifier));
+        std::string identifier{std::move(partialIdentifier)};
 
         // check if identifier contains a backslash
         if (identifier.find('\\') != std::string::npos)

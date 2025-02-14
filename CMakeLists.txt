@@ -139,6 +139,12 @@ add_library(
         src/diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp
         src/diagnostics/variants/tk_pp/pp_number_invalid.cpp
         src/diagnostics/variants/tk_pp/pp_number_invalid.hpp
+        src/diagnostics/variants/tk_pp/orphaned_endif.cpp
+        src/diagnostics/variants/tk_pp/orphaned_endif.hpp
+        src/diagnostics/variants/tk_pp/illegal_macro_redef.cpp
+        src/diagnostics/variants/tk_pp/illegal_macro_redef.hpp
+        src/diagnostics/variants/tk_pp/escape_without_newline.cpp
+        src/diagnostics/variants/tk_pp/escape_without_newline.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

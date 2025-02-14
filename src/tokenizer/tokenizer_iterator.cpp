@@ -14,6 +14,10 @@ namespace jcc::tokenizer {
         return m_CurrentToken.value();
     }
 
+    TokenizerIterator::pointer TokenizerIterator::operator->() const {
+        return &m_CurrentToken.value();
+    }
+
     TokenizerIterator &TokenizerIterator::operator++() {
         m_CurrentToken = m_Tokenizer->GetNextToken();
 

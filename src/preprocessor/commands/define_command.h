@@ -31,12 +31,13 @@ namespace jcc::preprocessor::commands {
         GatherParameterList(Preprocessor &preprocessor);
 
         static void DefineObjectLikeMacro(
-                Preprocessor &preprocessor, std::string &&name,
+                Preprocessor &preprocessor, Span &&span, std::string &&name,
                 tokenizer::Token &&firstToken
         );
 
-        static void
-        DefineFunctionLikeMacro(Preprocessor &preprocessor, std::string &&name);
+        static void DefineFunctionLikeMacro(
+                Preprocessor &preprocessor, Span &&span, std::string &&name
+        );
 
     public:
         explicit DefineCommand(CommandMap &map);

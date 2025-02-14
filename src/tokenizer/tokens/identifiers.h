@@ -18,13 +18,14 @@ namespace jcc::tokenizer::identifiers {
     CollectRestOfIdentifier(CharIter &charIter, std::string &identifier);
 
     struct IdentifierTokenStart final {
-        std::string m_Identifier{};
-        std::size_t m_Start{};
+        std::string   m_Identifier;
+        mjolnir::Span m_Span;
+
+        IdentifierTokenStart(std::string identifier, mjolnir::Span span);
     };
 
     [[nodiscard]]
-    Token
-    Tokenize(CharIter const &charIter, IdentifierTokenStart const &tokenStart);
+    Token Tokenize(CharIter const &charIter, IdentifierTokenStart &&tokenStart);
 }// namespace jcc::tokenizer::identifiers
 
 #endif//IDENTIFIER_TOKENIZER_H

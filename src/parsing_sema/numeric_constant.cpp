@@ -290,11 +290,8 @@ namespace jcc::parsing_sema {
             int radix
     ) {
         if (radix == RADIX_OCT) {
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PRS_OctalFloatingPoint,
-                    // std::move(token.m_Span)
-            };
+            // Leading zeros are allowed in octal literals, but they have no effect.
+            radix = RADIX_DEC;
         }
 
         auto const             fractionalConstantEnd{std::ranges::find_if(

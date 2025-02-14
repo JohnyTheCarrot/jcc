@@ -15,8 +15,6 @@
 namespace jcc {
     enum class Diagnosis::Kind {
         UnexpectedEOF,
-        TK_PartialTokenEncountered,
-        TK_UnknownDirective,
         TK_EscapeExpectedNewline,
         TK_InvalidBaseDigit,
         TK_UnexpectedIntSuffixChar,
@@ -35,27 +33,21 @@ namespace jcc {
         PP_MacroExpectedLParen,
         PP_MacroTooFewArgs,
         PP_MacroTooManyArgs,
-        PP_IllegalMacroRedefinition,
         PP_IllegalMacroParameterToken,
         PP_UnterminatedMacroParameterList,
         PP_UnterminatedMacroInvocation,
         PP_UnexpectedMacroInvocationArgumentCount,
-        PP_MacroDefinedInTermsOfItself,
         PP_HashNotFollowedByParameter,
         PP_DirectiveNotAloneOnLine,
-        PP_CondExpectedIdentifier,
         PP_OrphanedConditionalClosure,
         PP_ExpectedEndif,
         PP_UndefExpectedIdentifier,
-        PP_Custom,
         PRS_UnrecognizedIntegerSuffix,
         PRS_InvalidFloatingPointLiteral,
         PRS_UnrecognizedFloatingSuffix,
         PRS_InvalidIntegerLiteral,
-        PRS_SyntaxError,
         PRS_ExpectedRParen,
         PRS_ExpectedExpressionToFollow,
-        PRS_OctalFloatingPoint,
         SEMA_NoCompatibleIntegerType,
         TODO,
     };
@@ -92,20 +84,6 @@ namespace jcc {
         switch (m_Kind) {
             case Kind::UnexpectedEOF:
                 return "Unexpected end of file.";
-            case Kind::TK_PartialTokenEncountered:
-                return fmt::format(
-                        fmt::emphasis::bold,
-                        "Partial token encountered, did you mean {}?",
-                        fmt::styled(
-                                std::get<std::string>(m_Data0.value()),
-                                fmt::fg(fmt::color::cyan)
-                        )
-                );
-            case Kind::TK_UnknownDirective:
-                return std::format(
-                        "Unknown directive '{}'.",
-                        std::get<std::string>(m_Data0.value())
-                );
             case Kind::TK_EscapeExpectedNewline:
                 return "Expected newline after \\.";
             case Kind::TK_InvalidBaseDigit:
@@ -154,8 +132,6 @@ namespace jcc {
             case Kind::PP_MacroTooManyArgs:
                 return "Too many arguments passed to non-variadic "
                        "function-like macro.";
-            case Kind::PP_IllegalMacroRedefinition:
-                return "A macro may not be redefined.";
             case Kind::PP_IllegalMacroParameterToken:
                 return "Illegal token in macro parameter definitions.";
             case Kind::PP_UnterminatedMacroParameterList:
@@ -165,24 +141,15 @@ namespace jcc {
             case Kind::PP_UnexpectedMacroInvocationArgumentCount:
                 return "Invalid amount of arguments passed to "
                        "function-like macro.";
-            case Kind::PP_MacroDefinedInTermsOfItself:
-                return "Macros may not be defined in terms of themselves, "
-                       "therefore, this will become an "
-                       "identifier or "
-                       "keyword upon expansion. Was this intended?";
             case Kind::PP_HashNotFollowedByParameter:
                 return "'#' not followed by a macro parameter.";
             case Kind::PP_DirectiveNotAloneOnLine:
                 return "Preprocessor directive must be the only item on a "
                        "line.";
-            case Kind::PP_Custom:
-                return std::get<std::string>(m_Data0.value());
             case Kind::PP_InclDirectiveExpectedHeaderName:
                 return "Expected header name in #include directive.";
             case Kind::PP_DirectiveExpectedNewline:
                 return "Expected newline after preprocessor directive.";
-            case Kind::PP_CondExpectedIdentifier:
-                return "Conditional directive expected identifier.";
             case Kind::PP_OrphanedConditionalClosure:
                 return "Closing conditional directive without a matching "
                        "opening directive.";
@@ -199,17 +166,10 @@ namespace jcc {
                 return "Invalid floating point literal.";
             case Kind::PRS_InvalidIntegerLiteral:
                 return "Invalid integer literal.";
-            case Kind::PRS_SyntaxError:
-                return std::format(
-                        "Syntax error: {}",
-                        std::get<std::string>(m_Data0.value())
-                );
             case Kind::PRS_ExpectedRParen:
                 return "Expected right parenthesis.";
             case Kind::PRS_ExpectedExpressionToFollow:
                 return "Expected expression to follow.";
-            case Kind::PRS_OctalFloatingPoint:
-                return "Octal floating point literals are not allowed.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
         }

@@ -5,7 +5,9 @@
 #include <variant>  // for get, holds_alternative
 #include <vector>   // for vector
 
-#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "diagnostics/variants/tk_pp/illegal_macro_redef.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor
@@ -92,7 +94,7 @@ namespace jcc::preprocessor::commands {
     }
 
     void DefineCommand::DefineObjectLikeMacro(
-            Preprocessor &preprocessor, std::string &&name,
+            Preprocessor &preprocessor, Span &&span, std::string &&name,
             tokenizer::Token &&firstToken
     ) {
         macro::ReplacementList replacementList{{std::move(firstToken)}};
@@ -103,18 +105,22 @@ namespace jcc::preprocessor::commands {
         );
 
         preprocessor.GetMacroStore().RegisterMacro(
-                name, macro::ObjectLikeMacro{name, std::move(replacementList)}
+                name,
+                macro::ObjectLikeMacro{
+                        name, std::move(span), std::move(replacementList)
+                }
         );
     }
 
     void DefineCommand::DefineFunctionLikeMacro(
-            Preprocessor &preprocessor, std::string &&name
+            Preprocessor &preprocessor, Span &&span, std::string &&name
     ) {
         auto [isVariadic, parameterList]{GatherParameterList(preprocessor)};
         auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
 
         macro::FunctionLikeMacro macro{
                 name,
+                std::move(span),
                 {std::move(m_ReplacementList)},
                 std::move(parameterList),
                 isVariadic
@@ -147,6 +153,7 @@ namespace jcc::preprocessor::commands {
             };
         }
 
+        auto        macroNameSpan{nextToken.m_Span};
         std::string macroName{
                 isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value)
                                   .m_Name
@@ -156,12 +163,17 @@ namespace jcc::preprocessor::commands {
                           )
         };
 
-        if (preprocessor.GetMacroStore().IsMacroDefined(macroName)) {
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_IllegalMacroRedefinition,
-                    // nextToken.m_Span
-            };
+        if (auto const *macro{preprocessor.GetMacroStore().GetMacro(macroName)};
+            macro != nullptr) {
+            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto  macroSpan{std::visit(
+                    [](auto const &macro) { return macro.m_Span; }, *macro
+            )};
+
+            compilerState.EmplaceDiagnostic<diagnostics::IllegalMacroRedef>(
+                    std::move(macroSpan), std::move(macroNameSpan)
+            );
+            return std::nullopt;
         }
 
         auto nextPpToken{preprocessor.SimpleTokenRead()};
@@ -169,16 +181,22 @@ namespace jcc::preprocessor::commands {
 
         if (nextToken.Is(tokenizer::SpecialPurpose::NewLine)) {
             preprocessor.GetMacroStore().RegisterMacro(
-                    macroName, macro::ObjectLikeMacro{macroName, {}}
+                    macroName,
+                    macro::ObjectLikeMacro{
+                            macroName, std::move(macroNameSpan), {}
+                    }
             );
             return nextPpToken;
         }
 
         if (nextToken.Is(tokenizer::Punctuator::PpLeftParenthesis)) {
-            DefineFunctionLikeMacro(preprocessor, std::move(macroName));
+            DefineFunctionLikeMacro(
+                    preprocessor, std::move(macroNameSpan), std::move(macroName)
+            );
         } else {
             DefineObjectLikeMacro(
-                    preprocessor, std::move(macroName), std::move(nextToken)
+                    preprocessor, std::move(macroNameSpan),
+                    std::move(macroName), std::move(nextToken)
             );
         }
 

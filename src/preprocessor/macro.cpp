@@ -6,6 +6,25 @@
 #include "gtest/gtest.h"// for PrintToString
 
 namespace jcc::preprocessor::macro {
+    ObjectLikeMacro::ObjectLikeMacro(
+            std::string macroName, Span span, ReplacementList replacementList
+    )
+        : m_MacroName{std::move(macroName)}
+        , m_Span{std::move(span)}
+        , m_ReplacementList{std::move(replacementList)} {
+    }
+
+    FunctionLikeMacro::FunctionLikeMacro(
+            std::string macroName, Span span, ReplacementList &&replacementList,
+            ParameterList &&parameterList, bool isVA
+    )
+        : m_MacroName{std::move(macroName)}
+        , m_Span{std::move(span)}
+        , m_ReplacementList{std::move(replacementList)}
+        , m_ParameterList{std::move(parameterList)}
+        , m_IsVA{isVA} {
+    }
+
     std::ostream &operator<<(std::ostream &os, FnMacroArguments const &args) {
         for (auto const &[name, value] : args) {
             os << testing::PrintToString(name) << " -> ";

@@ -16,6 +16,7 @@ namespace jcc::tokenizer {
     public:
         using iterator_category = std::input_iterator_tag;
         using value_type        = Token;
+        using pointer           = Token const *;
         using difference_type   = int;
 
         TokenizerIterator();
@@ -23,22 +24,21 @@ namespace jcc::tokenizer {
         explicit TokenizerIterator(Tokenizer &tokenizer);
 
         [[nodiscard]]
-        value_type
-        operator*() const;
+        value_type operator*() const;
+
+        [[nodiscard]]
+        pointer operator->() const;
 
         TokenizerIterator &operator++();
 
         [[nodiscard]]
-        TokenizerIterator
-        operator++(int);
+        TokenizerIterator operator++(int);
 
         [[nodiscard]]
-        bool
-        operator==(TokenizerIterator const &other) const;
+        bool operator==(TokenizerIterator const &other) const;
 
         [[nodiscard]]
-        bool
-        operator!=(TokenizerIterator const &other) const;
+        bool operator!=(TokenizerIterator const &other) const;
     };
 
     static_assert(std::input_iterator<TokenizerIterator>);

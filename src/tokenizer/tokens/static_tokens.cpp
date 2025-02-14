@@ -138,6 +138,7 @@ namespace jcc::tokenizer::static_tokens {
             {"!=", Punctuator::ExclamationMarkEqual},
             {"//", SpecialPurpose::LineComment},
             {"/*", SpecialPurpose::BlockComment},
+            {"\\", SpecialPurpose::InvalidEscape},
     };
 
     [[nodiscard]]
@@ -234,7 +235,7 @@ namespace jcc::tokenizer::static_tokens {
         }
 
         if (!trieResult.has_value())
-            // TODO: diagnosis
+            // TODO: diagnosis? do we need to diagnose this? does this even happen?
             throw FatalCompilerError{
                     // Diagnosis::Kind::TK_PartialTokenEncountered, std::move(span)
             };

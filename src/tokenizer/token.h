@@ -218,6 +218,7 @@ namespace jcc::tokenizer {
         NewLine,
         LineComment,
         BlockComment,
+        InvalidEscape,
     };
 
     struct Token {
