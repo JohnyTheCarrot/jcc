@@ -6,8 +6,7 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class ShiftOperandNonInt final : public BinaryDiagnostic {
-    public:
+    struct ShiftOperandNonInt final : BinaryDiagnostic {
         ShiftOperandNonInt(
                 std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
                 mjolnir::Span rhsSpan, mjolnir::Span opSpan,
@@ -15,7 +14,7 @@ namespace jcc::diagnostics {
                 parsing_sema::types::ValueType const &rhsType
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

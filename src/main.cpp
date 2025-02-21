@@ -18,7 +18,7 @@ int main(int argCount, char *args[]) {
         exit(1);
     }
 
-    std::string filePath{args[1]};
+    std::string const filePath{args[1]};
 
     jcc::Diagnosis::Vec diagnoses;
     auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
@@ -71,7 +71,10 @@ int main(int argCount, char *args[]) {
         std::cout << diagnosis.GetMessage() << '\n';
     }
 
-    compState.PrintDiagnostics(std::cout);
+    using DiagnosticsFormat =
+            jcc::parsing_sema::CompilerState::DiagnosticsFormat;
+
+    compState.PrintDiagnostics(DiagnosticsFormat::Fancy);
 
     return 0;
 }

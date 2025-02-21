@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     MultNonArithmetic::MultNonArithmetic(
             std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
@@ -20,44 +22,7 @@ namespace jcc::diagnostics {
           } {
     }
 
-    void MultNonArithmetic::Print(std::ostream &ostream) const {
-        constexpr auto lhsColor{mjolnir::colors::light_cyan};
-        constexpr auto rhsColor{mjolnir::colors::light_magenta};
-
-        StartReport()
-                .with_message(
-                        "The operands of a multiplicative expression must be "
-                        "of "
-                        "an arithmetic type."
-                )
-                .with_label(mjolnir::Label{GetOpSpan()})
-                .with_label(
-                        mjolnir::Label{GetLhsSpan()}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                lhsColor.fg(
-                                                        GetLhsType().ToString()
-                                                )
-                                        )
-                                )
-                                .with_color(lhsColor)
-                )
-                .with_label(
-                        mjolnir::Label{GetRhsSpan()}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                rhsColor.fg(
-                                                        GetRhsType().ToString()
-                                                )
-                                        )
-                                )
-                                .with_color(rhsColor)
-                )
-                .with_help(
-                        "Consider casting the operand(s) to arithmetic type(s)."
-                )
-                .print(ostream);
+    void MultNonArithmetic::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

@@ -6,17 +6,16 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class CharConstEmpty final : public DiagnosticData {
+    struct CharConstEmpty final : DiagnosticData {
         mjolnir::Span                m_Span;
         std::optional<mjolnir::Span> m_PotentiallyClosingQuote;
 
-    public:
         CharConstEmpty(
-                std::shared_ptr<Source> const &source, mjolnir::Span span,
-                std::optional<mjolnir::Span> potentiallyClosingQuote
+                std::shared_ptr<Source> source, mjolnir::Span span,
+                std::optional<mjolnir::Span> const &potentiallyClosingQuote
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

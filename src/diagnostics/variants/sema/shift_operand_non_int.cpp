@@ -1,5 +1,7 @@
 #include "shift_operand_non_int.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     ShiftOperandNonInt::ShiftOperandNonInt(
             std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
@@ -18,43 +20,7 @@ namespace jcc::diagnostics {
           } {
     }
 
-    void ShiftOperandNonInt::Print(std::ostream &ostream) const {
-        constexpr auto lhsColor{mjolnir::colors::light_cyan};
-        constexpr auto rhsColor{mjolnir::colors::light_magenta};
-
-        StartReport()
-                .with_message(
-                        "Both operands in a shift expression must be of "
-                        "integer type."
-                )
-                .with_label(mjolnir::Label{GetOpSpan()})
-                .with_label(
-                        mjolnir::Label{GetLhsSpan()}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                lhsColor.fg(
-                                                        GetLhsType().ToString()
-                                                )
-                                        )
-                                )
-                                .with_color(lhsColor)
-                )
-                .with_label(
-                        mjolnir::Label{GetRhsSpan()}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                rhsColor.fg(
-                                                        GetRhsType().ToString()
-                                                )
-                                        )
-                                )
-                                .with_color(rhsColor)
-                )
-                .with_help(
-                        "Consider casting the operand(s) to integer type(s)."
-                )
-                .print(ostream);
+    void ShiftOperandNonInt::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

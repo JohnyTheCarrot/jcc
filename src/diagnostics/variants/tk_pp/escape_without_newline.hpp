@@ -5,15 +5,14 @@
 #include <mjolnir/span.hpp>
 
 namespace jcc::diagnostics {
-    class EscapeWithoutNewline final : public DiagnosticData {
+    struct EscapeWithoutNewline final : DiagnosticData {
         mjolnir::Span m_Span;
 
-    public:
         EscapeWithoutNewline(
                 std::shared_ptr<Source> source, mjolnir::Span span
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

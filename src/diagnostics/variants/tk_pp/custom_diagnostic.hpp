@@ -4,17 +4,16 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class CustomDiagnostic final : public DiagnosticData {
+    struct CustomDiagnostic final : DiagnosticData {
         mjolnir::Span m_Span;
         std::string   m_Message;
 
-    public:
         CustomDiagnostic(
                 std::shared_ptr<Source> source, mjolnir::Span span,
                 std::string message, mjolnir::BasicReportKind reportKind
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

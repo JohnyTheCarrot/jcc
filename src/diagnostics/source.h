@@ -5,6 +5,7 @@
 #include <string>
 
 namespace jcc::diagnostics {
+    // This class serves to make sure the lifetime of the buffer is longer than the lifetime of the Mjölnir source.
     struct Source final {
         std::string     m_Buffer;
         mjolnir::Source m_Source;

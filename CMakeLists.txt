@@ -145,6 +145,11 @@ add_library(
         src/diagnostics/variants/tk_pp/illegal_macro_redef.hpp
         src/diagnostics/variants/tk_pp/escape_without_newline.cpp
         src/diagnostics/variants/tk_pp/escape_without_newline.hpp
+        src/diagnostics/variants/visitors/diagnostics_visitor.hpp
+        src/diagnostics/variants/visitors/mjolnir_visitor.cpp
+        src/diagnostics/variants/visitors/mjolnir_visitor.hpp
+        src/diagnostics/variants/visitors/diagnostics_visitor.cpp
+        src/misc/visitor.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

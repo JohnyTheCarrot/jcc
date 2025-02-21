@@ -3,13 +3,12 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class HexEscapeEmpty final : public DiagnosticData {
+    struct HexEscapeEmpty final : public DiagnosticData {
         mjolnir::Span m_Span;
 
-    public:
         HexEscapeEmpty(std::shared_ptr<Source> source, mjolnir::Span span);
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

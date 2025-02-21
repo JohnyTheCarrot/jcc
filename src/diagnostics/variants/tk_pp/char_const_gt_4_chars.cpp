@@ -1,6 +1,9 @@
 #include "char_const_gt_4_chars.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
+    // TODO: this will probably be removed, and the behavior for multi-character constants will change
     CharConstGt4Chars::CharConstGt4Chars(
             std::shared_ptr<Source> source, mjolnir::Span span
     )
@@ -8,29 +11,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void CharConstGt4Chars::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message(
-                        "Character constant contains more than 4 characters."
-                )
-                .with_label(
-                        mjolnir::Label{m_Span}
-                                .with_message(
-                                        "Perhaps you meant to use a string "
-                                        "literal?"
-                                )
-                                .with_color(mjolnir::colors::light_magenta)
-                )
-                .with_note(
-                        "Multi-character character constant values are "
-                        "implementation defined."
-                )
-                .with_note(
-                        "The value of a multi-character character constant "
-                        "whose length is less than or equal to 4 is the "
-                        "integer value equal to the concatenation of the "
-                        "character values."
-                )
-                .print(ostream);
+    void CharConstGt4Chars::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

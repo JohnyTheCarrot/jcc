@@ -6,17 +6,16 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class PpConditionalExpectedIdent final : public DiagnosticData {
+    struct PpConditionalExpectedIdent final : DiagnosticData {
         mjolnir::Span m_ConditionalSpan;
         mjolnir::Span m_UnexpectedTokenSpan;
 
-    public:
         PpConditionalExpectedIdent(
                 std::shared_ptr<Source> source, mjolnir::Span condSpan,
                 mjolnir::Span unexpectedTokenSpan
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

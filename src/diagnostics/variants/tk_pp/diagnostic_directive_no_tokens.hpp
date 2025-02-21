@@ -9,17 +9,16 @@ namespace jcc::diagnostics {
         Error,
     };
 
-    class DiagnosticDirectiveNoTokens final : public DiagnosticData {
+    struct DiagnosticDirectiveNoTokens final : DiagnosticData {
         mjolnir::Span           m_Span;
         DiagnosticDirectiveKind m_Kind;
 
-    public:
         DiagnosticDirectiveNoTokens(
                 std::shared_ptr<Source> source, DiagnosticDirectiveKind kind,
                 mjolnir::Span span
         );
-
-        void Print(std::ostream &ostream) const override;
+        
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

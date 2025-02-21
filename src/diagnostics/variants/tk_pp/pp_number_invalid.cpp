@@ -1,5 +1,7 @@
 #include "pp_number_invalid.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     PpNumberInvalid::PpNumberInvalid(
             std::shared_ptr<Source> source, mjolnir::Span span
@@ -8,14 +10,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void PpNumberInvalid::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message("Invalid preprocessing number.")
-                .with_label(
-                        mjolnir::Label{m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
-                )
-                .print(ostream);
+    void PpNumberInvalid::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

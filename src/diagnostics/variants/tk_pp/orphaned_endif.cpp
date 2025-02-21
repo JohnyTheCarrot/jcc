@@ -1,5 +1,7 @@
 #include "orphaned_endif.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     OrphanedEndif::OrphanedEndif(
             std::shared_ptr<Source> source, mjolnir::Span span
@@ -8,14 +10,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void OrphanedEndif::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message("Orphaned #endif directive.")
-                .with_label(
-                        mjolnir::Label{m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
-                )
-                .print(ostream);
+    void OrphanedEndif::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

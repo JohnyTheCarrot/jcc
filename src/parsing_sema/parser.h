@@ -57,19 +57,12 @@ namespace jcc::parsing_sema {
 
         static CompilerState &GetInstance();
 
-        template<class... Args>
-            requires std::constructible_from<Diagnosis, Args...>
-        void EmplaceDiagnosis(Args &&...args) {
-            Diagnosis diagnosis{std::forward<Args>(args)...};
-
-            if (diagnosis.GetClass() == Diagnosis::Class::Error) {
-                m_ErrorDiagnoses.emplace_back(std::move(diagnosis));
-                return;
-            }
-
-            m_WarningDiagnoses.emplace_back(std::move(diagnosis));
-        }
-
+        /**
+         * 
+         * @tparam D    The diagnostic type
+         * @tparam Args The arguments to the diagnostic constructor
+         * @param  args The arguments to the diagnostic constructor
+         */
         template<class D, class... Args>
             requires std::derived_from<D, diagnostics::DiagnosticData> and
                      std::constructible_from<D, Args...>
@@ -89,7 +82,8 @@ namespace jcc::parsing_sema {
          * 
          * @tparam D 
          * @tparam Args 
-         * @param args 
+         * @param args
+         * @throws FatalCompilerError
          */
         template<class D, class... Args>
             requires std::derived_from<D, diagnostics::DiagnosticData> and
@@ -103,9 +97,13 @@ namespace jcc::parsing_sema {
         /**
          * Emplace a diagnostic and throw a FatalCompilerError.
          *
-         * Usage of this function call should be replaced with a non-fatal diagnostic eventually, when the code has been refactored to allow for it.
+         * Usage of this function implies the programmer believes it's possible to recover from the error, but the infrastructure is not in place to do so yet.
          * Fatal means that the compiler cannot recover from the error and must stop execution.
          * 
+         * @tparam D                    The diagnostic type
+         * @tparam Args                 The arguments to the diagnostic constructor
+         * @param  args                 The arguments to the diagnostic constructor
+         * @throws FatalCompilerError   Unconditionally
          */
         template<class D, class... Args>
             requires std::derived_from<D, diagnostics::DiagnosticData> and
@@ -118,7 +116,18 @@ namespace jcc::parsing_sema {
         [[nodiscard]]
         bool HasFatalError() const noexcept;
 
-        void PrintDiagnostics(std::ostream &ostream) const;
+        enum class DiagnosticsFormat {
+            Fancy,
+            // Compact,
+            // SARIF,
+        };
+
+        /**
+         * Print the diagnostics to the given stream.
+         * 
+         * @param format  The format to print the diagnostics in
+         */
+        void PrintDiagnostics(DiagnosticsFormat format) const;
     };
 }// namespace jcc::parsing_sema
 

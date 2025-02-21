@@ -1,5 +1,7 @@
 #include "pp_conditional_expected_ident.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     PpConditionalExpectedIdent::PpConditionalExpectedIdent(
             std::shared_ptr<Source> source, mjolnir::Span condSpan,
@@ -10,21 +12,8 @@ namespace jcc::diagnostics {
         , m_UnexpectedTokenSpan{unexpectedTokenSpan} {
     }
 
-    void PpConditionalExpectedIdent::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message("Preprocessor conditional expected identifier.")
-                .with_label(
-                        mjolnir::Label{m_ConditionalSpan}.with_color(
-                                mjolnir::colors::light_cyan
-                        )
-                )
-                .with_label(
-                        mjolnir::Label{m_UnexpectedTokenSpan}
-                                .with_message(
-                                        "Unexpected token, expected identifier"
-                                )
-                                .with_color(mjolnir::colors::light_red)
-                )
-                .print(ostream);
+    void
+    PpConditionalExpectedIdent::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

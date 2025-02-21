@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "diagnostics/variants/visitors/mjolnir_visitor.hpp"
+
 namespace jcc::parsing_sema {
     llvm::IRBuilder<> &CompilerState::GetBuilder() noexcept {
         return m_Builder;
@@ -28,9 +30,11 @@ namespace jcc::parsing_sema {
         return m_HasFatalError;
     }
 
-    void CompilerState::PrintDiagnostics(std::ostream &ostream) const {
+    void CompilerState::PrintDiagnostics(DiagnosticsFormat) const {
+        diagnostics::MjolnirVisitor visitor{std::cout};
+
         for (auto const &diagnosis : m_Diagnostics) {
-            diagnosis->Print(ostream);
+            diagnosis->Visit(visitor);
         }
     }
 }// namespace jcc::parsing_sema

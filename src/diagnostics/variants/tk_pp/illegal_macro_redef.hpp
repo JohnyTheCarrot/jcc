@@ -5,14 +5,13 @@
 #include "misc/Span.h"
 
 namespace jcc::diagnostics {
-    class IllegalMacroRedef final : public DiagnosticData {
+    struct IllegalMacroRedef final : DiagnosticData {
         Span m_DefSpan;
         Span m_RedefineSpan;
 
-    public:
         IllegalMacroRedef(Span definedLoc, Span redefineLoc);
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

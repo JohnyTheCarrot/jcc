@@ -1,5 +1,7 @@
 #include "escape_seq_too_large.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     EscapeSeqTooLarge::EscapeSeqTooLarge(
             std::shared_ptr<Source> source, mjolnir::Span span
@@ -8,14 +10,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void EscapeSeqTooLarge::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message("Escape sequence value is too large")
-                .with_label(
-                        mjolnir::Label{m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
-                )
-                .print(ostream);
+    void EscapeSeqTooLarge::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

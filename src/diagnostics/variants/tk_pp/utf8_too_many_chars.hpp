@@ -6,15 +6,12 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class Utf8TooManyChars final : public DiagnosticData {
+    struct Utf8TooManyChars final : DiagnosticData {
         mjolnir::Span m_Span;
 
-    public:
-        Utf8TooManyChars(
-                std::shared_ptr<Source> const &source, mjolnir::Span span
-        );
+        Utf8TooManyChars(std::shared_ptr<Source> source, mjolnir::Span span);
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

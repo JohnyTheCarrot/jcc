@@ -1,5 +1,7 @@
 #include "diagnostic_directive_no_tokens.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     DiagnosticDirectiveNoTokens::DiagnosticDirectiveNoTokens(
             std::shared_ptr<Source> source, DiagnosticDirectiveKind kind,
@@ -10,20 +12,9 @@ namespace jcc::diagnostics {
         , m_Kind{kind} {
     }
 
-    void DiagnosticDirectiveNoTokens::Print(std::ostream &ostream) const {
-        mjolnir::Report report{StartReport()};
-
-        if (m_Kind == DiagnosticDirectiveKind::Error) {
-            report.with_message("Error directive without tokens");
-        } else {
-            report.with_message("Warning directive without tokens");
-        }
-
-        report.with_label(
-                      mjolnir::Label{m_Span}.with_color(
-                              mjolnir::colors::light_red
-                      )
-        )
-                .print(ostream);
+    void DiagnosticDirectiveNoTokens::Visit(
+            DiagnosticsVisitor const &visitor
+    ) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

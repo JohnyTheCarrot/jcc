@@ -1,5 +1,7 @@
 #include "custom_diagnostic.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     CustomDiagnostic::CustomDiagnostic(
             std::shared_ptr<Source> source, mjolnir::Span span,
@@ -10,10 +12,7 @@ namespace jcc::diagnostics {
         , m_Message{std::move(message)} {
     }
 
-    void CustomDiagnostic::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message(m_Message)
-                .with_label(mjolnir::Label{m_Span})
-                .print(ostream);
+    void CustomDiagnostic::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

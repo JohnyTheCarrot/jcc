@@ -6,17 +6,16 @@
 #include "diagnostics/diagnostics.h"
 
 namespace jcc::diagnostics {
-    class PpConditionalNotTerminated final : public DiagnosticData {
+    struct PpConditionalNotTerminated final : DiagnosticData {
         mjolnir::Span m_ConditionalSpan;
         mjolnir::Span m_EofSpan;
 
-    public:
         PpConditionalNotTerminated(
                 std::shared_ptr<Source> source, mjolnir::Span conditionalSpan,
                 mjolnir::Span eofSpan
         );
 
-        void Print(std::ostream &ostream) const override;
+        void Visit(DiagnosticsVisitor const &visitor) const override;
     };
 }// namespace jcc::diagnostics
 

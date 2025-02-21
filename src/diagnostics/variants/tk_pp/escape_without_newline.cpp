@@ -1,5 +1,7 @@
 #include "escape_without_newline.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     EscapeWithoutNewline::EscapeWithoutNewline(
             std::shared_ptr<Source> source, mjolnir::Span span
@@ -8,14 +10,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void EscapeWithoutNewline::Print(std::ostream &ostream) const {
-        StartReport()
-                .with_message("Newline escape sequence without a newline.")
-                .with_label(
-                        mjolnir::Label{m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
-                )
-                .print(ostream);
+    void EscapeWithoutNewline::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

@@ -1,5 +1,7 @@
 #include "hex_escape_empty.hpp"
 
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+
 namespace jcc::diagnostics {
     HexEscapeEmpty::HexEscapeEmpty(
             std::shared_ptr<Source> source, mjolnir::Span span
@@ -8,13 +10,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void HexEscapeEmpty::Print(std::ostream &ostream) const {
-        StartReport().with_message("Hexadecimal escape sequence is empty")
-                .with_label(
-                        mjolnir::Label{m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
-                )
-                .print(ostream);
+    void HexEscapeEmpty::Visit(DiagnosticsVisitor const &visitor) const {
+        visitor.Print(*this);
     }
 }// namespace jcc::diagnostics
