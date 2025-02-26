@@ -8,8 +8,7 @@
 
 #include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
 #include "diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
-#include "misc/Span.h"     // for Span
+#include "misc/Span.h"// for Span
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/preprocessor.h"         // for Preprocessor

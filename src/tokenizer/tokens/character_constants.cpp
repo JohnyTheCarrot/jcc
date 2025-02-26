@@ -8,6 +8,7 @@
 #include "diagnostics/variants/tk_pp/char_const_gt_4_chars.hpp"
 #include "diagnostics/variants/tk_pp/multi_byte_char_impl_def.hpp"
 #include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
+#include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/compiler_data_types.h"// for Char32, Int
 #include "misc/Diagnosis.h"          // for Diagnosis, FatalCompilerError
 #include "misc/Span.h"               // for Span, SpanMarker (ptr only)
@@ -25,14 +26,12 @@ namespace jcc::tokenizer::character_constants {
         auto &compilerState{parsing_sema::CompilerState::GetInstance()};
 
         if (charIter == CharIter::end()) {
-            // Span span{
-            //         charIter.GetSource(), {startPos, charIter.GetCurrentPos()}
-            // };
+            mjolnir::Span span{startPos, charIter.GetCurrentPos()};
 
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
-            };
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
+                            charIter.GetSource(), span
+                    );
         }
 
         // TODO: Char32 is probably not the right type to use here

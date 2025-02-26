@@ -9,7 +9,6 @@
 #include <variant>    // for variant
 #include <vector>     // for vector
 
-#include "diagnostics/diagnostics.h"
 #include "Span.h"// for Span
 
 namespace jcc {

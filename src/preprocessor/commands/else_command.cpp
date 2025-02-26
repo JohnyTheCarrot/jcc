@@ -2,8 +2,9 @@
 
 #include <variant>// for get
 
+#include "diagnostics/variants/tk_pp/else_without_if.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerE...
+#include "diagnostics/variants/tk_pp/unexpected_else.hpp"
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/preprocessor.h"    // for Preprocessor
@@ -19,6 +20,14 @@ namespace jcc::preprocessor::commands {
     std::optional<PreprocessorToken> ElseCommand::Execute(
             Preprocessor &preprocessor, tokenizer::Token &&token
     ) const {
+        if (preprocessor.GetConditionalDepth() == 0) {
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceDiagnostic<diagnostics::ElseWithoutIf>(
+                            token.m_Span.m_Source, token.m_Span.m_Span
+                    );
+            return std::nullopt;
+        }
+
         // if we reached this point, we know that the previous condition was met, and we must skip the next group
         auto const conditionEnd{preprocessor.SkipUntilConditionEnd()};
 
@@ -35,15 +44,16 @@ namespace jcc::preprocessor::commands {
                 std::get<tokenizer::Directive>(conditionEnd->m_Value)
         };
 
+        // The only directives that can be encountered here are conditional directives
         switch (directive) {
             case tokenizer::Directive::Endif:
                 return std::nullopt;
             default:
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::PP_ExpectedEndif,
-                        // preprocessor.GetCurrentSpan()
-                };
+                parsing_sema::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<diagnostics::UnexpectedElse>(
+                                token.m_Span.m_Source, token.m_Span.m_Span,
+                                conditionEnd->m_Span.m_Span
+                        );
         }
     }
 }// namespace jcc::preprocessor::commands

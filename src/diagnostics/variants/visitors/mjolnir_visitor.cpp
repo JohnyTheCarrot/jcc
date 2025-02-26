@@ -2,6 +2,7 @@
 
 #include <mjolnir/report.hpp>
 
+#include "diagnostics/variants/parsing/expected_expression.hpp"
 #include "diagnostics/variants/sema/modulo_with_non_int.hpp"
 #include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
 #include "diagnostics/variants/sema/shift_operand_non_int.hpp"
@@ -9,22 +10,35 @@
 #include "diagnostics/variants/tk_pp/char_const_gt_4_chars.hpp"
 #include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
 #include "diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp"
+#include "diagnostics/variants/tk_pp/directive_expected_newline.hpp"
+#include "diagnostics/variants/tk_pp/else_without_if.hpp"
 #include "diagnostics/variants/tk_pp/escape_seq_too_large.hpp"
 #include "diagnostics/variants/tk_pp/escape_without_newline.hpp"
 #include "diagnostics/variants/tk_pp/hex_escape_empty.hpp"
 #include "diagnostics/variants/tk_pp/illegal_macro_redef.hpp"
+#include "diagnostics/variants/tk_pp/include_expected_header_name.hpp"
+#include "diagnostics/variants/tk_pp/include_open_failed.hpp"
+#include "diagnostics/variants/tk_pp/invalid_macro_param.hpp"
+#include "diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp"
+#include "diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp"
+#include "diagnostics/variants/tk_pp/macro_name_not_ident.hpp"
 #include "diagnostics/variants/tk_pp/multi_byte_char_impl_def.hpp"
 #include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"
+#include "diagnostics/variants/tk_pp/unexpected_char.hpp"
+#include "diagnostics/variants/tk_pp/unexpected_else.hpp"
 #include "diagnostics/variants/tk_pp/unknown_escape_seq.hpp"
 #include "diagnostics/variants/tk_pp/untermed_char.h"
 #include "diagnostics/variants/tk_pp/untermed_string.h"
 #include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
 #include "diagnostics/variants/todo.hpp"
+#include "diagnostics/variants/unexpected_eof.hpp"
 
 namespace jcc::diagnostics {
+    constexpr auto c_ErrorColor{mjolnir::colors::light_red};
+
     [[nodiscard]]
     mjolnir::Report StartReport(DiagnosticData const &diag) {
         return {diag.m_ReportKind, diag.m_Source->m_Source, diag.m_StartPos};
@@ -37,9 +51,7 @@ namespace jcc::diagnostics {
                         "contain exactly one character."
                 )
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -51,7 +63,7 @@ namespace jcc::diagnostics {
                         mjolnir::Label{
                                 {diag.m_Span.end() - 1, diag.m_Span.end()}
                         }.with_message("Reached end of line")
-                                .with_color(mjolnir::colors::light_red)
+                                .with_color(c_ErrorColor)
                 )
                 .with_help(
                         "If you intended to write a multi-line string, "
@@ -68,7 +80,7 @@ namespace jcc::diagnostics {
                         mjolnir::Label{
                                 {diag.m_Span.end() - 1, diag.m_Span.end()}
                         }.with_message("Reached end of line")
-                                .with_color(mjolnir::colors::light_red)
+                                .with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -77,9 +89,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Unknown escape sequence.")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -95,7 +105,7 @@ namespace jcc::diagnostics {
                 .with_label(
                         mjolnir::Label{diag.m_EofSpan}
                                 .with_message("End of file")
-                                .with_color(mjolnir::colors::light_red)
+                                .with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -113,7 +123,7 @@ namespace jcc::diagnostics {
                                 .with_message(
                                         "Unexpected token, expected identifier"
                                 )
-                                .with_color(mjolnir::colors::light_red)
+                                .with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -122,9 +132,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Orphaned #endif directive.")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -133,9 +141,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Invalid preprocessing number.")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -202,7 +208,7 @@ namespace jcc::diagnostics {
                 .with_label(
                         mjolnir::Label{diag.m_RedefineSpan.m_Span}
                                 .with_message("Redefinition here")
-                                .with_color(mjolnir::colors::light_red)
+                                .with_color(c_ErrorColor)
                 );
 
         if (defLabel.has_value()) {
@@ -216,9 +222,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Hexadecimal escape sequence is empty")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -227,9 +231,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Newline escape sequence without a newline.")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -238,9 +240,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Escape sequence value is too large")
                 .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(
-                                mjolnir::colors::light_red
-                        )
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -254,11 +254,7 @@ namespace jcc::diagnostics {
             report.with_message("Warning directive without tokens");
         }
 
-        report.with_label(
-                      mjolnir::Label{diag.m_Span}.with_color(
-                              mjolnir::colors::light_red
-                      )
-        )
+        report.with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor))
                 .print(GetOstream());
     }
 
@@ -303,7 +299,7 @@ namespace jcc::diagnostics {
         if (diag.m_PotentiallyClosingQuote.has_value()) {
             report.with_label(
                           mjolnir::Label{diag.m_Span}
-                                  .with_color(mjolnir::colors::light_red)
+                                  .with_color(c_ErrorColor)
                                   .with_message(
                                           "This is the effective character "
                                           "constant, which is empty."
@@ -323,7 +319,7 @@ namespace jcc::diagnostics {
         } else {
             report.with_label(
                     mjolnir::Label{diag.m_Span}
-                            .with_color(mjolnir::colors::light_red)
+                            .with_color(c_ErrorColor)
                             .with_message("This character constant is empty.")
             );
         }
@@ -338,7 +334,7 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message(
                         "Both operands in a shift expression must be of "
-                        "integer type."
+                        "integer types."
                 )
                 .with_label(mjolnir::Label{diag.m_OpSpan})
                 .with_label(
@@ -442,6 +438,187 @@ namespace jcc::diagnostics {
                 )
                 .with_help(
                         "Consider casting the operand(s) to integer type(s)."
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(ExpectedExpression const &diag) const {
+        auto report{StartReport(diag)};
+        report.with_message("Expected expression to follow operator.");
+
+        report.with_label(
+                mjolnir::Label{diag.m_LhsSpan}
+                        .with_message("Left-hand side")
+                        .with_color(mjolnir::colors::light_blue)
+        );
+        if (diag.m_RhsSpan.has_value()) {
+            report.with_label(
+                          mjolnir::Label{diag.m_RhsSpan.value()}
+                                  .with_message("Expected expression here")
+                                  .with_color(c_ErrorColor)
+            )
+                    .with_label(
+                            mjolnir::Label{diag.m_OpSpan}.with_color(
+                                    mjolnir::colors::light_cyan
+                            )
+                    );
+        } else {
+            report.with_label(
+                    mjolnir::Label{diag.m_OpSpan}.with_message(
+                            "Expected this to be followed by an expression"
+                    )
+            );
+        }
+
+        report.print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UnexpectedEof const &diag) const {
+        StartReport(diag)
+                .with_message("Unexpected EOF.")
+                .with_label(mjolnir::Label{diag.m_Span})
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UnexpectedChar const &diag) const {
+        StartReport(diag)
+                .with_message("Unexpected character.")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(IncludeOpenFailed const &diag) const {
+        StartReport(diag)
+                .with_message("Failed to open included file.")
+                .with_label(mjolnir::Label{diag.m_DirectiveSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(IncludeExpectedHeaderName const &diag) const {
+        StartReport(diag)
+                .with_message("Expected header name in #include directive.")
+                .with_label(mjolnir::Label{diag.m_DirectiveSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(DirectiveExpectedNewline const &diag) const {
+        StartReport(diag)
+                .with_message("Expected directive to be followed by a newline.")
+                .with_label(mjolnir::Label{diag.m_DirectiveSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_NextTokenSpan}
+                                .with_color(c_ErrorColor)
+                                .with_message("Expected newline here")
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UndefExpectedIdent const &diag) const {
+        StartReport(diag)
+                .with_message("Undef directive expected identifier.")
+                .with_label(mjolnir::Label{diag.m_DirectiveSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_NextTokenSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(InvalidMacroParam const &diag) const {
+        StartReport(diag)
+                .with_message("Unexpected token in macro parameter list.")
+                .with_label(mjolnir::Label{diag.m_MacroDefSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_InvalidParamSpan}
+                                .with_color(c_ErrorColor)
+                                .with_message(
+                                        "Expected either an ellipsis or an "
+                                        "identifier"
+                                )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(MacroNameNotIdent const &diag) const {
+        StartReport(diag)
+                .with_message("Expected identifier for macro name.")
+                .with_label(mjolnir::Label{diag.m_DirectiveSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_MacroNameSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UnexpectedElse const &diag) const {
+        StartReport(diag)
+                .with_message(
+                        "Cannot use an else-type directive after an else "
+                        "directive."
+                )
+                .with_label(
+                        mjolnir::Label{diag.m_ElseSpan}
+                                .with_color(mjolnir::colors::light_cyan)
+                                .with_message("Valid else directive used here")
+                )
+                .with_label(
+                        mjolnir::Label{diag.m_UnexpectedElseSpan}
+                                .with_color(c_ErrorColor)
+                                .with_message(
+                                        "Followed up by unexpected else "
+                                        "directive here"
+                                )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(ElseWithoutIf const &diag) const {
+        StartReport(diag)
+                .with_message("#else without #if")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(MacroExpectedCommaOrRparen const &diag) const {
+        StartReport(diag)
+                .with_message(
+                        "Expected comma or right parenthesis in macro "
+                        "parameter list."
+                )
+                .with_label(mjolnir::Label{diag.m_MacroSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(MacroEllipsisNotLast const &diag) const {
+        StartReport(diag)
+                .with_message(
+                        "The ellipsis must be the last parameter in a variadic "
+                        "macro."
+                )
+                .with_label(mjolnir::Label{diag.m_MacroSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_CommaSpan}.with_color(
+                                c_ErrorColor
+                        )
                 )
                 .print(GetOstream());
     }

@@ -4,7 +4,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <string_view>
 
-#include "misc/Diagnosis.h"
+#include "diagnostics/variants/todo.hpp"
 
 namespace jcc::parsing_sema {
     AstIntegerConstant::AstIntegerConstant(
@@ -249,16 +249,17 @@ namespace jcc::parsing_sema {
             int &exponent
     ) {
         if (radix == RADIX_HEX) {
-            // P-notation
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(token.m_Span)
-            };
+            // TODO: P-notation
+            CompilerState::GetInstance()
+                    .EmplaceTemporarilyFatalDiagnostic<diagnostics::TodoError>(
+                            std::move(token.m_Span.m_Source),
+                            token.m_Span.m_Span
+                    );
         }
 
         // At this point, the next character must be either 'e' or 'E', or it must be the start of a floating-suffix.
         if (rest.starts_with("e") || rest.starts_with("E")) {
-            std::string_view exponentStart{[&] {
+            std::string_view const exponentStart{[&] {
                 std::string_view strView{std::next(rest.cbegin()), rest.cend()};
                 if (strView.starts_with('+'))
                     strView.remove_prefix(1);

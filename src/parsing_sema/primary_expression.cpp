@@ -1,8 +1,8 @@
 #include "primary_expression.h"
 
 #include "constant.h"
+#include "diagnostics/variants/todo.hpp"
 #include "expression.h"
-#include "misc/Diagnosis.h"
 
 namespace jcc::parsing_sema {
     AstExpressionPtr ParsePrimaryExpression(
@@ -11,6 +11,7 @@ namespace jcc::parsing_sema {
     ) {
         auto firstToken{*current};
         ++current;
+        auto &compilerState{CompilerState::GetInstance()};
 
         if (firstToken.Is(tokenizer::Punctuator::LeftParenthesis)) {
             auto result{ParseExpression(current, end)};
@@ -30,26 +31,26 @@ namespace jcc::parsing_sema {
 
         if (firstToken.Is(tokenizer::Keyword::Generic)) {
             // TODO: Generic selection
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
-            };
+            compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                    std::move(firstToken.m_Span.m_Source),
+                    firstToken.m_Span.m_Span
+            );
         }
 
         if (firstToken.Is<tokenizer::Identifier>()) {
             // TODO: Identifier
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
-            };
+            compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                    std::move(firstToken.m_Span.m_Source),
+                    firstToken.m_Span.m_Span
+            );
         }
 
         if (firstToken.Is<tokenizer::StringConstant>()) {
             // TODO: String literal
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(firstToken.m_Span)
-            };
+            compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                    std::move(firstToken.m_Span.m_Source),
+                    firstToken.m_Span.m_Span
+            );
         }
 
         // May return nullptr, which is fine, it just means there's no syntactical match.

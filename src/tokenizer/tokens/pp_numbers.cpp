@@ -5,8 +5,7 @@
 #include <utility>// for move
 
 #include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
-#include "misc/Span.h"     // for Span, SpanMarker (ptr only)
+#include "misc/Span.h"// for Span, SpanMarker (ptr only)
 #include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for IsNonDigit

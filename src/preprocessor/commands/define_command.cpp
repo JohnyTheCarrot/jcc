@@ -6,7 +6,10 @@
 #include <vector>   // for vector
 
 #include "diagnostics/variants/tk_pp/illegal_macro_redef.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
+#include "diagnostics/variants/tk_pp/invalid_macro_param.hpp"
+#include "diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp"
+#include "diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp"
+#include "diagnostics/variants/tk_pp/macro_name_not_ident.hpp"
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
@@ -15,8 +18,7 @@
 #include "tokenizer/token.h"                   // for Identifier, Token
 
 namespace jcc::preprocessor::commands {
-    macro::ReplacementList
-    DefineCommand::GatherReplacementList(Preprocessor &preprocessor) {
+    macro::ReplacementList GatherReplacementList(Preprocessor &preprocessor) {
         macro::ReplacementList replacementList{};
 
         auto const currentPos{
@@ -37,27 +39,30 @@ namespace jcc::preprocessor::commands {
     }
 
     std::pair<bool, macro::FunctionLikeMacro::ParameterList>
-    DefineCommand::GatherParameterList(Preprocessor &preprocessor) {
+    GatherParameterList(Preprocessor &preprocessor, Span &span) {
         macro::FunctionLikeMacro::ParameterList parameterList{};
 
         auto [token, isFromMacro]{preprocessor.GetNextFromTokenizer(false)};
 
         while (true) {
             if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
-                if (!token.Is(tokenizer::Punctuator::Ellipsis))
-                    // TODO: diagnosis
-                    throw FatalCompilerError{
-                            // Diagnosis::Kind::PP_MacroExpectedIdentifier,
-                            // token.m_Span
-                    };
+                if (!token.Is(tokenizer::Punctuator::Ellipsis)) {
+                    parsing_sema::CompilerState::GetInstance()
+                            .EmplaceFatalDiagnostic<
+                                    diagnostics::InvalidMacroParam>(
+                                    span.m_Source, span.m_Span,
+                                    token.m_Span.m_Span
+                            );
+                }
 
                 token = preprocessor.GetNextPreprocessorToken().m_Token;
                 if (!token.Is(tokenizer::Punctuator::RightParenthesis)) {
-                    // TODO: diagnosis
-                    throw FatalCompilerError{
-                            // Diagnosis::Kind::PP_MacroEllipsisNotLast,
-                            // token.m_Span
-                    };
+                    parsing_sema::CompilerState::GetInstance()
+                            .EmplaceFatalDiagnostic<
+                                    diagnostics::MacroEllipsisNotLast>(
+                                    span.m_Source, span.m_Span,
+                                    token.m_Span.m_Span
+                            );
                 }
 
                 return std::make_pair(true, parameterList);
@@ -67,11 +72,11 @@ namespace jcc::preprocessor::commands {
 
             token = preprocessor.GetNextPreprocessorToken().m_Token;
             if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
-                        // token.m_Span
-                };
+                parsing_sema::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<
+                                diagnostics::MacroExpectedCommaOrRparen>(
+                                span.m_Source, span.m_Span, token.m_Span.m_Span
+                        );
             }
 
             auto const punctuator{std::get<tokenizer::Punctuator>(token.m_Value)
@@ -82,11 +87,11 @@ namespace jcc::preprocessor::commands {
             }
 
             if (punctuator != tokenizer::Punctuator::Comma) {
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::PP_MacroExpectedCommaOrRParen,
-                        // token.m_Span
-                };
+                parsing_sema::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<
+                                diagnostics::MacroExpectedCommaOrRparen>(
+                                span.m_Source, span.m_Span, token.m_Span.m_Span
+                        );
             }
 
             token = preprocessor.GetNextPreprocessorToken().m_Token;
@@ -115,7 +120,8 @@ namespace jcc::preprocessor::commands {
     void DefineCommand::DefineFunctionLikeMacro(
             Preprocessor &preprocessor, Span &&span, std::string &&name
     ) {
-        auto [isVariadic, parameterList]{GatherParameterList(preprocessor)};
+        auto [isVariadic, parameterList]{GatherParameterList(preprocessor, span)
+        };
         auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
 
         macro::FunctionLikeMacro macro{
@@ -134,8 +140,9 @@ namespace jcc::preprocessor::commands {
 
     DefineCommand::~DefineCommand() = default;
 
-    std::optional<PreprocessorToken> DefineCommand::
-            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
+    std::optional<PreprocessorToken> DefineCommand::Execute(
+            Preprocessor &preprocessor, tokenizer::Token &&directive
+    ) const {
         auto nextToken{preprocessor.SimpleTokenRead().m_Token};
 
         auto const isIdent{
@@ -146,11 +153,13 @@ namespace jcc::preprocessor::commands {
         };
 
         if (!isIdent && !isKeyword) {
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_MacroExpectedIdentifier,
-                    // nextToken.m_Span
-            };
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceDiagnostic<diagnostics::MacroNameNotIdent>(
+                            directive.m_Span.m_Source, directive.m_Span.m_Span,
+                            nextToken.m_Span.m_Span
+                    );
+            preprocessor.SkipToNextLine();
+            return std::nullopt;
         }
 
         auto        macroNameSpan{nextToken.m_Span};

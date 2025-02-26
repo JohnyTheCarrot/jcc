@@ -9,7 +9,6 @@
 #include <string_view>// for string_view
 
 #include "macro_store.h"                 // for MacroStore
-#include "misc/Diagnosis.h"              // for Diagnosis
 #include "misc/Span.h"                   // for Span
 #include "preprocessor_iterator.h"       // for PreprocessorIterator, IsPr...
 #include "preprocessor_token.h"          // for PreprocessorToken
@@ -46,7 +45,6 @@ namespace jcc::preprocessor {
 
     class Preprocessor final {
         std::stack<TokenizerIteratorPair> m_TokenizerStack;
-        Diagnosis::Vec                   *m_pDiagnoses;
         std::unique_ptr<MacroStore> m_pMacroStore{std::make_unique<MacroStore>()
         };
         int                         m_ConditionalDepth{0};
@@ -54,10 +52,14 @@ namespace jcc::preprocessor {
         void SkipEmptyLines();
 
     public:
-        Preprocessor(std::string const &filename, Diagnosis::Vec &diagnoses);
+        explicit Preprocessor(std::string const &filename);
 
-        Preprocessor(std::istream &input, Diagnosis::Vec &diagnoses);
-
+        /**
+         * Opens a header file for processing.
+         * 
+         * @param filename The name of the file to open.
+         * @throws tokenizer::TokenizerFileOpenFailure if the file could not be opened.
+         */
         void OpenHeader(std::string_view filename);
 
         [[nodiscard]]
@@ -71,8 +73,6 @@ namespace jcc::preprocessor {
 
         [[nodiscard]]
         MacroStore &GetMacroStore() const noexcept;
-
-        void EmitWarning(Diagnosis &&diagnosis) const;
 
         template<class It = PreprocessorIterator>
             requires IsPreprocessorIterator<It> ||
@@ -121,6 +121,11 @@ namespace jcc::preprocessor {
         void PushConditional();
 
         void PopConditional();
+
+        [[nodiscard]]
+        int GetConditionalDepth() const noexcept;
+
+        void SkipToNextLine();
     };
 }// namespace jcc::preprocessor
 

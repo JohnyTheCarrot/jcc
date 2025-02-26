@@ -3,7 +3,9 @@
 #include <utility>// for move
 #include <variant>// for get
 
-#include "misc/Diagnosis.h"               // for Diagnosis, FatalCompilerE...
+#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerE...
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/macro_store.h"     // for MacroStore
 #include "preprocessor/preprocessor.h"    // for Preprocessor
@@ -16,22 +18,22 @@ namespace jcc::preprocessor::commands {
 
     UndefCommand::~UndefCommand() = default;
 
-    std::optional<PreprocessorToken> UndefCommand::
-            Execute(Preprocessor &preprocessor, tokenizer::Token &&) const {
-        auto identToken{preprocessor.SimpleTokenRead()};
+    std::optional<PreprocessorToken> UndefCommand::Execute(
+            Preprocessor &preprocessor, tokenizer::Token &&undefDirective
+    ) const {
+        auto const [token, isFromMacro]{preprocessor.SimpleTokenRead()};
 
-        if (!identToken.m_Token.Is<tokenizer::Identifier>()) {
-            // TODO: diagnose
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_MacroExpectedIdentifier,
-                    // std::move(identToken.m_Token.m_Span)
-            };
+        if (!token.Is<tokenizer::Identifier>()) {
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceDiagnostic<diagnostics::UndefExpectedIdent>(
+                            undefDirective.m_Span.m_Source,
+                            undefDirective.m_Span.m_Span, token.m_Span.m_Span
+                    );
+            preprocessor.SkipToNextLine();
+            return std::nullopt;
         }
 
-        auto const ident{
-                std::get<tokenizer::Identifier>(identToken.m_Token.m_Value)
-                        .m_Name
-        };
+        auto const ident{std::get<tokenizer::Identifier>(token.m_Value).m_Name};
         preprocessor.GetMacroStore().UnregisterMacro(ident);
 
         return std::nullopt;

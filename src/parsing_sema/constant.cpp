@@ -1,6 +1,6 @@
 #include "constant.h"
 
-#include "misc/Diagnosis.h"
+#include "diagnostics/variants/todo.hpp"
 #include "numeric_constant.h"
 
 namespace jcc::parsing_sema {
@@ -57,11 +57,10 @@ namespace jcc::parsing_sema {
         }
 
         if (token.Is<tokenizer::CharacterConstant>()) {
-            // TODO: Character constant
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(token.m_Span)
-            };
+            auto &compilerState{CompilerState::GetInstance()};
+            compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                    std::move(token.m_Span.m_Source), token.m_Span.m_Span
+            );
         }
 
         if (token.Is<tokenizer::Identifier>()) {

@@ -6,8 +6,10 @@
 #include <string>   // for basic_string, string, u32string
 #include <utility>  // for move
 
-#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
-#include "misc/Span.h"          // for Span, SpanMarker (ptr only)
+#include "diagnostics/variants/unexpected_eof.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "misc/Span.h"     // for Span, SpanMarker (ptr only)
+#include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for ReadSingleCharacter, ConstantType
 
@@ -15,14 +17,12 @@ namespace jcc::tokenizer::string_literals {
     Token
     Tokenize(CharIter &charIter, ConstantPrefix prefix, std::size_t startPos) {
         if (charIter == CharIter::end()) {
-            // Span span{
-            //         charIter.GetSource(), {startPos, charIter.GetCurrentPos()}
-            // };
+            mjolnir::Span span{startPos, charIter.GetCurrentPos()};
 
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
-            };
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
+                            charIter.GetSource(), span
+                    );
         }
 
         // std::u32string u32Characters{};
@@ -60,7 +60,7 @@ namespace jcc::tokenizer::string_literals {
 
         return Token{
                 .m_Value = StringConstant{std::move(strContents), prefix},
-                .m_Span  = span
+                .m_Span  = std::move(span)
         };
     }
 }// namespace jcc::tokenizer::string_literals

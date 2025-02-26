@@ -19,9 +19,9 @@ namespace jcc::parsing_sema {
             std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
 
     class CompilerState final {
-        llvm::LLVMContext      m_Context{};
-        llvm::IRBuilder<>      m_Builder{m_Context};
-        llvm::Target const    *m_Target{[] {
+        llvm::LLVMContext   m_Context{};
+        llvm::IRBuilder<>   m_Builder{m_Context};
+        llvm::Target const *m_Target{[] {
             llvm::InitializeAllTargetInfos();
             llvm::InitializeAllTargets();
             auto const targetTriple{llvm::sys::getDefaultTargetTriple()};
@@ -36,8 +36,6 @@ namespace jcc::parsing_sema {
 
             throw std::runtime_error{error};
         }()};
-        std::vector<Diagnosis> m_ErrorDiagnoses{};
-        std::vector<Diagnosis> m_WarningDiagnoses{};
 
         std::vector<diagnostics::Diagnostic> m_Diagnostics{};
         bool                                 m_HasFatalError{false};
@@ -108,6 +106,7 @@ namespace jcc::parsing_sema {
         template<class D, class... Args>
             requires std::derived_from<D, diagnostics::DiagnosticData> and
                      std::constructible_from<D, Args...>
+        [[noreturn]]
         void EmplaceTemporarilyFatalDiagnostic(Args &&...args) {
             EmplaceDiagnostic<D>(std::forward<Args>(args)...);
             throw FatalCompilerError{};

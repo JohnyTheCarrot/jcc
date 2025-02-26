@@ -5,7 +5,6 @@
 #include "diagnostics/variants/tk_pp/untermed_char.h"
 #include "diagnostics/variants/tk_pp/untermed_string.h"
 #include "escape_sequences.h"// for Tokenize
-#include "misc/Diagnosis.h"  // for Diagnosis, FatalCompilerError
 #include "misc/Span.h"       // for Span, SpanMarker (ptr only)
 #include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter

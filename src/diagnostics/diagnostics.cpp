@@ -5,17 +5,17 @@
 namespace jcc::diagnostics {
     DiagnosticData::DiagnosticData(
             std::shared_ptr<Source> source, std::size_t startPos,
-            mjolnir::ReportKind reportKind
+            mjolnir::BasicReportKind reportKind
     ) noexcept
         : m_Source{std::move(source)}
         , m_StartPos{startPos}
         , m_ReportKind{std::move(reportKind)} {
     }
 
+    DiagnosticData::~DiagnosticData() = default;
+
     bool DiagnosticData::IsError() const noexcept {
-        return std::holds_alternative<mjolnir::BasicReportKind>(m_ReportKind) &&
-               std::get<mjolnir::BasicReportKind>(m_ReportKind) ==
-                       mjolnir::BasicReportKind::Error;
+        return m_ReportKind == mjolnir::BasicReportKind::Error;
     }
 
     BinaryDiagnostic::BinaryDiagnostic(

@@ -2,10 +2,9 @@
 #define POSTFIX_EXPRESSION_H
 
 #include "ast_node.h"
-#include "misc/Diagnosis.h"
+#include "diagnostics/variants/todo.hpp"
 #include "parser.h"
 #include "primary_expression.h"
-#include "types.h"
 
 namespace jcc::tokenizer {
     struct Token;
@@ -38,10 +37,11 @@ namespace jcc::parsing_sema {
                 case tokenizer::Punctuator::Arrow:
                 case tokenizer::Punctuator::PlusPlus:
                 case tokenizer::Punctuator::MinusMinus:
-                    // TODO: diagnosis
-                    throw FatalCompilerError{
-                            // Diagnosis::Kind::TODO, std::move(nextToken.m_Span)
-                    };
+                    CompilerState::GetInstance()
+                            .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                                    std::move(nextToken.m_Span.m_Source),
+                                    nextToken.m_Span.m_Span
+                            );
                 default:
                     break;
             }

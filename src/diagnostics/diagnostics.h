@@ -11,16 +11,16 @@ namespace jcc::diagnostics {
     class DiagnosticsVisitor;
 
     struct DiagnosticData {
-        std::shared_ptr<Source> m_Source;
-        std::size_t             m_StartPos;
-        mjolnir::ReportKind     m_ReportKind;
+        std::shared_ptr<Source>  m_Source;
+        std::size_t              m_StartPos;
+        mjolnir::BasicReportKind m_ReportKind;
 
         DiagnosticData(
                 std::shared_ptr<Source> source, std::size_t startPos,
-                mjolnir::ReportKind reportKind
+                mjolnir::BasicReportKind reportKind
         ) noexcept;
 
-        virtual ~DiagnosticData() = default;
+        virtual ~DiagnosticData();
 
         [[nodiscard]]
         bool IsError() const noexcept;

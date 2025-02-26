@@ -20,11 +20,10 @@ int main(int argCount, char *args[]) {
 
     std::string const filePath{args[1]};
 
-    jcc::Diagnosis::Vec diagnoses;
     auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
 
     try {
-        jcc::preprocessor::Preprocessor preprocessor{filePath, diagnoses};
+        jcc::preprocessor::Preprocessor preprocessor{filePath};
         auto const &compilerState{jcc::parsing_sema::CompilerState::GetInstance(
         )};
 
@@ -66,10 +65,6 @@ int main(int argCount, char *args[]) {
     } catch (jcc::FatalCompilerError const &) {
         std::cerr << "A fatal compiler error occurred." << std::endl;
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
-
-    for (auto const &diagnosis : diagnoses) {
-        std::cout << diagnosis.GetMessage() << '\n';
-    }
 
     using DiagnosticsFormat =
             jcc::parsing_sema::CompilerState::DiagnosticsFormat;

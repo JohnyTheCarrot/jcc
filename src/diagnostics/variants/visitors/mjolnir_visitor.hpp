@@ -29,6 +29,19 @@ namespace jcc::diagnostics {
         void Print(ShiftOperandNonInt const &diag) const override;
         void Print(MultNonArithmetic const &diag) const override;
         void Print(ModuloWithNonInt const &diag) const override;
+        void Print(ExpectedExpression const &diag) const override;
+        void Print(UnexpectedEof const &diag) const override;
+        void Print(UnexpectedChar const &diag) const override;
+        void Print(IncludeOpenFailed const &diag) const override;
+        void Print(IncludeExpectedHeaderName const &diag) const override;
+        void Print(DirectiveExpectedNewline const &diag) const override;
+        void Print(UndefExpectedIdent const &diag) const override;
+        void Print(InvalidMacroParam const &diag) const override;
+        void Print(MacroNameNotIdent const &diag) const override;
+        void Print(UnexpectedElse const &diag) const override;
+        void Print(ElseWithoutIf const &diag) const override;
+        void Print(MacroExpectedCommaOrRparen const &diag) const override;
+        void Print(MacroEllipsisNotLast const &diag) const override;
     };
 }// namespace jcc::diagnostics
 #endif//MJOLNIR_VISITOR_HPP

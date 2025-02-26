@@ -8,6 +8,8 @@
 #include "diagnostics/variants/tk_pp/escape_seq_too_large.hpp"
 #include "diagnostics/variants/tk_pp/hex_escape_empty.hpp"
 #include "diagnostics/variants/tk_pp/unknown_escape_seq.hpp"
+#include "diagnostics/variants/todo.hpp"
+#include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
 #include "misc/Span.h"     // for Span, SpanMarker (ptr only)
 #include "parsing_sema/parser.h"
@@ -245,17 +247,12 @@ namespace jcc::tokenizer::escape_sequences {
     TokenizeNoSizeCheck(CharIter &charIter, std::size_t backslashPos) {
         auto &compilerState{parsing_sema::CompilerState::GetInstance()};
         if (charIter == CharIter::end()) {
-            auto currentPos{charIter.GetCurrentPos()};
-            Span span{// charIter.GetFileName(), currentMarker, currentMarker,
-                      // charIter.GetInput()
-                      charIter.GetSource(),
-                      {currentPos, currentPos}
-            };
+            auto const    currentPos{charIter.GetCurrentPos()};
+            mjolnir::Span span{currentPos - 1, currentPos};
 
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
-            };
+            compilerState.EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
+                    charIter.GetSource(), span
+            );
         }
 
         char const c{charIter->m_Char};
@@ -278,12 +275,13 @@ namespace jcc::tokenizer::escape_sequences {
 
         if (c == 'u' || c == 'U') {
             // TODO: Universal character names
-            throw FatalCompilerError{};
+            compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                    charIter.GetSource(), span
+            );
         }
 
         compilerState.EmplaceTemporarilyFatalDiagnostic<
                 diagnostics::UnknownEscapeSeq>(charIter.GetSource(), span);
-        throw FatalCompilerError{};
     }
 
     compiler_data_types::Char32::type Tokenize(

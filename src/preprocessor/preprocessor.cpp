@@ -7,6 +7,7 @@
 #include <variant>      // for get, holds_alternative
 
 #include "diagnostics/variants/tk_pp/escape_without_newline.hpp"
+#include "diagnostics/variants/tk_pp/include_open_failed.hpp"
 #include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for PreprocessorCommandS...
@@ -57,6 +58,19 @@ namespace jcc::preprocessor {
         }
 
         --m_ConditionalDepth;
+    }
+
+    int Preprocessor::GetConditionalDepth() const noexcept {
+        return m_ConditionalDepth;
+    }
+
+    void Preprocessor::SkipToNextLine() {
+        while (true) {
+            if (auto [m_Token, m_IsFromMacro]{SimpleTokenRead()};
+                m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
+                return;
+            }
+        }
     }
 
     PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
@@ -148,10 +162,6 @@ namespace jcc::preprocessor {
         return *m_pMacroStore;
     }
 
-    void Preprocessor::EmitWarning(Diagnosis &&diagnosis) const {
-        m_pDiagnoses->emplace_back(std::move(diagnosis));
-    }
-
     TokenizerIteratorPair::TokenizerIteratorPair(
             tokenizer::Tokenizer &&tokenizer
     )
@@ -194,9 +204,7 @@ namespace jcc::preprocessor {
         }
     }
 
-    Preprocessor::Preprocessor(
-            std::string const &filename, Diagnosis::Vec &diagnoses
-    )
+    Preprocessor::Preprocessor(std::string const &filename)
         : m_TokenizerStack{[&] {
             tokenizer::Tokenizer  tokenizer{filename};
             TokenizerIteratorPair pair{std::move(tokenizer)};
@@ -205,22 +213,13 @@ namespace jcc::preprocessor {
             stack.push(std::move(pair));
 
             return stack;
-        }()}
-        , m_pDiagnoses{&diagnoses} {
+        }()} {
     }
 
     void Preprocessor::OpenHeader(std::string_view filename) {
-        try {
-            auto &top{m_TokenizerStack.emplace(
-                    tokenizer::Tokenizer{std::string{filename}}
-            )};
-            ++top.GetTokenIter();
-        } catch (tokenizer::TokenizerFileOpenFailure const &) {
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PP_InclDirectiveFileOpenFailed,
-                    // GetCurrentSpan()
-            };
-        }
+        auto &top{m_TokenizerStack.emplace(
+                tokenizer::Tokenizer{std::string{filename}}
+        )};
+        ++top.GetTokenIter();
     }
 }// namespace jcc::preprocessor

@@ -2,7 +2,6 @@
 
 #include "additive_expression.h"
 #include "binary_expression.h"
-#include "misc/Diagnosis.h"
 #include "preprocessor/preprocessor_iterator.h"
 
 namespace jcc::parsing_sema {

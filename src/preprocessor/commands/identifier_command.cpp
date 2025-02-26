@@ -7,7 +7,9 @@
 #include <unordered_map>// for operator==, _Node_it...
 #include <variant>      // for get, holds_alternative
 
-#include "misc/Diagnosis.h"                    // for Diagnosis, FatalComp...
+#include "diagnostics/variants/unexpected_eof.hpp"
+#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
+#include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor, VaArgs
@@ -113,7 +115,8 @@ namespace jcc::preprocessor::commands {
         auto const ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>(
         )};
 
-        for (auto &[token, isFromMacro] : std::ranges::subrange(ppItStart, ppItEnd)) {
+        for (auto &[token, isFromMacro] :
+             std::ranges::subrange(ppItStart, ppItEnd)) {
             if (!isFromMacro &&
                 std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
                 switch (std::get<tokenizer::Punctuator>(token.m_Value)) {
@@ -138,10 +141,11 @@ namespace jcc::preprocessor::commands {
             argumentTokens.emplace_back(std::move(token));
         }
 
-        // TODO: diagnosis
-        throw FatalCompilerError{
-                // Diagnosis::Kind::UnexpectedEOF, preprocessor.GetCurrentSpan()
-        };
+        auto currentSpan{preprocessor.GetCurrentSpan()};
+        parsing_sema::CompilerState::GetInstance()
+                .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
+                        std::move(currentSpan.m_Source), currentSpan.m_Span
+                );
     }
 
     IdentifierCommand::IdentifierCommand(CommandMap &map)

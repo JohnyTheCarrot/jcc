@@ -66,9 +66,6 @@ namespace jcc::tokenizer {
 
         [[nodiscard]]
         std::optional<Token> SkipUntilConditionEnd();
-
-        [[nodiscard]]
-        mjolnir::Source const &GetSource() const noexcept;
     };
 }// namespace jcc::tokenizer
 

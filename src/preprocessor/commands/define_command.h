@@ -21,15 +21,6 @@ namespace jcc {
 
 namespace jcc::preprocessor::commands {
     class DefineCommand final : public Command {
-        [[nodiscard]]
-        static macro::ReplacementList
-        GatherReplacementList(Preprocessor &preprocessor);
-
-        [[nodiscard]]
-        /// \return a pair of whether the parameter list is variadic and the parameter list
-        static std::pair<bool, macro::FunctionLikeMacro::ParameterList>
-        GatherParameterList(Preprocessor &preprocessor);
-
         static void DefineObjectLikeMacro(
                 Preprocessor &preprocessor, Span &&span, std::string &&name,
                 tokenizer::Token &&firstToken

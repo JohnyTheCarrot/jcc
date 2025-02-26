@@ -3,15 +3,23 @@
 
 #include <ostream>
 
+#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
+
 namespace jcc::diagnostics {
+    struct MacroEllipsisNotLast;
+    struct MacroExpectedCommaOrRparen;
+    struct ElseWithoutIf;
+    struct UnexpectedElse;
+    struct MacroNameNotIdent;
+    struct InvalidMacroParam;
+    struct DirectiveExpectedNewline;
+    struct IncludeExpectedHeaderName;
+    struct IncludeOpenFailed;
+    struct UnexpectedChar;
+    struct UnexpectedEof;
+    struct ExpectedExpression;
     struct ModuloWithNonInt;
-}
-
-namespace jcc::diagnostics {
     struct MultNonArithmetic;
-}
-
-namespace jcc::diagnostics {
     struct ShiftOperandNonInt;
     struct CharConstEmpty;
     struct CharConstGt4Chars;
@@ -65,6 +73,19 @@ namespace jcc::diagnostics {
         virtual void Print(ShiftOperandNonInt const &diag) const          = 0;
         virtual void Print(MultNonArithmetic const &diag) const           = 0;
         virtual void Print(ModuloWithNonInt const &diag) const            = 0;
+        virtual void Print(ExpectedExpression const &diag) const          = 0;
+        virtual void Print(UnexpectedEof const &diag) const               = 0;
+        virtual void Print(UnexpectedChar const &diag) const              = 0;
+        virtual void Print(IncludeOpenFailed const &diag) const           = 0;
+        virtual void Print(IncludeExpectedHeaderName const &diag) const   = 0;
+        virtual void Print(DirectiveExpectedNewline const &diag) const    = 0;
+        virtual void Print(UndefExpectedIdent const &diag) const          = 0;
+        virtual void Print(InvalidMacroParam const &diag) const           = 0;
+        virtual void Print(MacroNameNotIdent const &diag) const           = 0;
+        virtual void Print(UnexpectedElse const &diag) const              = 0;
+        virtual void Print(ElseWithoutIf const &diag) const               = 0;
+        virtual void Print(MacroExpectedCommaOrRparen const &diag) const  = 0;
+        virtual void Print(MacroEllipsisNotLast const &diag) const        = 0;
     };
 }// namespace jcc::diagnostics
 

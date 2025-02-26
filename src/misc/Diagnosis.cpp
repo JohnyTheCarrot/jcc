@@ -14,42 +14,15 @@
 
 namespace jcc {
     enum class Diagnosis::Kind {
-        UnexpectedEOF,
-        TK_EscapeExpectedNewline,
-        TK_InvalidBaseDigit,
-        TK_UnexpectedIntSuffixChar,
-        TK_InvalidUniversalCharacterName,
-        TK_IllegalUniversalCharacterName,
-        TK_IllegalBackslash,
-        TK_ExpectedHeaderName,
-        TK_DirectiveNotAloneOnLine,
-        TK_UnexpectedChar,
-        PP_InclDirectiveFileOpenFailed,
-        PP_InclDirectiveExpectedHeaderName,
-        PP_DirectiveExpectedNewline,
-        PP_MacroExpectedIdentifier,
-        PP_MacroExpectedCommaOrRParen,
-        PP_MacroEllipsisNotLast,
         PP_MacroExpectedLParen,
         PP_MacroTooFewArgs,
         PP_MacroTooManyArgs,
-        PP_IllegalMacroParameterToken,
-        PP_UnterminatedMacroParameterList,
-        PP_UnterminatedMacroInvocation,
-        PP_UnexpectedMacroInvocationArgumentCount,
-        PP_HashNotFollowedByParameter,
-        PP_DirectiveNotAloneOnLine,
-        PP_OrphanedConditionalClosure,
-        PP_ExpectedEndif,
-        PP_UndefExpectedIdentifier,
         PRS_UnrecognizedIntegerSuffix,
         PRS_InvalidFloatingPointLiteral,
         PRS_UnrecognizedFloatingSuffix,
         PRS_InvalidIntegerLiteral,
         PRS_ExpectedRParen,
-        PRS_ExpectedExpressionToFollow,
         SEMA_NoCompatibleIntegerType,
-        TODO,
     };
 
     Diagnosis::Diagnosis(
@@ -82,48 +55,6 @@ namespace jcc {
 
     std::string Diagnosis::GetDiagMessage() const {
         switch (m_Kind) {
-            case Kind::UnexpectedEOF:
-                return "Unexpected end of file.";
-            case Kind::TK_EscapeExpectedNewline:
-                return "Expected newline after \\.";
-            case Kind::TK_InvalidBaseDigit:
-                return std::format(
-                        "Invalid base digit \'{}\'.",
-                        std::get<char>(m_Data0.value())
-                );
-            case Kind::TK_UnexpectedIntSuffixChar:
-                return std::format(
-                        "Unexpected character for integer literal suffix "
-                        "\'{}\'.",
-                        std::get<char>(m_Data0.value())
-                );
-            case Kind::TK_InvalidUniversalCharacterName:
-                return "Invalid universal character name.";
-            case Kind::TK_IllegalUniversalCharacterName:
-                return "Illegal universal character name.";
-            case Kind::TK_IllegalBackslash:
-                return "Illegal backslash.";
-            case Kind::TK_ExpectedHeaderName:
-                return "Expected header-name.";
-            case Kind::TK_DirectiveNotAloneOnLine:
-                return "A preprocessor directive must be the only item on "
-                       "a line.";
-            case Kind::TK_UnexpectedChar:
-                return std::format(
-                        "Unexpected character '{}'.",
-                        std::get<char>(m_Data0.value())
-                );
-            case Kind::TODO:
-                return "Compiler feature unimplemented.";
-            case Kind::PP_InclDirectiveFileOpenFailed:
-                return "Couldn't open include file.";
-            case Kind::PP_MacroExpectedIdentifier:
-                return "Expected identifier in macro definition.";
-            case Kind::PP_MacroExpectedCommaOrRParen:
-                return "Expected comma or right parenthesis.";
-            case Kind::PP_MacroEllipsisNotLast:
-                return "Variadic macro parameter must be the last "
-                       "parameter.";
             case Kind::PP_MacroExpectedLParen:
                 return "Expected left parenthesis as part of macro "
                        "invocation.";
@@ -132,32 +63,6 @@ namespace jcc {
             case Kind::PP_MacroTooManyArgs:
                 return "Too many arguments passed to non-variadic "
                        "function-like macro.";
-            case Kind::PP_IllegalMacroParameterToken:
-                return "Illegal token in macro parameter definitions.";
-            case Kind::PP_UnterminatedMacroParameterList:
-                return "Macro parameter list was not terminated.";
-            case Kind::PP_UnterminatedMacroInvocation:
-                return "Function-like macro invocation was not terminated.";
-            case Kind::PP_UnexpectedMacroInvocationArgumentCount:
-                return "Invalid amount of arguments passed to "
-                       "function-like macro.";
-            case Kind::PP_HashNotFollowedByParameter:
-                return "'#' not followed by a macro parameter.";
-            case Kind::PP_DirectiveNotAloneOnLine:
-                return "Preprocessor directive must be the only item on a "
-                       "line.";
-            case Kind::PP_InclDirectiveExpectedHeaderName:
-                return "Expected header name in #include directive.";
-            case Kind::PP_DirectiveExpectedNewline:
-                return "Expected newline after preprocessor directive.";
-            case Kind::PP_OrphanedConditionalClosure:
-                return "Closing conditional directive without a matching "
-                       "opening directive.";
-            case Kind::PP_ExpectedEndif:
-                return "#else, #elif, #elifdef or #elifndef may not follow "
-                       "#else.";
-            case Kind::PP_UndefExpectedIdentifier:
-                return "Expected identifier in #undef directive.";
             case Kind::PRS_UnrecognizedIntegerSuffix:
                 return "Unrecognized integer suffix.";
             case Kind::PRS_UnrecognizedFloatingSuffix:
@@ -168,8 +73,6 @@ namespace jcc {
                 return "Invalid integer literal.";
             case Kind::PRS_ExpectedRParen:
                 return "Expected right parenthesis.";
-            case Kind::PRS_ExpectedExpressionToFollow:
-                return "Expected expression to follow.";
             case Kind::SEMA_NoCompatibleIntegerType:
                 return "No compatible integer type found.";
         }

@@ -4,7 +4,8 @@
 #include <iterator> // for back_insert_iterator, back_inserter
 #include <utility>  // for move
 
-#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
+#include "diagnostics/variants/todo.hpp"
+#include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::identifiers {
@@ -40,12 +41,13 @@ namespace jcc::tokenizer::identifiers {
             Span const span{charIter.GetSource(), tokenStart.m_Span};
 
             // check if identifier contains a backslash
-            if (tokenStart.m_Identifier.find('\\') != std::string::npos)
+            if (tokenStart.m_Identifier.find('\\') != std::string::npos) {
                 // TODO: Universal character names
-                // TODO: diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::TODO, std::move(span)
-                };
+                parsing_sema::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                                std::move(span.m_Source), span.m_Span
+                        );
+            }
             return Token{
                     .m_Value = Identifier{tokenStart.m_Identifier},
                     .m_Span  = span
@@ -59,12 +61,13 @@ namespace jcc::tokenizer::identifiers {
         std::string identifier{std::move(partialIdentifier)};
 
         // check if identifier contains a backslash
-        if (identifier.find('\\') != std::string::npos)
+        if (identifier.find('\\') != std::string::npos) {
             // TODO: Universal character names
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TODO, std::move(span)
-            };
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                            std::move(span.m_Source), span.m_Span
+                    );
+        }
 
         Identifier identToken{std::move(identifier)};
 

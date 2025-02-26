@@ -7,7 +7,6 @@
 #include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/todo.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalComp...
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
@@ -47,7 +46,7 @@ namespace jcc::preprocessor::commands {
             return;
         }
 
-        auto const conditionEnd{preprocessor.SkipUntilConditionEnd()};
+        auto conditionEnd{preprocessor.SkipUntilConditionEnd()};
 
         if (!conditionEnd.has_value()) {
             auto &compilerState{parsing_sema::CompilerState::GetInstance()};
@@ -77,13 +76,12 @@ namespace jcc::preprocessor::commands {
             case tokenizer::Directive::Else:
                 return;
 
-            case tokenizer::Directive::If: {
-                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
-                compilerState.EmplaceFatalDiagnostic<diagnostics::TodoError>(
-                        conditionEnd->m_Span.m_Source,
-                        conditionEnd->m_Span.m_Span
-                );
-            }
+            case tokenizer::Directive::If:
+                parsing_sema::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                                conditionEnd->m_Span.m_Source,
+                                conditionEnd->m_Span.m_Span
+                        );
             default:
                 assert(false);
                 return;

@@ -10,6 +10,7 @@
 #include <utility>
 
 namespace jcc {
+    // TODO: memory inefficient, refactor to use an unordered_map instead of a std::array
     template<char charRangeStart, char charRangeEnd, class TValue>
     struct TrieNode final {
     public:

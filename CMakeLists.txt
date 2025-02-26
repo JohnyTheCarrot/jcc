@@ -150,6 +150,32 @@ add_library(
         src/diagnostics/variants/visitors/mjolnir_visitor.hpp
         src/diagnostics/variants/visitors/diagnostics_visitor.cpp
         src/misc/visitor.hpp
+        src/diagnostics/variants/parsing/expected_expression.cpp
+        src/diagnostics/variants/parsing/expected_expression.hpp
+        src/diagnostics/variants/unexpected_eof.cpp
+        src/diagnostics/variants/unexpected_eof.hpp
+        src/diagnostics/variants/tk_pp/unexpected_char.cpp
+        src/diagnostics/variants/tk_pp/unexpected_char.hpp
+        src/diagnostics/variants/tk_pp/include_open_failed.cpp
+        src/diagnostics/variants/tk_pp/include_open_failed.hpp
+        src/diagnostics/variants/tk_pp/include_expected_header_name.cpp
+        src/diagnostics/variants/tk_pp/include_expected_header_name.hpp
+        src/diagnostics/variants/tk_pp/directive_expected_newline.cpp
+        src/diagnostics/variants/tk_pp/directive_expected_newline.hpp
+        src/diagnostics/variants/tk_pp/undef_expected_ident.cpp
+        src/diagnostics/variants/tk_pp/undef_expected_ident.hpp
+        src/diagnostics/variants/tk_pp/invalid_macro_param.cpp
+        src/diagnostics/variants/tk_pp/invalid_macro_param.hpp
+        src/diagnostics/variants/tk_pp/macro_name_not_ident.cpp
+        src/diagnostics/variants/tk_pp/macro_name_not_ident.hpp
+        src/diagnostics/variants/tk_pp/unexpected_else.cpp
+        src/diagnostics/variants/tk_pp/unexpected_else.hpp
+        src/diagnostics/variants/tk_pp/else_without_if.cpp
+        src/diagnostics/variants/tk_pp/else_without_if.hpp
+        src/diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.cpp
+        src/diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp
+        src/diagnostics/variants/tk_pp/macro_ellipsis_not_last.cpp
+        src/diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

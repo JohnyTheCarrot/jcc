@@ -6,7 +6,9 @@
 
 #include "gtest/gtest.h"// for PrintToString
 
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
+#include "diagnostics/variants/tk_pp/unexpected_char.hpp"
+#include "diagnostics/variants/unexpected_eof.hpp"
+#include "parsing_sema/parser.h"
 
 namespace jcc::tokenizer {
     CharIter const CharIter::c_UntilNewline{'\n'};
@@ -45,28 +47,25 @@ namespace jcc::tokenizer {
 
     CharInfo CharIter::Expect(char c) {
         if (!Next()) {
-            // auto const lastSpanMarker{
-            //         std::get<Sentinel>(m_CurrentChar).m_LastPos
-            // };
-            // Span span{*m_Source, {lastSpanMarker, lastSpanMarker}};
-
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::UnexpectedEOF, std::move(span)
+            auto const lastSpanMarker{
+                    std::get<Sentinel>(m_CurrentChar).m_LastPos
             };
+            mjolnir::Span span{lastSpanMarker - 1, lastSpanMarker};
+
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
+                            m_Source, span
+                    );
         }
 
         if (auto const [pos, character, isSentinel]{
                     std::get<value_type>(m_CurrentChar)
             };
             character != c) {
-            // Span span{*m_Source, {pos, pos}};
-
-            // TODO: diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::TK_UnexpectedChar, std::move(span),
-                    // character
-            };
+            parsing_sema::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::UnexpectedChar>(
+                            m_Source, mjolnir::Span{pos - 1, pos}
+                    );
         }
 
         return std::get<CharInfo>(m_CurrentChar);
