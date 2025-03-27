@@ -8,7 +8,6 @@
 
 #include "ast_node.h"
 #include "diagnostics/diagnostics.h"
-#include "misc/Diagnosis.h"
 #include "tokenizer/token.h"
 
 namespace jcc::parsing_sema {
@@ -89,7 +88,7 @@ namespace jcc::parsing_sema {
         [[noreturn]]
         void EmplaceFatalDiagnostic(Args &&...args) {
             EmplaceDiagnostic<D>(std::forward<Args>(args)...);
-            throw FatalCompilerError{};
+            throw diagnostics::FatalCompilerError{};
         }
 
         /**
@@ -109,7 +108,7 @@ namespace jcc::parsing_sema {
         [[noreturn]]
         void EmplaceTemporarilyFatalDiagnostic(Args &&...args) {
             EmplaceDiagnostic<D>(std::forward<Args>(args)...);
-            throw FatalCompilerError{};
+            throw diagnostics::FatalCompilerError{};
         }
 
         [[nodiscard]]

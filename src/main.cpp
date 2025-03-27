@@ -5,7 +5,6 @@
 #include <vector>   // for vector
 
 #include "codegen/expressions.h"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
 #include "parsing_sema/additive_expression.h"
 #include "parsing_sema/expression.h"
 #include "parsing_sema/numeric_constant.h"
@@ -62,7 +61,7 @@ int main(int argCount, char *args[]) {
                 module.print(llvm::outs(), nullptr);
             }
         }
-    } catch (jcc::FatalCompilerError const &) {
+    } catch (jcc::diagnostics::FatalCompilerError const &) {
         std::cerr << "A fatal compiler error occurred." << std::endl;
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 

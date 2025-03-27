@@ -11,8 +11,6 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 add_library(
         jcc_core STATIC
-        src/misc/Diagnosis.h
-        src/misc/Diagnosis.cpp
         src/misc/Span.h
         src/misc/Span.cpp
         src/misc/trie.h
@@ -176,6 +174,16 @@ add_library(
         src/diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp
         src/diagnostics/variants/tk_pp/macro_ellipsis_not_last.cpp
         src/diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp
+        src/diagnostics/variants/tk_pp/macro_invoc_expected_lparen.cpp
+        src/diagnostics/variants/tk_pp/macro_invoc_expected_lparen.hpp
+        src/diagnostics/variants/tk_pp/macro_invoc_invalid_num_args.cpp
+        src/diagnostics/variants/tk_pp/macro_invoc_invalid_num_args.hpp
+        src/diagnostics/variants/parsing/unrecognized_integer_suffix.cpp
+        src/diagnostics/variants/parsing/unrecognized_floating_suffix.cpp
+        src/diagnostics/variants/parsing/invalid_floating_point_literal.cpp
+        src/diagnostics/variants/parsing/invalid_integer_literal.cpp
+        src/diagnostics/variants/parsing/expected_rparen.cpp
+        src/diagnostics/variants/sema/no_compat_int_type.cpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

@@ -1,6 +1,7 @@
 #include "primary_expression.h"
 
 #include "constant.h"
+#include "diagnostics/variants/parsing/expected_rparen.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "expression.h"
 
@@ -17,11 +18,11 @@ namespace jcc::parsing_sema {
             auto result{ParseExpression(current, end)};
             if (current == end ||
                 !current->Is(tokenizer::Punctuator::RightParenthesis)) {
-                // TODO: Diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::PRS_ExpectedRParen,
-                        // std::move(firstToken.m_Span)
-                };
+                compilerState
+                        .EmplaceFatalDiagnostic<diagnostics::ExpectedRParen>(
+                                std::move(firstToken.m_Span.m_Source),
+                                firstToken.m_Span.m_Span
+                        );
             }
             result->m_Span = firstToken.m_Span + current->m_Span;
             ++current;

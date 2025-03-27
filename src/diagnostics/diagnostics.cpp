@@ -3,6 +3,12 @@
 #include <utility>
 
 namespace jcc::diagnostics {
+    FatalCompilerError::FatalCompilerError() noexcept = default;
+
+    char const *FatalCompilerError::what() const noexcept {
+        return "Fatal compiler error";
+    }
+
     DiagnosticData::DiagnosticData(
             std::shared_ptr<Source> source, std::size_t startPos,
             mjolnir::BasicReportKind reportKind

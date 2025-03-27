@@ -63,13 +63,17 @@ namespace jcc::preprocessor {
         void OpenHeader(std::string_view filename);
 
         [[nodiscard]]
-        PreprocessorToken GetNextFromTokenizer(bool executeCommands = true);
+        PreprocessorToken GetNextFromTokenizer(
+                bool executeCommands = true, bool expandMacros = true
+        );
 
         [[nodiscard]]
-        PreprocessorToken GetNextPreprocessorToken();
+        PreprocessorToken GetNextPreprocessorToken(
+                bool executeCommands = true, bool expandMacros = true
+        );
 
         [[nodiscard]]
-        PreprocessorToken SimpleTokenRead();
+        PreprocessorToken SimpleTokenRead(bool expandMacros = true);
 
         [[nodiscard]]
         MacroStore &GetMacroStore() const noexcept;

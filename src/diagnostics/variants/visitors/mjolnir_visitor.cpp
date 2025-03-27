@@ -1,8 +1,14 @@
 #include "mjolnir_visitor.hpp"
 
+#include <diagnostics/variants/parsing/invalid_floating_point_literal.hpp>
+#include <diagnostics/variants/parsing/invalid_integer_literal.hpp>
+#include <diagnostics/variants/parsing/unrecognized_floating_suffix.hpp>
+#include <diagnostics/variants/parsing/unrecognized_integer_suffix.hpp>
+#include <diagnostics/variants/sema/no_compat_int_type.hpp>
 #include <mjolnir/report.hpp>
 
 #include "diagnostics/variants/parsing/expected_expression.hpp"
+#include "diagnostics/variants/parsing/expected_rparen.hpp"
 #include "diagnostics/variants/sema/modulo_with_non_int.hpp"
 #include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
 #include "diagnostics/variants/sema/shift_operand_non_int.hpp"
@@ -21,12 +27,15 @@
 #include "diagnostics/variants/tk_pp/invalid_macro_param.hpp"
 #include "diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp"
 #include "diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp"
+#include "diagnostics/variants/tk_pp/macro_invoc_expected_lparen.hpp"
+#include "diagnostics/variants/tk_pp/macro_invoc_invalid_num_args.hpp"
 #include "diagnostics/variants/tk_pp/macro_name_not_ident.hpp"
 #include "diagnostics/variants/tk_pp/multi_byte_char_impl_def.hpp"
 #include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"
+#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/unexpected_char.hpp"
 #include "diagnostics/variants/tk_pp/unexpected_else.hpp"
 #include "diagnostics/variants/tk_pp/unknown_escape_seq.hpp"
@@ -619,6 +628,103 @@ namespace jcc::diagnostics {
                         mjolnir::Label{diag.m_CommaSpan}.with_color(
                                 c_ErrorColor
                         )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(MacroInvocExpectedLparen const &diag) const {
+        StartReport(diag)
+                .with_message(
+                        "Left parenthesis expected after function-like macro "
+                        "invocation."
+                )
+                .with_label(mjolnir::Label{diag.m_MacroNameSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_NextTokenSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(MacroInvocInvalidNumArgs const &diag) const {
+        auto const expectedArgsStr{std::to_string(diag.m_ExpectedNArgs)};
+        auto const receivedArgsStr{std::to_string(diag.m_ReceivedNArgs)};
+
+        StartReport(diag)
+                .with_message(
+                        std::format(
+                                "Expected {}{} arguments, but received {}.",
+                                diag.m_IsMinimum ? "at least " : "",
+                                mjolnir::colors::light_green.fg(
+                                        expectedArgsStr
+                                ),
+                                c_ErrorColor.fg(receivedArgsStr)
+                        )
+                )
+                .with_label(mjolnir::Label{diag.m_MacroInvocSpan})
+                .with_label(
+                        mjolnir::Label{diag.m_MacroArgsSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UnrecognizedIntegerSuffix const &diag) const {
+        StartReport(diag)
+                .with_message("Unrecognized integer suffix.")
+                .with_label(
+                        mjolnir::Label{diag.m_SuffixSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(UnrecognizedFloatingSuffix const &diag) const {
+        StartReport(diag)
+                .with_message("Unrecognized floating point suffix.")
+                .with_label(
+                        mjolnir::Label{diag.m_SuffixSpan}.with_color(
+                                c_ErrorColor
+                        )
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(InvalidFloatingPointLiteral const &diag) const {
+        StartReport(diag)
+                .with_message("Invalid floating point literal.")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(InvalidIntegerLiteral const &diag) const {
+        StartReport(diag)
+                .with_message("Invalid integer literal.")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(ExpectedRParen const &diag) const {
+        StartReport(diag)
+                .with_message("Expected right parenthesis.")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                )
+                .print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(NoCompatIntType const &diag) const {
+        StartReport(diag)
+                .with_message("No compatible integer type found.")
+                .with_label(
+                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }

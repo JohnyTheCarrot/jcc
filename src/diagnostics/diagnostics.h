@@ -10,6 +10,14 @@
 namespace jcc::diagnostics {
     class DiagnosticsVisitor;
 
+    class FatalCompilerError final : public std::exception {
+    public:
+        FatalCompilerError() noexcept;
+
+        [[nodiscard]]
+        char const *what() const noexcept override;
+    };
+
     struct DiagnosticData {
         std::shared_ptr<Source>  m_Source;
         std::size_t              m_StartPos;

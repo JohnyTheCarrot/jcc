@@ -42,6 +42,14 @@ namespace jcc::diagnostics {
         void Print(ElseWithoutIf const &diag) const override;
         void Print(MacroExpectedCommaOrRparen const &diag) const override;
         void Print(MacroEllipsisNotLast const &diag) const override;
+        void Print(MacroInvocExpectedLparen const &diag) const override;
+        void Print(MacroInvocInvalidNumArgs const &diag) const override;
+        void Print(UnrecognizedIntegerSuffix const &diag) const override;
+        void Print(UnrecognizedFloatingSuffix const &diag) const override;
+        void Print(InvalidFloatingPointLiteral const &diag) const override;
+        void Print(InvalidIntegerLiteral const &diag) const override;
+        void Print(ExpectedRParen const &diag) const override;
+        void Print(NoCompatIntType const &diag) const override;
     };
 }// namespace jcc::diagnostics
 #endif//MJOLNIR_VISITOR_HPP

@@ -10,7 +10,6 @@
 #include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/compiler_data_types.h"// for Char32, Int
-#include "misc/Diagnosis.h"          // for Diagnosis, FatalCompilerError
 #include "misc/Span.h"               // for Span, SpanMarker (ptr only)
 #include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter

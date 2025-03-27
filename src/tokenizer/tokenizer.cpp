@@ -8,7 +8,6 @@
 
 #include "diagnostics/variants/tk_pp/unexpected_char.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerError
 #include "parsing_sema/parser.h"
 #include "tokenizer/char_iter.h"         // for CharIter, CharInfo
 #include "tokenizer/tokenizer_iterator.h"// for TokenizerIterator

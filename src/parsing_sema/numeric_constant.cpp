@@ -1,5 +1,10 @@
 #include "numeric_constant.h"
 
+#include <diagnostics/variants/parsing/invalid_floating_point_literal.hpp>
+#include <diagnostics/variants/parsing/invalid_integer_literal.hpp>
+#include <diagnostics/variants/parsing/unrecognized_floating_suffix.hpp>
+#include <diagnostics/variants/parsing/unrecognized_integer_suffix.hpp>
+#include <diagnostics/variants/sema/no_compat_int_type.hpp>
 #include <iostream>
 #include <magic_enum/magic_enum.hpp>
 #include <string_view>
@@ -47,10 +52,17 @@ namespace jcc::parsing_sema {
 
     /**
      * Types must be ordered from smallest to largest.
+     *
+     * This function will return the smallest compatible type that can hold a value of at least `numBits` bits.
+     *
+     * @param intSpan The span of the integer literal
+     * @param types The list of types to choose from
+     * @param numBits The minimum number of bits the type must be able to hold
+     * @param signPossibilities The possible signs of the integer
      */
     [[nodiscard]]
     types::IntegerType ChooseSmallestCompatible(
-            Span &, std::span<types::StandardIntegerType const> types,
+            Span &intSpan, std::span<types::StandardIntegerType const> types,
             unsigned numBits, SignPossibilities signPossibilities
     ) {
         using namespace magic_enum::bitwise_operators;
@@ -78,17 +90,16 @@ namespace jcc::parsing_sema {
             }
         }
 
-        // TODO: Diagnosis
-        throw FatalCompilerError{
-                // Diagnosis::Kind::SEMA_NoCompatibleIntegerType,
-                // std::move(intSpan)
-        };
+        CompilerState::GetInstance()
+                .EmplaceFatalDiagnostic<diagnostics::NoCompatIntType>(
+                        std::move(intSpan.m_Source), intSpan.m_Span
+                );
     }
 
     [[nodiscard]]
     types::IntegerType ParseIntegerType(
-            Span &intSpan, Span &, std::string_view typeSuffix, int numMinBits,
-            bool isDecimal, bool isForcedUnsigned
+            Span &intSpan, Span &suffixSpan, std::string_view typeSuffix,
+            int numMinBits, bool isDecimal, bool isForcedUnsigned
     ) {
         auto signPossibilities{
                 isForcedUnsigned ? SignPossibilities::Unsigned
@@ -147,11 +158,11 @@ namespace jcc::parsing_sema {
             };
         }
 
-        // TODO: Diagnosis
-        throw FatalCompilerError{
-                // Diagnosis::Kind::PRS_UnrecognizedIntegerSuffix,
-                // std::move(suffixSpan)
-        };
+        CompilerState::GetInstance()
+                .EmplaceTemporarilyFatalDiagnostic<
+                        diagnostics::UnrecognizedIntegerSuffix>(
+                        suffixSpan.m_Source, suffixSpan.m_Span
+                );
     }
 
     types::IntegerType ParseIntegerSuffix(
@@ -223,7 +234,8 @@ namespace jcc::parsing_sema {
     constexpr auto RADIX_DEC{10};
 
     [[nodiscard]]
-    types::FloatingType ParseFloatingSuffix(Span &, std::string_view suffix) {
+    types::FloatingType
+    ParseFloatingSuffix(Span &suffixSpan, std::string_view suffix) {
         if (suffix.empty()) {
             return types::FloatingType{types::StandardFloatingType::Double};
         }
@@ -236,11 +248,11 @@ namespace jcc::parsing_sema {
             return types::FloatingType{types::StandardFloatingType::LongDouble};
         }
 
-        // TODO: Diagnosis
-        throw FatalCompilerError{
-                // Diagnosis::Kind::PRS_UnrecognizedFloatingSuffix,
-                // std::move(suffixSpan)
-        };
+        CompilerState::GetInstance()
+                .EmplaceTemporarilyFatalDiagnostic<
+                        diagnostics::UnrecognizedFloatingSuffix>(
+                        suffixSpan.m_Source, suffixSpan.m_Span
+                );
     }
 
     [[nodiscard]]
@@ -272,11 +284,12 @@ namespace jcc::parsing_sema {
                     exponentStart.data() + exponentStart.size(), exponent
             )};
             if (exponentResult.ec != std::errc{}) {
-                // TODO: Diagnosis
-                throw FatalCompilerError{
-                        // Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
-                        // std::move(token.m_Span)
-                };
+                CompilerState::GetInstance()
+                        .EmplaceTemporarilyFatalDiagnostic<
+                                diagnostics::InvalidFloatingPointLiteral>(
+                                std::move(token.m_Span.m_Source),
+                                token.m_Span.m_Span
+                        );
             }
 
             std::string_view const suffix{exponentResult.ptr, rest.end()};
@@ -309,11 +322,12 @@ namespace jcc::parsing_sema {
                 fractionalValue
         )};
         if (result.ec != std::errc{}) {
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PRS_InvalidFloatingPointLiteral,
-                    // std::move(token.m_Span)
-            };
+            CompilerState::GetInstance()
+                    .EmplaceTemporarilyFatalDiagnostic<
+                            diagnostics::InvalidFloatingPointLiteral>(
+                            std::move(token.m_Span.m_Source),
+                            token.m_Span.m_Span
+                    );
         }
 
         // Floating-point literals without a fractional part must have an exponent.
@@ -387,11 +401,12 @@ namespace jcc::parsing_sema {
                 integerValue, radix
         )};
         if (result.ec != std::errc{}) {
-            // TODO: Diagnosis
-            throw FatalCompilerError{
-                    // Diagnosis::Kind::PRS_InvalidIntegerLiteral,
-                    // std::move(token.m_Span)
-            };
+            CompilerState::GetInstance()
+                    .EmplaceTemporarilyFatalDiagnostic<
+                            diagnostics::InvalidIntegerLiteral>(
+                            std::move(token.m_Span.m_Source),
+                            token.m_Span.m_Span
+                    );
         }
 
         auto const minBits{CalcMinNumBits(integerValue)};

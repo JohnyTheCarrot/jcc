@@ -42,7 +42,8 @@ namespace jcc::preprocessor::commands {
     GatherParameterList(Preprocessor &preprocessor, Span &span) {
         macro::FunctionLikeMacro::ParameterList parameterList{};
 
-        auto [token, isFromMacro]{preprocessor.GetNextFromTokenizer(false)};
+        auto [token,
+              isFromMacro]{preprocessor.GetNextFromTokenizer(false, false)};
 
         while (true) {
             if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
@@ -94,7 +95,7 @@ namespace jcc::preprocessor::commands {
                         );
             }
 
-            token = preprocessor.GetNextPreprocessorToken().m_Token;
+            token = preprocessor.GetNextPreprocessorToken(false, false).m_Token;
         }
     }
 
@@ -143,7 +144,7 @@ namespace jcc::preprocessor::commands {
     std::optional<PreprocessorToken> DefineCommand::Execute(
             Preprocessor &preprocessor, tokenizer::Token &&directive
     ) const {
-        auto nextToken{preprocessor.SimpleTokenRead().m_Token};
+        auto nextToken{preprocessor.SimpleTokenRead(false).m_Token};
 
         auto const isIdent{
                 std::holds_alternative<tokenizer::Identifier>(nextToken.m_Value)
@@ -185,7 +186,7 @@ namespace jcc::preprocessor::commands {
             return std::nullopt;
         }
 
-        auto nextPpToken{preprocessor.SimpleTokenRead()};
+        auto nextPpToken{preprocessor.SimpleTokenRead(false)};
         nextToken = nextPpToken.m_Token;
 
         if (nextToken.Is(tokenizer::SpecialPurpose::NewLine)) {

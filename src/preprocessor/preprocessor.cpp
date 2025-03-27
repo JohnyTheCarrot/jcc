@@ -16,9 +16,12 @@
 #include "preprocessor/preprocessor_token.h"   // for PreprocessorToken
 
 namespace jcc::preprocessor {
-    PreprocessorToken Preprocessor::GetNextPreprocessorToken() {
+    PreprocessorToken Preprocessor::GetNextPreprocessorToken(
+            bool executeCommands, bool expandMacros
+    ) {
         while (true) {
-            if (auto ppToken{GetNextFromTokenizer()};
+            if (auto ppToken{GetNextFromTokenizer(executeCommands, expandMacros)
+                };
                 !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
                 return ppToken;
             }
@@ -73,9 +76,11 @@ namespace jcc::preprocessor {
         }
     }
 
-    PreprocessorToken Preprocessor::GetNextFromTokenizer(bool executeCommands) {
+    PreprocessorToken Preprocessor::GetNextFromTokenizer(
+            bool executeCommands, bool expandMacros
+    ) {
         while (true) {
-            auto ppToken{SimpleTokenRead()};
+            auto ppToken{SimpleTokenRead(expandMacros)};
 
             if (auto &[token, span]{ppToken.m_Token};
                 std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
@@ -121,20 +126,23 @@ namespace jcc::preprocessor {
         }
     }
 
-    PreprocessorToken Preprocessor::SimpleTokenRead() {
+    PreprocessorToken Preprocessor::SimpleTokenRead(bool expandMacros) {
         while (true) {
-            if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()};
-                token.has_value()) {
+            if (expandMacros) {
+                if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()
+                    };
+                    token.has_value()) {
 
-                // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-                return {std::move(token.value()), false};
-            }
+                    // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+                    return {std::move(token.value()), false};
+                }
 
-            if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
-                token.has_value()) {
+                if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
+                    token.has_value()) {
 
-                // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-                return {std::move(token.value()), false};
+                    // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
+                    return {std::move(token.value()), false};
+                }
             }
 
             auto const &tokenizer{m_TokenizerStack.top().GetTokenizer()};

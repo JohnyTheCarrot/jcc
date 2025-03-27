@@ -6,7 +6,6 @@
 #include "diagnostics/variants/tk_pp/directive_expected_newline.hpp"
 #include "diagnostics/variants/tk_pp/include_expected_header_name.hpp"
 #include "diagnostics/variants/tk_pp/include_open_failed.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerE...
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/preprocessor.h"    // for Preprocessor

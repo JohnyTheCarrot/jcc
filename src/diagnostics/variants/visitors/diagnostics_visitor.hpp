@@ -3,9 +3,17 @@
 
 #include <ostream>
 
-#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
-
 namespace jcc::diagnostics {
+#pragma region Forward declarations
+    struct NoCompatIntType;
+    struct ExpectedRParen;
+    struct InvalidIntegerLiteral;
+    struct InvalidFloatingPointLiteral;
+    struct UndefExpectedIdent;
+    struct UnrecognizedFloatingSuffix;
+    struct UnrecognizedIntegerSuffix;
+    struct MacroInvocInvalidNumArgs;
+    struct MacroInvocExpectedLparen;
     struct MacroEllipsisNotLast;
     struct MacroExpectedCommaOrRparen;
     struct ElseWithoutIf;
@@ -39,6 +47,7 @@ namespace jcc::diagnostics {
     struct UntermedChar;
     struct UntermedString;
     struct Utf8TooManyChars;
+#pragma endregion
 
     class DiagnosticsVisitor {
         std::ostream *m_Ostream;
@@ -86,6 +95,14 @@ namespace jcc::diagnostics {
         virtual void Print(ElseWithoutIf const &diag) const               = 0;
         virtual void Print(MacroExpectedCommaOrRparen const &diag) const  = 0;
         virtual void Print(MacroEllipsisNotLast const &diag) const        = 0;
+        virtual void Print(MacroInvocExpectedLparen const &diag) const    = 0;
+        virtual void Print(MacroInvocInvalidNumArgs const &diag) const    = 0;
+        virtual void Print(UnrecognizedIntegerSuffix const &diag) const   = 0;
+        virtual void Print(UnrecognizedFloatingSuffix const &diag) const  = 0;
+        virtual void Print(InvalidFloatingPointLiteral const &diag) const = 0;
+        virtual void Print(InvalidIntegerLiteral const &diag) const       = 0;
+        virtual void Print(ExpectedRParen const &diag) const              = 0;
+        virtual void Print(NoCompatIntType const &diag) const             = 0;
     };
 }// namespace jcc::diagnostics
 

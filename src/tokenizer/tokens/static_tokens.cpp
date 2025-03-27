@@ -4,7 +4,6 @@
 #include <optional>// for optional, operator==, nullopt
 #include <utility> // for move
 
-#include "misc/Diagnosis.h"     // for Diagnosis, FatalCompilerError
 #include "misc/trie.h"          // for TrieNode
 #include "tokenizer/char_iter.h"// for CharIter
 
@@ -236,7 +235,7 @@ namespace jcc::tokenizer::static_tokens {
 
         if (!trieResult.has_value())
             // TODO: diagnosis? do we need to diagnose this? does this even happen?
-            throw FatalCompilerError{
+            throw diagnostics::FatalCompilerError{
                     // Diagnosis::Kind::TK_PartialTokenEncountered, std::move(span)
             };
 

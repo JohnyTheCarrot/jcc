@@ -4,7 +4,6 @@
 #include <variant>// for get
 
 #include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
-#include "misc/Diagnosis.h"// for Diagnosis, FatalCompilerE...
 #include "parsing_sema/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/macro_store.h"     // for MacroStore
