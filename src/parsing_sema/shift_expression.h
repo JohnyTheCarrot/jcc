@@ -22,7 +22,7 @@ namespace jcc::parsing_sema {
         [[nodiscard]]
         ShiftOperator GetOperator() const noexcept;
 
-        void Accept(ExpressionVisitor *visitor) const override;
+        void AcceptOnExpression(ExpressionVisitor *visitor) const override;
     };
 
     [[nodiscard]]

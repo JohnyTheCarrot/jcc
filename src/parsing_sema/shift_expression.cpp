@@ -17,7 +17,7 @@ namespace jcc::parsing_sema {
         return m_Operator;
     }
 
-    void AstShiftExpression::Accept(ExpressionVisitor *visitor) const {
+    void AstShiftExpression::AcceptOnExpression(ExpressionVisitor *visitor) const {
         visitor->Visit(this);
     }
 

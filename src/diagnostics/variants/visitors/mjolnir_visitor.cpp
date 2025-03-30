@@ -7,8 +7,9 @@
 #include <diagnostics/variants/sema/no_compat_int_type.hpp>
 #include <mjolnir/report.hpp>
 
+#include "diagnostics/variants/parsing/basic_syntax_error.hpp"
 #include "diagnostics/variants/parsing/expected_expression.hpp"
-#include "diagnostics/variants/parsing/expected_rparen.hpp"
+#include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "diagnostics/variants/sema/modulo_with_non_int.hpp"
 #include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
 #include "diagnostics/variants/sema/shift_operand_non_int.hpp"
@@ -711,18 +712,51 @@ namespace jcc::diagnostics {
                 .print(GetOstream());
     }
 
-    void MjolnirVisitor::Print(ExpectedRParen const &diag) const {
+    void MjolnirVisitor::Print(BasicSyntaxError const &diag) const {
+        auto report = StartReport(diag).with_label(
+                mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+        );
+
+        if (std::holds_alternative<std::string>(diag.m_Message)) {
+            auto &message{std::get<std::string>(diag.m_Message)};
+
+            report.with_message(std::move(message));
+        } else if (std::holds_alternative<
+                           BasicSyntaxError::ExpectedReceivedPair>(
+                           diag.m_Message
+                   )) {
+            auto &[expected,
+                   received]{std::get<BasicSyntaxError::ExpectedReceivedPair>(
+                    diag.m_Message
+            )};
+            constexpr auto expectedColor{mjolnir::colors::light_green};
+            constexpr auto receivedColor{c_ErrorColor};
+
+            report.with_message(
+                    std::format(
+                            "Expected {} but received {}.",
+                            expectedColor.fg(expected),
+                            receivedColor.fg(received)
+                    )
+            );
+        }
+
+        report.print(GetOstream());
+    }
+
+    void MjolnirVisitor::Print(NoCompatIntType const &diag) const {
         StartReport(diag)
-                .with_message("Expected right parenthesis.")
+                .with_message("No compatible integer type found.")
                 .with_label(
                         mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
 
-    void MjolnirVisitor::Print(NoCompatIntType const &diag) const {
+    void
+    MjolnirVisitor::Print(InvalidSpecifierQualifierList const &diag) const {
         StartReport(diag)
-                .with_message("No compatible integer type found.")
+                .with_message("Invalid specifier-qualifier list.")
                 .with_label(
                         mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )

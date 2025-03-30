@@ -1,7 +1,6 @@
 #include "types.h"
 
 #include <magic_enum/magic_enum.hpp>
-#include <magic_enum/magic_enum_flags.hpp>
 #include <unordered_set>
 
 #include "tokenizer/token.h"
@@ -40,6 +39,10 @@ namespace jcc::parsing_sema {
 
     void PrintTo(BasicTypeSpecifier specifier, std::ostream *os) {
         *os << magic_enum::enum_flags_name(specifier);
+    }
+
+    TypeSpecifier::TypeSpecifier(BasicTypeSpecifier specifier) noexcept
+        : m_BasicSpecifiers{specifier} {
     }
 
     using namespace magic_enum::bitwise_operators;
@@ -113,33 +116,92 @@ namespace jcc::parsing_sema {
             BasicTypeSpecifier::Complex | BasicTypeSpecifier::LongDouble
     };
 
+    bool TypeSpecifier::IsEmpty() const noexcept {
+        if (m_BasicSpecifiers == BasicTypeSpecifier::None)
+            return true;
+
+        return false;
+    }
+
+    TypeSpecifier &TypeSpecifier::operator|=(BasicTypeSpecifier specifier
+    ) noexcept {
+        m_BasicSpecifiers = m_BasicSpecifiers | specifier;
+        return *this;
+    }
+
+    TypeSpecifier &TypeSpecifier::operator|=(TypeSpecifier const &specifier
+    ) noexcept {
+        m_BasicSpecifiers |= specifier.m_BasicSpecifiers;
+
+        return *this;
+    }
+
+    TypeSpecifier TypeSpecifier::operator|(BasicTypeSpecifier specifier
+    ) const noexcept {
+        TypeSpecifier result{*this};
+        result |= specifier;
+        return result;
+    }
+
+    TypeSpecifier TypeSpecifier::operator|(TypeSpecifier const &specifier
+    ) const noexcept {
+        TypeSpecifier result{*this};
+        result |= specifier;
+        return result;
+    }
+
+    bool TypeSpecifier::IsValid() const {
+        // TODO: Check for invalid combinations of non basic type specifiers.
+        return AreBasicTypesCompatible(m_BasicSpecifiers);
+    }
+
     bool AreBasicTypesCompatible(BasicTypeSpecifier types) {
         return c_ValidBasicTypeSpecifiers.contains(types);
     }
 
-    void CombineTypeSpecifiers(
-            TypeSpecifier &current, TypeSpecifier const &specifier
-    ) {
-        if (!std::holds_alternative<BasicTypeSpecifier>(current) ||
-            !std::holds_alternative<BasicTypeSpecifier>(specifier)) {
-            throw std::invalid_argument{
-                    "The type specifiers must be basic types."
-            };
+    TypeSpecifierQualifier &
+    TypeSpecifierQualifier::operator|=(TypeSpecifierQualifier const &other
+    ) noexcept {
+        m_Specifiers |= other.m_Specifiers;
+        m_Qualifiers |= other.m_Qualifiers;
+        return *this;
+    }
+
+    bool TypeSpecifierQualifier::IsEmpty() const noexcept {
+        return m_Specifiers.IsEmpty() && m_Qualifiers == TypeQualifier::None;
+    }
+
+    SpecifierQualifierList::SpecifierQualifierList(
+            Span &&span, TypeSpecifierQualifier list
+    )
+        : AstNode{std::move(span)}
+        , m_List{list} {
+    }
+
+    void SpecifierQualifierList::AcceptOnNode(AstNodeVisitor *visitor) const {
+        visitor->Visit(this);
+    }
+
+    bool SpecifierQualifierList::IsValid() const noexcept {
+        return m_List.m_Specifiers.IsValid();
+    }
+
+    std::optional<TypeQualifier>
+    ParseTypeQualifier(tokenizer::Token const &token) {
+        if (!token.Is<tokenizer::Keyword>())
+            return std::nullopt;
+
+        switch (std::get<tokenizer::Keyword>(token.m_Value)) {
+            case tokenizer::Keyword::Const:
+                return TypeQualifier::Const;
+            case tokenizer::Keyword::Restrict:
+                return TypeQualifier::Restrict;
+            case tokenizer::Keyword::Volatile:
+                return TypeQualifier::Volatile;
+            case tokenizer::Keyword::Atomic:
+                return TypeQualifier::Atomic;
+            default:
+                return std::nullopt;
         }
-
-        auto       basicCurrent{std::get<BasicTypeSpecifier>(current)};
-        auto const basicSpecifier{std::get<BasicTypeSpecifier>(specifier)};
-
-        basicCurrent |= basicSpecifier;
-
-        if (AreBasicTypesCompatible(basicCurrent)) {
-            current = basicCurrent;
-            return;
-        }
-
-        throw std::invalid_argument{
-                "The given type specifier is not compatible with the current "
-                "type specifier."
-        };
     }
 }// namespace jcc::parsing_sema

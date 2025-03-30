@@ -18,7 +18,7 @@ namespace jcc::parsing_sema {
         [[nodiscard]]
         IntValue GetValue() const noexcept;
 
-        void Accept(ExpressionVisitor *visitor) const override;
+        void AcceptOnExpression(ExpressionVisitor *visitor) const override;
 
         [[nodiscard]]
         bool operator==(AstIntegerConstant const &other) const;
@@ -39,7 +39,7 @@ namespace jcc::parsing_sema {
         [[nodiscard]]
         FloatingValue GetValue() const noexcept;
 
-        void Accept(ExpressionVisitor *visitor) const override;
+        void AcceptOnExpression(ExpressionVisitor *visitor) const override;
     };
 
     [[nodiscard]]

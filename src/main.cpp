@@ -33,12 +33,12 @@ int main(int argCount, char *args[]) {
         };
         jcc::parsing_sema::SemaVisitor semaVisitor;
         if (constant != nullptr) {
-            constant->Accept(&semaVisitor);
+            constant->AcceptOnExpression(&semaVisitor);
 
             if (!compilerState.HasFatalError()) {
                 jcc::codegen::ExpressionCodegenVisitor codegenVisitor;
 
-                constant->Accept(&codegenVisitor);
+                constant->AcceptOnExpression(&codegenVisitor);
                 auto *value{codegenVisitor.GetValue()};
                 auto &context{compState.GetContext()};
                 auto &builder{compState.GetBuilder()};

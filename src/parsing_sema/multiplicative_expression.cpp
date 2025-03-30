@@ -1,6 +1,7 @@
 #include "multiplicative_expression.h"
 
 #include "binary_expression.h"
+#include "cast_expression.hpp"
 #include "preprocessor/preprocessor_iterator.h"
 #include "primary_expression.h"
 
@@ -18,7 +19,9 @@ namespace jcc::parsing_sema {
         return m_Operator;
     }
 
-    void AstMultiplicativeExpression::Accept(ExpressionVisitor *visitor) const {
+    void AstMultiplicativeExpression::AcceptOnExpression(
+            ExpressionVisitor *visitor
+    ) const {
         visitor->Visit(this);
     }
 
@@ -43,7 +46,7 @@ namespace jcc::parsing_sema {
     ) {
         return ParseBinaryExpression<
                 MultiplicativeOperator, AstMultiplicativeExpression>(
-                GetMultiplicativeOperator, ParsePrimaryExpression, current, end
+                GetMultiplicativeOperator, ParseCastExpression, current, end
         );
     }
 }// namespace jcc::parsing_sema

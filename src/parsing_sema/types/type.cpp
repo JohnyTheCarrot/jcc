@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "parsing_sema/parser.h"
+#include "parsing_sema/types.h"
 
 namespace jcc::parsing_sema::types {
     BitInteger::BitInteger(int bitWidth)
@@ -181,7 +182,7 @@ namespace jcc::parsing_sema::types {
     }
 
     IntegerType
-    IntegerType::UsualArithmeticConversion(IntegerType const &other) const {
+    IntegerType::UsualArithmeticConversion(IntegerType other) const {
         // Promote both operands
         auto const promotedLhs{Promote()};
         auto const promotedRhs{other.Promote()};
@@ -214,6 +215,11 @@ namespace jcc::parsing_sema::types {
 
         // Otherwise, both operands are converted to the unsigned type corresponding to the signed type
         return IntegerType{signedType.m_Type, Signedness::Unsigned};
+    }
+
+    FloatingType
+    IntegerType::UsualArithmeticConversion(FloatingType other) const {
+        return other;
     }
 
     void PrintTo(IntegerType type, std::ostream *os) {
@@ -312,6 +318,97 @@ namespace jcc::parsing_sema::types {
         : m_Type{type} {
     }
 
+    [[nodiscard]]
+    IntegerType::Signedness GetSignedness(BasicTypeSpecifier specifier) {
+        using namespace magic_enum::bitwise_operators;
+
+        if ((specifier & BasicTypeSpecifier::Signed) ==
+            BasicTypeSpecifier::Signed)
+            return IntegerType::Signedness::Signed;
+
+        if ((specifier & BasicTypeSpecifier::Unsigned) ==
+            BasicTypeSpecifier::Unsigned)
+            return IntegerType::Signedness::Unsigned;
+
+        return IntegerType::Signedness::Unspecified;
+    }
+
+    ValueType::ValueType(TypeSpecifier const &typeSpecifiers)
+        : m_Type{[typeSpecifiers] -> Type {
+            using namespace magic_enum::bitwise_operators;
+
+            switch (auto const specifiers{typeSpecifiers.GetBasicSpecifiers()}
+            ) {
+                case BasicTypeSpecifier::Bool:
+                    return IntegerType{
+                            StandardIntegerType::Bool,
+                            IntegerType::Signedness::Unspecified
+                    };
+                case BasicTypeSpecifier::Char:
+                    return IntegerType{
+                            StandardIntegerType::Char, GetSignedness(specifiers)
+                    };
+                case BasicTypeSpecifier::Short:
+                case BasicTypeSpecifier::Short | BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::Short | BasicTypeSpecifier::Signed:
+                case BasicTypeSpecifier::Short | BasicTypeSpecifier::Signed |
+                        BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::Short | BasicTypeSpecifier::Unsigned:
+                case BasicTypeSpecifier::Short | BasicTypeSpecifier::Unsigned |
+                        BasicTypeSpecifier::Int:
+                    return IntegerType{
+                            StandardIntegerType::Short,
+                            GetSignedness(specifiers)
+                    };
+                case BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::Signed:
+                case BasicTypeSpecifier::Int | BasicTypeSpecifier::Signed:
+                case BasicTypeSpecifier::Unsigned:
+                case BasicTypeSpecifier::Int | BasicTypeSpecifier::Unsigned:
+                    return IntegerType{
+                            StandardIntegerType::Int, GetSignedness(specifiers)
+                    };
+                case BasicTypeSpecifier::Long:
+                case BasicTypeSpecifier::Long | BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::Long | BasicTypeSpecifier::Signed:
+                case BasicTypeSpecifier::Long | BasicTypeSpecifier::Signed |
+                        BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::Long | BasicTypeSpecifier::Unsigned:
+                case BasicTypeSpecifier::Long | BasicTypeSpecifier::Unsigned |
+                        BasicTypeSpecifier::Int:
+                    return IntegerType{
+                            StandardIntegerType::Long, GetSignedness(specifiers)
+                    };
+                case BasicTypeSpecifier::LongLong:
+                case BasicTypeSpecifier::LongLong | BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::LongLong | BasicTypeSpecifier::Signed:
+                case BasicTypeSpecifier::LongLong | BasicTypeSpecifier::Signed |
+                        BasicTypeSpecifier::Int:
+                case BasicTypeSpecifier::LongLong |
+                        BasicTypeSpecifier::Unsigned:
+                case BasicTypeSpecifier::LongLong |
+                        BasicTypeSpecifier::Unsigned | BasicTypeSpecifier::Int:
+                    return IntegerType{
+                            StandardIntegerType::LongLong,
+                            GetSignedness(specifiers)
+                    };
+                case BasicTypeSpecifier::BitInt:
+                case BasicTypeSpecifier::BitInt | BasicTypeSpecifier::Signed:
+                    // TODO
+                    throw diagnostics::FatalCompilerError{};
+                case BasicTypeSpecifier::Float:
+                    return FloatingType{StandardFloatingType::Float};
+                case BasicTypeSpecifier::Double:
+                    return FloatingType{StandardFloatingType::Double};
+                case BasicTypeSpecifier::LongDouble:
+                    return FloatingType{StandardFloatingType::LongDouble};
+                // TODO: the other types
+                default:
+                    throw std::runtime_error{"Unhandled type"};
+            }
+        }()} {
+    }
+
     bool ValueType::IsArithmetic() const noexcept {
         if (std::holds_alternative<IntegerType>(m_Type) ||
             std::holds_alternative<FloatingType>(m_Type))
@@ -331,9 +428,7 @@ namespace jcc::parsing_sema::types {
     }
 
     llvm::Type *ValueType::GetLLVMType() const {
-        return std::visit(
-                [&](auto &&arg) { return arg.GetLLVMType(); }, m_Type
-        );
+        return std::visit([](auto &&arg) { return arg.GetLLVMType(); }, m_Type);
     }
 
     ValueType::Type const &ValueType::GetType() const noexcept {
@@ -356,9 +451,12 @@ namespace jcc::parsing_sema::types {
     CastValue(llvm::Value *value, ValueType const &from, ValueType const &to) {
         auto &builder{CompilerState::GetInstance().GetBuilder()};
 
+        if (from == to)
+            return value;
+
         if (from.IsInteger() && to.IsInteger()) {
-            auto const &fromIntegerType{std::get<IntegerType>(from.GetType())};
-            auto const &toIntegerType{std::get<IntegerType>(to.GetType())};
+            auto const fromIntegerType{std::get<IntegerType>(from.GetType())};
+            auto const toIntegerType{std::get<IntegerType>(to.GetType())};
 
             if (fromIntegerType.IsSigned()) {
                 return builder.CreateSExt(value, toIntegerType.GetLLVMType());
@@ -367,9 +465,44 @@ namespace jcc::parsing_sema::types {
             return builder.CreateZExt(value, toIntegerType.GetLLVMType());
         }
 
-        throw std::runtime_error{
-                "TODO: Implement CastValue for non-integer types"
-        };
+        if (from.IsFloating() && to.IsFloating()) {
+            auto const toFloatingType{std::get<FloatingType>(to.GetType())};
+
+            return builder.CreateFPCast(
+                    value, toFloatingType.GetLLVMType(), "fp_cast"
+            );
+        }
+
+        if (from.IsInteger() && to.IsFloating()) {
+            auto const integerType{std::get<IntegerType>(from.GetType())};
+            auto const floatingType{std::get<FloatingType>(to.GetType())};
+
+            if (integerType.IsSigned()) {
+                return builder.CreateSIToFP(
+                        value, floatingType.GetLLVMType(), "signed_int_to_float"
+                );
+            }
+
+            return builder.CreateUIToFP(
+                    value, floatingType.GetLLVMType(), "unsigned_int_to_float"
+            );
+        }
+
+        if (from.IsFloating() && to.IsInteger()) {
+            auto const integerType{std::get<IntegerType>(to.GetType())};
+
+            if (integerType.IsSigned()) {
+                return builder.CreateFPToSI(
+                        value, integerType.GetLLVMType(), "float_to_signed_int"
+                );
+            }
+
+            return builder.CreateFPToUI(
+                    value, integerType.GetLLVMType(), "float_to_unsigned_int"
+            );
+        }
+
+        throw diagnostics::FatalCompilerError{};
     }
 
     void PrintTo(ValueType const &type, std::ostream *os) {
@@ -399,12 +532,21 @@ namespace jcc::parsing_sema::types {
             return ValueType{lhsIntType.UsualArithmeticConversion(rhsIntType)};
         }
 
-        if (std::holds_alternative<FloatingType>(lhs.GetType()) ^
+        if (std::holds_alternative<FloatingType>(lhs.GetType()) !=
             std::holds_alternative<FloatingType>(rhs.GetType())) {
-            if (lhs.IsInteger())
-                return ValueType{std::get<FloatingType>(rhs.GetType())};
+            auto const theFloatType{
+                    std::holds_alternative<FloatingType>(lhs.GetType())
+                            ? std::get<FloatingType>(lhs.GetType())
+                            : std::get<FloatingType>(rhs.GetType())
+            };
+            auto const theIntType{
+                    std::holds_alternative<FloatingType>(lhs.GetType())
+                            ? std::get<IntegerType>(rhs.GetType())
+                            : std::get<IntegerType>(lhs.GetType())
+            };
 
-            return ValueType{std::get<FloatingType>(lhs.GetType())};
+            return ValueType{theIntType.UsualArithmeticConversion(theFloatType)
+            };
         }
 
         if (std::holds_alternative<FloatingType>(lhs.GetType()) &&

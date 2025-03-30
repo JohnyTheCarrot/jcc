@@ -23,7 +23,7 @@ namespace jcc::parsing_sema {
         return m_Value;
     }
 
-    void AstIntegerConstant::Accept(ExpressionVisitor *visitor) const {
+    void AstIntegerConstant::AcceptOnExpression(ExpressionVisitor *visitor) const {
         return visitor->Visit(this);
     }
 
@@ -225,7 +225,7 @@ namespace jcc::parsing_sema {
         return m_Value;
     }
 
-    void AstFloatingConstant::Accept(ExpressionVisitor *visitor) const {
+    void AstFloatingConstant::AcceptOnExpression(ExpressionVisitor *visitor) const {
         return visitor->Visit(this);
     }
 

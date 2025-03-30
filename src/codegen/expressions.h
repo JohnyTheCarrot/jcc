@@ -32,6 +32,8 @@ namespace jcc::codegen {
         Visit(parsing_sema::AstFloatingConstant const *astFloatingConst
         ) override;
 
+        void Visit(parsing_sema::AstCastExpression const *astCastExpr) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };

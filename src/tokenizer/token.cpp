@@ -191,6 +191,12 @@ namespace jcc::tokenizer {
         return m_Value == other.m_Value && m_Span == other.m_Span;
     }
 
+    std::string Token::ToString() const {
+        std::stringstream ss;
+        ss << *this;
+        return ss.str();
+    }
+
     void Token::DebugPrintTo(std::ostream &os) const {
         os << '[';
         PrintTo(m_Span, &os);

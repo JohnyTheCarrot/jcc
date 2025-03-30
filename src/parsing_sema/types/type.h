@@ -2,14 +2,50 @@
 #define TYPE_H
 
 #include <llvm/IR/Type.h>
-#include <ostream>
 #include <variant>
 
 namespace llvm {
     class Value;
 }
 
+namespace jcc::parsing_sema {
+    class TypeSpecifier;
+}
+
 namespace jcc::parsing_sema::types {
+#pragma region Floats
+    // Ensure that the enum values indicate the rank of the floating type
+    enum class StandardFloatingType { Float = 0, Double = 1, LongDouble = 2 };
+
+    void PrintTo(StandardFloatingType floatingType, std::ostream *os);
+
+    class FloatingType final {
+    public:
+        using Type = std::variant<StandardFloatingType>;
+
+        explicit FloatingType(Type &&specifier);
+
+        [[nodiscard]]
+        llvm::Type *GetLLVMType() const;
+
+        [[nodiscard]]
+        bool operator==(FloatingType const &other) const;
+
+        [[nodiscard]]
+        Type GetType() const noexcept;
+
+        [[nodiscard]]
+        FloatingType UsualArithmeticConversion(FloatingType const &other) const;
+
+    private:
+        Type m_Type;
+    };
+
+    void PrintTo(FloatingType const &type, std::ostream *os);
+#pragma endregion
+
+#pragma region Ints
+
     namespace int_ranks {
         using IntegerConversionRank = int;
 
@@ -94,7 +130,10 @@ namespace jcc::parsing_sema::types {
         bool CanRepresentValuesOf(IntegerType const &other) const;
 
         [[nodiscard]]
-        IntegerType UsualArithmeticConversion(IntegerType const &other) const;
+        IntegerType UsualArithmeticConversion(IntegerType other) const;
+
+        [[nodiscard]]
+        FloatingType UsualArithmeticConversion(FloatingType other) const;
 
     private:
         Type       m_Type;
@@ -102,40 +141,15 @@ namespace jcc::parsing_sema::types {
     };
 
     void PrintTo(IntegerType type, std::ostream *os);
-
-    enum class StandardFloatingType { Float = 0, Double = 1, LongDouble = 2 };
-
-    void PrintTo(StandardFloatingType floatingType, std::ostream *os);
-
-    class FloatingType final {
-    public:
-        using Type = std::variant<StandardFloatingType>;
-
-        explicit FloatingType(Type &&specifier);
-
-        [[nodiscard]]
-        llvm::Type *GetLLVMType() const;
-
-        [[nodiscard]]
-        bool operator==(FloatingType const &other) const;
-
-        [[nodiscard]]
-        Type GetType() const noexcept;
-
-        [[nodiscard]]
-        FloatingType UsualArithmeticConversion(FloatingType const &other) const;
-
-    private:
-        Type m_Type;
-    };
-
-    void PrintTo(FloatingType const &type, std::ostream *os);
+#pragma endregion
 
     class ValueType final {
     public:
         using Type = std::variant<IntegerType, FloatingType>;
 
         explicit ValueType(Type &&type);
+
+        explicit ValueType(TypeSpecifier const &typeSpecifiers);
 
         [[nodiscard]]
         bool IsArithmetic() const noexcept;

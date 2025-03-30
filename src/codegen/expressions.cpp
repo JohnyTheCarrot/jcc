@@ -1,5 +1,6 @@
 #include "expressions.h"
 
+#include "parsing_sema/cast_expression.hpp"
 #include "parsing_sema/additive_expression.h"
 #include "parsing_sema/multiplicative_expression.h"
 #include "parsing_sema/numeric_constant.h"
@@ -13,14 +14,14 @@ namespace jcc::codegen {
         auto const *lhs{astExpr->GetLhs()};
         auto const *rhs{astExpr->GetRhs()};
 
-        lhs->Accept(this);
+        lhs->AcceptOnExpression(this);
         auto *lhsValue{GetValue()};
 
         if (lhs->GetType() != astExpr->GetType()) {
             lhsValue = CastValue(lhsValue, lhs->GetType(), astExpr->GetType());
         }
 
-        rhs->Accept(this);
+        rhs->AcceptOnExpression(this);
         auto *rhsValue{GetValue()};
 
         if (rhs->GetType() != astExpr->GetType()) {
@@ -191,6 +192,17 @@ namespace jcc::codegen {
         auto *llvmType{type.GetLLVMType()};
 
         m_Value = llvm::ConstantFP::get(llvmType, value);
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing_sema::AstCastExpression const *astCastExpr
+    ) {
+        auto const *expression{astCastExpr->GetExpression()};
+        expression->AcceptOnExpression(this);
+        auto       *value{GetValue()};
+        auto const &type{astCastExpr->GetTypeName().GetType()};
+
+        m_Value = CastValue(value, expression->GetType(), type);
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {

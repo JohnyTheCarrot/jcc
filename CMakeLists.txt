@@ -77,7 +77,6 @@ add_library(
         src/parsing_sema/parser.cpp
         src/parsing_sema/primary_expression.h
         src/parsing_sema/postfix_expression.h
-        src/parsing_sema/postfix_expression.cpp
         src/parsing_sema/types.h
         src/parsing_sema/types.cpp
         src/parsing_sema/type_name.h
@@ -147,7 +146,6 @@ add_library(
         src/diagnostics/variants/visitors/mjolnir_visitor.cpp
         src/diagnostics/variants/visitors/mjolnir_visitor.hpp
         src/diagnostics/variants/visitors/diagnostics_visitor.cpp
-        src/misc/visitor.hpp
         src/diagnostics/variants/parsing/expected_expression.cpp
         src/diagnostics/variants/parsing/expected_expression.hpp
         src/diagnostics/variants/unexpected_eof.cpp
@@ -182,8 +180,11 @@ add_library(
         src/diagnostics/variants/parsing/unrecognized_floating_suffix.cpp
         src/diagnostics/variants/parsing/invalid_floating_point_literal.cpp
         src/diagnostics/variants/parsing/invalid_integer_literal.cpp
-        src/diagnostics/variants/parsing/expected_rparen.cpp
+        src/diagnostics/variants/parsing/basic_syntax_error.cpp
         src/diagnostics/variants/sema/no_compat_int_type.cpp
+        src/parsing_sema/cast_expression.cpp
+        src/diagnostics/variants/sema/invalid_specifier_qualifier_list.cpp
+        src/diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)
@@ -192,10 +193,6 @@ target_link_libraries("${PROJECT_NAME}" jcc_core)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 set(TEST_PROJECT_NAME "jcc-tests")
-
-#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-#endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE libs)
 
@@ -263,7 +260,7 @@ include(GoogleTest)
 gtest_discover_tests(${TEST_PROJECT_NAME})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wno-error=switch")
     set(COMP_FLAGS --pedantic-errors)
     target_compile_options(${PROJECT_NAME} PRIVATE ${COMP_FLAGS})
     target_compile_options(${TEST_PROJECT_NAME} PRIVATE ${COMP_FLAGS})

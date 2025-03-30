@@ -7,6 +7,8 @@
 #include "types/type.h"
 
 namespace jcc::parsing_sema {
+    class AstCastExpression;
+
     class AstFloatingConstant;
 
     class AstShiftExpression;
@@ -14,6 +16,10 @@ namespace jcc::parsing_sema {
     class AstAdditiveExpression;
 
     class AstMultiplicativeExpression;
+
+    class SpecifierQualifierList;
+
+    class AstTypeName;
 }// namespace jcc::parsing_sema
 
 namespace jcc::parsing_sema {
@@ -42,19 +48,29 @@ namespace jcc::parsing_sema {
         virtual void Visit(AstShiftExpression const *astShiftExpr) = 0;
 
         virtual void Visit(AstFloatingConstant const *astFloatingConst) = 0;
+
+        virtual void Visit(AstCastExpression const *astCastExpr) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {
     public:
         using ExpressionVisitor::ExpressionVisitor;
+        using ExpressionVisitor::Visit;
+
+        virtual void
+        Visit(SpecifierQualifierList const *specifierQualifierList) = 0;
+
+        virtual void Visit(AstTypeName const *astTypeName) = 0;
     };
 
     struct AstNode {
         Span m_Span;
 
-        explicit AstNode(Span &&span);
+        explicit AstNode(Span span);
 
         virtual ~AstNode() = default;
+
+        virtual void AcceptOnNode(AstNodeVisitor *visitor) const = 0;
     };
 
     class AstExpression : public AstNode {
@@ -63,7 +79,9 @@ namespace jcc::parsing_sema {
     public:
         AstExpression(Span &&span, types::ValueType type);
 
-        virtual void Accept(ExpressionVisitor *visitor) const = 0;
+        void AcceptOnNode(AstNodeVisitor *visitor) const override;
+
+        virtual void AcceptOnExpression(ExpressionVisitor *visitor) const = 0;
 
         [[nodiscard]]
         types::ValueType const &GetType() const;

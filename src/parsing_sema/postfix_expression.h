@@ -14,16 +14,13 @@ namespace jcc::parsing_sema {
     template<typename It>
         requires TokenIterator<It>
     [[nodiscard]]
-    AstExpressionPtr ParsePostfixExpression(It current, It end) {
+    AstExpressionPtr ParsePostfixExpression(It &current, It const &end) {
         if (current == end)
             return nullptr;
 
-        auto &firstToken{*current};
-
         // TODO: if firstToken is a left paren, it may be a compound literal
-        auto primaryExpr{ParsePrimaryExpression(firstToken)};
+        auto primaryExpr{ParsePrimaryExpression(current, end)};
 
-        ++current;
         if (current == end)
             return primaryExpr;
 

@@ -20,7 +20,6 @@ namespace jcc {
         [[nodiscard]]
         Span operator+(Span const &other) const noexcept;
 
-        [[nodiscard]]
         Span const &operator+=(Span const &other) noexcept;
     };
 

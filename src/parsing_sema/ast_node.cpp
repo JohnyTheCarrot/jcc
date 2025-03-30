@@ -3,13 +3,17 @@
 #include "parser.h"
 
 namespace jcc::parsing_sema {
-    AstNode::AstNode(Span &&span)
+    AstNode::AstNode(Span span)
         : m_Span{std::move(span)} {
     }
 
     AstExpression::AstExpression(Span &&span, types::ValueType type)
         : AstNode{std::move(span)}
-        , m_Type{std::move(type)} {
+        , m_Type{type} {
+    }
+
+    void AstExpression::AcceptOnNode(AstNodeVisitor *visitor) const {
+        AcceptOnExpression(visitor);
     }
 
     types::ValueType const &AstExpression::GetType() const {

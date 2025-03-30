@@ -1,7 +1,8 @@
 #include "primary_expression.h"
 
+#include <diagnostics/variants/parsing/basic_syntax_error.hpp>
+
 #include "constant.h"
-#include "diagnostics/variants/parsing/expected_rparen.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "expression.h"
 
@@ -19,9 +20,10 @@ namespace jcc::parsing_sema {
             if (current == end ||
                 !current->Is(tokenizer::Punctuator::RightParenthesis)) {
                 compilerState
-                        .EmplaceFatalDiagnostic<diagnostics::ExpectedRParen>(
+                        .EmplaceFatalDiagnostic<diagnostics::BasicSyntaxError>(
                                 std::move(firstToken.m_Span.m_Source),
-                                firstToken.m_Span.m_Span
+                                firstToken.m_Span.m_Span,
+                                "a closing parenthesis", current->ToString()
                         );
             }
             result->m_Span = firstToken.m_Span + current->m_Span;

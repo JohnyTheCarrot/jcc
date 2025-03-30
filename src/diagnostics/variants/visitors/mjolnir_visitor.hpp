@@ -48,8 +48,9 @@ namespace jcc::diagnostics {
         void Print(UnrecognizedFloatingSuffix const &diag) const override;
         void Print(InvalidFloatingPointLiteral const &diag) const override;
         void Print(InvalidIntegerLiteral const &diag) const override;
-        void Print(ExpectedRParen const &diag) const override;
+        void Print(BasicSyntaxError const &diag) const override;
         void Print(NoCompatIntType const &diag) const override;
+        void Print(InvalidSpecifierQualifierList const &diag) const override;
     };
 }// namespace jcc::diagnostics
 #endif//MJOLNIR_VISITOR_HPP

@@ -1,12 +1,15 @@
 #include "sema_visitor.h"
 
 #include "additive_expression.h"
+#include "cast_expression.hpp"
+#include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "diagnostics/variants/sema/modulo_with_non_int.hpp"
 #include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
 #include "diagnostics/variants/sema/shift_operand_non_int.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "multiplicative_expression.h"
 #include "shift_expression.h"
+#include "type_name.h"
 
 namespace jcc::parsing_sema {
     void SemaVisitor::Visit(AstIntegerConstant const *) {
@@ -21,12 +24,12 @@ namespace jcc::parsing_sema {
         auto &compilerState{CompilerState::GetInstance()};
 
         auto const lhs{astMultiplicativeExpr->GetLhs()};
-        lhs->Accept(this);
+        lhs->AcceptOnExpression(this);
 
         auto const lhsType{lhs->GetType()};
 
         auto const rhs{astMultiplicativeExpr->GetRhs()};
-        rhs->Accept(this);
+        rhs->AcceptOnExpression(this);
 
         auto const rhsType{rhs->GetType()};
 
@@ -70,12 +73,12 @@ namespace jcc::parsing_sema {
         auto &compilerState{CompilerState::GetInstance()};
 
         auto const lhs{astAdditiveExpr->GetLhs()};
-        lhs->Accept(this);
+        lhs->AcceptOnExpression(this);
 
         auto const &lhsType{lhs->GetType()};
 
         auto const rhs{astAdditiveExpr->GetRhs()};
-        rhs->Accept(this);
+        rhs->AcceptOnExpression(this);
 
         auto const &rhsType{rhs->GetType()};
 
@@ -105,12 +108,12 @@ namespace jcc::parsing_sema {
         auto &compilerState{CompilerState::GetInstance()};
 
         auto const lhs{astShiftExpr->GetLhs()};
-        lhs->Accept(this);
+        lhs->AcceptOnExpression(this);
 
         auto const &lhsType{lhs->GetType()};
 
         auto const rhs{astShiftExpr->GetRhs()};
-        rhs->Accept(this);
+        rhs->AcceptOnExpression(this);
 
         auto const &rhsType{rhs->GetType()};
 
@@ -125,5 +128,31 @@ namespace jcc::parsing_sema {
 
     void SemaVisitor::Visit(AstFloatingConstant const *) {
         // Nothing to do here
+    }
+
+    void SemaVisitor::Visit(AstCastExpression const *astCastExpr) {
+        astCastExpr->GetTypeName().AcceptOnNode(this);
+        astCastExpr->GetExpression()->AcceptOnExpression(this);
+    }
+
+    void
+    SemaVisitor::Visit(SpecifierQualifierList const *specifierQualifierList) {
+        auto const typeSpecifierQualifiers{
+                specifierQualifierList->GetTypeSpecifierQualifier()
+        };
+
+        if (!typeSpecifierQualifiers.m_Specifiers.IsValid()) {
+            CompilerState::GetInstance()
+                    .EmplaceDiagnostic<
+                            diagnostics::InvalidSpecifierQualifierList>(
+                            specifierQualifierList->m_Span.m_Source,
+                            specifierQualifierList->m_Span.m_Span
+                    );
+        }
+        // TODO: Check the qualifiers
+    }
+
+    void SemaVisitor::Visit(AstTypeName const *astTypeName) {
+        astTypeName->GetSpecifierQualifierList().AcceptOnNode(this);
     }
 }// namespace jcc::parsing_sema

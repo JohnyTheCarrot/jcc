@@ -23,7 +23,7 @@ namespace jcc::parsing_sema {
         [[nodiscard]]
         MultiplicativeOperator GetOperator() const noexcept;
 
-        void Accept(ExpressionVisitor *visitor) const override;
+        void AcceptOnExpression(ExpressionVisitor *visitor) const override;
     };
 
     [[nodiscard]]
