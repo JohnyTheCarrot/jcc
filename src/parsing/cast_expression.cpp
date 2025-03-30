@@ -86,6 +86,7 @@ namespace jcc::parsing {
                             current->ToString()
                     );
         }
+        ++current;
 
         return expressionPtr;
     }
