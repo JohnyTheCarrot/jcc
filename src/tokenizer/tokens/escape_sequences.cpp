@@ -11,7 +11,7 @@
 #include "diagnostics/variants/todo.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/Span.h"     // for Span, SpanMarker (ptr only)
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "tokenizer/token.h"    // for GetConstantPrefixRange, Consta...
 
@@ -80,7 +80,7 @@ namespace jcc::tokenizer::escape_sequences {
             result64 |= digit;
 
             if (result64 & ~std::numeric_limits<std::uint8_t>::max()) {
-                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+                auto &compilerState{parsing::CompilerState::GetInstance()};
 
                 mjolnir::Span span{
                         charIter.GetCurrentPos(), charIter.GetCurrentPos() + 1
@@ -180,7 +180,7 @@ namespace jcc::tokenizer::escape_sequences {
             if (result64 & ~static_cast<std::uint64_t>(
                                    std::numeric_limits<std::uint32_t>::max()
                            )) {
-                auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+                auto &compilerState{parsing::CompilerState::GetInstance()};
 
                 mjolnir::Span span{
                         charIter.GetCurrentPos(), charIter.GetCurrentPos() + 1
@@ -195,7 +195,7 @@ namespace jcc::tokenizer::escape_sequences {
             result = static_cast<std::uint32_t>(result64);
         }};
 
-        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+        auto &compilerState{parsing::CompilerState::GetInstance()};
 
         if (charIter == CharIter::end()) {
             mjolnir::Span span{backslashPos, charIter.GetCurrentPos()};
@@ -233,7 +233,7 @@ namespace jcc::tokenizer::escape_sequences {
     ) {
         if (auto const [min, max]{GetConstantPrefixRange(prefix)};
             result < min || result > max) {
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
 
             compilerState.EmplaceTemporarilyFatalDiagnostic<
                     diagnostics::EscapeSeqTooLarge>(span.m_Source, span.m_Span);
@@ -244,7 +244,7 @@ namespace jcc::tokenizer::escape_sequences {
 
     compiler_data_types::Char32::type
     TokenizeNoSizeCheck(CharIter &charIter, std::size_t backslashPos) {
-        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+        auto &compilerState{parsing::CompilerState::GetInstance()};
         if (charIter == CharIter::end()) {
             auto const    currentPos{charIter.GetCurrentPos()};
             mjolnir::Span span{currentPos - 1, currentPos};

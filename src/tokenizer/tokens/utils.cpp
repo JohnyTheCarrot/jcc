@@ -6,7 +6,7 @@
 #include "diagnostics/variants/tk_pp/untermed_string.h"
 #include "escape_sequences.h"// for Tokenize
 #include "misc/Span.h"       // for Span, SpanMarker (ptr only)
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::utils {
@@ -18,7 +18,7 @@ namespace jcc::tokenizer::utils {
         if (charIter == CharIter::end() || charIter->m_Char == '\n') {
             mjolnir::Span const span{start, charIter.GetCurrentPos()};
 
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
             if (constantType == ConstantType::String) {
                 compilerState
                         .EmplaceFatalDiagnostic<diagnostics::UntermedString>(

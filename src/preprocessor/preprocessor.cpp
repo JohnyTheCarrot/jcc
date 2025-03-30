@@ -9,7 +9,7 @@
 #include "diagnostics/variants/tk_pp/escape_without_newline.hpp"
 #include "diagnostics/variants/tk_pp/include_open_failed.hpp"
 #include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for PreprocessorCommandS...
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
@@ -51,7 +51,7 @@ namespace jcc::preprocessor {
 
     void Preprocessor::PopConditional() {
         if (m_ConditionalDepth == 0) {
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
             // TODO: find a better span
             auto span{GetCurrentSpan()};
             compilerState.EmplaceDiagnostic<diagnostics::OrphanedEndif>(
@@ -89,7 +89,7 @@ namespace jcc::preprocessor {
                         return ppToken;
                     case tokenizer::SpecialPurpose::InvalidEscape: {
                         auto &compilerState{
-                                parsing_sema::CompilerState::GetInstance()
+                                parsing::CompilerState::GetInstance()
                         };
                         compilerState.EmplaceDiagnostic<
                                 diagnostics::EscapeWithoutNewline>(

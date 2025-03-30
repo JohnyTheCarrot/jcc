@@ -10,7 +10,7 @@
 #include "diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp"
 #include "diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp"
 #include "diagnostics/variants/tk_pp/macro_name_not_ident.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor
@@ -48,7 +48,7 @@ namespace jcc::preprocessor::commands {
         while (true) {
             if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
                 if (!token.Is(tokenizer::Punctuator::Ellipsis)) {
-                    parsing_sema::CompilerState::GetInstance()
+                    parsing::CompilerState::GetInstance()
                             .EmplaceFatalDiagnostic<
                                     diagnostics::InvalidMacroParam>(
                                     span.m_Source, span.m_Span,
@@ -58,7 +58,7 @@ namespace jcc::preprocessor::commands {
 
                 token = preprocessor.GetNextPreprocessorToken().m_Token;
                 if (!token.Is(tokenizer::Punctuator::RightParenthesis)) {
-                    parsing_sema::CompilerState::GetInstance()
+                    parsing::CompilerState::GetInstance()
                             .EmplaceFatalDiagnostic<
                                     diagnostics::MacroEllipsisNotLast>(
                                     span.m_Source, span.m_Span,
@@ -73,7 +73,7 @@ namespace jcc::preprocessor::commands {
 
             token = preprocessor.GetNextPreprocessorToken().m_Token;
             if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<
                                 diagnostics::MacroExpectedCommaOrRparen>(
                                 span.m_Source, span.m_Span, token.m_Span.m_Span
@@ -88,7 +88,7 @@ namespace jcc::preprocessor::commands {
             }
 
             if (punctuator != tokenizer::Punctuator::Comma) {
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<
                                 diagnostics::MacroExpectedCommaOrRparen>(
                                 span.m_Source, span.m_Span, token.m_Span.m_Span
@@ -154,7 +154,7 @@ namespace jcc::preprocessor::commands {
         };
 
         if (!isIdent && !isKeyword) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceDiagnostic<diagnostics::MacroNameNotIdent>(
                             directive.m_Span.m_Source, directive.m_Span.m_Span,
                             nextToken.m_Span.m_Span
@@ -175,7 +175,7 @@ namespace jcc::preprocessor::commands {
 
         if (auto const *macro{preprocessor.GetMacroStore().GetMacro(macroName)};
             macro != nullptr) {
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
             auto  macroSpan{std::visit(
                     [](auto const &macro) { return macro.m_Span; }, *macro
             )};

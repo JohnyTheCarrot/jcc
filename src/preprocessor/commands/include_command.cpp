@@ -6,7 +6,7 @@
 #include "diagnostics/variants/tk_pp/directive_expected_newline.hpp"
 #include "diagnostics/variants/tk_pp/include_expected_header_name.hpp"
 #include "diagnostics/variants/tk_pp/include_open_failed.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/preprocessor.h"    // for Preprocessor
 #include "tokenizer/token.h"              // for StringConstant, Token
@@ -25,7 +25,7 @@ namespace jcc::preprocessor::commands {
         auto const nextToken{preprocessor.SimpleTokenRead().m_Token};
 
         if (!nextToken.Is<tokenizer::StringConstant>()) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceDiagnostic<diagnostics::IncludeExpectedHeaderName>(
                             directiveToken.m_Span.m_Source,
                             directiveToken.m_Span.m_Span,
@@ -37,7 +37,7 @@ namespace jcc::preprocessor::commands {
 
         if (auto const newlineToken{preprocessor.SimpleTokenRead().m_Token};
             !newlineToken.Is(tokenizer::SpecialPurpose::NewLine)) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceDiagnostic<diagnostics::DirectiveExpectedNewline>(
                             directiveToken.m_Span.m_Source,
                             directiveToken.m_Span.m_Span +
@@ -55,7 +55,7 @@ namespace jcc::preprocessor::commands {
         try {
             preprocessor.OpenHeader(headerFileName);
         } catch (tokenizer::TokenizerFileOpenFailure const &) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceDiagnostic<diagnostics::IncludeOpenFailed>(
                             directiveToken.m_Span.m_Source,
                             directiveToken.m_Span.m_Span,

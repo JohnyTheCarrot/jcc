@@ -9,7 +9,7 @@
 
 #include "diagnostics/variants/tk_pp/macro_invoc_invalid_num_args.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor, VaArgs
@@ -57,7 +57,7 @@ namespace jcc::preprocessor::commands {
         }
 
         auto currentSpan{preprocessor.GetCurrentSpan()};
-        parsing_sema::CompilerState::GetInstance()
+        parsing::CompilerState::GetInstance()
                 .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                         std::move(currentSpan.m_Source), currentSpan.m_Span
                 );
@@ -117,7 +117,7 @@ namespace jcc::preprocessor::commands {
                     );
                 } else if (!fnMacro.m_ParameterList.empty() &&
                            !fnMacro.m_IsVA) {
-                    parsing_sema::CompilerState::GetInstance()
+                    parsing::CompilerState::GetInstance()
                             .EmplaceFatalDiagnostic<
                                     diagnostics::MacroInvocInvalidNumArgs>(
                                     span.m_Source, span.m_Span, argsSpan,
@@ -139,7 +139,7 @@ namespace jcc::preprocessor::commands {
         auto const vaArgsIter{arguments.find(std::string{VaArgs})};
         // if we've got variadic arguments AND the macro is not variadic, it means we've got too many arguments
         if (vaArgsIter != arguments.end() && !fnMacro.m_IsVA) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<
                             diagnostics::MacroInvocInvalidNumArgs>(
                             span.m_Source, span.m_Span, argsSpan,
@@ -156,7 +156,7 @@ namespace jcc::preprocessor::commands {
         // -1 if the macro is variadic, 0 otherwise
         if (arguments.size() - fnMacro.m_IsVA <
             fnMacro.m_ParameterList.size()) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<
                             diagnostics::MacroInvocInvalidNumArgs>(
                             std::move(span.m_Source), span.m_Span, argsSpan,

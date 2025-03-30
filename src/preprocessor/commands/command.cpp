@@ -8,7 +8,7 @@
 #include "identifier_command.h"
 #include "ifdef_command.h"
 #include "include_command.h"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/preprocessor.h"
 #include "undef_command.h"
 #include "warning_command.h"

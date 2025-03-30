@@ -6,7 +6,7 @@
 
 #include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"
 #include "misc/Span.h"// for Span, SpanMarker (ptr only)
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for IsNonDigit
 
@@ -23,7 +23,7 @@ namespace jcc::tokenizer::pp_numbers {
                 if (charIter == CharIter::end() ||
                     !std::isxdigit(charIter->m_Char)) {
                     auto &compilerState{
-                            parsing_sema::CompilerState::GetInstance()
+                            parsing::CompilerState::GetInstance()
                     };
                     compilerState.EmplaceTemporarilyFatalDiagnostic<
                             diagnostics::PpNumberInvalid>(
@@ -42,7 +42,7 @@ namespace jcc::tokenizer::pp_numbers {
                 ++charIter;
                 if (charIter == CharIter::end()) {
                     auto &compilerState{
-                            parsing_sema::CompilerState::GetInstance()
+                            parsing::CompilerState::GetInstance()
                     };
                     compilerState.EmplaceTemporarilyFatalDiagnostic<
                             diagnostics::PpNumberInvalid>(

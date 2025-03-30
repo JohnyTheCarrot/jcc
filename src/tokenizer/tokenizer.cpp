@@ -8,7 +8,7 @@
 
 #include "diagnostics/variants/tk_pp/unexpected_char.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"         // for CharIter, CharInfo
 #include "tokenizer/tokenizer_iterator.h"// for TokenizerIterator
 #include "tokens/character_constants.h"  // for Tokenize
@@ -40,7 +40,7 @@ namespace jcc::tokenizer {
         while (true) {
             if (m_CharIter == CharIter::end()) {
                 span.m_Span.set_end(m_CharIter.GetSentinel().m_LastPos);
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                                 span.m_Source, span.m_Span
                         );
@@ -50,7 +50,7 @@ namespace jcc::tokenizer {
                 if (m_CharIter == CharIter::end()) {
                     span.m_Span.set_end(m_CharIter.GetSentinel().m_LastPos);
 
-                    parsing_sema::CompilerState::GetInstance()
+                    parsing::CompilerState::GetInstance()
                             .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                                     span.m_Source, span.m_Span
                             );
@@ -74,7 +74,7 @@ namespace jcc::tokenizer {
         auto const tokenValue{[&]() -> Token::Value {
             if (!std::holds_alternative<Token::Value>(valueOrString))
                 // TODO: diagnosis
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<diagnostics::UnexpectedChar>(
                                 std::move(span.m_Source), span.m_Span
                         );

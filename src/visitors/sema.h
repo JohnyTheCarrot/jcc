@@ -1,0 +1,33 @@
+#ifndef SEMA_VISITOR_H
+#define SEMA_VISITOR_H
+
+#include "parsing/ast_node.h"
+
+namespace jcc::visitors {
+    class SemaVisitor final : public parsing::AstNodeVisitor {
+    public:
+        void Visit(parsing::AstIntegerConstant const *astIntConst) override;
+
+        void
+        Visit(parsing::AstMultiplicativeExpression const *astMultiplicativeExpr
+        ) override;
+
+        void
+        Visit(parsing::AstAdditiveExpression const *astAdditiveExpr) override;
+
+        void Visit(parsing::AstShiftExpression const *astShiftExpr) override;
+
+        void
+        Visit(parsing::AstFloatingConstant const *astFloatingConst) override;
+
+        void Visit(parsing::AstCastExpression const *astCastExpr) override;
+
+        void
+        Visit(parsing::SpecifierQualifierList const *specifierQualifierList
+        ) override;
+
+        void Visit(parsing::AstTypeName const *astTypeName) override;
+    };
+}// namespace jcc::visitors
+
+#endif//SEMA_VISITOR_H

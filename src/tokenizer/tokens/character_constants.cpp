@@ -11,7 +11,7 @@
 #include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/compiler_data_types.h"// for Char32, Int
 #include "misc/Span.h"               // for Span, SpanMarker (ptr only)
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for ReadSingleCharacter, ConstantType
 
@@ -22,12 +22,12 @@ namespace jcc::tokenizer::character_constants {
 
     Token
     Tokenize(CharIter &charIter, ConstantPrefix prefix, std::size_t startPos) {
-        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+        auto &compilerState{parsing::CompilerState::GetInstance()};
 
         if (charIter == CharIter::end()) {
             mjolnir::Span span{startPos, charIter.GetCurrentPos()};
 
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                             charIter.GetSource(), span
                     );

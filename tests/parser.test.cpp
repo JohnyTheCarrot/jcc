@@ -4,10 +4,10 @@
 
 #include <gtest/gtest.h>
 
-#include "parsing_sema/numeric_constant.h"
-#include "parsing_sema/types.h"
+#include "parsing/numeric_constant.h"
+#include "parsing/types.h"
 
-using namespace jcc::parsing_sema;
+using namespace jcc::parsing;
 
 using Iterator = std::vector<jcc::tokenizer::Token>::const_iterator;
 

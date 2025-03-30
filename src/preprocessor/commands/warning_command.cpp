@@ -9,7 +9,7 @@
 #include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
 #include "diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp"
 #include "misc/Span.h"// for Span
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/preprocessor.h"         // for Preprocessor
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator...
@@ -35,7 +35,7 @@ namespace jcc::preprocessor::commands {
                 std::back_inserter(tokens)
         );
 
-        auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+        auto &compilerState{parsing::CompilerState::GetInstance()};
         if (tokens.empty()) {
             compilerState.EmplaceDiagnostic<
                     diagnostics::DiagnosticDirectiveNoTokens>(

@@ -8,7 +8,7 @@
 
 #include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/Span.h"// for Span, SpanMarker (ptr only)
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for ReadSingleCharacter, ConstantType
 
@@ -18,7 +18,7 @@ namespace jcc::tokenizer::string_literals {
         if (charIter == CharIter::end()) {
             mjolnir::Span span{startPos, charIter.GetCurrentPos()};
 
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                             charIter.GetSource(), span
                     );

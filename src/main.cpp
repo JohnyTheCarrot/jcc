@@ -4,12 +4,13 @@
 #include <string>   // for allocator, operator<<, string
 #include <vector>   // for vector
 
-#include "codegen/expressions.h"
-#include "parsing_sema/additive_expression.h"
-#include "parsing_sema/expression.h"
-#include "parsing_sema/numeric_constant.h"
-#include "parsing_sema/sema_visitor.h"
+#include "parsing/additive_expression.h"
+#include "parsing/expression.h"
+#include "parsing/numeric_constant.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
+#include "visitors/expression_codegen.h"
+#include "visitors/expression_type_deduction.hpp"
+#include "visitors/sema.h"
 
 int main(int argCount, char *args[]) {
     if (argCount < 2) {
@@ -19,24 +20,25 @@ int main(int argCount, char *args[]) {
 
     std::string const filePath{args[1]};
 
-    auto &compState{jcc::parsing_sema::CompilerState::GetInstance()};
+    auto &compState{jcc::parsing::CompilerState::GetInstance()};
 
     try {
         jcc::preprocessor::Preprocessor preprocessor{filePath};
-        auto const &compilerState{jcc::parsing_sema::CompilerState::GetInstance(
-        )};
+        auto const &compilerState{jcc::parsing::CompilerState::GetInstance()};
 
         auto startIt{preprocessor.begin()};
 
         auto const constant{
-                jcc::parsing_sema::ParseExpression(startIt, preprocessor.end())
+                jcc::parsing::ParseExpression(startIt, preprocessor.end())
         };
-        jcc::parsing_sema::SemaVisitor semaVisitor;
         if (constant != nullptr) {
+            jcc::visitors::ExpressionTypeDeductionVisitor typeDeductionVisitor;
+            constant->AcceptOnExpression(&typeDeductionVisitor);
+            jcc::visitors::SemaVisitor semaVisitor;
             constant->AcceptOnExpression(&semaVisitor);
 
             if (!compilerState.HasFatalError()) {
-                jcc::codegen::ExpressionCodegenVisitor codegenVisitor;
+                jcc::visitors::ExpressionCodegenVisitor codegenVisitor;
 
                 constant->AcceptOnExpression(&codegenVisitor);
                 auto *value{codegenVisitor.GetValue()};
@@ -65,8 +67,7 @@ int main(int argCount, char *args[]) {
         std::cerr << "A fatal compiler error occurred." << std::endl;
     } catch (...) { std::cerr << "An internal compiler error occurred."; }
 
-    using DiagnosticsFormat =
-            jcc::parsing_sema::CompilerState::DiagnosticsFormat;
+    using DiagnosticsFormat = jcc::parsing::CompilerState::DiagnosticsFormat;
 
     compState.PrintDiagnostics(DiagnosticsFormat::Fancy);
 

@@ -1,8 +1,8 @@
-#include "parsing_sema/types/type.h"
+#include "parsing/types/type.h"
 
 #include <gtest/gtest.h>
 
-using namespace jcc::parsing_sema;
+using namespace jcc::parsing;
 
 using Signedness = types::IntegerType::Signedness;
 

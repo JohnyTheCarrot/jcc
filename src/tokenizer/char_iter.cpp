@@ -8,7 +8,7 @@
 
 #include "diagnostics/variants/tk_pp/unexpected_char.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 
 namespace jcc::tokenizer {
     CharIter const CharIter::c_UntilNewline{'\n'};
@@ -52,7 +52,7 @@ namespace jcc::tokenizer {
             };
             mjolnir::Span span{lastSpanMarker - 1, lastSpanMarker};
 
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<diagnostics::UnexpectedEof>(
                             m_Source, span
                     );
@@ -62,7 +62,7 @@ namespace jcc::tokenizer {
                     std::get<value_type>(m_CurrentChar)
             };
             character != c) {
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<diagnostics::UnexpectedChar>(
                             m_Source, mjolnir::Span{pos - 1, pos}
                     );

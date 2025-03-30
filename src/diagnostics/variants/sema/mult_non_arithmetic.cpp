@@ -8,8 +8,8 @@ namespace jcc::diagnostics {
     MultNonArithmetic::MultNonArithmetic(
             std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
             mjolnir::Span rhsSpan, mjolnir::Span opSpan,
-            parsing_sema::types::ValueType const &lhsType,
-            parsing_sema::types::ValueType const &rhsType
+            parsing::types::ValueType const &lhsType,
+            parsing::types::ValueType const &rhsType
     )
         : BinaryDiagnostic{
                   mjolnir::BasicReportKind::Error,

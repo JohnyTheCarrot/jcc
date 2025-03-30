@@ -66,36 +66,35 @@ add_library(
         src/preprocessor/commands/else_command.cpp
         src/preprocessor/commands/undef_command.h
         src/preprocessor/commands/undef_command.cpp
-        src/parsing_sema/types/type.h
-        src/parsing_sema/types/type.cpp
-        src/parsing_sema/parser.h
-        src/parsing_sema/ast_node.h
-        src/parsing_sema/numeric_constant.h
-        src/parsing_sema/numeric_constant.cpp
-        src/parsing_sema/constant.h
-        src/parsing_sema/constant.cpp
-        src/parsing_sema/parser.cpp
-        src/parsing_sema/primary_expression.h
-        src/parsing_sema/postfix_expression.h
-        src/parsing_sema/types.h
-        src/parsing_sema/types.cpp
-        src/parsing_sema/type_name.h
-        src/parsing_sema/type_name.cpp
-        src/parsing_sema/ast_node.cpp
-        src/parsing_sema/multiplicative_expression.cpp
-        src/parsing_sema/multiplicative_expression.h
-        src/codegen/expressions.cpp
-        src/codegen/expressions.h
-        src/parsing_sema/additive_expression.cpp
-        src/parsing_sema/additive_expression.h
-        src/parsing_sema/expression.h
-        src/parsing_sema/primary_expression.cpp
-        src/parsing_sema/expression.cpp
-        src/parsing_sema/shift_expression.cpp
-        src/parsing_sema/shift_expression.h
-        src/parsing_sema/binary_expression.h
-        src/parsing_sema/sema_visitor.cpp
-        src/parsing_sema/sema_visitor.h
+        src/parsing/types/type.h
+        src/parsing/types/type.cpp
+        src/parsing/parser.h
+        src/parsing/ast_node.h
+        src/parsing/numeric_constant.h
+        src/parsing/numeric_constant.cpp
+        src/parsing/constant.h
+        src/parsing/constant.cpp
+        src/parsing/parser.cpp
+        src/parsing/primary_expression.h
+        src/parsing/postfix_expression.h
+        src/parsing/types.h
+        src/parsing/types.cpp
+        src/parsing/type_name.h
+        src/parsing/type_name.cpp
+        src/parsing/ast_node.cpp
+        src/parsing/multiplicative_expression.cpp
+        src/parsing/multiplicative_expression.h
+        src/visitors/expression_codegen.cpp
+        src/parsing/additive_expression.cpp
+        src/parsing/additive_expression.h
+        src/parsing/expression.h
+        src/parsing/primary_expression.cpp
+        src/parsing/expression.cpp
+        src/parsing/shift_expression.cpp
+        src/parsing/shift_expression.h
+        src/parsing/binary_expression.h
+        src/visitors/sema.cpp
+        src/visitors/sema.h
         src/diagnostics/diagnostics.cpp
         src/diagnostics/diagnostics.h
         src/diagnostics/variants/sema/mult_non_arithmetic.cpp
@@ -182,9 +181,11 @@ add_library(
         src/diagnostics/variants/parsing/invalid_integer_literal.cpp
         src/diagnostics/variants/parsing/basic_syntax_error.cpp
         src/diagnostics/variants/sema/no_compat_int_type.cpp
-        src/parsing_sema/cast_expression.cpp
+        src/parsing/cast_expression.cpp
         src/diagnostics/variants/sema/invalid_specifier_qualifier_list.cpp
         src/diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp
+        src/visitors/expression_type_deduction.cpp
+        src/visitors/expression_type_deduction.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

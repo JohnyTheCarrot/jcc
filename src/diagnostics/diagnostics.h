@@ -4,7 +4,7 @@
 #include <memory>
 #include <mjolnir/report.hpp>
 
-#include "parsing_sema/types/type.h"
+#include "parsing/types/type.h"
 #include "source.h"
 
 namespace jcc::diagnostics {
@@ -40,15 +40,15 @@ namespace jcc::diagnostics {
         mjolnir::Span                  m_LhsSpan;
         mjolnir::Span                  m_RhsSpan;
         mjolnir::Span                  m_OpSpan;
-        parsing_sema::types::ValueType m_LhsType;
-        parsing_sema::types::ValueType m_RhsType;
+        parsing::types::ValueType m_LhsType;
+        parsing::types::ValueType m_RhsType;
 
         BinaryDiagnostic(
                 mjolnir::BasicReportKind reportKind,
                 std::shared_ptr<Source> source, mjolnir::Span lhsSpan,
                 mjolnir::Span rhsSpan, mjolnir::Span opSpan,
-                parsing_sema::types::ValueType lhsType,
-                parsing_sema::types::ValueType rhsType
+                parsing::types::ValueType lhsType,
+                parsing::types::ValueType rhsType
         );
     };
 

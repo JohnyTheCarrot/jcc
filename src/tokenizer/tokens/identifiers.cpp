@@ -5,7 +5,7 @@
 #include <utility>  // for move
 
 #include "diagnostics/variants/todo.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 
 namespace jcc::tokenizer::identifiers {
@@ -43,7 +43,7 @@ namespace jcc::tokenizer::identifiers {
             // check if identifier contains a backslash
             if (tokenStart.m_Identifier.find('\\') != std::string::npos) {
                 // TODO: Universal character names
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<diagnostics::TodoError>(
                                 std::move(span.m_Source), span.m_Span
                         );
@@ -63,7 +63,7 @@ namespace jcc::tokenizer::identifiers {
         // check if identifier contains a backslash
         if (identifier.find('\\') != std::string::npos) {
             // TODO: Universal character names
-            parsing_sema::CompilerState::GetInstance()
+            parsing::CompilerState::GetInstance()
                     .EmplaceFatalDiagnostic<diagnostics::TodoError>(
                             std::move(span.m_Source), span.m_Span
                     );

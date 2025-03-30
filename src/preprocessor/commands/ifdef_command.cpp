@@ -7,7 +7,7 @@
 #include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/todo.hpp"
-#include "parsing_sema/parser.h"
+#include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor
@@ -20,7 +20,7 @@ namespace jcc::preprocessor::commands {
     ) {
         auto ident{preprocessor.SimpleTokenRead()};
         if (!ident.m_Token.Is<tokenizer::Identifier>()) {
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
             auto const tokenSpan{[&] {
                 auto const tkSpan{ident.m_Token.m_Span.m_Span};
 
@@ -49,7 +49,7 @@ namespace jcc::preprocessor::commands {
         auto conditionEnd{preprocessor.SkipUntilConditionEnd()};
 
         if (!conditionEnd.has_value()) {
-            auto &compilerState{parsing_sema::CompilerState::GetInstance()};
+            auto &compilerState{parsing::CompilerState::GetInstance()};
             compilerState.EmplaceFatalDiagnostic<
                     diagnostics::PpConditionalNotTerminated>(
                     span.m_Source, span.m_Span,
@@ -77,7 +77,7 @@ namespace jcc::preprocessor::commands {
                 return;
 
             case tokenizer::Directive::If:
-                parsing_sema::CompilerState::GetInstance()
+                parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<diagnostics::TodoError>(
                                 conditionEnd->m_Span.m_Source,
                                 conditionEnd->m_Span.m_Span
