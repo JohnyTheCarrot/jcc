@@ -6,6 +6,7 @@
 #include "parsing/additive_expression.h"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
+#include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
 
 namespace jcc::visitors {
@@ -76,5 +77,27 @@ namespace jcc::visitors {
         astCastExpr->GetExpression()->AcceptOnExpression(this);
 
         astCastExpr->SetDeducedType(astCastExpr->GetTypeName().GetType());
+    }
+
+    void ExpressionTypeDeductionVisitor::Visit(
+            parsing::AstRelationalExpression const *astRelationalExpr
+    ) {
+        using namespace parsing::types;
+
+        IntegerType const intType{
+                StandardIntegerType::Int, IntegerType::Signedness::Unspecified
+        };
+
+        astRelationalExpr->SetDeducedType(ValueType{intType});
+
+        auto const *lhs{astRelationalExpr->GetLhs()};
+        lhs->AcceptOnExpression(this);
+        auto const *rhs{astRelationalExpr->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const type{UsualArithmeticConversions(
+                lhs->GetDeducedType(), rhs->GetDeducedType()
+        )};
+        astRelationalExpr->SetUsualArithmeticConversionType(type);
     }
 }// namespace jcc::visitors

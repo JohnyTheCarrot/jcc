@@ -7,6 +7,9 @@
 #include "types/type.h"
 
 namespace jcc::parsing {
+#pragma region Forward Declarations
+    class AstRelationalExpression;
+
     class AstCastExpression;
 
     class AstFloatingConstant;
@@ -20,12 +23,11 @@ namespace jcc::parsing {
     class SpecifierQualifierList;
 
     class AstTypeName;
-}// namespace jcc::parsing
 
-namespace jcc::parsing {
     class AstIntegerConstant;
 
     class CompilerState;
+#pragma endregion
 
     enum class ValueCategory { LValue, RValue };
 
@@ -50,6 +52,9 @@ namespace jcc::parsing {
         virtual void Visit(AstFloatingConstant const *astFloatingConst) = 0;
 
         virtual void Visit(AstCastExpression const *astCastExpr) = 0;
+
+        virtual void
+        Visit(AstRelationalExpression const *astRelationalExpr) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {

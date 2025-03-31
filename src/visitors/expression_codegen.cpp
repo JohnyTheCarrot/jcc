@@ -4,12 +4,14 @@
 #include "parsing/cast_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
+#include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
 
 namespace jcc::visitors {
     std::pair<llvm::Value *, llvm::Value *>
     ExpressionCodegenVisitor::PrepareOperands(
-            parsing::AstBinaryExpression const *astExpr
+            parsing::AstBinaryExpression const *astExpr,
+            parsing::types::ValueType           type
     ) {
         auto const *lhs{astExpr->GetLhs()};
         auto const *rhs{astExpr->GetRhs()};
@@ -17,19 +19,15 @@ namespace jcc::visitors {
         lhs->AcceptOnExpression(this);
         auto *lhsValue{GetValue()};
 
-        if (lhs->GetDeducedType() != astExpr->GetDeducedType()) {
-            lhsValue = CastValue(
-                    lhsValue, lhs->GetDeducedType(), astExpr->GetDeducedType()
-            );
+        if (lhs->GetDeducedType() != type) {
+            lhsValue = CastValue(lhsValue, lhs->GetDeducedType(), type);
         }
 
         rhs->AcceptOnExpression(this);
         auto *rhsValue{GetValue()};
 
-        if (rhs->GetDeducedType() != astExpr->GetDeducedType()) {
-            rhsValue = CastValue(
-                    rhsValue, rhs->GetDeducedType(), astExpr->GetDeducedType()
-            );
+        if (rhs->GetDeducedType() != type) {
+            rhsValue = CastValue(rhsValue, rhs->GetDeducedType(), type);
         }
 
         return {lhsValue, rhsValue};
@@ -52,7 +50,9 @@ namespace jcc::visitors {
     void ExpressionCodegenVisitor::Visit(
             parsing::AstMultiplicativeExpression const *astMultiplicativeExpr
     ) {
-        auto [lhsValue, rhsValue]{PrepareOperands(astMultiplicativeExpr)};
+        auto [lhsValue, rhsValue]{PrepareOperands(
+                astMultiplicativeExpr, astMultiplicativeExpr->GetDeducedType()
+        )};
 
         auto       &builder{parsing::CompilerState::GetInstance().GetBuilder()};
         auto const &type{astMultiplicativeExpr->GetDeducedType()};
@@ -120,7 +120,9 @@ namespace jcc::visitors {
     void ExpressionCodegenVisitor::Visit(
             parsing::AstAdditiveExpression const *astAdditiveExpr
     ) {
-        auto [lhsValue, rhsValue]{PrepareOperands(astAdditiveExpr)};
+        auto [lhsValue, rhsValue]{PrepareOperands(
+                astAdditiveExpr, astAdditiveExpr->GetDeducedType()
+        )};
 
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
 
@@ -161,7 +163,9 @@ namespace jcc::visitors {
     void ExpressionCodegenVisitor::Visit(
             parsing::AstShiftExpression const *astShiftExpr
     ) {
-        auto [lhsValue, rhsValue]{PrepareOperands(astShiftExpr)};
+        auto [lhsValue, rhsValue]{
+                PrepareOperands(astShiftExpr, astShiftExpr->GetDeducedType())
+        };
 
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
 
@@ -206,6 +210,111 @@ namespace jcc::visitors {
         auto const &type{astCastExpr->GetTypeName().GetType()};
 
         m_Value = CastValue(value, expression->GetDeducedType(), type);
+    }
+
+    [[nodiscard]]
+    llvm::Value *CmpFloat(
+            llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
+    ) {
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+
+        switch (op) {
+            case parsing::RelationalOperator::LessThan:
+                return builder.CreateFCmpOLT(lhs, rhs, "fp_lt_result");
+            case parsing::RelationalOperator::GreaterThan:
+                return builder.CreateFCmpOGT(lhs, rhs, "fp_gt_result");
+            case parsing::RelationalOperator::LessThanOrEqual:
+                return builder.CreateFCmpOLE(lhs, rhs, "fp_le_result");
+            case parsing::RelationalOperator::GreaterThanOrEqual:
+                return builder.CreateFCmpOGE(lhs, rhs, "fp_ge_result");
+        }
+
+        assert(false);
+    }
+
+    [[nodiscard]]
+    llvm::Value *CmpSignedInt(
+            llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
+    ) {
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+
+        switch (op) {
+            case parsing::RelationalOperator::LessThan:
+                return builder.CreateICmpSLT(lhs, rhs, "int_lt_result");
+            case parsing::RelationalOperator::GreaterThan:
+                return builder.CreateICmpSGT(lhs, rhs, "int_gt_result");
+            case parsing::RelationalOperator::LessThanOrEqual:
+                return builder.CreateICmpSLE(lhs, rhs, "int_le_result");
+            case parsing::RelationalOperator::GreaterThanOrEqual:
+                return builder.CreateICmpSGE(lhs, rhs, "int_ge_result");
+        }
+
+        assert(false);
+    }
+
+    [[nodiscard]]
+    llvm::Value *CmpUnsignedInt(
+            llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
+    ) {
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+
+        switch (op) {
+            case parsing::RelationalOperator::LessThan:
+                return builder.CreateICmpULT(lhs, rhs, "uint_lt_result");
+            case parsing::RelationalOperator::GreaterThan:
+                return builder.CreateICmpUGT(lhs, rhs, "uint_gt_result");
+            case parsing::RelationalOperator::LessThanOrEqual:
+                return builder.CreateICmpULE(lhs, rhs, "uint_le_result");
+            case parsing::RelationalOperator::GreaterThanOrEqual:
+                return builder.CreateICmpUGE(lhs, rhs, "uint_ge_result");
+        }
+
+        assert(false);
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing::AstRelationalExpression const *astRelationalExpr
+    ) {
+        auto [lhsValue, rhsValue]{PrepareOperands(
+                astRelationalExpr,
+                astRelationalExpr->GetUsualArithmeticConversionType()
+        )};
+
+        auto const type{astRelationalExpr->GetUsualArithmeticConversionType()};
+
+        if (type.IsFloating()) {
+            m_Value = CmpFloat(
+                    lhsValue, rhsValue, astRelationalExpr->GetOperator()
+            );
+        } else if (type.IsInteger()) {
+            auto const intType{std::get<parsing::types::IntegerType>(
+                    astRelationalExpr->GetDeducedType().GetType()
+            )};
+
+            if (intType.IsSigned()) {
+                m_Value = CmpSignedInt(
+                        lhsValue, rhsValue, astRelationalExpr->GetOperator()
+                );
+            } else {
+                m_Value = CmpUnsignedInt(
+                        lhsValue, rhsValue, astRelationalExpr->GetOperator()
+                );
+            }
+        } else {
+            parsing::CompilerState::GetInstance()
+                    .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                            astRelationalExpr->m_Span.m_Source,
+                            astRelationalExpr->m_Span.m_Span
+                    );
+        }
+
+        auto       &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+        auto *const intType{parsing::types::IntegerType::GetLLVMType(
+                parsing::types::StandardIntegerType::Int
+        )};
+
+        m_Value =
+                builder.CreateZExt(m_Value, intType, "relational_result_zext");
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {

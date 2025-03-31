@@ -26,9 +26,7 @@ namespace jcc::diagnostics {
         void Print(CustomDiagnostic const &diag) const override;
         void Print(CharConstGt4Chars const &diag) const override;
         void Print(CharConstEmpty const &diag) const override;
-        void Print(ShiftOperandNonInt const &diag) const override;
-        void Print(MultNonArithmetic const &diag) const override;
-        void Print(ModuloWithNonInt const &diag) const override;
+        void Print(BinaryOperandsWrongTypes const &diag) const override;
         void Print(ExpectedExpression const &diag) const override;
         void Print(UnexpectedEof const &diag) const override;
         void Print(UnexpectedChar const &diag) const override;

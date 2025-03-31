@@ -94,7 +94,14 @@ namespace jcc::parsing::types {
     }
 
     bool IntegerType::IsSigned() const noexcept {
-        return m_Sign == Signedness::Signed;
+        if (std::holds_alternative<StandardIntegerType>(m_Type) &&
+            std::get<StandardIntegerType>(m_Type) ==
+                    StandardIntegerType::Char) {
+            return m_Sign == Signedness::Signed;
+        }
+
+        return m_Sign !=
+               Signedness::Unsigned;// Unspecified is treated as signed
     }
 
     llvm::Type *IntegerType::GetLLVMType(Type type) {
@@ -425,6 +432,11 @@ namespace jcc::parsing::types {
 
     bool ValueType::IsFloating() const noexcept {
         return std::holds_alternative<FloatingType>(m_Type);
+    }
+
+    bool ValueType::IsReal() const noexcept {
+        return std::holds_alternative<FloatingType>(m_Type) ||
+               std::holds_alternative<IntegerType>(m_Type);
     }
 
     llvm::Type *ValueType::GetLLVMType() const {

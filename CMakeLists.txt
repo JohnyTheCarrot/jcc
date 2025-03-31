@@ -97,10 +97,8 @@ add_library(
         src/visitors/sema.h
         src/diagnostics/diagnostics.cpp
         src/diagnostics/diagnostics.h
-        src/diagnostics/variants/sema/mult_non_arithmetic.cpp
-        src/diagnostics/variants/sema/mult_non_arithmetic.hpp
-        src/diagnostics/variants/sema/modulo_with_non_int.cpp
-        src/diagnostics/variants/sema/modulo_with_non_int.hpp
+        src/diagnostics/variants/sema/binary_operands_wrong_types.cpp
+        src/diagnostics/variants/sema/binary_operands_wrong_types.hpp
         src/diagnostics/source.h
         src/diagnostics/source.cpp
         src/diagnostics/variants/tk_pp/untermed_string.cpp
@@ -127,8 +125,6 @@ add_library(
         src/diagnostics/variants/tk_pp/unknown_escape_seq.hpp
         src/diagnostics/variants/todo.cpp
         src/diagnostics/variants/todo.hpp
-        src/diagnostics/variants/sema/shift_operand_non_int.cpp
-        src/diagnostics/variants/sema/shift_operand_non_int.hpp
         src/diagnostics/variants/tk_pp/pp_conditional_not_terminated.cpp
         src/diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp
         src/diagnostics/variants/tk_pp/pp_conditional_expected_ident.cpp
@@ -186,6 +182,8 @@ add_library(
         src/diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp
         src/visitors/expression_type_deduction.cpp
         src/visitors/expression_type_deduction.hpp
+        src/parsing/relational_expression.cpp
+        src/parsing/relational_expression.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

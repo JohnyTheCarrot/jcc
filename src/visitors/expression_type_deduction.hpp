@@ -26,6 +26,10 @@ namespace jcc::visitors {
         Visit(parsing::AstFloatingConstant const *astFloatingConst) override;
 
         void Visit(parsing::AstCastExpression const *astCastExpr) override;
+
+        void
+        Visit(parsing::AstRelationalExpression const *astRelationalExpr
+        ) override;
     };
 }// namespace jcc::visitors
 

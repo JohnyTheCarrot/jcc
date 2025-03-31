@@ -1,13 +1,12 @@
 #include "sema.h"
 
+#include "diagnostics/variants/sema/binary_operands_wrong_types.hpp"
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
-#include "diagnostics/variants/sema/modulo_with_non_int.hpp"
-#include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
-#include "diagnostics/variants/sema/shift_operand_non_int.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "parsing/additive_expression.h"
 #include "parsing/cast_expression.hpp"
 #include "parsing/multiplicative_expression.h"
+#include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
 #include "parsing/type_name.h"
 
@@ -35,23 +34,32 @@ namespace jcc::visitors {
 
         auto const rhsType{rhs->GetDeducedType()};
 
+        std::string errorMessage{
+                "The operands of a multiplicative expression must "
+                "both be of arithmetic types."
+        };
+
         // Because we want to check both children, we can't just return after checking one of them.
         bool canContinue{true};
         if (!lhsType.IsArithmetic()) {
-            compilerState.EmplaceDiagnostic<diagnostics::MultNonArithmetic>(
-                    lhs->m_Span.m_Source, lhs->m_Span.m_Span,
-                    rhs->m_Span.m_Span, astMultiplicativeExpr->GetOpSpan(),
-                    lhsType, rhsType
-            );
+            compilerState
+                    .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                            lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                            rhs->m_Span.m_Span,
+                            astMultiplicativeExpr->GetOpSpan(), errorMessage,
+                            lhsType, rhsType
+                    );
             canContinue = false;
         }
 
         if (!rhsType.IsArithmetic()) {
-            compilerState.EmplaceDiagnostic<diagnostics::MultNonArithmetic>(
-                    lhs->m_Span.m_Source, lhs->m_Span.m_Span,
-                    rhs->m_Span.m_Span, astMultiplicativeExpr->GetOpSpan(),
-                    lhsType, rhsType
-            );
+            compilerState
+                    .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                            lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                            rhs->m_Span.m_Span,
+                            astMultiplicativeExpr->GetOpSpan(),
+                            std::move(errorMessage), lhsType, rhsType
+                    );
             canContinue = false;
         }
 
@@ -63,11 +71,15 @@ namespace jcc::visitors {
             if (lhsType.IsInteger() && rhsType.IsInteger())
                 return;// OK
 
-            compilerState.EmplaceDiagnostic<diagnostics::ModuloWithNonInt>(
-                    lhs->m_Span.m_Source, lhs->m_Span.m_Span,
-                    rhs->m_Span.m_Span, astMultiplicativeExpr->GetOpSpan(),
-                    lhsType, rhsType
-            );
+            compilerState
+                    .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                            lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                            rhs->m_Span.m_Span,
+                            astMultiplicativeExpr->GetOpSpan(),
+                            "Both operands must be of an integer type when "
+                            "using the modulo operator.",
+                            lhsType, rhsType
+                    );
         }
     }
 
@@ -122,9 +134,12 @@ namespace jcc::visitors {
         if (lhsType.IsInteger() && rhsType.IsInteger())
             return;
 
-        compilerState.EmplaceDiagnostic<diagnostics::ShiftOperandNonInt>(
+        compilerState.EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
                 astShiftExpr->m_Span.m_Source, lhs->m_Span.m_Span,
-                rhs->m_Span.m_Span, astShiftExpr->GetOpSpan(), lhsType, rhsType
+                rhs->m_Span.m_Span, astShiftExpr->GetOpSpan(),
+                "The operands of a shift expression must "
+                "both be of integer types.",
+                lhsType, rhsType
         );
     }
 
@@ -156,5 +171,31 @@ namespace jcc::visitors {
 
     void SemaVisitor::Visit(AstTypeName const *astTypeName) {
         astTypeName->GetSpecifierQualifierList().AcceptOnNode(this);
+    }
+
+    void SemaVisitor::Visit(AstRelationalExpression const *astRelationalExpr) {
+        auto const lhs{astRelationalExpr->GetLhs()};
+        lhs->AcceptOnExpression(this);
+
+        auto const &lhsType{lhs->GetDeducedType()};
+
+        auto const rhs{astRelationalExpr->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const &rhsType{rhs->GetDeducedType()};
+
+        if (lhsType.IsReal() && rhsType.IsReal())
+            return;
+
+        // TODO: Handle the case of both operands being pointers to qualified or unqualified versions of compatible object types.
+
+        CompilerState::GetInstance()
+                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                        rhs->m_Span.m_Span, astRelationalExpr->GetOpSpan(),
+                        "Both operands must be a real type or pointers to "
+                        "compatible types.",
+                        lhsType, rhsType
+                );
     }
 }// namespace jcc::visitors

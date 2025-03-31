@@ -1,7 +1,9 @@
 #ifndef BINARY_EXPRESSION_H
 #define BINARY_EXPRESSION_H
+
 #include "ast_node.h"
 #include "diagnostics/variants/parsing/expected_expression.hpp"
+#include "parsing/parser.h"
 #include "preprocessor/preprocessor_iterator.h"
 
 namespace jcc::tokenizer {

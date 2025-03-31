@@ -28,7 +28,7 @@ namespace jcc::diagnostics {
     struct UnexpectedEof;
     struct ExpectedExpression;
     struct ModuloWithNonInt;
-    struct MultNonArithmetic;
+    struct BinaryOperandsWrongTypes;
     struct ShiftOperandNonInt;
     struct CharConstEmpty;
     struct CharConstGt4Chars;
@@ -80,9 +80,7 @@ namespace jcc::diagnostics {
         virtual void Print(CustomDiagnostic const &diag) const              = 0;
         virtual void Print(CharConstGt4Chars const &diag) const             = 0;
         virtual void Print(CharConstEmpty const &diag) const                = 0;
-        virtual void Print(ShiftOperandNonInt const &diag) const            = 0;
-        virtual void Print(MultNonArithmetic const &diag) const             = 0;
-        virtual void Print(ModuloWithNonInt const &diag) const              = 0;
+        virtual void Print(BinaryOperandsWrongTypes const &diag) const      = 0;
         virtual void Print(ExpectedExpression const &diag) const            = 0;
         virtual void Print(UnexpectedEof const &diag) const                 = 0;
         virtual void Print(UnexpectedChar const &diag) const                = 0;

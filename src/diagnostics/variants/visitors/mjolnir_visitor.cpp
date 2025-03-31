@@ -9,10 +9,8 @@
 
 #include "diagnostics/variants/parsing/basic_syntax_error.hpp"
 #include "diagnostics/variants/parsing/expected_expression.hpp"
+#include "diagnostics/variants/sema/binary_operands_wrong_types.hpp"
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
-#include "diagnostics/variants/sema/modulo_with_non_int.hpp"
-#include "diagnostics/variants/sema/mult_non_arithmetic.hpp"
-#include "diagnostics/variants/sema/shift_operand_non_int.hpp"
 #include "diagnostics/variants/tk_pp/char_const_empty.h"
 #include "diagnostics/variants/tk_pp/char_const_gt_4_chars.hpp"
 #include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
@@ -337,15 +335,12 @@ namespace jcc::diagnostics {
         report.print(GetOstream());
     }
 
-    void MjolnirVisitor::Print(ShiftOperandNonInt const &diag) const {
+    void MjolnirVisitor::Print(BinaryOperandsWrongTypes const &diag) const {
         constexpr auto lhsColor{mjolnir::colors::light_cyan};
         constexpr auto rhsColor{mjolnir::colors::light_magenta};
 
         StartReport(diag)
-                .with_message(
-                        "Both operands in a shift expression must be of "
-                        "integer types."
-                )
+                .with_message(diag.m_Message)
                 .with_label(mjolnir::Label{diag.m_OpSpan})
                 .with_label(
                         mjolnir::Label{diag.m_LhsSpan}
@@ -368,86 +363,6 @@ namespace jcc::diagnostics {
                                         )
                                 )
                                 .with_color(rhsColor)
-                )
-                .with_help(
-                        "Consider casting the operand(s) to integer type(s)."
-                )
-                .print(GetOstream());
-    }
-
-    void MjolnirVisitor::Print(MultNonArithmetic const &diag) const {
-        constexpr auto lhsColor{mjolnir::colors::light_cyan};
-        constexpr auto rhsColor{mjolnir::colors::light_magenta};
-
-        StartReport(diag)
-                .with_message(
-                        "The operands of a multiplicative expression must be "
-                        "of "
-                        "an arithmetic type."
-                )
-                .with_label(mjolnir::Label{diag.m_OpSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_LhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                lhsColor.fg(diag.m_LhsType
-                                                                    .ToString())
-                                        )
-                                )
-                                .with_color(lhsColor)
-                )
-                .with_label(
-                        mjolnir::Label{diag.m_RhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                rhsColor.fg(diag.m_RhsType
-                                                                    .ToString())
-                                        )
-                                )
-                                .with_color(rhsColor)
-                )
-                .with_help(
-                        "Consider casting the operand(s) to arithmetic type(s)."
-                )
-                .print(GetOstream());
-    }
-
-    void MjolnirVisitor::Print(ModuloWithNonInt const &diag) const {
-        constexpr auto lhsColor{mjolnir::colors::light_cyan};
-        constexpr auto rhsColor{mjolnir::colors::light_magenta};
-
-        StartReport(diag)
-                .with_message(
-                        "Both operands in a modulo expression must be of "
-                        "integer types."
-                )
-                .with_label(mjolnir::Label{diag.m_OpSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_LhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                lhsColor.fg(diag.m_LhsType
-                                                                    .ToString())
-                                        )
-                                )
-                                .with_color(lhsColor)
-                )
-                .with_label(
-                        mjolnir::Label{diag.m_RhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                rhsColor.fg(diag.m_RhsType
-                                                                    .ToString())
-                                        )
-                                )
-                                .with_color(rhsColor)
-                )
-                .with_help(
-                        "Consider casting the operand(s) to integer type(s)."
                 )
                 .print(GetOstream());
     }

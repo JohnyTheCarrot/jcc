@@ -1,7 +1,7 @@
 #include "expression.h"
 
 #include "preprocessor/preprocessor_iterator.h"
-#include "shift_expression.h"
+#include "relational_expression.hpp"
 
 namespace jcc::parsing {
     AstExpressionPtr ParseExpression(
@@ -11,6 +11,6 @@ namespace jcc::parsing {
         if (current == end)
             return nullptr;
 
-        return ParseShiftExpression(current, end);
+        return ParseRelationalExpression(current, end);
     }
 }// namespace jcc::parsing

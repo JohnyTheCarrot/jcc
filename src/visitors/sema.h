@@ -27,6 +27,10 @@ namespace jcc::visitors {
         ) override;
 
         void Visit(parsing::AstTypeName const *astTypeName) override;
+
+        void
+        Visit(parsing::AstRelationalExpression const *astRelationalExpr
+        ) override;
     };
 }// namespace jcc::visitors
 

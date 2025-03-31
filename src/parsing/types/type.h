@@ -161,6 +161,9 @@ namespace jcc::parsing::types {
         bool IsFloating() const noexcept;
 
         [[nodiscard]]
+        bool IsReal() const noexcept;
+
+        [[nodiscard]]
         llvm::Type *GetLLVMType() const;
 
         [[nodiscard]]
