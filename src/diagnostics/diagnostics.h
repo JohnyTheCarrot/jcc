@@ -37,9 +37,9 @@ namespace jcc::diagnostics {
     };
 
     struct BinaryDiagnostic : DiagnosticData {
-        mjolnir::Span                  m_LhsSpan;
-        mjolnir::Span                  m_RhsSpan;
-        mjolnir::Span                  m_OpSpan;
+        mjolnir::Span             m_LhsSpan;
+        mjolnir::Span             m_RhsSpan;
+        mjolnir::Span             m_OpSpan;
         parsing::types::ValueType m_LhsType;
         parsing::types::ValueType m_RhsType;
 

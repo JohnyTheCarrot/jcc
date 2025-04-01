@@ -171,7 +171,8 @@ namespace jcc::tokenizer::static_tokens {
         while (charIter != CharIter::c_UntilNewline) {
             auto [spanMarker, character, isSentinel]{*charIter};
 
-            if (!std::isalnum(character) && character != '_')
+            if (!std::isalnum(character) && character != '_' &&
+                character != '#')
                 break;
 
             auto [node, leaf]{currentNode->Find(character)};

@@ -5,6 +5,7 @@
 #include "diagnostics/variants/todo.hpp"
 #include "parsing/additive_expression.h"
 #include "parsing/cast_expression.hpp"
+#include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
@@ -195,6 +196,33 @@ namespace jcc::visitors {
                         rhs->m_Span.m_Span, astRelationalExpr->GetOpSpan(),
                         "Both operands must be a real type or pointers to "
                         "compatible types.",
+                        lhsType, rhsType
+                );
+    }
+
+    void
+    SemaVisitor::Visit(AstEqualityExpression const *astEqualityExpression) {
+        auto const lhs{astEqualityExpression->GetLhs()};
+        lhs->AcceptOnExpression(this);
+
+        auto const &lhsType{lhs->GetDeducedType()};
+
+        auto const rhs{astEqualityExpression->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const &rhsType{rhs->GetDeducedType()};
+
+        if (lhsType.IsArithmetic() && rhsType.IsArithmetic())
+            return;
+
+        // TODO: handle the other cases
+
+        CompilerState::GetInstance()
+                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                        rhs->m_Span.m_Span, astEqualityExpression->GetOpSpan(),
+                        "Both operands must be of arithmetic types or pointers "
+                        "to compatible types.",
                         lhsType, rhsType
                 );
     }

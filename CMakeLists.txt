@@ -179,11 +179,9 @@ add_library(
         src/diagnostics/variants/sema/no_compat_int_type.cpp
         src/parsing/cast_expression.cpp
         src/diagnostics/variants/sema/invalid_specifier_qualifier_list.cpp
-        src/diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp
         src/visitors/expression_type_deduction.cpp
-        src/visitors/expression_type_deduction.hpp
         src/parsing/relational_expression.cpp
-        src/parsing/relational_expression.hpp
+        src/parsing/equality_expression.cpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

@@ -1,1 +1,1 @@
-(unsigned long long int) (4.f * 2. + 1 / (float) 2) - (float) 2
+1 << ((2 - 1) == 1)

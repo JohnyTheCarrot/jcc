@@ -9,7 +9,7 @@ namespace jcc::parsing {
             AstExpressionPtr lhs, AstExpressionPtr rhs, RelationalOperator op,
             mjolnir::Span opSpan
     )
-        : AstBinaryExpression{lhs->m_Span + rhs->m_Span, std::move(lhs), std::move(rhs), opSpan}
+        : AstBooleanBinaryExpression{lhs->m_Span + rhs->m_Span, std::move(lhs), std::move(rhs), opSpan}
         , m_RelationalOperator{op} {
     }
 
@@ -21,17 +21,6 @@ namespace jcc::parsing {
             ExpressionVisitor *visitor
     ) const {
         visitor->Visit(this);
-    }
-
-    types::ValueType
-    AstRelationalExpression::GetUsualArithmeticConversionType() const {
-        return m_UsualArithmeticConversionType.value();
-    }
-
-    void AstRelationalExpression::SetUsualArithmeticConversionType(
-            types::ValueType const &type
-    ) const noexcept {
-        m_UsualArithmeticConversionType = type;
     }
 
     [[nodiscard]]

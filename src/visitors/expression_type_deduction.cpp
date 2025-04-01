@@ -4,6 +4,7 @@
 
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "parsing/additive_expression.h"
+#include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
 #include "parsing/relational_expression.hpp"
@@ -79,8 +80,9 @@ namespace jcc::visitors {
         astCastExpr->SetDeducedType(astCastExpr->GetTypeName().GetType());
     }
 
-    void ExpressionTypeDeductionVisitor::Visit(
-            parsing::AstRelationalExpression const *astRelationalExpr
+    void ExpressionTypeDeductionVisitor::CmpTypeDeduction(
+            parsing::AstBooleanBinaryExpression const
+                    *astBooleanBinaryExpression
     ) {
         using namespace parsing::types;
 
@@ -88,16 +90,28 @@ namespace jcc::visitors {
                 StandardIntegerType::Int, IntegerType::Signedness::Unspecified
         };
 
-        astRelationalExpr->SetDeducedType(ValueType{intType});
+        astBooleanBinaryExpression->SetDeducedType(ValueType{intType});
 
-        auto const *lhs{astRelationalExpr->GetLhs()};
+        auto const *lhs{astBooleanBinaryExpression->GetLhs()};
         lhs->AcceptOnExpression(this);
-        auto const *rhs{astRelationalExpr->GetRhs()};
+        auto const *rhs{astBooleanBinaryExpression->GetRhs()};
         rhs->AcceptOnExpression(this);
 
         auto const type{UsualArithmeticConversions(
                 lhs->GetDeducedType(), rhs->GetDeducedType()
         )};
-        astRelationalExpr->SetUsualArithmeticConversionType(type);
+        astBooleanBinaryExpression->SetUsualArithmeticConversionType(type);
+    }
+
+    void ExpressionTypeDeductionVisitor::Visit(
+            parsing::AstRelationalExpression const *astRelationalExpr
+    ) {
+        CmpTypeDeduction(astRelationalExpr);
+    }
+
+    void ExpressionTypeDeductionVisitor::Visit(
+            parsing::AstEqualityExpression const *astEqualityExpression
+    ) {
+        CmpTypeDeduction(astEqualityExpression);
     }
 }// namespace jcc::visitors

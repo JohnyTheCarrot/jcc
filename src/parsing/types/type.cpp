@@ -470,7 +470,7 @@ namespace jcc::parsing::types {
             auto const fromIntegerType{std::get<IntegerType>(from.GetType())};
             auto const toIntegerType{std::get<IntegerType>(to.GetType())};
 
-            if (fromIntegerType.IsSigned()) {
+            if (fromIntegerType.IsSigned() && toIntegerType.IsSigned()) {
                 return builder.CreateSExt(value, toIntegerType.GetLLVMType());
             }
 

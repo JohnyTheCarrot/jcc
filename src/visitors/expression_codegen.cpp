@@ -2,6 +2,7 @@
 
 #include "parsing/additive_expression.h"
 #include "parsing/cast_expression.hpp"
+#include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
 #include "parsing/relational_expression.hpp"
@@ -213,7 +214,7 @@ namespace jcc::visitors {
     }
 
     [[nodiscard]]
-    llvm::Value *CmpFloat(
+    llvm::Value *RelationalCmpFloat(
             llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
     ) {
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
@@ -233,7 +234,7 @@ namespace jcc::visitors {
     }
 
     [[nodiscard]]
-    llvm::Value *CmpSignedInt(
+    llvm::Value *RelationalCmpSignedInt(
             llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
     ) {
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
@@ -253,7 +254,7 @@ namespace jcc::visitors {
     }
 
     [[nodiscard]]
-    llvm::Value *CmpUnsignedInt(
+    llvm::Value *RelationalCmpUnsignedInt(
             llvm::Value *lhs, llvm::Value *rhs, parsing::RelationalOperator op
     ) {
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
@@ -275,15 +276,12 @@ namespace jcc::visitors {
     void ExpressionCodegenVisitor::Visit(
             parsing::AstRelationalExpression const *astRelationalExpr
     ) {
-        auto [lhsValue, rhsValue]{PrepareOperands(
-                astRelationalExpr,
-                astRelationalExpr->GetUsualArithmeticConversionType()
-        )};
 
         auto const type{astRelationalExpr->GetUsualArithmeticConversionType()};
+        auto [lhsValue, rhsValue]{PrepareOperands(astRelationalExpr, type)};
 
         if (type.IsFloating()) {
-            m_Value = CmpFloat(
+            m_Value = RelationalCmpFloat(
                     lhsValue, rhsValue, astRelationalExpr->GetOperator()
             );
         } else if (type.IsInteger()) {
@@ -292,11 +290,11 @@ namespace jcc::visitors {
             )};
 
             if (intType.IsSigned()) {
-                m_Value = CmpSignedInt(
+                m_Value = RelationalCmpSignedInt(
                         lhsValue, rhsValue, astRelationalExpr->GetOperator()
                 );
             } else {
-                m_Value = CmpUnsignedInt(
+                m_Value = RelationalCmpUnsignedInt(
                         lhsValue, rhsValue, astRelationalExpr->GetOperator()
                 );
             }
@@ -315,6 +313,58 @@ namespace jcc::visitors {
 
         m_Value =
                 builder.CreateZExt(m_Value, intType, "relational_result_zext");
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing::AstEqualityExpression const *astEqualityExpression
+    ) {
+        auto const type{astEqualityExpression->GetUsualArithmeticConversionType(
+        )};
+        auto [lhsValue, rhsValue]{PrepareOperands(astEqualityExpression, type)};
+
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+        if (type.IsArithmetic()) {
+            if (type.IsFloating()) {
+                switch (astEqualityExpression->GetOperator()) {
+                    case parsing::EqualityOperator::Equal:
+                        m_Value = builder.CreateFCmpOEQ(
+                                lhsValue, rhsValue, "fp_eq_result"
+                        );
+                        break;
+                    case parsing::EqualityOperator::NotEqual:
+                        m_Value = builder.CreateFCmpONE(
+                                lhsValue, rhsValue, "fp_ne_result"
+                        );
+                        break;
+                }
+            } else if (type.IsInteger()) {
+                switch (astEqualityExpression->GetOperator()) {
+                    case parsing::EqualityOperator::Equal:
+                        m_Value = builder.CreateICmpEQ(
+                                lhsValue, rhsValue, "int_eq_result"
+                        );
+                        break;
+                    case parsing::EqualityOperator::NotEqual:
+                        m_Value = builder.CreateICmpNE(
+                                lhsValue, rhsValue, "int_ne_result"
+                        );
+                        break;
+                }
+            } else {
+                parsing::CompilerState::GetInstance()
+                        .EmplaceFatalDiagnostic<diagnostics::TodoError>(
+                                astEqualityExpression->m_Span.m_Source,
+                                astEqualityExpression->m_Span.m_Span
+                        );
+            }
+        }
+
+
+        auto *const intType{parsing::types::IntegerType::GetLLVMType(
+                parsing::types::StandardIntegerType::Int
+        )};
+
+        m_Value = builder.CreateZExt(m_Value, intType, "equality_result_zext");
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {

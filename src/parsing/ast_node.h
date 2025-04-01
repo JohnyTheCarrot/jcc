@@ -8,6 +8,8 @@
 
 namespace jcc::parsing {
 #pragma region Forward Declarations
+    class AstEqualityExpression;
+
     class AstRelationalExpression;
 
     class AstCastExpression;
@@ -55,6 +57,9 @@ namespace jcc::parsing {
 
         virtual void
         Visit(AstRelationalExpression const *astRelationalExpr) = 0;
+
+        virtual void
+        Visit(AstEqualityExpression const *astEqualityExpression) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {
@@ -119,6 +124,20 @@ namespace jcc::parsing {
 
         [[nodiscard]]
         mjolnir::Span GetOpSpan() const noexcept;
+    };
+
+    class AstBooleanBinaryExpression : public AstBinaryExpression {
+        mutable std::optional<types::ValueType> m_UsualArithmeticConversionType;
+
+    public:
+        using AstBinaryExpression::AstBinaryExpression;
+
+        [[nodiscard]]
+        types::ValueType GetUsualArithmeticConversionType() const;
+
+        void SetUsualArithmeticConversionType(
+                types::ValueType const &type
+        ) const noexcept;
     };
 }// namespace jcc::parsing
 

@@ -36,4 +36,15 @@ namespace jcc::parsing {
     mjolnir::Span AstBinaryExpression::GetOpSpan() const noexcept {
         return m_OpSpan;
     }
+
+    types::ValueType
+    AstBooleanBinaryExpression::GetUsualArithmeticConversionType() const {
+        return m_UsualArithmeticConversionType.value();
+    }
+
+    void AstBooleanBinaryExpression::SetUsualArithmeticConversionType(
+            types::ValueType const &type
+    ) const noexcept {
+        m_UsualArithmeticConversionType = type;
+    }
 }// namespace jcc::parsing

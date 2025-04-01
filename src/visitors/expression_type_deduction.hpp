@@ -10,6 +10,11 @@ namespace jcc::visitors {
                 parsing::AstBinaryExpression const *astBinaryExpr
         );
 
+        void CmpTypeDeduction(
+                parsing::AstBooleanBinaryExpression const
+                        *astBooleanBinaryExpression
+        );
+
     public:
         void Visit(parsing::AstIntegerConstant const *astIntConst) override;
 
@@ -29,6 +34,10 @@ namespace jcc::visitors {
 
         void
         Visit(parsing::AstRelationalExpression const *astRelationalExpr
+        ) override;
+
+        void
+        Visit(parsing::AstEqualityExpression const *astEqualityExpression
         ) override;
     };
 }// namespace jcc::visitors

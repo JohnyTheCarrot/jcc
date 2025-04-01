@@ -35,6 +35,10 @@ namespace jcc::visitors {
         Visit(parsing::AstRelationalExpression const *astRelationalExpr
         ) override;
 
+        void
+        Visit(parsing::AstEqualityExpression const *astEqualityExpression
+        ) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };

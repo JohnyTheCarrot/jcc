@@ -14,9 +14,8 @@ namespace jcc::parsing {
         GreaterThanOrEqual
     };
 
-    class AstRelationalExpression final : public AstBinaryExpression {
-        RelationalOperator                      m_RelationalOperator;
-        mutable std::optional<types::ValueType> m_UsualArithmeticConversionType;
+    class AstRelationalExpression final : public AstBooleanBinaryExpression {
+        RelationalOperator m_RelationalOperator;
 
     public:
         AstRelationalExpression(
@@ -28,13 +27,6 @@ namespace jcc::parsing {
         RelationalOperator GetOperator() const noexcept;
 
         void AcceptOnExpression(ExpressionVisitor *visitor) const override;
-
-        [[nodiscard]]
-        types::ValueType GetUsualArithmeticConversionType() const;
-
-        void SetUsualArithmeticConversionType(
-                types::ValueType const &type
-        ) const noexcept;
     };
 
     [[nodiscard]]
