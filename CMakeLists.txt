@@ -182,6 +182,7 @@ add_library(
         src/visitors/expression_type_deduction.cpp
         src/parsing/relational_expression.cpp
         src/parsing/equality_expression.cpp
+        src/parsing/bitwise_and_expression.cpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

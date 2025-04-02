@@ -39,6 +39,10 @@ namespace jcc::visitors {
         Visit(parsing::AstEqualityExpression const *astEqualityExpression
         ) override;
 
+        void
+        Visit(parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
+        ) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };

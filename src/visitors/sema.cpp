@@ -4,6 +4,7 @@
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "parsing/additive_expression.h"
+#include "parsing/bitwise_and_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
@@ -223,6 +224,30 @@ namespace jcc::visitors {
                         rhs->m_Span.m_Span, astEqualityExpression->GetOpSpan(),
                         "Both operands must be of arithmetic types or pointers "
                         "to compatible types.",
+                        lhsType, rhsType
+                );
+    }
+
+    void SemaVisitor::Visit(AstBitwiseAndExpression const *astBitwiseAndExpr) {
+        auto const lhs{astBitwiseAndExpr->GetLhs()};
+        lhs->AcceptOnExpression(this);
+
+        auto const &lhsType{lhs->GetDeducedType()};
+
+        auto const rhs{astBitwiseAndExpr->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const &rhsType{rhs->GetDeducedType()};
+
+        if (lhsType.IsInteger() && rhsType.IsInteger())
+            return;
+
+        CompilerState::GetInstance()
+                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                        rhs->m_Span.m_Span, astBitwiseAndExpr->GetOpSpan(),
+                        "The operands of a bitwise and expression must "
+                        "both be of integer types.",
                         lhsType, rhsType
                 );
     }

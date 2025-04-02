@@ -35,6 +35,10 @@ namespace jcc::visitors {
         void
         Visit(parsing::AstEqualityExpression const *astEqualityExpression
         ) override;
+
+        void
+        Visit(parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
+        ) override;
     };
 }// namespace jcc::visitors
 

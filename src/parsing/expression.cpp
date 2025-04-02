@@ -1,6 +1,6 @@
 #include "expression.h"
 
-#include "equality_expression.hpp"
+#include "bitwise_and_expression.hpp"
 #include "preprocessor/preprocessor_iterator.h"
 
 namespace jcc::parsing {
@@ -11,6 +11,6 @@ namespace jcc::parsing {
         if (current == end)
             return nullptr;
 
-        return ParseEqualityExpression(current, end);
+        return ParseBitwiseAndExpression(current, end);
     }
 }// namespace jcc::parsing

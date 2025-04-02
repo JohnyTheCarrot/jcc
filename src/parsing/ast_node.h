@@ -29,6 +29,8 @@ namespace jcc::parsing {
     class AstIntegerConstant;
 
     class CompilerState;
+
+    class AstBitwiseAndExpression;
 #pragma endregion
 
     enum class ValueCategory { LValue, RValue };
@@ -60,6 +62,9 @@ namespace jcc::parsing {
 
         virtual void
         Visit(AstEqualityExpression const *astEqualityExpression) = 0;
+
+        virtual void
+        Visit(AstBitwiseAndExpression const *astBitwiseAndExpr) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {

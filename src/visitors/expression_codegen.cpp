@@ -1,6 +1,7 @@
 #include "expression_codegen.h"
 
 #include "parsing/additive_expression.h"
+#include "parsing/bitwise_and_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
@@ -365,6 +366,16 @@ namespace jcc::visitors {
         )};
 
         m_Value = builder.CreateZExt(m_Value, intType, "equality_result_zext");
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
+    ) {
+        auto const type{astBitwiseAndExpr->GetDeducedType()};
+        auto [lhsValue, rhsValue]{PrepareOperands(astBitwiseAndExpr, type)};
+
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+        m_Value = builder.CreateAnd(lhsValue, rhsValue, "and_result");
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {
