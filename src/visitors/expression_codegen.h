@@ -47,6 +47,9 @@ namespace jcc::visitors {
         Visit(parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
         ) override;
 
+        void
+        Visit(parsing::AstBitwiseOrExpression const *astBitwiseOrExpr) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };

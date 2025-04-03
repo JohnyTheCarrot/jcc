@@ -1,5 +1,5 @@
-#ifndef BITWISE_XOR_EXPRESSION_HPP
-#define BITWISE_XOR_EXPRESSION_HPP
+#ifndef BITWISE_OR_EXPRESSION_HPP
+#define BITWISE_OR_EXPRESSION_HPP
 
 #include "ast_node.h"
 
@@ -9,13 +9,13 @@ namespace jcc::preprocessor {
 
 namespace jcc::parsing {
     // This enum class only exists so we satisfy the ParseBinaryExpression requirements.
-    enum class BitwiseXorOperator { Xor };
+    enum class BitwiseOrOperator { Or };
 
-    class AstBitwiseXorExpression final : public AstBinaryExpression {
+    class AstBitwiseOrExpression final : public AstBinaryExpression {
     public:
         // This constructor only takes the operator for the sake of satisfying ParseBinaryExpression.
-        AstBitwiseXorExpression(
-                AstExpressionPtr lhs, AstExpressionPtr rhs, BitwiseXorOperator,
+        AstBitwiseOrExpression(
+                AstExpressionPtr lhs, AstExpressionPtr rhs, BitwiseOrOperator,
                 mjolnir::Span opSpan
         );
 
@@ -23,10 +23,10 @@ namespace jcc::parsing {
     };
 
     [[nodiscard]]
-    AstExpressionPtr ParseBitwiseXorExpression(
+    AstExpressionPtr ParseBitwiseOrExpression(
             preprocessor::PreprocessorIterator       &current,
             preprocessor::PreprocessorIterator const &end
     );
 }// namespace jcc::parsing
 
-#endif//BITWISE_XOR_EXPRESSION_HPP
+#endif//BITWISE_OR_EXPRESSION_HPP

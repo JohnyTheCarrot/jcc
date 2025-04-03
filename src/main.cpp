@@ -1,8 +1,9 @@
 #include <algorithm>// for for_each
 #include <cstdlib>  // for exit
-#include <iostream> // for basic_ostream, char_traits
-#include <string>   // for allocator, operator<<, string
-#include <vector>   // for vector
+#include <diagnostics/variants/parsing/basic_syntax_error.hpp>
+#include <iostream>// for basic_ostream, char_traits
+#include <string>  // for allocator, operator<<, string
+#include <vector>  // for vector
 
 #include "parsing/additive_expression.h"
 #include "parsing/expression.h"
@@ -31,6 +32,14 @@ int main(int argCount, char *args[]) {
         auto const constant{
                 jcc::parsing::ParseExpression(startIt, preprocessor.end())
         };
+        if (startIt != preprocessor.end()) {
+            jcc::parsing::CompilerState::GetInstance()
+                    .EmplaceDiagnostic<jcc::diagnostics::BasicSyntaxError>(
+                            startIt->m_Span.m_Source, startIt->m_Span.m_Span,
+                            "Expected end of file, but found: " +
+                                    startIt->ToString()
+                    );
+        }
         if (constant != nullptr) {
             jcc::visitors::ExpressionTypeDeductionVisitor typeDeductionVisitor;
             constant->AcceptOnExpression(&typeDeductionVisitor);

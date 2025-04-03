@@ -5,6 +5,7 @@
 #include "diagnostics/variants/todo.hpp"
 #include "parsing/additive_expression.h"
 #include "parsing/bitwise_and_expression.hpp"
+#include "parsing/bitwise_or_expression.hpp"
 #include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
@@ -261,5 +262,11 @@ namespace jcc::visitors {
 
     void SemaVisitor::Visit(AstBitwiseXorExpression const *astBitwiseXorExpr) {
         SemaBitwiseExpression(astBitwiseXorExpr);
+    }
+
+    void SemaVisitor::Visit(
+            AstBitwiseOrExpression const *astBitwiseOrExpr
+    ) {
+        SemaBitwiseExpression(astBitwiseOrExpr);
     }
 }// namespace jcc::visitors
