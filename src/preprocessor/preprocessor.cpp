@@ -1,6 +1,7 @@
 #include "preprocessor.h"
 
-#include <algorithm>    // for copy
+#include <algorithm>// for copy
+#include <iostream>
 #include <optional>     // for optional
 #include <unordered_map>// for operator==, _Node_it...
 #include <utility>      // for move, pair
@@ -17,11 +18,12 @@
 
 namespace jcc::preprocessor {
     PreprocessorToken Preprocessor::GetNextPreprocessorToken(
-            bool executeCommands, bool expandMacros
+            bool executeCommands, bool expandMacros, bool shouldAdvance
     ) {
         while (true) {
-            if (auto ppToken{GetNextFromTokenizer(executeCommands, expandMacros)
-                };
+            if (auto ppToken{GetNextFromTokenizer(
+                        executeCommands, expandMacros, shouldAdvance
+                )};
                 !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
                 return ppToken;
             }
@@ -77,67 +79,105 @@ namespace jcc::preprocessor {
     }
 
     PreprocessorToken Preprocessor::GetNextFromTokenizer(
-            bool executeCommands, bool expandMacros
+            bool executeCommands, bool expandMacros, bool shouldAdvance
     ) {
-        while (true) {
-            auto ppToken{SimpleTokenRead(expandMacros)};
+        auto token{[&] {
+            while (true) {
+                auto ppToken{SimpleTokenRead(expandMacros, shouldAdvance)};
 
-            if (auto &[token, span]{ppToken.m_Token};
-                std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
-                switch (std::get<tokenizer::SpecialPurpose>(token)) {
-                    case tokenizer::SpecialPurpose::EndOfFile:
-                        return ppToken;
-                    case tokenizer::SpecialPurpose::InvalidEscape: {
-                        auto &compilerState{
-                                parsing::CompilerState::GetInstance()
-                        };
-                        compilerState.EmplaceDiagnostic<
-                                diagnostics::EscapeWithoutNewline>(
-                                ppToken.m_Token.m_Span.m_Source,
-                                ppToken.m_Token.m_Span.m_Span
-                        );
-                        continue;
+                if (auto &[token, span]{ppToken.m_Token};
+                    std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
+                    switch (std::get<tokenizer::SpecialPurpose>(token)) {
+                        case tokenizer::SpecialPurpose::EndOfFile:
+                            return ppToken;
+                        case tokenizer::SpecialPurpose::InvalidEscape: {
+                            auto &compilerState{
+                                    parsing::CompilerState::GetInstance()
+                            };
+                            compilerState.EmplaceDiagnostic<
+                                    diagnostics::EscapeWithoutNewline>(
+                                    ppToken.m_Token.m_Span.m_Source,
+                                    ppToken.m_Token.m_Span.m_Span
+                            );
+                            continue;
+                        }
+                        default:
+                            break;
                     }
-                    default:
-                        break;
+                }
+
+                if (!executeCommands)
+                    return ppToken;
+
+                auto const  valueType{ppToken.m_Token.GetValueType()};
+                auto const &commandMap{
+                        commands::PreprocessorCommandSingleton::GetInstance()
+                                .GetCommandMap()
+                };
+
+                if (auto const commandIt{commandMap.find(valueType)};
+                    commandIt != commandMap.end()) {
+                    if (auto result{commandIt->second->Execute(
+                                *this, std::move(ppToken.m_Token)
+                        )};
+                        result.has_value())
+                        // If the command does not return a token, it means it was a directive.
+                        return std::move(result.value());
+                } else {
+                    return ppToken;
                 }
             }
+        }()};
 
-            if (!executeCommands)
-                return ppToken;
+        if (!executeCommands)
+            return token;
 
-            auto const  valueType{ppToken.m_Token.GetValueType()};
-            auto const &commandMap{
-                    commands::PreprocessorCommandSingleton::GetInstance()
-                            .GetCommandMap()
-            };
-
-            if (auto const commandIt{commandMap.find(valueType)};
-                commandIt != commandMap.end()) {
-                if (auto result{commandIt->second->Execute(
-                            *this, std::move(ppToken.m_Token)
-                    )};
-                    result.has_value())
-                    // If the command does not return a token, it means it was a directive.
-                    return std::move(result.value());
-            } else {
-                return ppToken;
-            }
+        auto const macroToken{m_pMacroStore->GetTokenFromMacroStack(false)};
+        auto      &tokenIter{m_TokenizerStack.top().GetTokenIter()};
+        auto const isEnd{
+                tokenIter == m_TokenizerStack.top().GetTokenizer().end()
+        };
+        if ((!macroToken.has_value() ||
+             !macroToken->Is(tokenizer::Punctuator::HashHash)) &&
+            (isEnd || !tokenIter->Is(tokenizer::Punctuator::HashHash))) {
+            return token;
         }
+
+        std::shared_ptr<diagnostics::Source> source;
+        if (macroToken.has_value()) {
+            m_pMacroStore->Advance();
+            source = macroToken->m_Span.m_Source;
+        } else {
+            source = token.m_Token.m_Span.m_Source;
+            ++tokenIter;
+        }
+
+        auto rhs{GetNextFromTokenizer(executeCommands, expandMacros)};
+
+        auto const           merged{std::format(
+                "{}{}", token.m_Token.ToString(), rhs.m_Token.ToString()
+        )};
+        tokenizer::Tokenizer tokenizer{std::move(source), merged};
+
+        return PreprocessorToken{tokenizer.GetNextToken().value(), false};
     }
 
-    PreprocessorToken Preprocessor::SimpleTokenRead(bool expandMacros) {
+    PreprocessorToken
+    Preprocessor::SimpleTokenRead(bool expandMacros, bool shouldAdvance) {
         while (true) {
             if (expandMacros) {
-                if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()
-                    };
+                if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader(
+                            shouldAdvance
+                    )};
                     token.has_value()) {
 
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
                     return {std::move(token.value()), false};
                 }
 
-                if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
+                if (auto token{
+                            m_pMacroStore->GetTokenFromMacroStack(shouldAdvance)
+                    };
                     token.has_value()) {
 
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
@@ -160,7 +200,8 @@ namespace jcc::preprocessor {
             }
 
             auto token{*tokenIter};
-            ++tokenIter;
+            if (shouldAdvance)
+                ++tokenIter;
 
             return {std::move(token), false};
         }

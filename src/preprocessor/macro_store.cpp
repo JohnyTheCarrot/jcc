@@ -1,10 +1,11 @@
 #include "macro_store.h"
 
 #include <functional>// for identity
-#include <ranges>    // for __find_if_fn, borrowed_iterator_t
-#include <stdexcept> // for runtime_error
-#include <utility>   // for move, pair
-#include <vector>    // for vector
+#include <iostream>
+#include <ranges>   // for __find_if_fn, borrowed_iterator_t
+#include <stdexcept>// for runtime_error
+#include <utility>  // for move, pair
+#include <vector>   // for vector
 
 #include "preprocessor/macro.h"// for MacroInvocation, MacroArgumentReader
 
@@ -76,13 +77,16 @@ namespace jcc::preprocessor {
         return argIt->second;
     }
 
-    std::optional<tokenizer::Token> MacroStore::GetTokenFromMacroStack() {
+    std::optional<tokenizer::Token>
+    MacroStore::GetTokenFromMacroStack(bool shouldAdvance) {
         if (m_MacroStack.empty())
             return std::nullopt;
 
         auto &[macroName, currentTokenIndex, args,
                currentArgReader]{m_MacroStack.top()};
-        ++currentTokenIndex;
+        auto const newTokenIdx{currentTokenIndex + 1};
+        if (shouldAdvance)
+            currentTokenIndex = newTokenIdx;
 
         if (auto const *macro{GetMacro(macroName, true)}; macro != nullptr) {
             auto const [m_ReplacementList]{[macro] {
@@ -95,13 +99,16 @@ namespace jcc::preprocessor {
                         .m_ReplacementList;
             }()};
 
-            if (currentTokenIndex >=
-                static_cast<int>(m_ReplacementList.size())) {
-                m_MacroStack.pop();
-                return GetTokenFromMacroStack();
+            if (newTokenIdx >= static_cast<int>(m_ReplacementList.size())) {
+                if (shouldAdvance) {
+                    m_MacroStack.pop();
+                    return GetTokenFromMacroStack();
+                }
+
+                return std::nullopt;
             }
 
-            return m_ReplacementList.at(currentTokenIndex);
+            return m_ReplacementList.at(newTokenIdx);
         }
 
         throw std::runtime_error{
@@ -109,8 +116,14 @@ namespace jcc::preprocessor {
         };
     }
 
+    void MacroStore::Advance() {
+        auto &[macroName, currentTokenIndex, args,
+               currentArgReader]{m_MacroStack.top()};
+        ++currentTokenIndex;
+    }
+
     std::optional<tokenizer::Token>
-    MacroStore::GetTokenFromMacroArgumentReader() {
+    MacroStore::GetTokenFromMacroArgumentReader(bool shouldAdvance) {
         if (m_MacroStack.empty())
             return std::nullopt;
 
@@ -119,16 +132,18 @@ namespace jcc::preprocessor {
         if (!macroArgReader.has_value())
             return std::nullopt;
 
-        auto &[m_Args, m_CurrentTokenIndex]{macroArgReader.value()};
+        auto &[args, currentTokenIndex]{macroArgReader.value()};
+        auto const newIndex{currentTokenIndex + 1};
 
-        ++m_CurrentTokenIndex;
+        if (shouldAdvance)
+            currentTokenIndex = newIndex;
 
-        if (m_CurrentTokenIndex >= static_cast<int>(m_Args.size())) {
+        if (newIndex >= static_cast<int>(args.size())) {
             macroArgReader = std::nullopt;
             return std::nullopt;
         }
 
-        return m_Args.at(m_CurrentTokenIndex);
+        return args.at(newIndex);
     }
 
     void

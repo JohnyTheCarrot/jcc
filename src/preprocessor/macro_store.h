@@ -39,10 +39,14 @@ namespace jcc::preprocessor {
         GetMacroArgument(std::string const &argumentName) const;
 
         [[nodiscard]]
-        std::optional<tokenizer::Token> GetTokenFromMacroStack();
+        std::optional<tokenizer::Token>
+        GetTokenFromMacroStack(bool shouldAdvance = true);
+
+        void Advance();
 
         [[nodiscard]]
-        std::optional<tokenizer::Token> GetTokenFromMacroArgumentReader();
+        std::optional<tokenizer::Token>
+        GetTokenFromMacroArgumentReader(bool shouldAdvance = true);
 
         void PushMacroArgumentTokens(std::vector<tokenizer::Token> &&args);
     };

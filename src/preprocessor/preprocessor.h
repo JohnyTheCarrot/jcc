@@ -64,16 +64,19 @@ namespace jcc::preprocessor {
 
         [[nodiscard]]
         PreprocessorToken GetNextFromTokenizer(
-                bool executeCommands = true, bool expandMacros = true
+                bool executeCommands = true, bool expandMacros = true,
+                bool shouldAdvance = true
         );
 
         [[nodiscard]]
         PreprocessorToken GetNextPreprocessorToken(
-                bool executeCommands = true, bool expandMacros = true
+                bool executeCommands = true, bool expandMacros = true,
+                bool shouldAdvance = true
         );
 
         [[nodiscard]]
-        PreprocessorToken SimpleTokenRead(bool expandMacros = true);
+        PreprocessorToken
+        SimpleTokenRead(bool expandMacros = true, bool shouldAdvance = true);
 
         [[nodiscard]]
         MacroStore &GetMacroStore() const noexcept;

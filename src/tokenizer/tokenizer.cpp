@@ -139,6 +139,16 @@ namespace jcc::tokenizer {
         , m_CharIter{m_Input, m_Source} {
     }
 
+    Tokenizer::Tokenizer(
+            std::shared_ptr<diagnostics::Source> source,
+            std::string const                   &input
+    )
+        : m_Source{std::move(source)}
+        , m_Input{input}
+        , m_CharIter{m_Input, m_Source} {
+        m_CharIter.SetInput(m_Input);
+    }
+
     Tokenizer::Tokenizer(Tokenizer &&other) noexcept
         : m_Source{std::move(other.m_Source)}
         , m_Input{std::move(other.m_Input)}

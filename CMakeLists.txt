@@ -4,6 +4,15 @@ project(jcc CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+if (ipo_supported)
+    message(STATUS "IPO is supported")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else ()
+    message(STATUS "IPO is not supported: ${error}")
+endif ()
+
 add_subdirectory(libs/fmt)
 target_include_directories(fmt PRIVATE libs/fmt/include)
 

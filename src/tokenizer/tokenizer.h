@@ -46,6 +46,11 @@ namespace jcc::tokenizer {
     public:
         explicit Tokenizer(std::string const &fileName);
 
+        Tokenizer(
+                std::shared_ptr<diagnostics::Source> source,
+                std::string const                   &input
+        );
+
         Tokenizer(Tokenizer &&) noexcept;
 
         Tokenizer &operator=(Tokenizer const &) = delete;
