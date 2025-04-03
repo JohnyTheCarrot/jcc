@@ -5,6 +5,7 @@
 #include "diagnostics/variants/todo.hpp"
 #include "parsing/additive_expression.h"
 #include "parsing/bitwise_and_expression.hpp"
+#include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
@@ -14,6 +15,32 @@
 
 namespace jcc::visitors {
     using namespace parsing;
+
+    void SemaVisitor::SemaBitwiseExpression(
+            AstBinaryExpression const *astBinaryExpr
+    ) {
+        auto const lhs{astBinaryExpr->GetLhs()};
+        lhs->AcceptOnExpression(this);
+
+        auto const &lhsType{lhs->GetDeducedType()};
+
+        auto const rhs{astBinaryExpr->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const &rhsType{rhs->GetDeducedType()};
+
+        if (lhsType.IsInteger() && rhsType.IsInteger())
+            return;
+
+        CompilerState::GetInstance()
+                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                        rhs->m_Span.m_Span, astBinaryExpr->GetOpSpan(),
+                        "The operands of a bitwise expression must "
+                        "both be of integer types.",
+                        lhsType, rhsType
+                );
+    }
 
     void SemaVisitor::Visit(AstIntegerConstant const *) {
         // Nothing to do here
@@ -229,26 +256,10 @@ namespace jcc::visitors {
     }
 
     void SemaVisitor::Visit(AstBitwiseAndExpression const *astBitwiseAndExpr) {
-        auto const lhs{astBitwiseAndExpr->GetLhs()};
-        lhs->AcceptOnExpression(this);
+        SemaBitwiseExpression(astBitwiseAndExpr);
+    }
 
-        auto const &lhsType{lhs->GetDeducedType()};
-
-        auto const rhs{astBitwiseAndExpr->GetRhs()};
-        rhs->AcceptOnExpression(this);
-
-        auto const &rhsType{rhs->GetDeducedType()};
-
-        if (lhsType.IsInteger() && rhsType.IsInteger())
-            return;
-
-        CompilerState::GetInstance()
-                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
-                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
-                        rhs->m_Span.m_Span, astBitwiseAndExpr->GetOpSpan(),
-                        "The operands of a bitwise and expression must "
-                        "both be of integer types.",
-                        lhsType, rhsType
-                );
+    void SemaVisitor::Visit(AstBitwiseXorExpression const *astBitwiseXorExpr) {
+        SemaBitwiseExpression(astBitwiseXorExpr);
     }
 }// namespace jcc::visitors

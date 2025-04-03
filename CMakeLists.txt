@@ -183,6 +183,8 @@ add_library(
         src/parsing/relational_expression.cpp
         src/parsing/equality_expression.cpp
         src/parsing/bitwise_and_expression.cpp
+        src/parsing/bitwise_xor_expression.cpp
+        src/parsing/bitwise_xor_expression.hpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

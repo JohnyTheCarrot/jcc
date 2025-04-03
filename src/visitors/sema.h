@@ -5,6 +5,10 @@
 
 namespace jcc::visitors {
     class SemaVisitor final : public parsing::AstNodeVisitor {
+        void SemaBitwiseExpression(
+                parsing::AstBinaryExpression const *astBinaryExpr
+        );
+
     public:
         void Visit(parsing::AstIntegerConstant const *astIntConst) override;
 
@@ -38,6 +42,10 @@ namespace jcc::visitors {
 
         void
         Visit(parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
+        ) override;
+
+        void
+        Visit(parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
         ) override;
     };
 }// namespace jcc::visitors

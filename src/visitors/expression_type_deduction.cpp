@@ -5,6 +5,7 @@
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "parsing/additive_expression.h"
 #include "parsing/bitwise_and_expression.hpp"
+#include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
@@ -120,5 +121,11 @@ namespace jcc::visitors {
             parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
     ) {
         BinaryExprTypeDeduction(astBitwiseAndExpr);
+    }
+
+    void ExpressionTypeDeductionVisitor::Visit(
+            parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
+    ) {
+        BinaryExprTypeDeduction(astBitwiseXorExpr);
     }
 }// namespace jcc::visitors

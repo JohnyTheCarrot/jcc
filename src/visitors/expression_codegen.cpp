@@ -2,6 +2,7 @@
 
 #include "parsing/additive_expression.h"
 #include "parsing/bitwise_and_expression.hpp"
+#include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
 #include "parsing/multiplicative_expression.h"
@@ -376,6 +377,16 @@ namespace jcc::visitors {
 
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
         m_Value = builder.CreateAnd(lhsValue, rhsValue, "and_result");
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
+    ) {
+        auto const type{astBitwiseXorExpr->GetDeducedType()};
+        auto [lhsValue, rhsValue]{PrepareOperands(astBitwiseXorExpr, type)};
+
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+        m_Value = builder.CreateXor(lhsValue, rhsValue, "xor_result");
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {
