@@ -9,6 +9,7 @@
 #include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
+#include "parsing/logical_and_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
@@ -264,9 +265,29 @@ namespace jcc::visitors {
         SemaBitwiseExpression(astBitwiseXorExpr);
     }
 
-    void SemaVisitor::Visit(
-            AstBitwiseOrExpression const *astBitwiseOrExpr
-    ) {
+    void SemaVisitor::Visit(AstBitwiseOrExpression const *astBitwiseOrExpr) {
         SemaBitwiseExpression(astBitwiseOrExpr);
+    }
+
+    void SemaVisitor::Visit(AstLogicalAndExpression const *astLogicalAndExpr) {
+        auto const lhs{astLogicalAndExpr->GetLhs()};
+        lhs->AcceptOnExpression(this);
+
+        auto const &lhsType{lhs->GetDeducedType()};
+
+        auto const rhs{astLogicalAndExpr->GetRhs()};
+        rhs->AcceptOnExpression(this);
+
+        auto const &rhsType{rhs->GetDeducedType()};
+
+        if (lhsType.IsScalar() && rhsType.IsScalar())
+            return;
+
+        CompilerState::GetInstance()
+                .EmplaceDiagnostic<diagnostics::BinaryOperandsWrongTypes>(
+                        lhs->m_Span.m_Source, lhs->m_Span.m_Span,
+                        rhs->m_Span.m_Span, astLogicalAndExpr->GetOpSpan(),
+                        "Each operand must be a scalar type.", lhsType, rhsType
+                );
     }
 }// namespace jcc::visitors

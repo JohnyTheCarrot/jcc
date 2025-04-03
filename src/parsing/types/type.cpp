@@ -439,6 +439,11 @@ namespace jcc::parsing::types {
                std::holds_alternative<IntegerType>(m_Type);
     }
 
+    bool ValueType::IsScalar() const noexcept {
+        // TODO: pointer types and nullptr_t should also be scalar types
+        return IsArithmetic();
+    }
+
     llvm::Type *ValueType::GetLLVMType() const {
         return std::visit([](auto &&arg) { return arg.GetLLVMType(); }, m_Type);
     }

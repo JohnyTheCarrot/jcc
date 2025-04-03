@@ -35,6 +35,8 @@ namespace jcc::parsing {
     class AstBitwiseXorExpression;
 
     class AstBitwiseOrExpression;
+
+    class AstLogicalAndExpression;
 #pragma endregion
 
     enum class ValueCategory { LValue, RValue };
@@ -74,6 +76,9 @@ namespace jcc::parsing {
         Visit(AstBitwiseXorExpression const *astBitwiseXorExpr) = 0;
 
         virtual void Visit(AstBitwiseOrExpression const *astBitwiseOrExpr) = 0;
+
+        virtual void
+        Visit(AstLogicalAndExpression const *astLogicalAndExpr) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {

@@ -1,6 +1,6 @@
 #include "expression.h"
 
-#include "bitwise_or_expression.hpp"
+#include "logical_and_expression.hpp"
 #include "preprocessor/preprocessor_iterator.h"
 
 namespace jcc::parsing {
@@ -11,6 +11,6 @@ namespace jcc::parsing {
         if (current == end)
             return nullptr;
 
-        return ParseBitwiseOrExpression(current, end);
+        return ParseLogicalAndExpression(current, end);
     }
 }// namespace jcc::parsing

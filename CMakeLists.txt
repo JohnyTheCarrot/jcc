@@ -184,9 +184,8 @@ add_library(
         src/parsing/equality_expression.cpp
         src/parsing/bitwise_and_expression.cpp
         src/parsing/bitwise_xor_expression.cpp
-        src/parsing/bitwise_xor_expression.hpp
         src/parsing/bitwise_or_expression.cpp
-        src/parsing/bitwise_or_expression.hpp
+        src/parsing/logical_and_expression.cpp
 )
 
 add_executable("${PROJECT_NAME}" src/main.cpp)

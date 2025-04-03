@@ -6,6 +6,7 @@
 #include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/cast_expression.hpp"
 #include "parsing/equality_expression.hpp"
+#include "parsing/logical_and_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
 #include "parsing/relational_expression.hpp"
@@ -308,14 +309,6 @@ namespace jcc::visitors {
                             astRelationalExpr->m_Span.m_Span
                     );
         }
-
-        auto       &builder{parsing::CompilerState::GetInstance().GetBuilder()};
-        auto *const intType{parsing::types::IntegerType::GetLLVMType(
-                parsing::types::StandardIntegerType::Int
-        )};
-
-        m_Value =
-                builder.CreateZExt(m_Value, intType, "relational_result_zext");
     }
 
     void ExpressionCodegenVisitor::Visit(
@@ -361,13 +354,6 @@ namespace jcc::visitors {
                         );
             }
         }
-
-
-        auto *const intType{parsing::types::IntegerType::GetLLVMType(
-                parsing::types::StandardIntegerType::Int
-        )};
-
-        m_Value = builder.CreateZExt(m_Value, intType, "equality_result_zext");
     }
 
     void ExpressionCodegenVisitor::Visit(
@@ -398,6 +384,26 @@ namespace jcc::visitors {
 
         auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
         m_Value = builder.CreateOr(lhsValue, rhsValue, "incl_or_result");
+    }
+
+    void ExpressionCodegenVisitor::Visit(
+            parsing::AstLogicalAndExpression const *astLogicalAndExpr
+    ) {
+        auto const boolValueType{
+                parsing::types::ValueType{parsing::types::IntegerType{
+                        parsing::types::StandardIntegerType::Bool,
+                        parsing::types::IntegerType::Signedness::Unspecified
+                }}
+        };
+
+        auto [lhsValue,
+              rhsValue]{PrepareOperands(astLogicalAndExpr, boolValueType)};
+
+        auto &builder{parsing::CompilerState::GetInstance().GetBuilder()};
+
+        m_Value = builder.CreateLogicalAnd(
+                lhsValue, rhsValue, "logical_and_result"
+        );
     }
 
     llvm::Value *ExpressionCodegenVisitor::GetValue() noexcept {

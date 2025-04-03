@@ -8,6 +8,7 @@
 #include "parsing/bitwise_or_expression.hpp"
 #include "parsing/bitwise_xor_expression.hpp"
 #include "parsing/equality_expression.hpp"
+#include "parsing/logical_and_expression.hpp"
 #include "parsing/multiplicative_expression.h"
 #include "parsing/numeric_constant.h"
 #include "parsing/relational_expression.hpp"
@@ -134,5 +135,11 @@ namespace jcc::visitors {
             parsing::AstBitwiseOrExpression const *astBitwiseOrExpr
     ) {
         BinaryExprTypeDeduction(astBitwiseOrExpr);
+    }
+
+    void ExpressionTypeDeductionVisitor::Visit(
+            parsing::AstLogicalAndExpression const *astLogicalAndExpr
+    ) {
+        CmpTypeDeduction(astLogicalAndExpr);
     }
 }// namespace jcc::visitors

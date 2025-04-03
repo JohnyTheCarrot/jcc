@@ -50,6 +50,10 @@ namespace jcc::visitors {
         void
         Visit(parsing::AstBitwiseOrExpression const *astBitwiseOrExpr) override;
 
+        void
+        Visit(parsing::AstLogicalAndExpression const *astLogicalAndExpr
+        ) override;
+
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };

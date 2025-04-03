@@ -164,6 +164,9 @@ namespace jcc::parsing::types {
         bool IsReal() const noexcept;
 
         [[nodiscard]]
+        bool IsScalar() const noexcept;
+
+        [[nodiscard]]
         llvm::Type *GetLLVMType() const;
 
         [[nodiscard]]
