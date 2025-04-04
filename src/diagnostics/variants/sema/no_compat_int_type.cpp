@@ -1,5 +1,7 @@
 #include "no_compat_int_type.hpp"
 
+#include <mjolnir/report.hpp>
+
 #include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
 
 namespace jcc::diagnostics {

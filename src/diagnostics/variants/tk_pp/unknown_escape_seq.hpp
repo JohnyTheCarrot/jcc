@@ -1,9 +1,17 @@
 #ifndef UNKNOWN_ESCAPE_SEQ_HPP
 #define UNKNOWN_ESCAPE_SEQ_HPP
 
-#include <mjolnir/span.hpp>
+#include <memory>          // for shared_ptr
+#include <mjolnir/span.hpp>// for Span
 
-#include "diagnostics/diagnostics.h"
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct UnknownEscapeSeq final : DiagnosticData {

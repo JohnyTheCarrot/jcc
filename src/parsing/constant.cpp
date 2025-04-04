@@ -1,7 +1,12 @@
 #include "constant.h"
 
-#include "diagnostics/variants/todo.hpp"
-#include "numeric_constant.h"
+#include <utility>// for move
+
+#include "diagnostics/variants/todo.hpp"// for TodoError
+#include "misc/Span.h"                  // for Span
+#include "numeric_constant.h"           // for ParseNumericConstant
+#include "parsing/parser.h"             // for CompilerState
+#include "tokenizer/token.h"            // for CharacterConstant, Identifier
 
 namespace jcc::parsing {
     // std::unique_ptr<AstPredefinedConstant>

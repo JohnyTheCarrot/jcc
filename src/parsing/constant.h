@@ -1,7 +1,13 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
-#include "parser.h"
+#include "parsing/ast_node.h"// for AstExpressionPtr
+
+namespace jcc {
+    namespace tokenizer {
+        struct Token;
+    }// namespace tokenizer
+}// namespace jcc
 
 namespace jcc::parsing {
     // enum class PredefinedConstant { True, False, Nullptr };

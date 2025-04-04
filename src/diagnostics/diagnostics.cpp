@@ -1,6 +1,14 @@
 #include "diagnostics.h"
 
-#include <utility>
+#include <utility>// for move
+
+#include "mjolnir/report.hpp"// for BasicReportKind
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     FatalCompilerError::FatalCompilerError() noexcept = default;

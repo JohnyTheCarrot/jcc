@@ -4,7 +4,8 @@
 #include <cctype>                   // for isalnum, isalpha
 #include <cstdint>                  // for uint32_t
 #include <magic_enum/magic_enum.hpp>// for enum_name
-#include <sstream>                  // for basic_ostream, operator<<, ost...
+#include <sstream>                  // for basic_ostream, operator<<, bas...
+#include <stdexcept>                // for logic_error
 
 #include "gtest/gtest.h"// for PrintToString
 

@@ -16,8 +16,8 @@ namespace jcc::parsing {
         , m_Expression{std::move(expression)} {
     }
 
-    void
-    AstCastExpression::AcceptOnExpression(ExpressionVisitor *visitor) const {
+    void AstCastExpression::AcceptOnExpression(ExpressionVisitor *visitor
+    ) const {
         visitor->Visit(this);
     }
 

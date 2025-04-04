@@ -1,6 +1,8 @@
 #include "ast_node.h"
 
-#include "parser.h"
+#include <utility>// for move
+
+#include "parsing/types/type.h"// for ValueType
 
 namespace jcc::parsing {
     AstNode::AstNode(Span span)

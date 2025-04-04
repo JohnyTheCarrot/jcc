@@ -1,42 +1,31 @@
 #ifndef AST_NODE_H
 #define AST_NODE_H
 
-#include <llvm/IR/Value.h>
+#include <concepts>// for same_as
+#include <memory>  // for unique_ptr
+#include <optional>// for optional
 
-#include "misc/Span.h"
-#include "types/type.h"
+#include "misc/Span.h"     // for Span
+#include "mjolnir/span.hpp"// for Span
+#include "types/type.h"    // for ValueType
 
 namespace jcc::parsing {
 #pragma region Forward Declarations
     class AstEqualityExpression;
-
     class AstRelationalExpression;
-
     class AstCastExpression;
-
     class AstFloatingConstant;
-
     class AstShiftExpression;
-
     class AstAdditiveExpression;
-
     class AstMultiplicativeExpression;
-
     class SpecifierQualifierList;
-
     class AstTypeName;
-
     class AstIntegerConstant;
-
-    class CompilerState;
-
     class AstBitwiseAndExpression;
-
     class AstBitwiseXorExpression;
-
     class AstBitwiseOrExpression;
-
     class AstLogicalAndExpression;
+
 #pragma endregion
 
     enum class ValueCategory { LValue, RValue };
@@ -63,22 +52,22 @@ namespace jcc::parsing {
 
         virtual void Visit(AstCastExpression const *astCastExpr) = 0;
 
-        virtual void
-        Visit(AstRelationalExpression const *astRelationalExpr) = 0;
+        virtual void Visit(AstRelationalExpression const *astRelationalExpr
+        ) = 0;
 
-        virtual void
-        Visit(AstEqualityExpression const *astEqualityExpression) = 0;
+        virtual void Visit(AstEqualityExpression const *astEqualityExpression
+        ) = 0;
 
-        virtual void
-        Visit(AstBitwiseAndExpression const *astBitwiseAndExpr) = 0;
+        virtual void Visit(AstBitwiseAndExpression const *astBitwiseAndExpr
+        ) = 0;
 
-        virtual void
-        Visit(AstBitwiseXorExpression const *astBitwiseXorExpr) = 0;
+        virtual void Visit(AstBitwiseXorExpression const *astBitwiseXorExpr
+        ) = 0;
 
         virtual void Visit(AstBitwiseOrExpression const *astBitwiseOrExpr) = 0;
 
-        virtual void
-        Visit(AstLogicalAndExpression const *astLogicalAndExpr) = 0;
+        virtual void Visit(AstLogicalAndExpression const *astLogicalAndExpr
+        ) = 0;
     };
 
     class AstNodeVisitor : public ExpressionVisitor {
@@ -86,8 +75,8 @@ namespace jcc::parsing {
         using ExpressionVisitor::ExpressionVisitor;
         using ExpressionVisitor::Visit;
 
-        virtual void
-        Visit(SpecifierQualifierList const *specifierQualifierList) = 0;
+        virtual void Visit(SpecifierQualifierList const *specifierQualifierList
+        ) = 0;
 
         virtual void Visit(AstTypeName const *astTypeName) = 0;
     };
@@ -154,8 +143,7 @@ namespace jcc::parsing {
         [[nodiscard]]
         types::ValueType GetUsualArithmeticConversionType() const;
 
-        void SetUsualArithmeticConversionType(
-                types::ValueType const &type
+        void SetUsualArithmeticConversionType(types::ValueType const &type
         ) const noexcept;
     };
 }// namespace jcc::parsing

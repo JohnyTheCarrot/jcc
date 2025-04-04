@@ -1,15 +1,19 @@
 #include "include_command.h"
 
-#include <string> // for char_traits
+#include <string>// for char_traits
+#include <utility>
 #include <variant>// for get
 
 #include "diagnostics/variants/tk_pp/directive_expected_newline.hpp"
 #include "diagnostics/variants/tk_pp/include_expected_header_name.hpp"
 #include "diagnostics/variants/tk_pp/include_open_failed.hpp"
+#include "misc/Span.h"
+#include "mjolnir/span.hpp"
 #include "parsing/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/preprocessor.h"    // for Preprocessor
 #include "tokenizer/token.h"              // for StringConstant, Token
+#include "tokenizer/tokenizer.h"
 
 namespace jcc::preprocessor::commands {
     IncludeCommand::IncludeCommand(CommandMap &map)

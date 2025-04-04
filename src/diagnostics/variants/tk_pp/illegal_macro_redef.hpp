@@ -1,8 +1,14 @@
 #ifndef ILLEGAL_MACRO_REDEF_HPP
 #define ILLEGAL_MACRO_REDEF_HPP
 
-#include "diagnostics/diagnostics.h"
-#include "misc/Span.h"
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "misc/Span.h"              // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct IllegalMacroRedef final : DiagnosticData {

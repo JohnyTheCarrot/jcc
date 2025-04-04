@@ -1,6 +1,16 @@
 #ifndef HEX_CHAR_EMPTY_HPP
 #define HEX_CHAR_EMPTY_HPP
-#include "diagnostics/diagnostics.h"
+#include <memory>// for shared_ptr
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct HexEscapeEmpty final : public DiagnosticData {

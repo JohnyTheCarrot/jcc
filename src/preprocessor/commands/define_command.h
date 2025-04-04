@@ -3,13 +3,13 @@
 
 #include <optional>// for optional
 #include <string>  // for string
-#include <utility> // for pair
 
 #include "command.h"                        // for Command, CommandMap
-#include "preprocessor/macro.h"             // for FunctionLikeMacro, Repl...
 #include "preprocessor/preprocessor_token.h"// for PreprocessorToken
 
 namespace jcc {
+    struct Span;
+
     namespace preprocessor {
         class Preprocessor;
     }// namespace preprocessor

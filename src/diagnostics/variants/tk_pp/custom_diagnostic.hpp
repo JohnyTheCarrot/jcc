@@ -1,7 +1,22 @@
 #ifndef CUSTOM_DIAGNOSTIC_HPP
 #define CUSTOM_DIAGNOSTIC_HPP
 
-#include "diagnostics/diagnostics.h"
+#include <memory>// for shared_ptr
+#include <string>// for string
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
+
+namespace mjolnir {
+    enum class BasicReportKind;
+}// namespace mjolnir
 
 namespace jcc::diagnostics {
     struct CustomDiagnostic final : DiagnosticData {

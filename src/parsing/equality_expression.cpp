@@ -17,8 +17,7 @@ namespace jcc::parsing {
         return m_EqualityOperator;
     }
 
-    void AstEqualityExpression::AcceptOnExpression(
-            ExpressionVisitor *visitor
+    void AstEqualityExpression::AcceptOnExpression(ExpressionVisitor *visitor
     ) const {
         visitor->Visit(this);
     }

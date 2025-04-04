@@ -9,8 +9,7 @@ namespace jcc::preprocessor {
         bool             m_IsFromMacro{false};
 
         [[nodiscard]]
-        bool
-        operator==(PreprocessorToken const &other) const noexcept;
+        bool operator==(PreprocessorToken const &other) const noexcept;
     };
 }// namespace jcc::preprocessor
 

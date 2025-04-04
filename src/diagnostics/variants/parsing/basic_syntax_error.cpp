@@ -1,5 +1,7 @@
 #include "basic_syntax_error.hpp"
 
+#include <mjolnir/report.hpp>
+
 #include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
 
 namespace jcc::diagnostics {

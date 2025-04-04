@@ -1,17 +1,14 @@
 #include "command.h"
 
-#include "define_command.h"
-#include "diagnostics/variants/todo.hpp"
-#include "else_command.h"
-#include "endif_command.h"
-#include "error_command.h"
-#include "identifier_command.h"
-#include "ifdef_command.h"
-#include "include_command.h"
-#include "parsing/parser.h"
-#include "preprocessor/preprocessor.h"
-#include "undef_command.h"
-#include "warning_command.h"
+#include "define_command.h"    // for DefineCommand
+#include "else_command.h"      // for ElseCommand
+#include "endif_command.h"     // for EndifCommand
+#include "error_command.h"     // for ErrorCommand
+#include "identifier_command.h"// for IdentifierCommand
+#include "ifdef_command.h"     // for IfdefCommand
+#include "include_command.h"   // for IncludeCommand
+#include "undef_command.h"     // for UndefCommand
+#include "warning_command.h"   // for WarningCommand
 
 namespace jcc::preprocessor::commands {
     Command::Command(CommandMap &map, tokenizer::Token::Type tokenType) {
@@ -20,9 +17,8 @@ namespace jcc::preprocessor::commands {
 
     PreprocessorCommandSingleton::PreprocessorCommandSingleton() {
         m_Commands.emplace_back(std::make_unique<DefineCommand>(m_CommandMap));
-        m_Commands.emplace_back(
-                std::make_unique<IdentifierCommand>(m_CommandMap)
-        );
+        m_Commands.emplace_back(std::make_unique<IdentifierCommand>(m_CommandMap
+        ));
         m_Commands.emplace_back(std::make_unique<WarningCommand>(m_CommandMap));
         m_Commands.emplace_back(std::make_unique<ErrorCommand>(m_CommandMap));
         m_Commands.emplace_back(std::make_unique<IncludeCommand>(m_CommandMap));

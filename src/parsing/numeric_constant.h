@@ -1,10 +1,18 @@
 #ifndef NUMERIC_CONSTANT_H
 #define NUMERIC_CONSTANT_H
 
-#include <random>
+#include <cstdint>// for int64_t
+#include <iosfwd> // for ostream
 
-#include "parser.h"
-#include "types/type.h"
+#include "parsing/ast_node.h"// for AstExpression, ExpressionVisitor (ptr ...
+#include "types/type.h"      // for FloatingType, IntegerType
+
+namespace jcc {
+    namespace tokenizer {
+        struct Token;
+    }// namespace tokenizer
+    struct Span;
+}// namespace jcc
 
 namespace jcc::parsing {
     using IntValue = std::int64_t;

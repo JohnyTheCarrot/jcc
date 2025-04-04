@@ -1,16 +1,28 @@
 #include "expression_codegen.h"
 
-#include "parsing/additive_expression.h"
-#include "parsing/bitwise_and_expression.hpp"
-#include "parsing/bitwise_or_expression.hpp"
-#include "parsing/bitwise_xor_expression.hpp"
-#include "parsing/cast_expression.hpp"
-#include "parsing/equality_expression.hpp"
-#include "parsing/logical_and_expression.hpp"
-#include "parsing/multiplicative_expression.h"
-#include "parsing/numeric_constant.h"
-#include "parsing/relational_expression.hpp"
-#include "parsing/shift_expression.h"
+#include <assert.h>           // for assert
+#include <llvm/IR/Constant.h> // for Constant
+#include <llvm/IR/Constants.h>// for ConstantFP, ConstantInt
+#include <llvm/IR/IRBuilder.h>// for IRBuilder
+#include <stdexcept>          // for runtime_error
+#include <variant>            // for get
+
+#include "diagnostics/variants/todo.hpp"      // for TodoError
+#include "misc/Span.h"                        // for Span
+#include "parsing/additive_expression.h"      // for AstAdditiveExpression
+#include "parsing/bitwise_and_expression.hpp" // for AstBitwiseAndExpression
+#include "parsing/bitwise_or_expression.hpp"  // for AstBitwiseOrExpression
+#include "parsing/bitwise_xor_expression.hpp" // for AstBitwiseXorExpression
+#include "parsing/cast_expression.hpp"        // for AstCastExpression
+#include "parsing/equality_expression.hpp"    // for AstEqualityExpression
+#include "parsing/logical_and_expression.hpp" // for AstLogicalAndExpression
+#include "parsing/multiplicative_expression.h"// for AstMultiplicativeExpr...
+#include "parsing/numeric_constant.h"         // for AstFloatingConstant
+#include "parsing/parser.h"                   // for CompilerState
+#include "parsing/relational_expression.hpp"  // for AstRelationalExpression
+#include "parsing/shift_expression.h"         // for AstShiftExpression
+#include "parsing/type_name.h"                // for AstTypeName
+#include "parsing/types/type.h"               // for ValueType, IntegerType
 
 namespace jcc::visitors {
     std::pair<llvm::Value *, llvm::Value *>

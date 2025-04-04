@@ -1,8 +1,15 @@
 #include "untermed_string.h"
 
-#include <utility>
+#include <utility>// for move
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     UntermedString::UntermedString(

@@ -7,6 +7,8 @@
 #include "diagnostics/variants/tk_pp/pp_conditional_expected_ident.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/todo.hpp"
+#include "misc/Span.h"
+#include "mjolnir/span.hpp"
 #include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/macro_store.h"          // for MacroStore
@@ -20,7 +22,7 @@ namespace jcc::preprocessor::commands {
     ) {
         auto ident{preprocessor.SimpleTokenRead()};
         if (!ident.m_Token.Is<tokenizer::Identifier>()) {
-            auto &compilerState{parsing::CompilerState::GetInstance()};
+            auto      &compilerState{parsing::CompilerState::GetInstance()};
             auto const tokenSpan{[&] {
                 auto const tkSpan{ident.m_Token.m_Span.m_Span};
 

@@ -1,10 +1,9 @@
 #include "macro_store.h"
 
-#include <functional>// for identity
-#include <iostream>
-#include <ranges>   // for __find_if_fn, borrowed_iterator_t
+#include <ranges>   // for __find_if_fn, find_if
 #include <stdexcept>// for runtime_error
 #include <utility>  // for move, pair
+#include <variant>  // for get, holds_alternative
 #include <vector>   // for vector
 
 #include "preprocessor/macro.h"// for MacroInvocation, MacroArgumentReader

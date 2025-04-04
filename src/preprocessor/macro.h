@@ -8,6 +8,7 @@
 #include <variant>      // for variant
 #include <vector>       // for vector
 
+#include "misc/Span.h"      // for Span
 #include "tokenizer/token.h"// for Token, Identifier
 
 namespace jcc::preprocessor::macro {

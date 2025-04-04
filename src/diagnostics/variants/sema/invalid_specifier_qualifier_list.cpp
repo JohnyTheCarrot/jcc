@@ -1,5 +1,7 @@
 #include "invalid_specifier_qualifier_list.hpp"
 
+#include <mjolnir/report.hpp>
+
 #include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
 
 namespace jcc::diagnostics {
@@ -10,8 +12,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void InvalidSpecifierQualifierList::Visit(
-            DiagnosticsVisitor const &visitor
+    void InvalidSpecifierQualifierList::Visit(DiagnosticsVisitor const &visitor
     ) const {
         visitor.Print(*this);
     }

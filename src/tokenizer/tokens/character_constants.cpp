@@ -2,6 +2,7 @@
 
 #include <numeric> // for accumulate
 #include <optional>// for optional
+#include <utility> // for move
 #include <vector>  // for vector
 
 #include "diagnostics/variants/tk_pp/char_const_empty.h"
@@ -10,7 +11,8 @@
 #include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
 #include "misc/compiler_data_types.h"// for Char32, Int
-#include "misc/Span.h"               // for Span, SpanMarker (ptr only)
+#include "misc/Span.h"               // for Span
+#include "mjolnir/span.hpp"          // for Span
 #include "parsing/parser.h"
 #include "tokenizer/char_iter.h"// for CharIter
 #include "utils.h"              // for ReadSingleCharacter, ConstantType

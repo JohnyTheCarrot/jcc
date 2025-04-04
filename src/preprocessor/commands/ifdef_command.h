@@ -5,6 +5,10 @@
 #include "command.h"                        // for Command, CommandMap
 #include "preprocessor/preprocessor_token.h"// for PreprocessorToken
 
+namespace jcc {
+    struct Span;
+}// namespace jcc
+
 namespace jcc::tokenizer {
     struct Token;
 }// namespace jcc::tokenizer

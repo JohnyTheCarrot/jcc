@@ -4,6 +4,7 @@
 #include <concepts>   // for same_as
 #include <functional> // for function
 #include <memory>     // for make_unique, unique_ptr
+#include <optional>   // for optional
 #include <stack>      // for stack
 #include <string>     // for string
 #include <string_view>// for string_view
@@ -109,9 +110,8 @@ namespace jcc::preprocessor {
             requires IsPreprocessorIterator<It> ||
                      std::same_as<It, InternalPreprocessorIterator>
         [[nodiscard]]
-        It
-        Until(std::function<bool(tokenizer::Token const &)> const
-                      &untilCondition) {
+        It Until(std::function<bool(tokenizer::Token const &)> const
+                         &untilCondition) {
             return It::Until(untilCondition);
         }
 

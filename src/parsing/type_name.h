@@ -1,8 +1,11 @@
 #ifndef TYPE_NAME_H
 #define TYPE_NAME_H
 
-#include "ast_node.h"
-#include "types.h"
+#include <optional>// for optional
+
+#include "ast_node.h"          // for AstNode
+#include "parsing/types/type.h"// for ValueType
+#include "types.h"             // for SpecifierQualifierList
 
 namespace jcc::preprocessor {
     class PreprocessorIterator;

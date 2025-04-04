@@ -1,15 +1,19 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <magic_enum/magic_enum_flags.hpp>
-#include <optional>
+#include <cstdint> // for uint8_t
+#include <iosfwd>  // for ostream
+#include <optional>// for optional, nullopt, nullopt_t
+#include <utility> // for move
+#include <variant> // for get
+#include <vector>  // for vector
 
 #include "diagnostics/variants/todo.hpp"
-#include "parser.h"
-
-namespace jcc::tokenizer {
-    struct Token;
-}
+#include "magic_enum/magic_enum.hpp"// for bitwise_operators
+#include "misc/Span.h"              // for Span
+#include "parser.h"                 // for CompilerState, TokenIterator
+#include "parsing/ast_node.h"       // for AstNode, AstNodeVisitor (ptr only)
+#include "tokenizer/token.h"        // for Keyword, Token, Punctuator
 
 namespace jcc::parsing {
     enum class StorageClassSpecifier {

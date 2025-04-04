@@ -1,6 +1,8 @@
 #ifndef CHARACTER_CONSTANTS_H
 #define CHARACTER_CONSTANTS_H
 
+#include <cstddef>// for size_t
+
 #include "tokenizer/token.h"// for ConstantPrefix (ptr only), Token
 
 namespace jcc::tokenizer {

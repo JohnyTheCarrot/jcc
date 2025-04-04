@@ -2,13 +2,15 @@
 #define IDENTIFIER_COMMAND_H
 
 #include <optional>// for optional
-#include <utility> // for pair
-#include <vector>  // for vector
 
 #include "command.h"                        // for Command, CommandMap
-#include "preprocessor/macro.h"             // for FnMacroArguments, Funct...
 #include "preprocessor/preprocessor_token.h"// for PreprocessorToken
-#include "tokenizer/token.h"                // for Token
+
+namespace jcc {
+    namespace tokenizer {
+        struct Token;
+    }// namespace tokenizer
+}// namespace jcc
 
 namespace jcc::preprocessor {
     class Preprocessor;

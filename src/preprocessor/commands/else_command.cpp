@@ -1,10 +1,12 @@
 #include "else_command.h"
 
+#include <utility>
 #include <variant>// for get
 
 #include "diagnostics/variants/tk_pp/else_without_if.hpp"
 #include "diagnostics/variants/tk_pp/pp_conditional_not_terminated.hpp"
 #include "diagnostics/variants/tk_pp/unexpected_else.hpp"
+#include "misc/Span.h"
 #include "parsing/parser.h"
 #include "preprocessor/commands/command.h"// for Command, CommandMap
 #include "preprocessor/preprocessor.h"    // for Preprocessor

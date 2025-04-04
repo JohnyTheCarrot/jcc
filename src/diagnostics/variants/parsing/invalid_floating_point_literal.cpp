@@ -1,6 +1,15 @@
 #include "invalid_floating_point_literal.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
 
@@ -11,8 +20,7 @@ namespace jcc::diagnostics {
         , m_Span{span} {
     }
 
-    void InvalidFloatingPointLiteral::Visit(
-            DiagnosticsVisitor const &visitor
+    void InvalidFloatingPointLiteral::Visit(DiagnosticsVisitor const &visitor
     ) const {
         visitor.Print(*this);
     }

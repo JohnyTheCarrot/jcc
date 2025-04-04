@@ -1,7 +1,17 @@
 #ifndef UNTERMED_CHAR_H
 #define UNTERMED_CHAR_H
 
-#include "diagnostics/diagnostics.h"
+#include <memory>// for shared_ptr
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct UntermedChar final : DiagnosticData {

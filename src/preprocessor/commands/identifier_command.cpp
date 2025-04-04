@@ -1,19 +1,23 @@
 #include "identifier_command.h"
 
-#include <algorithm>    // for move
-#include <iterator>     // for back_insert_iterator
 #include <ranges>       // for subrange
 #include <string>       // for operator==, hash
 #include <unordered_map>// for operator==, _Node_it...
-#include <variant>      // for get, holds_alternative
+#include <utility>
+#include <variant>// for get, holds_alternative
+#include <vector>
 
 #include "diagnostics/variants/tk_pp/macro_invoc_invalid_num_args.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
+#include "misc/Span.h"
+#include "mjolnir/span.hpp"
 #include "parsing/parser.h"
-#include "preprocessor/commands/command.h"     // for Command, CommandMap
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/macro.h"
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor, VaArgs
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
+#include "tokenizer/token.h"
 
 namespace jcc::preprocessor::commands {
     std::pair<bool, std::vector<tokenizer::Token>>
@@ -210,8 +214,7 @@ namespace jcc::preprocessor::commands {
                 return macro::MacroInvocation{.m_MacroName = identifierContent};
             }()};
 
-            preprocessor.GetMacroStore().InvokeMacro(
-                    std::move(macroInvocation)
+            preprocessor.GetMacroStore().InvokeMacro(std::move(macroInvocation)
             );
 
             return preprocessor.GetNextPreprocessorToken(

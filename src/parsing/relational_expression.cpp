@@ -17,8 +17,7 @@ namespace jcc::parsing {
         return m_RelationalOperator;
     }
 
-    void AstRelationalExpression::AcceptOnExpression(
-            ExpressionVisitor *visitor
+    void AstRelationalExpression::AcceptOnExpression(ExpressionVisitor *visitor
     ) const {
         visitor->Visit(this);
     }

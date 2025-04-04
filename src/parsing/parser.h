@@ -1,14 +1,26 @@
 #ifndef PARSER_STATE_H
 #define PARSER_STATE_H
 
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/MC/TargetRegistry.h>
-#include <llvm/Support/TargetSelect.h>
-#include <llvm/TargetParser/Host.h>
+#include <concepts>                   // for constructible_from, derived_from
+#include <iterator>                   // for iter_value_t, input_iterator
+#include <llvm/IR/IRBuilder.h>        // for IRBuilder
+#include <llvm/IR/LLVMContext.h>      // for LLVMContext
+#include <llvm/MC/TargetRegistry.h>   // for Target (ptr only), TargetRegi...
+#include <llvm/Support/TargetSelect.h>// for InitializeAllTargetInfos, Ini...
+#include <llvm/TargetParser/Host.h>   // for getDefaultTargetTriple
+#include <memory>                     // for make_unique
+#include <stdexcept>                  // for runtime_error
+#include <string>                     // for string
+#include <utility>                    // for forward
+#include <vector>                     // for vector
 
-#include "ast_node.h"
-#include "diagnostics/diagnostics.h"
-#include "tokenizer/token.h"
+#include "diagnostics/diagnostics.h"// for FatalCompilerError, Diagnosti...
+
+namespace jcc {
+    namespace tokenizer {
+        struct Token;
+    }// namespace tokenizer
+}// namespace jcc
 
 namespace jcc::parsing {
     // TODO: this isn't really only for parsing and semantic analysis

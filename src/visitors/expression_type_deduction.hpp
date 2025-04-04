@@ -10,10 +10,8 @@ namespace jcc::visitors {
                 parsing::AstBinaryExpression const *astBinaryExpr
         );
 
-        void CmpTypeDeduction(
-                parsing::AstBooleanBinaryExpression const
-                        *astBooleanBinaryExpression
-        );
+        void CmpTypeDeduction(parsing::AstBooleanBinaryExpression const
+                                      *astBooleanBinaryExpression);
 
     public:
         void Visit(parsing::AstIntegerConstant const *astIntConst) override;
@@ -22,37 +20,32 @@ namespace jcc::visitors {
         Visit(parsing::AstMultiplicativeExpression const *astMultiplicativeExpr
         ) override;
 
-        void
-        Visit(parsing::AstAdditiveExpression const *astAdditiveExpr) override;
+        void Visit(parsing::AstAdditiveExpression const *astAdditiveExpr
+        ) override;
 
         void Visit(parsing::AstShiftExpression const *astShiftExpr) override;
 
-        void
-        Visit(parsing::AstFloatingConstant const *astFloatingConst) override;
+        void Visit(parsing::AstFloatingConstant const *astFloatingConst
+        ) override;
 
         void Visit(parsing::AstCastExpression const *astCastExpr) override;
 
-        void
-        Visit(parsing::AstRelationalExpression const *astRelationalExpr
+        void Visit(parsing::AstRelationalExpression const *astRelationalExpr
         ) override;
 
-        void
-        Visit(parsing::AstEqualityExpression const *astEqualityExpression
+        void Visit(parsing::AstEqualityExpression const *astEqualityExpression
         ) override;
 
-        void
-        Visit(parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
+        void Visit(parsing::AstBitwiseAndExpression const *astBitwiseAndExpr
         ) override;
 
-        void
-        Visit(parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
+        void Visit(parsing::AstBitwiseXorExpression const *astBitwiseXorExpr
         ) override;
 
-        void
-        Visit(parsing::AstBitwiseOrExpression const *astBitwiseOrExpr) override;
+        void Visit(parsing::AstBitwiseOrExpression const *astBitwiseOrExpr
+        ) override;
 
-        void
-        Visit(parsing::AstLogicalAndExpression const *astLogicalAndExpr
+        void Visit(parsing::AstLogicalAndExpression const *astLogicalAndExpr
         ) override;
     };
 }// namespace jcc::visitors

@@ -1,6 +1,16 @@
 #ifndef ELSE_WITHOUT_IF_HPP
 #define ELSE_WITHOUT_IF_HPP
-#include "diagnostics/diagnostics.h"
+#include <memory>// for shared_ptr
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct ElseWithoutIf final : DiagnosticData {

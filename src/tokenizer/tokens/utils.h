@@ -1,13 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <optional>
+#include <cstddef> // for size_t
+#include <optional>// for optional
 
-#include "misc/compiler_data_types.h"
-
-namespace jcc {
-    struct SpanMarker;
-}
+#include "misc/compiler_data_types.h"// for Char32
 
 namespace jcc::tokenizer {
     enum class ConstantPrefix;

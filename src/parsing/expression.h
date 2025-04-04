@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-#include "parser.h"
+#include "parsing/ast_node.h"// for AstExpressionPtr
 
 namespace jcc::preprocessor {
     class PreprocessorIterator;

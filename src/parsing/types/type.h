@@ -1,12 +1,14 @@
 #ifndef TYPE_H
 #define TYPE_H
 
-#include <llvm/IR/Type.h>
-#include <variant>
+#include <iosfwd> // for ostream
+#include <string> // for string
+#include <variant>// for variant
 
 namespace llvm {
     class Value;
-}
+    class Type;
+}// namespace llvm
 
 namespace jcc::parsing {
     class TypeSpecifier;

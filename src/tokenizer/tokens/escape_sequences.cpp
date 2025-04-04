@@ -1,19 +1,21 @@
 #include "escape_sequences.h"
 
+#include <cstdint>                   // for uint64_t
+#include <limits>                    // for numer...
 #include <misc/compiler_data_types.h>// for Char32
-#include <optional>                  // for optional, nullopt
+#include <optional>                  // for optional
 #include <utility>                   // for move
-#include <variant>                   // for variant
 
-#include "diagnostics/variants/tk_pp/escape_seq_too_large.hpp"
-#include "diagnostics/variants/tk_pp/hex_escape_empty.hpp"
-#include "diagnostics/variants/tk_pp/unknown_escape_seq.hpp"
-#include "diagnostics/variants/todo.hpp"
-#include "diagnostics/variants/unexpected_eof.hpp"
-#include "misc/Span.h"     // for Span, SpanMarker (ptr only)
-#include "parsing/parser.h"
-#include "tokenizer/char_iter.h"// for CharIter
-#include "tokenizer/token.h"    // for GetConstantPrefixRange, Consta...
+#include "diagnostics/variants/tk_pp/escape_seq_too_large.hpp"// for Escap...
+#include "diagnostics/variants/tk_pp/hex_escape_empty.hpp"    // for HexEs...
+#include "diagnostics/variants/tk_pp/unknown_escape_seq.hpp"  // for Unkno...
+#include "diagnostics/variants/todo.hpp"                      // for TodoE...
+#include "diagnostics/variants/unexpected_eof.hpp"            // for Unexp...
+#include "misc/Span.h"                                        // for Span
+#include "mjolnir/span.hpp"                                   // for Span
+#include "parsing/parser.h"                                   // for Compi...
+#include "tokenizer/char_iter.h"                              // for CharIter
+#include "tokenizer/token.h"                                  // for GetCo...
 
 namespace jcc::tokenizer::escape_sequences {
     using Character = std::uint8_t;

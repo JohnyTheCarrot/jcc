@@ -3,9 +3,8 @@
 
 #include <optional>     // for optional
 #include <stack>        // for stack
-#include <string>       // for string, hash, operator==
+#include <string>       // for hash, string, operator==
 #include <unordered_map>// for unordered_map
-#include <variant>      // for variant
 #include <vector>       // for vector
 
 #include "macro.h"          // for MacroInvocation, Macro

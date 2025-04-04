@@ -1,10 +1,10 @@
 #ifndef STATIC_TOKEN_TOKENIZER_H
 #define STATIC_TOKEN_TOKENIZER_H
 
+#include <cstddef>// for size_t
 #include <string> // for string
 #include <variant>// for variant
 
-#include "misc/Span.h"      // for SpanMarker
 #include "tokenizer/token.h"// for Token
 
 namespace jcc::tokenizer {
