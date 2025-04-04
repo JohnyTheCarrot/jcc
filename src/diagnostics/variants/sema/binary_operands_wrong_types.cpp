@@ -1,8 +1,15 @@
 #include "binary_operands_wrong_types.hpp"
 
-#include <utility>
+#include <utility>// for move
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     BinaryOperandsWrongTypes::BinaryOperandsWrongTypes(
@@ -20,8 +27,8 @@ namespace jcc::diagnostics {
         , m_RhsType{rhsType} {
     }
 
-    void
-    BinaryOperandsWrongTypes::Visit(DiagnosticsVisitor const &visitor) const {
+    void BinaryOperandsWrongTypes::Visit(DiagnosticsVisitor const &visitor
+    ) const {
         visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

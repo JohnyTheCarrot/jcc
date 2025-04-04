@@ -1,8 +1,12 @@
 #include "sema.h"
 
+#include <string>
+#include <utility>
+
 #include "diagnostics/variants/sema/binary_operands_wrong_types.hpp"
 #include "diagnostics/variants/sema/invalid_specifier_qualifier_list.hpp"
 #include "diagnostics/variants/todo.hpp"
+#include "misc/Span.h"
 #include "parsing/additive_expression.h"
 #include "parsing/bitwise_and_expression.hpp"
 #include "parsing/bitwise_or_expression.hpp"
@@ -11,15 +15,25 @@
 #include "parsing/equality_expression.hpp"
 #include "parsing/logical_and_expression.hpp"
 #include "parsing/multiplicative_expression.h"
+#include "parsing/parser.h"
 #include "parsing/relational_expression.hpp"
 #include "parsing/shift_expression.h"
 #include "parsing/type_name.h"
+#include "parsing/types.h"
+#include "parsing/types/type.h"
+
+namespace jcc {
+    namespace parsing {
+        class AstFloatingConstant;
+        class AstIntegerConstant;
+    }// namespace parsing
+}// namespace jcc
 
 namespace jcc::visitors {
     using namespace parsing;
 
-    void SemaVisitor::SemaBitwiseExpression(
-            AstBinaryExpression const *astBinaryExpr
+    void
+    SemaVisitor::SemaBitwiseExpression(AstBinaryExpression const *astBinaryExpr
     ) {
         auto const lhs{astBinaryExpr->GetLhs()};
         lhs->AcceptOnExpression(this);
@@ -48,8 +62,8 @@ namespace jcc::visitors {
         // Nothing to do here
     }
 
-    void SemaVisitor::Visit(
-            AstMultiplicativeExpression const *astMultiplicativeExpr
+    void
+    SemaVisitor::Visit(AstMultiplicativeExpression const *astMultiplicativeExpr
     ) {
         // TODO: If either operand has decimal floating type, the other operand shall not have standard floating type, complex type, or imaginary type.
 
@@ -183,8 +197,8 @@ namespace jcc::visitors {
         astCastExpr->GetExpression()->AcceptOnExpression(this);
     }
 
-    void
-    SemaVisitor::Visit(SpecifierQualifierList const *specifierQualifierList) {
+    void SemaVisitor::Visit(SpecifierQualifierList const *specifierQualifierList
+    ) {
         auto const typeSpecifierQualifiers{
                 specifierQualifierList->GetTypeSpecifierQualifier()
         };
@@ -230,8 +244,8 @@ namespace jcc::visitors {
                 );
     }
 
-    void
-    SemaVisitor::Visit(AstEqualityExpression const *astEqualityExpression) {
+    void SemaVisitor::Visit(AstEqualityExpression const *astEqualityExpression
+    ) {
         auto const lhs{astEqualityExpression->GetLhs()};
         lhs->AcceptOnExpression(this);
 

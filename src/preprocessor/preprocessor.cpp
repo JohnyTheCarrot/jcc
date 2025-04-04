@@ -1,19 +1,24 @@
 #include "preprocessor.h"
 
-#include <algorithm>    // for copy
-#include <optional>     // for optional
-#include <unordered_map>// for operator==, _Node_it...
-#include <utility>      // for move, pair
-#include <variant>      // for get, holds_alternative
+#include <format>       // for format
+#include <optional>     // for opt...
+#include <unordered_map>// for ope...
+#include <utility>      // for move
+#include <variant>      // for hash
 
-#include "diagnostics/variants/tk_pp/escape_without_newline.hpp"
-#include "diagnostics/variants/tk_pp/include_open_failed.hpp"
-#include "diagnostics/variants/tk_pp/orphaned_endif.hpp"
-#include "parsing/parser.h"
-#include "preprocessor/commands/command.h"     // for PreprocessorCommandS...
-#include "preprocessor/macro_store.h"          // for MacroStore
-#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
-#include "preprocessor/preprocessor_token.h"   // for PreprocessorToken
+#include "diagnostics/variants/tk_pp/escape_without_newline.hpp"// for Esc...
+#include "diagnostics/variants/tk_pp/orphaned_endif.hpp"        // for Orp...
+#include "parsing/parser.h"                                     // for Com...
+#include "preprocessor/commands/command.h"                      // for Pre...
+#include "preprocessor/macro_store.h"                           // for Mac...
+#include "preprocessor/preprocessor_iterator.h"                 // for Pre...
+#include "preprocessor/preprocessor_token.h"                    // for Pre...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::preprocessor {
     PreprocessorToken Preprocessor::GetNextPreprocessorToken(

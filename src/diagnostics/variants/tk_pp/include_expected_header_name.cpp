@@ -1,6 +1,15 @@
 #include "include_expected_header_name.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     IncludeExpectedHeaderName::IncludeExpectedHeaderName(
@@ -12,8 +21,8 @@ namespace jcc::diagnostics {
         , m_HeaderNameSpan{headerNameSpan} {
     }
 
-    void
-    IncludeExpectedHeaderName::Visit(DiagnosticsVisitor const &visitor) const {
+    void IncludeExpectedHeaderName::Visit(DiagnosticsVisitor const &visitor
+    ) const {
         visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

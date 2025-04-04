@@ -1,14 +1,15 @@
 #include "pp_numbers.h"
 
 #include <cctype> // for isdigit
-#include <string> // for allocator, string
+#include <string> // for string
 #include <utility>// for move
 
-#include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"
-#include "misc/Span.h"// for Span, SpanMarker (ptr only)
-#include "parsing/parser.h"
-#include "tokenizer/char_iter.h"// for CharIter
-#include "utils.h"              // for IsNonDigit
+#include "diagnostics/variants/tk_pp/pp_number_invalid.hpp"// for PpNumber...
+#include "misc/Span.h"                                     // for Span
+#include "mjolnir/span.hpp"                                // for Span
+#include "parsing/parser.h"                                // for Compiler...
+#include "tokenizer/char_iter.h"                           // for CharIter
+#include "utils.h"                                         // for IsNonDigit
 
 namespace jcc::tokenizer::pp_numbers {
     [[nodiscard]]
@@ -22,9 +23,7 @@ namespace jcc::tokenizer::pp_numbers {
                 // Make sure the single quote is followed by a digit
                 if (charIter == CharIter::end() ||
                     !std::isxdigit(charIter->m_Char)) {
-                    auto &compilerState{
-                            parsing::CompilerState::GetInstance()
-                    };
+                    auto &compilerState{parsing::CompilerState::GetInstance()};
                     compilerState.EmplaceTemporarilyFatalDiagnostic<
                             diagnostics::PpNumberInvalid>(
                             charIter.GetSource(), span
@@ -41,9 +40,7 @@ namespace jcc::tokenizer::pp_numbers {
                 number += charIter->m_Char;
                 ++charIter;
                 if (charIter == CharIter::end()) {
-                    auto &compilerState{
-                            parsing::CompilerState::GetInstance()
-                    };
+                    auto &compilerState{parsing::CompilerState::GetInstance()};
                     compilerState.EmplaceTemporarilyFatalDiagnostic<
                             diagnostics::PpNumberInvalid>(
                             charIter.GetSource(), span

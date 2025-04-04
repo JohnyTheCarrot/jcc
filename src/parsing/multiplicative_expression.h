@@ -1,8 +1,11 @@
 #ifndef MULTIPLICATIVE_EXPRESSION_H
 #define MULTIPLICATIVE_EXPRESSION_H
 
-#include "ast_node.h"
-#include "parser.h"
+#include "ast_node.h"// for AstExpressionPtr, AstBinaryExpression
+
+namespace mjolnir {
+    class Span;
+}// namespace mjolnir
 
 namespace jcc::preprocessor {
     class PreprocessorIterator;

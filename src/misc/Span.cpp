@@ -1,10 +1,12 @@
 #include "Span.h"
 
-#include <mjolnir/source.hpp>
-#include <ostream>// for basic_ostream, basic_ostream::operator<<
-#include <utility>// for move
+#include <mjolnir/source.hpp>// for Source
+#include <ostream>           // for char_traits, basic_ostream, operator<<
+#include <string_view>       // for operator<<
+#include <utility>           // for move
 
-#include "gtest/gtest.h"// for PrintToString
+#include "diagnostics/source.h"// for Source
+#include "mjolnir/span.hpp"    // for Span
 
 namespace jcc {
     Span::Span(

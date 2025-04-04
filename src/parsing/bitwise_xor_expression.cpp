@@ -15,8 +15,7 @@ namespace jcc::parsing {
           } {
     }
 
-    void AstBitwiseXorExpression::AcceptOnExpression(
-            ExpressionVisitor *visitor
+    void AstBitwiseXorExpression::AcceptOnExpression(ExpressionVisitor *visitor
     ) const {
         visitor->Visit(this);
     }

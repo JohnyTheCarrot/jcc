@@ -1,11 +1,11 @@
 #ifndef IDENTIFIER_TOKENIZER_H
 #define IDENTIFIER_TOKENIZER_H
 
-#include <iosfwd>  // for streampos
+#include <cstddef> // for size_t
 #include <optional>// for optional
 #include <string>  // for string
 
-#include "misc/Span.h"      // for SpanMarker
+#include "mjolnir/span.hpp" // for Span
 #include "tokenizer/token.h"// for Token
 
 namespace jcc::tokenizer {

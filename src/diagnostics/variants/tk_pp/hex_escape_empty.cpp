@@ -1,6 +1,15 @@
 #include "hex_escape_empty.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     HexEscapeEmpty::HexEscapeEmpty(

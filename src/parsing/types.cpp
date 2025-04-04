@@ -1,9 +1,13 @@
 #include "types.h"
 
-#include <magic_enum/magic_enum.hpp>
-#include <unordered_set>
+#include <functional>               // for hash, equal_to
+#include <magic_enum/magic_enum.hpp>// for operator|, operator|=
+#include <ostream>                  // for basic_ios, basic_ostream
+#include <string>                   // for allocator, operator<<
+#include <unordered_set>            // for unordered_set
 
-#include "tokenizer/token.h"
+#include "magic_enum/magic_enum_flags.hpp"// for enum_flags_name
+#include "tokenizer/token.h"              // for Keyword, Token
 
 namespace jcc::parsing {
     std::optional<StorageClassSpecifier>

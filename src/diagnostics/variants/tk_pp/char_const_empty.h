@@ -1,9 +1,18 @@
 #ifndef CHAR_CONST_EMPTY_H
 #define CHAR_CONST_EMPTY_H
 
-#include <mjolnir/span.hpp>
+#include <memory>          // for shared_ptr
+#include <mjolnir/span.hpp>// for Span
+#include <optional>        // for optional
 
-#include "diagnostics/diagnostics.h"
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct CharConstEmpty final : DiagnosticData {

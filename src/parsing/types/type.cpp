@@ -1,11 +1,18 @@
 #include "type.h"
 
-#include <iostream>
-#include <magic_enum/magic_enum.hpp>
-#include <sstream>
+#include <assert.h>                 // for assert
+#include <llvm/IR/DerivedTypes.h>   // for Type::getIntegerBitWidth, Integ...
+#include <llvm/IR/IRBuilder.h>      // for IRBuilder
+#include <llvm/IR/Type.h>           // for Type
+#include <magic_enum/magic_enum.hpp>// for operator|, operator&
+#include <sstream>                  // for operator<<, basic_ostream, char...
+#include <stdexcept>                // for runtime_error
+#include <type_traits>              // for underlying_type_t
+#include <utility>                  // for move
 
-#include "parsing/parser.h"
-#include "parsing/types.h"
+#include "diagnostics/diagnostics.h"// for FatalCompilerError
+#include "parsing/parser.h"         // for CompilerState
+#include "parsing/types.h"          // for BasicTypeSpecifier, TypeSpecifier
 
 namespace jcc::parsing::types {
     BitInteger::BitInteger(int bitWidth)
@@ -188,8 +195,8 @@ namespace jcc::parsing::types {
                rhsType->getIntegerBitWidth() - rhsSigned;
     }
 
-    IntegerType
-    IntegerType::UsualArithmeticConversion(IntegerType other) const {
+    IntegerType IntegerType::UsualArithmeticConversion(IntegerType other
+    ) const {
         // Promote both operands
         auto const promotedLhs{Promote()};
         auto const promotedRhs{other.Promote()};
@@ -224,8 +231,8 @@ namespace jcc::parsing::types {
         return IntegerType{signedType.m_Type, Signedness::Unsigned};
     }
 
-    FloatingType
-    IntegerType::UsualArithmeticConversion(FloatingType other) const {
+    FloatingType IntegerType::UsualArithmeticConversion(FloatingType other
+    ) const {
         return other;
     }
 
@@ -571,9 +578,8 @@ namespace jcc::parsing::types {
             auto const &lhsFloatType{std::get<FloatingType>(lhs.GetType())};
             auto const &rhsFloatType{std::get<FloatingType>(rhs.GetType())};
 
-            return ValueType{
-                    lhsFloatType.UsualArithmeticConversion(rhsFloatType)
-            };
+            return ValueType{lhsFloatType.UsualArithmeticConversion(rhsFloatType
+            )};
         }
 
         throw std::runtime_error{"TODO: Implement UsualArithmeticConversions"};

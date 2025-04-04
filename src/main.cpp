@@ -8,6 +8,7 @@
 #include "parsing/additive_expression.h"
 #include "parsing/expression.h"
 #include "parsing/numeric_constant.h"
+#include "parsing/parser.h"
 #include "preprocessor/preprocessor.h"// for Preprocessor
 #include "visitors/expression_codegen.h"
 #include "visitors/expression_type_deduction.hpp"

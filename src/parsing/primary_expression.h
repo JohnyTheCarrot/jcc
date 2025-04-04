@@ -1,9 +1,13 @@
 #ifndef PRIMARY_EXPRESSION_H
 #define PRIMARY_EXPRESSION_H
 
-#include "ast_node.h"
-#include "parser.h"
-#include "preprocessor/preprocessor_iterator.h"
+#include "ast_node.h"// for AstExpressionPtr
+
+namespace jcc {
+    namespace preprocessor {
+        class PreprocessorIterator;
+    }// namespace preprocessor
+}// namespace jcc
 
 namespace jcc::parsing {
     [[nodiscard]]

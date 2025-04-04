@@ -1,6 +1,11 @@
 #include "type_name.h"
 
-#include "preprocessor/preprocessor_iterator.h"
+#include <utility>// for move
+
+#include "misc/Span.h"                         // for Span
+#include "parsing/ast_node.h"                  // for AstNode, AstNodeVisitor
+#include "parsing/types.h"                     // for SpecifierQualifierList
+#include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator
 
 namespace jcc::parsing {
     AstTypeName::AstTypeName(SpecifierQualifierList &&specifierQualifierList)

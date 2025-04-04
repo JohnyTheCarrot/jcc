@@ -1,6 +1,16 @@
 #ifndef MACRO_EXPECTED_COMMA_OR_RPAREN_HPP
 #define MACRO_EXPECTED_COMMA_OR_RPAREN_HPP
-#include "diagnostics/diagnostics.h"
+#include <memory>// for shared_ptr
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct MacroExpectedCommaOrRparen final : DiagnosticData {

@@ -1,15 +1,37 @@
 #include "numeric_constant.h"
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
+#include <cctype>
+#include <charconv>
+#include <cmath>
 #include <diagnostics/variants/parsing/invalid_floating_point_literal.hpp>
 #include <diagnostics/variants/parsing/invalid_integer_literal.hpp>
 #include <diagnostics/variants/parsing/unrecognized_floating_suffix.hpp>
 #include <diagnostics/variants/parsing/unrecognized_integer_suffix.hpp>
 #include <diagnostics/variants/sema/no_compat_int_type.hpp>
+#include <functional>
 #include <iostream>
+#include <iterator>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Type.h>
 #include <magic_enum/magic_enum.hpp>
+#include <memory>
+#include <ranges>
+#include <span>
+#include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
+#include <variant>
 
 #include "diagnostics/variants/todo.hpp"
+#include "misc/Span.h"
+#include "mjolnir/span.hpp"
+#include "parsing/parser.h"
+#include "parsing/types/type.h"
+#include "tokenizer/token.h"
 
 namespace jcc::parsing {
     AstIntegerConstant::AstIntegerConstant(
@@ -24,8 +46,8 @@ namespace jcc::parsing {
         return m_Value;
     }
 
-    void
-    AstIntegerConstant::AcceptOnExpression(ExpressionVisitor *visitor) const {
+    void AstIntegerConstant::AcceptOnExpression(ExpressionVisitor *visitor
+    ) const {
         return visitor->Visit(this);
     }
 
@@ -229,8 +251,8 @@ namespace jcc::parsing {
         return m_Value;
     }
 
-    void
-    AstFloatingConstant::AcceptOnExpression(ExpressionVisitor *visitor) const {
+    void AstFloatingConstant::AcceptOnExpression(ExpressionVisitor *visitor
+    ) const {
         return visitor->Visit(this);
     }
 

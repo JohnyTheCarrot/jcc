@@ -1,16 +1,16 @@
 #include "string_literals.h"
 
-#include <algorithm>// for __copy_fn, copy
-#include <iterator> // for back_insert_iterator, back_inserter
-#include <optional> // for optional
-#include <string>   // for basic_string, string, u32string
-#include <utility>  // for move
+#include <limits>  // for numeric_limits
+#include <optional>// for optional
+#include <string>  // for string
+#include <utility> // for move
 
-#include "diagnostics/variants/unexpected_eof.hpp"
-#include "misc/Span.h"// for Span, SpanMarker (ptr only)
-#include "parsing/parser.h"
-#include "tokenizer/char_iter.h"// for CharIter
-#include "utils.h"              // for ReadSingleCharacter, ConstantType
+#include "diagnostics/variants/unexpected_eof.hpp"// for UnexpectedEof
+#include "misc/Span.h"                            // for Span
+#include "mjolnir/span.hpp"                       // for Span
+#include "parsing/parser.h"                       // for CompilerState
+#include "tokenizer/char_iter.h"                  // for CharIter
+#include "utils.h"                                // for ReadSingleCharacter
 
 namespace jcc::tokenizer::string_literals {
     Token
@@ -47,12 +47,9 @@ namespace jcc::tokenizer::string_literals {
             if (!chOptional.has_value())
                 break;
 
-            strContents.push_back(
-                    static_cast<char>(
-                            chOptional.value() &
-                            std::numeric_limits<char>::max()
-                    )
-            );
+            strContents.push_back(static_cast<char>(
+                    chOptional.value() & std::numeric_limits<char>::max()
+            ));
         }
 
         Span span{charIter.GetSource(), {startPos, charIter.GetCurrentPos()}};

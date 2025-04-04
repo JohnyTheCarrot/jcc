@@ -9,6 +9,7 @@
 #include "diagnostics/variants/tk_pp/custom_diagnostic.hpp"
 #include "diagnostics/variants/tk_pp/diagnostic_directive_no_tokens.hpp"
 #include "misc/Span.h"// for Span
+#include "mjolnir/report.hpp"
 #include "parsing/parser.h"
 #include "preprocessor/commands/command.h"     // for Command, CommandMap
 #include "preprocessor/preprocessor.h"         // for Preprocessor

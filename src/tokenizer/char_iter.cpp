@@ -1,14 +1,16 @@
 #include "tokenizer/char_iter.h"
 
-#include <format> // for format, format_string
-#include <istream>// for basic_istream, basic_ios, basic_istream:...
+#include <format> // for format
+#include <istream>// for char_traits
+#include <string> // for operator<<
 #include <utility>// for move
 
 #include "gtest/gtest.h"// for PrintToString
 
-#include "diagnostics/variants/tk_pp/unexpected_char.hpp"
-#include "diagnostics/variants/unexpected_eof.hpp"
-#include "parsing/parser.h"
+#include "diagnostics/variants/tk_pp/unexpected_char.hpp"// for Unexpected...
+#include "diagnostics/variants/unexpected_eof.hpp"       // for UnexpectedEof
+#include "mjolnir/span.hpp"                              // for Span
+#include "parsing/parser.h"                              // for CompilerState
 
 namespace jcc::tokenizer {
     CharIter const CharIter::c_UntilNewline{'\n'};

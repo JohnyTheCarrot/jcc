@@ -1,6 +1,7 @@
 #ifndef ESCAPE_SEQUENCES_H
 #define ESCAPE_SEQUENCES_H
 
+#include <cstddef>                   // for size_t
 #include <misc/compiler_data_types.h>// for Char32
 
 namespace jcc {

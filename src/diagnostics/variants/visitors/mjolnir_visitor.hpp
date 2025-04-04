@@ -1,7 +1,53 @@
 #ifndef MJOLNIR_VISITOR_HPP
 #define MJOLNIR_VISITOR_HPP
 
-#include "diagnostics_visitor.hpp"
+#include "diagnostics_visitor.hpp"// for DiagnosticsVisitor
+
+namespace jcc {
+    namespace diagnostics {
+        struct BasicSyntaxError;
+        struct BinaryOperandsWrongTypes;
+        struct CharConstEmpty;
+        struct CharConstGt4Chars;
+        struct CustomDiagnostic;
+        struct DiagnosticDirectiveNoTokens;
+        struct DirectiveExpectedNewline;
+        struct ElseWithoutIf;
+        struct EscapeSeqTooLarge;
+        struct EscapeWithoutNewline;
+        struct ExpectedExpression;
+        struct HexEscapeEmpty;
+        struct IllegalMacroRedef;
+        struct IncludeExpectedHeaderName;
+        struct IncludeOpenFailed;
+        struct InvalidFloatingPointLiteral;
+        struct InvalidIntegerLiteral;
+        struct InvalidMacroParam;
+        struct InvalidSpecifierQualifierList;
+        struct MacroEllipsisNotLast;
+        struct MacroExpectedCommaOrRparen;
+        struct MacroInvocExpectedLparen;
+        struct MacroInvocInvalidNumArgs;
+        struct MacroNameNotIdent;
+        struct MultiByteCharImplDef;
+        struct NoCompatIntType;
+        struct OrphanedEndif;
+        struct PpConditionalExpectedIdent;
+        struct PpConditionalNotTerminated;
+        struct PpNumberInvalid;
+        struct TodoError;
+        struct UndefExpectedIdent;
+        struct UnexpectedChar;
+        struct UnexpectedElse;
+        struct UnexpectedEof;
+        struct UnknownEscapeSeq;
+        struct UnrecognizedFloatingSuffix;
+        struct UnrecognizedIntegerSuffix;
+        struct UntermedChar;
+        struct UntermedString;
+        struct Utf8TooManyChars;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     class MjolnirVisitor final : public DiagnosticsVisitor {

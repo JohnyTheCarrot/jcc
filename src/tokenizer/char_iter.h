@@ -1,13 +1,13 @@
 #ifndef CHAR_ITER_H
 #define CHAR_ITER_H
 
+#include <cstddef> // for size_t
 #include <iosfwd>  // for istream, ostream
 #include <iterator>// for input_iterator, input_iterator_tag
 #include <memory>  // for shared_ptr
 #include <variant> // for variant
 
-#include "diagnostics/diagnostics.h"
-#include "diagnostics/source.h"
+#include "diagnostics/source.h"// for Source
 
 namespace jcc::tokenizer {
     struct CharInfo final {

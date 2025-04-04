@@ -1,6 +1,15 @@
 #include "macro_invoc_expected_lparen.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     MacroInvocExpectedLparen::MacroInvocExpectedLparen(
@@ -12,8 +21,8 @@ namespace jcc::diagnostics {
         , m_NextTokenSpan{nextTokenSpan} {
     }
 
-    void
-    MacroInvocExpectedLparen::Visit(DiagnosticsVisitor const &visitor) const {
+    void MacroInvocExpectedLparen::Visit(DiagnosticsVisitor const &visitor
+    ) const {
         visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

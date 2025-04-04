@@ -1,7 +1,7 @@
 #ifndef DIAGNOSTICS_VISITOR_HPP
 #define DIAGNOSTICS_VISITOR_HPP
 
-#include <ostream>
+#include <ostream>// for ostream
 
 namespace jcc::diagnostics {
 #pragma region Forward declarations
@@ -27,9 +27,7 @@ namespace jcc::diagnostics {
     struct UnexpectedChar;
     struct UnexpectedEof;
     struct ExpectedExpression;
-    struct ModuloWithNonInt;
     struct BinaryOperandsWrongTypes;
-    struct ShiftOperandNonInt;
     struct CharConstEmpty;
     struct CharConstGt4Chars;
     struct CustomDiagnostic;
@@ -48,6 +46,7 @@ namespace jcc::diagnostics {
     struct UntermedChar;
     struct UntermedString;
     struct Utf8TooManyChars;
+
 #pragma endregion
 
     class DiagnosticsVisitor {

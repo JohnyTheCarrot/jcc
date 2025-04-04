@@ -2,16 +2,19 @@
 
 #include <algorithm>// for copy, __move_fn, move
 #include <iterator> // for back_insert_iterator
-#include <variant>  // for get, holds_alternative
-#include <vector>   // for vector
+#include <utility>
+#include <variant>// for get, holds_alternative
+#include <vector> // for vector
 
 #include "diagnostics/variants/tk_pp/illegal_macro_redef.hpp"
 #include "diagnostics/variants/tk_pp/invalid_macro_param.hpp"
 #include "diagnostics/variants/tk_pp/macro_ellipsis_not_last.hpp"
 #include "diagnostics/variants/tk_pp/macro_expected_comma_or_rparen.hpp"
 #include "diagnostics/variants/tk_pp/macro_name_not_ident.hpp"
+#include "misc/Span.h"
 #include "parsing/parser.h"
-#include "preprocessor/commands/command.h"     // for Command, CommandMap
+#include "preprocessor/commands/command.h"// for Command, CommandMap
+#include "preprocessor/macro.h"
 #include "preprocessor/macro_store.h"          // for MacroStore
 #include "preprocessor/preprocessor.h"         // for Preprocessor
 #include "preprocessor/preprocessor_iterator.h"// for PreprocessorIterator...
@@ -167,10 +170,9 @@ namespace jcc::preprocessor::commands {
         std::string macroName{
                 isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value)
                                   .m_Name
-                        : KeywordToString(
-                                  std::get<tokenizer::Keyword>(nextToken.m_Value
-                                  )
-                          )
+                        : KeywordToString(std::get<tokenizer::Keyword>(
+                                  nextToken.m_Value
+                          ))
         };
 
         if (auto const *macro{preprocessor.GetMacroStore().GetMacro(macroName)};

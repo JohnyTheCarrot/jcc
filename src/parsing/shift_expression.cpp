@@ -1,8 +1,16 @@
 #include "shift_expression.h"
 
-#include "additive_expression.h"
-#include "binary_expression.h"
-#include "preprocessor/preprocessor_iterator.h"
+#include <functional>// for function
+#include <memory>    // for unique_ptr
+#include <optional>  // for optional, nullopt, nullopt_t
+#include <utility>   // for move
+
+#include "additive_expression.h"// for ParseAdditiveExpression
+#include "binary_expression.h"  // for ParseBinaryExpression
+#include "misc/Span.h"          // for Span
+#include "mjolnir/span.hpp"     // for Span
+#include "parsing/ast_node.h"   // for AstExpression, AstExpressionPtr
+#include "tokenizer/token.h"    // for Punctuator
 
 namespace jcc::parsing {
     AstShiftExpression::AstShiftExpression(
@@ -17,7 +25,8 @@ namespace jcc::parsing {
         return m_Operator;
     }
 
-    void AstShiftExpression::AcceptOnExpression(ExpressionVisitor *visitor) const {
+    void AstShiftExpression::AcceptOnExpression(ExpressionVisitor *visitor
+    ) const {
         visitor->Visit(this);
     }
 

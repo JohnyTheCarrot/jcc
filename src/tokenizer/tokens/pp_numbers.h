@@ -1,7 +1,9 @@
 #ifndef PP_NUMBER_H
 #define PP_NUMBER_H
 
-#include "tokenizer/token.h"
+#include <cstddef>// for size_t
+
+#include "tokenizer/token.h"// for Token
 
 namespace jcc::tokenizer {
     class CharIter;

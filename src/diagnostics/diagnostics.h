@@ -1,11 +1,22 @@
 #ifndef DIAGNOSTICS_H
 #define DIAGNOSTICS_H
 
-#include <memory>
-#include <mjolnir/report.hpp>
+#include <cstddef>  // for size_t
+#include <exception>// for exception
+#include <memory>   // for shared_ptr, unique_ptr
 
-#include "parsing/types/type.h"
-#include "source.h"
+#include "mjolnir/span.hpp"    // for Span
+#include "parsing/types/type.h"// for ValueType
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
+
+namespace mjolnir {
+    enum class BasicReportKind;
+}// namespace mjolnir
 
 namespace jcc::diagnostics {
     class DiagnosticsVisitor;

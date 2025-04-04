@@ -1,6 +1,15 @@
 #include "unexpected_eof.hpp"
 
-#include "visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "mjolnir/report.hpp"              // for BasicReportKind
+#include "visitors/diagnostics_visitor.hpp"// for DiagnosticsVisitor
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     UnexpectedEof::UnexpectedEof(

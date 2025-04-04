@@ -1,6 +1,18 @@
 #include "custom_diagnostic.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
+
+namespace mjolnir {
+    enum class BasicReportKind;
+}// namespace mjolnir
 
 namespace jcc::diagnostics {
     CustomDiagnostic::CustomDiagnostic(

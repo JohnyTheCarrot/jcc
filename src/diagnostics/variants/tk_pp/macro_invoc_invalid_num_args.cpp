@@ -1,6 +1,15 @@
 #include "macro_invoc_invalid_num_args.hpp"
 
-#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"
+#include <utility>// for move
+
+#include "diagnostics/variants/visitors/diagnostics_visitor.hpp"// for Dia...
+#include "mjolnir/report.hpp"                                   // for Bas...
+
+namespace jcc {
+    namespace diagnostics {
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     MacroInvocInvalidNumArgs::MacroInvocInvalidNumArgs(
@@ -16,8 +25,8 @@ namespace jcc::diagnostics {
         , m_IsMinimum{isMinimum} {
     }
 
-    void
-    MacroInvocInvalidNumArgs::Visit(DiagnosticsVisitor const &visitor) const {
+    void MacroInvocInvalidNumArgs::Visit(DiagnosticsVisitor const &visitor
+    ) const {
         visitor.Print(*this);
     }
 }// namespace jcc::diagnostics

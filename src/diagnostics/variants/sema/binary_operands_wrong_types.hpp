@@ -1,8 +1,19 @@
 #ifndef SEMA_MULT_ARITHMETIC_H
 #define SEMA_MULT_ARITHMETIC_H
 
-#include "diagnostics/diagnostics.h"
-#include "parsing/types/type.h"
+#include <memory>// for shared_ptr
+#include <string>// for string
+
+#include "diagnostics/diagnostics.h"// for DiagnosticData
+#include "mjolnir/span.hpp"         // for Span
+#include "parsing/types/type.h"     // for ValueType
+
+namespace jcc {
+    namespace diagnostics {
+        class DiagnosticsVisitor;
+        struct Source;
+    }// namespace diagnostics
+}// namespace jcc
 
 namespace jcc::diagnostics {
     struct BinaryOperandsWrongTypes final : DiagnosticData {

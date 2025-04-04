@@ -3,12 +3,13 @@
 #include <utility>// for move
 #include <variant>// for get
 
-#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"
-#include "parsing/parser.h"
-#include "preprocessor/commands/command.h"// for Command, CommandMap
-#include "preprocessor/macro_store.h"     // for MacroStore
-#include "preprocessor/preprocessor.h"    // for Preprocessor
-#include "tokenizer/token.h"              // for Identifier, Token, Directive
+#include "diagnostics/variants/tk_pp/undef_expected_ident.hpp"// for Undef...
+#include "misc/Span.h"                                        // for Span
+#include "parsing/parser.h"                                   // for Compi...
+#include "preprocessor/commands/command.h"                    // for Command
+#include "preprocessor/macro_store.h"                         // for Macro...
+#include "preprocessor/preprocessor.h"                        // for Prepr...
+#include "tokenizer/token.h"                                  // for Ident...
 
 namespace jcc::preprocessor::commands {
     UndefCommand::UndefCommand(CommandMap &map)

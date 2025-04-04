@@ -1,5 +1,7 @@
 #include "source.h"
 
+#include <utility>// for move
+
 namespace jcc::diagnostics {
     Source::Source(std::string &&buffer, std::string const &fileName)
         : m_Buffer{std::move(buffer)}

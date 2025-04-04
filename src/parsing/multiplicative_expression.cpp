@@ -1,9 +1,16 @@
 #include "multiplicative_expression.h"
 
-#include "binary_expression.h"
-#include "cast_expression.hpp"
-#include "preprocessor/preprocessor_iterator.h"
-#include "primary_expression.h"
+#include <functional>// for function
+#include <memory>    // for unique_ptr
+#include <optional>  // for optional, nullopt, nullopt_t
+#include <utility>   // for move
+
+#include "binary_expression.h"// for ParseBinaryExpression
+#include "cast_expression.hpp"// for ParseCastExpression
+#include "misc/Span.h"        // for Span
+#include "mjolnir/span.hpp"   // for Span
+#include "parsing/ast_node.h" // for AstExpression, AstExpressionPtr, AstB...
+#include "tokenizer/token.h"  // for Punctuator
 
 namespace jcc::parsing {
     AstMultiplicativeExpression::AstMultiplicativeExpression(
@@ -19,8 +26,8 @@ namespace jcc::parsing {
         return m_Operator;
     }
 
-    void AstMultiplicativeExpression::AcceptOnExpression(
-            ExpressionVisitor *visitor
+    void
+    AstMultiplicativeExpression::AcceptOnExpression(ExpressionVisitor *visitor
     ) const {
         visitor->Visit(this);
     }

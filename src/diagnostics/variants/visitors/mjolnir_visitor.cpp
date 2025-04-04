@@ -5,8 +5,16 @@
 #include <diagnostics/variants/parsing/unrecognized_floating_suffix.hpp>
 #include <diagnostics/variants/parsing/unrecognized_integer_suffix.hpp>
 #include <diagnostics/variants/sema/no_compat_int_type.hpp>
+#include <format>
+#include <memory>
 #include <mjolnir/report.hpp>
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
 
+#include "diagnostics/diagnostics.h"
+#include "diagnostics/source.h"
 #include "diagnostics/variants/parsing/basic_syntax_error.hpp"
 #include "diagnostics/variants/parsing/expected_expression.hpp"
 #include "diagnostics/variants/sema/binary_operands_wrong_types.hpp"
@@ -43,6 +51,11 @@
 #include "diagnostics/variants/tk_pp/utf8_too_many_chars.hpp"
 #include "diagnostics/variants/todo.hpp"
 #include "diagnostics/variants/unexpected_eof.hpp"
+#include "misc/Span.h"
+#include "mjolnir/color.hpp"
+#include "mjolnir/source.hpp"
+#include "mjolnir/span.hpp"
+#include "parsing/types/type.h"
 
 namespace jcc::diagnostics {
     constexpr auto c_ErrorColor{mjolnir::colors::light_red};
@@ -58,8 +71,7 @@ namespace jcc::diagnostics {
                         "A UTF-8, UTF-16, or UTF-32 character literal must "
                         "contain exactly one character."
                 )
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -67,37 +79,30 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(UntermedString const &diag) const {
         StartReport(diag)
                 .with_message("Unterminated string constant.")
-                .with_label(
-                        mjolnir::Label{
-                                {diag.m_Span.end() - 1, diag.m_Span.end()}
-                        }.with_message("Reached end of line")
-                                .with_color(c_ErrorColor)
-                )
-                .with_help(
-                        "If you intended to write a multi-line string, "
-                        "consider "
-                        "escaping the newline character."
-                )
+                .with_label(mjolnir::Label{
+                        {diag.m_Span.end() - 1, diag.m_Span.end()}
+                }.with_message("Reached end of line")
+                                    .with_color(c_ErrorColor))
+                .with_help("If you intended to write a multi-line string, "
+                           "consider "
+                           "escaping the newline character.")
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(UntermedChar const &diag) const {
         StartReport(diag)
                 .with_message("Unterminated character constant.")
-                .with_label(
-                        mjolnir::Label{
-                                {diag.m_Span.end() - 1, diag.m_Span.end()}
-                        }.with_message("Reached end of line")
-                                .with_color(c_ErrorColor)
-                )
+                .with_label(mjolnir::Label{
+                        {diag.m_Span.end() - 1, diag.m_Span.end()}
+                }.with_message("Reached end of line")
+                                    .with_color(c_ErrorColor))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(UnknownEscapeSeq const &diag) const {
         StartReport(diag)
                 .with_message("Unknown escape sequence.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -105,27 +110,21 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(PpConditionalNotTerminated const &diag) const {
         StartReport(diag)
                 .with_message("Preprocessor conditional was not terminated")
-                .with_label(
-                        mjolnir::Label{diag.m_ConditionalSpan}
-                                .with_message("Conditional starts here")
-                                .with_color(mjolnir::colors::light_cyan)
-                )
-                .with_label(
-                        mjolnir::Label{diag.m_EofSpan}
-                                .with_message("End of file")
-                                .with_color(c_ErrorColor)
-                )
+                .with_label(mjolnir::Label{diag.m_ConditionalSpan}
+                                    .with_message("Conditional starts here")
+                                    .with_color(mjolnir::colors::light_cyan))
+                .with_label(mjolnir::Label{diag.m_EofSpan}
+                                    .with_message("End of file")
+                                    .with_color(c_ErrorColor))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(PpConditionalExpectedIdent const &diag) const {
         StartReport(diag)
                 .with_message("Preprocessor conditional expected identifier.")
-                .with_label(
-                        mjolnir::Label{diag.m_ConditionalSpan}.with_color(
-                                mjolnir::colors::light_cyan
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_ConditionalSpan}.with_color(
+                        mjolnir::colors::light_cyan
+                ))
                 .with_label(
                         mjolnir::Label{diag.m_UnexpectedTokenSpan}
                                 .with_message(
@@ -139,8 +138,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(OrphanedEndif const &diag) const {
         StartReport(diag)
                 .with_message("Orphaned #endif directive.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -148,8 +146,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(PpNumberInvalid const &diag) const {
         StartReport(diag)
                 .with_message("Invalid preprocessing number.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -167,19 +164,16 @@ namespace jcc::diagnostics {
                         "The values of multi-character character constants "
                         "are implementation-defined."
                 )
-                .with_note(
-                        "This implementation defines the behavior to be an "
-                        "integer value "
-                        "equal to the concatenation of the character values."
+                .with_note("This implementation defines the behavior to be an "
+                           "integer value "
+                           "equal to the concatenation of the character values."
                 )
-                .with_label(
-                        mjolnir::Label{diag.m_Span}
-                                .with_color(mjolnir::colors::light_magenta)
-                                .with_message(
-                                        "Perhaps you meant to use a string "
-                                        "literal?"
-                                )
-                )
+                .with_label(mjolnir::Label{diag.m_Span}
+                                    .with_color(mjolnir::colors::light_magenta)
+                                    .with_message(
+                                            "Perhaps you meant to use a string "
+                                            "literal?"
+                                    ))
                 .print(GetOstream());
     }
 
@@ -200,10 +194,9 @@ namespace jcc::diagnostics {
                     diag.m_DefSpan.m_Span.start()
             }
                     .with_message(std::move(message))
-                    .with_label(
-                            mjolnir::Label{diag.m_DefSpan.m_Span}
-                                    .with_message("First defined here")
-                                    .with_color(mjolnir::colors::light_cyan)
+                    .with_label(mjolnir::Label{diag.m_DefSpan.m_Span}
+                                        .with_message("First defined here")
+                                        .with_color(mjolnir::colors::light_cyan)
                     )
                     .print(GetOstream());
         }
@@ -213,11 +206,9 @@ namespace jcc::diagnostics {
                 diag.m_RedefineSpan.m_Span.start()
         };
         report.with_message(std::move(message))
-                .with_label(
-                        mjolnir::Label{diag.m_RedefineSpan.m_Span}
-                                .with_message("Redefinition here")
-                                .with_color(c_ErrorColor)
-                );
+                .with_label(mjolnir::Label{diag.m_RedefineSpan.m_Span}
+                                    .with_message("Redefinition here")
+                                    .with_color(c_ErrorColor));
 
         if (defLabel.has_value()) {
             report.with_label(defLabel.value());
@@ -229,8 +220,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(HexEscapeEmpty const &diag) const {
         StartReport(diag)
                 .with_message("Hexadecimal escape sequence is empty")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -238,8 +228,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(EscapeWithoutNewline const &diag) const {
         StartReport(diag)
                 .with_message("Newline escape sequence without a newline.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -247,8 +236,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(EscapeSeqTooLarge const &diag) const {
         StartReport(diag)
                 .with_message("Escape sequence value is too large")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -278,24 +266,18 @@ namespace jcc::diagnostics {
                 .with_message(
                         "Character constant contains more than 4 characters."
                 )
-                .with_label(
-                        mjolnir::Label{diag.m_Span}
-                                .with_message(
-                                        "Perhaps you meant to use a string "
-                                        "literal?"
-                                )
-                                .with_color(mjolnir::colors::light_magenta)
-                )
-                .with_note(
-                        "Multi-character character constant values are "
-                        "implementation defined."
-                )
-                .with_note(
-                        "The value of a multi-character character constant "
-                        "whose length is less than or equal to 4 is the "
-                        "integer value equal to the concatenation of the "
-                        "character values."
-                )
+                .with_label(mjolnir::Label{diag.m_Span}
+                                    .with_message(
+                                            "Perhaps you meant to use a string "
+                                            "literal?"
+                                    )
+                                    .with_color(mjolnir::colors::light_magenta))
+                .with_note("Multi-character character constant values are "
+                           "implementation defined.")
+                .with_note("The value of a multi-character character constant "
+                           "whose length is less than or equal to 4 is the "
+                           "integer value equal to the concatenation of the "
+                           "character values.")
                 .print(GetOstream());
     }
 
@@ -305,14 +287,12 @@ namespace jcc::diagnostics {
         report.with_message("Character constant is empty.");
 
         if (diag.m_PotentiallyClosingQuote.has_value()) {
-            report.with_label(
-                          mjolnir::Label{diag.m_Span}
-                                  .with_color(c_ErrorColor)
-                                  .with_message(
-                                          "This is the effective character "
-                                          "constant, which is empty."
-                                  )
-            )
+            report.with_label(mjolnir::Label{diag.m_Span}
+                                      .with_color(c_ErrorColor)
+                                      .with_message(
+                                              "This is the effective character "
+                                              "constant, which is empty."
+                                      ))
                     .with_label(
                             mjolnir::Label{diag.m_PotentiallyClosingQuote.value(
                                            )}
@@ -344,24 +324,18 @@ namespace jcc::diagnostics {
                 .with_label(mjolnir::Label{diag.m_OpSpan})
                 .with_label(
                         mjolnir::Label{diag.m_LhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                lhsColor.fg(diag.m_LhsType
-                                                                    .ToString())
-                                        )
-                                )
+                                .with_message(std::format(
+                                        "This is of type {}",
+                                        lhsColor.fg(diag.m_LhsType.ToString())
+                                ))
                                 .with_color(lhsColor)
                 )
                 .with_label(
                         mjolnir::Label{diag.m_RhsSpan}
-                                .with_message(
-                                        std::format(
-                                                "This is of type {}",
-                                                rhsColor.fg(diag.m_RhsType
-                                                                    .ToString())
-                                        )
-                                )
+                                .with_message(std::format(
+                                        "This is of type {}",
+                                        rhsColor.fg(diag.m_RhsType.ToString())
+                                ))
                                 .with_color(rhsColor)
                 )
                 .print(GetOstream());
@@ -371,28 +345,20 @@ namespace jcc::diagnostics {
         auto report{StartReport(diag)};
         report.with_message("Expected expression to follow operator.");
 
-        report.with_label(
-                mjolnir::Label{diag.m_LhsSpan}
-                        .with_message("Left-hand side")
-                        .with_color(mjolnir::colors::light_blue)
-        );
+        report.with_label(mjolnir::Label{diag.m_LhsSpan}
+                                  .with_message("Left-hand side")
+                                  .with_color(mjolnir::colors::light_blue));
         if (diag.m_RhsSpan.has_value()) {
-            report.with_label(
-                          mjolnir::Label{diag.m_RhsSpan.value()}
-                                  .with_message("Expected expression here")
-                                  .with_color(c_ErrorColor)
-            )
-                    .with_label(
-                            mjolnir::Label{diag.m_OpSpan}.with_color(
-                                    mjolnir::colors::light_cyan
-                            )
-                    );
+            report.with_label(mjolnir::Label{diag.m_RhsSpan.value()}
+                                      .with_message("Expected expression here")
+                                      .with_color(c_ErrorColor))
+                    .with_label(mjolnir::Label{diag.m_OpSpan}.with_color(
+                            mjolnir::colors::light_cyan
+                    ));
         } else {
-            report.with_label(
-                    mjolnir::Label{diag.m_OpSpan}.with_message(
-                            "Expected this to be followed by an expression"
-                    )
-            );
+            report.with_label(mjolnir::Label{diag.m_OpSpan}.with_message(
+                    "Expected this to be followed by an expression"
+            ));
         }
 
         report.print(GetOstream());
@@ -408,8 +374,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(UnexpectedChar const &diag) const {
         StartReport(diag)
                 .with_message("Unexpected character.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -418,11 +383,9 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Failed to open included file.")
                 .with_label(mjolnir::Label{diag.m_DirectiveSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
@@ -430,11 +393,9 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Expected header name in #include directive.")
                 .with_label(mjolnir::Label{diag.m_DirectiveSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_HeaderNameSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
@@ -442,11 +403,9 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Expected directive to be followed by a newline.")
                 .with_label(mjolnir::Label{diag.m_DirectiveSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_NextTokenSpan}
-                                .with_color(c_ErrorColor)
-                                .with_message("Expected newline here")
-                )
+                .with_label(mjolnir::Label{diag.m_NextTokenSpan}
+                                    .with_color(c_ErrorColor)
+                                    .with_message("Expected newline here"))
                 .print(GetOstream());
     }
 
@@ -454,11 +413,9 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Undef directive expected identifier.")
                 .with_label(mjolnir::Label{diag.m_DirectiveSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_NextTokenSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_NextTokenSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
@@ -466,14 +423,12 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Unexpected token in macro parameter list.")
                 .with_label(mjolnir::Label{diag.m_MacroDefSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_InvalidParamSpan}
-                                .with_color(c_ErrorColor)
-                                .with_message(
-                                        "Expected either an ellipsis or an "
-                                        "identifier"
-                                )
-                )
+                .with_label(mjolnir::Label{diag.m_InvalidParamSpan}
+                                    .with_color(c_ErrorColor)
+                                    .with_message(
+                                            "Expected either an ellipsis or an "
+                                            "identifier"
+                                    ))
                 .print(GetOstream());
     }
 
@@ -481,20 +436,16 @@ namespace jcc::diagnostics {
         StartReport(diag)
                 .with_message("Expected identifier for macro name.")
                 .with_label(mjolnir::Label{diag.m_DirectiveSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_MacroNameSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_MacroNameSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(UnexpectedElse const &diag) const {
         StartReport(diag)
-                .with_message(
-                        "Cannot use an else-type directive after an else "
-                        "directive."
-                )
+                .with_message("Cannot use an else-type directive after an else "
+                              "directive.")
                 .with_label(
                         mjolnir::Label{diag.m_ElseSpan}
                                 .with_color(mjolnir::colors::light_cyan)
@@ -503,10 +454,8 @@ namespace jcc::diagnostics {
                 .with_label(
                         mjolnir::Label{diag.m_UnexpectedElseSpan}
                                 .with_color(c_ErrorColor)
-                                .with_message(
-                                        "Followed up by unexpected else "
-                                        "directive here"
-                                )
+                                .with_message("Followed up by unexpected else "
+                                              "directive here")
                 )
                 .print(GetOstream());
     }
@@ -514,21 +463,17 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(ElseWithoutIf const &diag) const {
         StartReport(diag)
                 .with_message("#else without #if")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(MacroExpectedCommaOrRparen const &diag) const {
         StartReport(diag)
-                .with_message(
-                        "Expected comma or right parenthesis in macro "
-                        "parameter list."
-                )
+                .with_message("Expected comma or right parenthesis in macro "
+                              "parameter list.")
                 .with_label(mjolnir::Label{diag.m_MacroSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -540,11 +485,9 @@ namespace jcc::diagnostics {
                         "macro."
                 )
                 .with_label(mjolnir::Label{diag.m_MacroSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_CommaSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_CommaSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
@@ -555,11 +498,9 @@ namespace jcc::diagnostics {
                         "invocation."
                 )
                 .with_label(mjolnir::Label{diag.m_MacroNameSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_NextTokenSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_NextTokenSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
@@ -568,52 +509,41 @@ namespace jcc::diagnostics {
         auto const receivedArgsStr{std::to_string(diag.m_ReceivedNArgs)};
 
         StartReport(diag)
-                .with_message(
-                        std::format(
-                                "Expected {}{} arguments, but received {}.",
-                                diag.m_IsMinimum ? "at least " : "",
-                                mjolnir::colors::light_green.fg(
-                                        expectedArgsStr
-                                ),
-                                c_ErrorColor.fg(receivedArgsStr)
-                        )
-                )
+                .with_message(std::format(
+                        "Expected {}{} arguments, but received {}.",
+                        diag.m_IsMinimum ? "at least " : "",
+                        mjolnir::colors::light_green.fg(expectedArgsStr),
+                        c_ErrorColor.fg(receivedArgsStr)
+                ))
                 .with_label(mjolnir::Label{diag.m_MacroInvocSpan})
-                .with_label(
-                        mjolnir::Label{diag.m_MacroArgsSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_MacroArgsSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(UnrecognizedIntegerSuffix const &diag) const {
         StartReport(diag)
                 .with_message("Unrecognized integer suffix.")
-                .with_label(
-                        mjolnir::Label{diag.m_SuffixSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_SuffixSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(UnrecognizedFloatingSuffix const &diag) const {
         StartReport(diag)
                 .with_message("Unrecognized floating point suffix.")
-                .with_label(
-                        mjolnir::Label{diag.m_SuffixSpan}.with_color(
-                                c_ErrorColor
-                        )
-                )
+                .with_label(mjolnir::Label{diag.m_SuffixSpan}.with_color(
+                        c_ErrorColor
+                ))
                 .print(GetOstream());
     }
 
     void MjolnirVisitor::Print(InvalidFloatingPointLiteral const &diag) const {
         StartReport(diag)
                 .with_message("Invalid floating point literal.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -621,8 +551,7 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(InvalidIntegerLiteral const &diag) const {
         StartReport(diag)
                 .with_message("Invalid integer literal.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
@@ -647,13 +576,10 @@ namespace jcc::diagnostics {
             constexpr auto expectedColor{mjolnir::colors::light_green};
             constexpr auto receivedColor{c_ErrorColor};
 
-            report.with_message(
-                    std::format(
-                            "Expected {} but received {}.",
-                            expectedColor.fg(expected),
-                            receivedColor.fg(received)
-                    )
-            );
+            report.with_message(std::format(
+                    "Expected {} but received {}.", expectedColor.fg(expected),
+                    receivedColor.fg(received)
+            ));
         }
 
         report.print(GetOstream());
@@ -662,18 +588,16 @@ namespace jcc::diagnostics {
     void MjolnirVisitor::Print(NoCompatIntType const &diag) const {
         StartReport(diag)
                 .with_message("No compatible integer type found.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
 
-    void
-    MjolnirVisitor::Print(InvalidSpecifierQualifierList const &diag) const {
+    void MjolnirVisitor::Print(InvalidSpecifierQualifierList const &diag
+    ) const {
         StartReport(diag)
                 .with_message("Invalid specifier-qualifier list.")
-                .with_label(
-                        mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
+                .with_label(mjolnir::Label{diag.m_Span}.with_color(c_ErrorColor)
                 )
                 .print(GetOstream());
     }
