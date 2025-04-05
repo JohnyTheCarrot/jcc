@@ -7,7 +7,8 @@
 
 namespace jcc::preprocessor {
     tokenizer::Token PreprocessorIterator::GetNextToken() const {
-        auto token{m_pPreprocessor->GetNextPreprocessorToken().m_Token};
+        auto token{pp_token::GetToken(m_pPreprocessor->GetNextPreprocessorToken(
+        ))};
         if (token.Is(tokenizer::Punctuator::PpLeftParenthesis))
             token.m_Value = tokenizer::Punctuator::LeftParenthesis;
 
@@ -15,7 +16,11 @@ namespace jcc::preprocessor {
     }
 
     tokenizer::Token PreprocessorIteratorNoCommands::GetNextToken() const {
-        return m_pPreprocessor->SimpleTokenRead().m_Token;
+        return pp_token::GetToken(m_pPreprocessor->SimpleTokenRead());
+    }
+
+    PreprocessorToken PreprocessorIteratorVerbatim::GetNextToken() const {
+        return m_pPreprocessor->SimpleTokenRead();
     }
 
     InternalPreprocessorIterator::InternalPreprocessorIterator(
@@ -48,7 +53,7 @@ namespace jcc::preprocessor {
     InternalPreprocessorIterator &InternalPreprocessorIterator::operator++() {
         auto ppToken{m_pPreprocessor->GetNextFromTokenizer(true)};
 
-        if (auto const &[token, isFromMacro]{ppToken};
+        if (auto const &token{pp_token::GetToken(ppToken)};
             token.Is(tokenizer::SpecialPurpose::EndOfFile) ||
             (std::holds_alternative<tokenizer::Token::Type>(m_Token) &&
              std::get<tokenizer::Token::Type>(m_Token) == token.GetValueType()))

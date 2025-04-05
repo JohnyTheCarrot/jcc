@@ -30,10 +30,9 @@ namespace jcc::preprocessor::commands {
         auto const ppItEnd{preprocessor.EndOfFile<InternalPreprocessorIterator>(
         )};
 
-        for (auto &[token, isFromMacro] :
-             std::ranges::subrange(ppItStart, ppItEnd)) {
-            if (!isFromMacro &&
-                std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
+        for (auto &ppToken : std::ranges::subrange(ppItStart, ppItEnd)) {
+            auto token{pp_token::GetToken(ppToken)};
+            if (std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
                 switch (std::get<tokenizer::Punctuator>(token.m_Value)) {
                     case tokenizer::Punctuator::LeftParenthesis:
                     case tokenizer::Punctuator::PpLeftParenthesis:
@@ -190,12 +189,13 @@ namespace jcc::preprocessor::commands {
                     preprocessor.GetMacroStore().GetMacro(identifierContent)
             }) {
             if (std::holds_alternative<macro::FunctionLikeMacro>(*macro)) {
-                auto token{preprocessor.GetNextPreprocessorToken()};
-                if (!IsLeftParenthesis(token.m_Token)) {
-                    return token;
+                auto ppToken{preprocessor.GetNextPreprocessorToken()};
+                auto token{pp_token::GetToken(ppToken)};
+                if (!IsLeftParenthesis(token)) {
+                    return ppToken;
                 }
 
-                span.m_Span += token.m_Token.m_Span.m_Span;
+                span.m_Span += token.m_Span.m_Span;
             }
 
             auto macroInvocation{[&] {
@@ -214,7 +214,8 @@ namespace jcc::preprocessor::commands {
                 return macro::MacroInvocation{.m_MacroName = identifierContent};
             }()};
 
-            preprocessor.GetMacroStore().InvokeMacro(std::move(macroInvocation)
+            preprocessor.GetMacroStore().InvokeMacro(
+                    std::move(macroInvocation)
             );
 
             return preprocessor.GetNextPreprocessorToken(
@@ -231,6 +232,6 @@ namespace jcc::preprocessor::commands {
             return preprocessor.GetNextPreprocessorToken();
         }
 
-        return PreprocessorToken{ident, false};
+        return PreprocessorToken{BasicPreprocessorToken{std::move(ident)}};
     }
 }// namespace jcc::preprocessor::commands

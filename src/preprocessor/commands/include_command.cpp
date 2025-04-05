@@ -26,7 +26,9 @@ namespace jcc::preprocessor::commands {
             Preprocessor &preprocessor, tokenizer::Token &&directiveToken
     ) const {
         // TODO: #include <header>, there is no support for this yet.
-        auto const nextToken{preprocessor.SimpleTokenRead().m_Token};
+        auto const nextToken{
+                pp_token::GetBasicToken(preprocessor.SimpleTokenRead())
+        };
 
         if (!nextToken.Is<tokenizer::StringConstant>()) {
             parsing::CompilerState::GetInstance()
@@ -39,7 +41,9 @@ namespace jcc::preprocessor::commands {
             return std::nullopt;
         }
 
-        if (auto const newlineToken{preprocessor.SimpleTokenRead().m_Token};
+        if (auto const newlineToken{
+                    pp_token::GetBasicToken(preprocessor.SimpleTokenRead())
+            };
             !newlineToken.Is(tokenizer::SpecialPurpose::NewLine)) {
             parsing::CompilerState::GetInstance()
                     .EmplaceDiagnostic<diagnostics::DirectiveExpectedNewline>(

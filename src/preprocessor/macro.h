@@ -8,40 +8,42 @@
 #include <variant>      // for variant
 #include <vector>       // for vector
 
-#include "misc/Span.h"      // for Span
+#include "misc/Span.h"// for Span
+#include "preprocessor_token.h"
 #include "tokenizer/token.h"// for Token, Identifier
 
 namespace jcc::preprocessor::macro {
     struct ReplacementList {
-        using TokenList = std::vector<tokenizer::Token>;
+        using TokenList = std::vector<PreprocessorToken>;
         TokenList m_ReplacementList{};
 
         [[nodiscard]]
         bool operator==(ReplacementList const &other) const noexcept;
     };
 
-    struct ObjectLikeMacro final {
+    struct MacroDefinition {
         std::string     m_MacroName;
         Span            m_Span;
         ReplacementList m_ReplacementList;
 
-        ObjectLikeMacro(
-                std::string macroName, Span span,
+        MacroDefinition(
+                std::string m_MacroName, Span m_Span,
                 ReplacementList replacementList
-        );
+        ) noexcept;
+    };
+
+    struct ObjectLikeMacro final : MacroDefinition {
+        using MacroDefinition::MacroDefinition;
 
         [[nodiscard]]
         bool operator==(ObjectLikeMacro const &other) const noexcept;
     };
 
-    struct FunctionLikeMacro final {
+    struct FunctionLikeMacro final : MacroDefinition {
         using ParameterList = std::vector<tokenizer::Identifier>;
 
-        std::string     m_MacroName;
-        Span            m_Span;
-        ReplacementList m_ReplacementList;
-        ParameterList   m_ParameterList;
-        bool            m_IsVA;
+        ParameterList m_ParameterList;
+        bool          m_IsVA;
 
         FunctionLikeMacro(
                 std::string macroName, Span span,
@@ -70,6 +72,7 @@ namespace jcc::preprocessor::macro {
         int                                m_CurrentToken{-1};
         std::optional<FnMacroArguments>    m_Args{};
         std::optional<MacroArgumentReader> m_CurrentArgReader{};
+        std::optional<PreprocessorToken>   m_NextToken{};
     };
 }// namespace jcc::preprocessor::macro
 

@@ -52,6 +52,8 @@ namespace jcc::tokenizer {
     public:
         explicit Tokenizer(std::string const &fileName);
 
+        explicit Tokenizer(std::istream &inputStream);
+
         Tokenizer(Tokenizer &&) noexcept;
 
         Tokenizer &operator=(Tokenizer const &) = delete;

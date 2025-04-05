@@ -34,6 +34,13 @@ namespace jcc::preprocessor {
         m_MacroStack.push(macroInvocation);
     }
 
+    macro::MacroInvocation *MacroStore::GetCurrentMacroInvocation() noexcept {
+        if (m_MacroStack.empty())
+            return nullptr;
+
+        return &m_MacroStack.top();
+    }
+
     macro::Macro const *MacroStore::GetMacro(
             std::string const &name, bool allowCurrentMacro
     ) const {
@@ -76,12 +83,12 @@ namespace jcc::preprocessor {
         return argIt->second;
     }
 
-    std::optional<tokenizer::Token> MacroStore::GetTokenFromMacroStack() {
+    std::optional<PreprocessorToken> MacroStore::GetTokenFromMacroStack() {
         if (m_MacroStack.empty())
             return std::nullopt;
 
-        auto &[macroName, currentTokenIndex, args,
-               currentArgReader]{m_MacroStack.top()};
+        auto &[macroName, currentTokenIndex, args, currentArgReader,
+               nextToken]{m_MacroStack.top()};
         ++currentTokenIndex;
 
         if (auto const *macro{GetMacro(macroName, true)}; macro != nullptr) {

@@ -1,1 +1,3 @@
-(0x1F & 0xF0) >> 4 | 2
+#define GLUE(a, b) a ## b
+
+GLUE(pog, champ)

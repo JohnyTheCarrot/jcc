@@ -10,14 +10,25 @@
 #include "tokenizer/token.h"   // for Token, SpecialPurpose
 
 namespace jcc::preprocessor {
+    class PreprocessorIteratorVerbatim;
     class Preprocessor;
 
-    template<class Super>
-    class BasePreprocessorIterator {
-        using UntilCondition = std::function<bool(tokenizer::Token const &)>;
+    namespace internal {
+        [[nodiscard]]
+        inline tokenizer::Token GetToken(PreprocessorToken const &token) {
+            return pp_token::GetToken(token);
+        }
 
-        mutable std::variant<
-                tokenizer::Token::Type, tokenizer::Token, UntilCondition>
+        inline tokenizer::Token GetToken(tokenizer::Token const &token) {
+            return token;
+        }
+    }// namespace internal
+
+    template<class Super, class ValueType = tokenizer::Token>
+    class BasePreprocessorIterator {
+        using UntilCondition = std::function<bool(ValueType const &)>;
+
+        mutable std::variant<tokenizer::Token::Type, ValueType, UntilCondition>
                 m_Token{tokenizer::SpecialPurpose::EndOfFile};
 
     protected:
@@ -33,7 +44,7 @@ namespace jcc::preprocessor {
 
     public:
         using iterator_category = std::input_iterator_tag;
-        using value_type        = tokenizer::Token;
+        using value_type        = ValueType;
         using reference         = value_type &;
         using pointer           = value_type *;
         using difference_type   = int;
@@ -45,23 +56,32 @@ namespace jcc::preprocessor {
         BasePreprocessorIterator() = default;
 
         reference operator*() const {
-            return std::get<tokenizer::Token>(m_Token);
+            return std::get<ValueType>(m_Token);
         }
 
         pointer operator->() const {
-            return &std::get<tokenizer::Token>(m_Token);
+            return &std::get<ValueType>(m_Token);
         }
 
         Super &operator++() {
             auto const token{static_cast<Super *>(this)->GetNextToken()};
 
-            if (token.Is(tokenizer::SpecialPurpose::EndOfFile) ||
+            tokenizer::Token finalToken = [&token] {
+                if constexpr (std::same_as<
+                                      Super, PreprocessorIteratorVerbatim>) {
+                    return pp_token::GetToken(token);
+                } else {
+                    return token;
+                }
+            }();
+
+            if (finalToken.Is(tokenizer::SpecialPurpose::EndOfFile) ||
                 (std::holds_alternative<tokenizer::Token::Type>(m_Token) &&
                  std::get<tokenizer::Token::Type>(m_Token) ==
-                         token.GetValueType()))
-                m_Token = token.GetValueType();
+                         finalToken.GetValueType()))
+                m_Token = finalToken.GetValueType();
             else
-                m_Token = token;
+                m_Token = std::move(token);
 
             return static_cast<Super &>(*this);
         }
@@ -91,20 +111,21 @@ namespace jcc::preprocessor {
         [[nodiscard]]
         bool operator==(Super const &other) const noexcept {
             if (std::holds_alternative<UntilCondition>(other.m_Token)) {
-                if (!std::holds_alternative<tokenizer::Token>(m_Token))
+                if (!std::holds_alternative<ValueType>(m_Token))
                     return true;// both are special purpose
 
                 auto const condition{std::get<UntilCondition>(other.m_Token)};
 
-                return condition(std::get<tokenizer::Token>(m_Token));
+                return condition(std::get<ValueType>(m_Token));
             }
 
             if (std::holds_alternative<tokenizer::Token::Type>(other.m_Token)) {
-                if (!std::holds_alternative<tokenizer::Token>(m_Token))
+                if (!std::holds_alternative<ValueType>(m_Token))
                     return true;// both are special purpose
 
                 auto const currentTokenType{
-                        std::get<tokenizer::Token>(m_Token).GetValueType()
+                        internal::GetToken(std::get<ValueType>(m_Token))
+                                .GetValueType()
                 };
                 auto const isCurrentEOF{
                         std::holds_alternative<tokenizer::SpecialPurpose>(
@@ -119,8 +140,8 @@ namespace jcc::preprocessor {
                                std::get<tokenizer::Token::Type>(other.m_Token);
             }
 
-            return std::get<tokenizer::Token>(m_Token) ==
-                   std::get<tokenizer::Token>(other.m_Token);
+            return std::get<ValueType>(m_Token) ==
+                   std::get<ValueType>(other.m_Token);
         }
 
         [[nodiscard]]
@@ -161,6 +182,16 @@ namespace jcc::preprocessor {
     };
 
     static_assert(IsPreprocessorIterator<PreprocessorIteratorNoCommands>);
+
+    class PreprocessorIteratorVerbatim final
+        : public BasePreprocessorIterator<
+                  PreprocessorIteratorVerbatim, PreprocessorToken> {
+    public:
+        using BasePreprocessorIterator::BasePreprocessorIterator;
+
+        [[nodiscard]]
+        PreprocessorToken GetNextToken() const;
+    };
 
     class InternalPreprocessorIterator final {
         mutable Preprocessor *m_pPreprocessor{};

@@ -25,10 +25,10 @@ namespace jcc::preprocessor::commands {
         macro::ReplacementList replacementList{};
 
         auto const currentPos{
-                ++preprocessor.Current<PreprocessorIteratorNoCommands>()
+                ++preprocessor.Current<PreprocessorIteratorVerbatim>()
         };
         auto const untilNewLine{
-                preprocessor.Until<PreprocessorIteratorNoCommands>(
+                preprocessor.Until<PreprocessorIteratorVerbatim>(
                         tokenizer::SpecialPurpose::NewLine
                 )
         };
@@ -45,8 +45,9 @@ namespace jcc::preprocessor::commands {
     GatherParameterList(Preprocessor &preprocessor, Span &span) {
         macro::FunctionLikeMacro::ParameterList parameterList{};
 
-        auto [token,
-              isFromMacro]{preprocessor.GetNextFromTokenizer(false, false)};
+        auto token{pp_token::GetBasicToken(
+                preprocessor.GetNextFromTokenizer(false, false)
+        )};
 
         while (true) {
             if (!std::holds_alternative<tokenizer::Identifier>(token.m_Value)) {
@@ -59,7 +60,9 @@ namespace jcc::preprocessor::commands {
                             );
                 }
 
-                token = preprocessor.GetNextPreprocessorToken().m_Token;
+                token = pp_token::GetBasicToken(
+                        preprocessor.GetNextPreprocessorToken()
+                );
                 if (!token.Is(tokenizer::Punctuator::RightParenthesis)) {
                     parsing::CompilerState::GetInstance()
                             .EmplaceFatalDiagnostic<
@@ -74,7 +77,9 @@ namespace jcc::preprocessor::commands {
             auto &identifier{std::get<tokenizer::Identifier>(token.m_Value)};
             parameterList.push_back(std::move(identifier));
 
-            token = preprocessor.GetNextPreprocessorToken().m_Token;
+            token = pp_token::GetBasicToken(
+                    preprocessor.GetNextPreprocessorToken()
+            );
             if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value)) {
                 parsing::CompilerState::GetInstance()
                         .EmplaceFatalDiagnostic<
@@ -98,7 +103,9 @@ namespace jcc::preprocessor::commands {
                         );
             }
 
-            token = preprocessor.GetNextPreprocessorToken(false, false).m_Token;
+            token = pp_token::GetBasicToken(
+                    preprocessor.GetNextPreprocessorToken(false, false)
+            );
         }
     }
 
@@ -106,7 +113,9 @@ namespace jcc::preprocessor::commands {
             Preprocessor &preprocessor, Span &&span, std::string &&name,
             tokenizer::Token &&firstToken
     ) {
-        macro::ReplacementList replacementList{{std::move(firstToken)}};
+        macro::ReplacementList replacementList{
+                {BasicPreprocessorToken{std::move(firstToken)}}
+        };
         auto [m_ReplacementList]{GatherReplacementList(preprocessor)};
         std::ranges::move(
                 m_ReplacementList,
@@ -147,7 +156,9 @@ namespace jcc::preprocessor::commands {
     std::optional<PreprocessorToken> DefineCommand::Execute(
             Preprocessor &preprocessor, tokenizer::Token &&directive
     ) const {
-        auto nextToken{preprocessor.SimpleTokenRead(false).m_Token};
+        auto nextToken{
+                pp_token::GetBasicToken(preprocessor.SimpleTokenRead(false))
+        };
 
         auto const isIdent{
                 std::holds_alternative<tokenizer::Identifier>(nextToken.m_Value)
@@ -170,9 +181,10 @@ namespace jcc::preprocessor::commands {
         std::string macroName{
                 isIdent ? std::get<tokenizer::Identifier>(nextToken.m_Value)
                                   .m_Name
-                        : KeywordToString(std::get<tokenizer::Keyword>(
-                                  nextToken.m_Value
-                          ))
+                        : KeywordToString(
+                                  std::get<tokenizer::Keyword>(nextToken.m_Value
+                                  )
+                          )
         };
 
         if (auto const *macro{preprocessor.GetMacroStore().GetMacro(macroName)};
@@ -189,7 +201,7 @@ namespace jcc::preprocessor::commands {
         }
 
         auto nextPpToken{preprocessor.SimpleTokenRead(false)};
-        nextToken = nextPpToken.m_Token;
+        nextToken = pp_token::GetToken(nextPpToken);
 
         if (nextToken.Is(tokenizer::SpecialPurpose::NewLine)) {
             preprocessor.GetMacroStore().RegisterMacro(

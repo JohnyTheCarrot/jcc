@@ -30,6 +30,9 @@ namespace jcc::preprocessor {
         void InvokeMacro(macro::MacroInvocation &&macroInvocation);
 
         [[nodiscard]]
+        macro::MacroInvocation *GetCurrentMacroInvocation() noexcept;
+
+        [[nodiscard]]
         macro::Macro const *
         GetMacro(std::string const &name, bool allowCurrentMacro = false) const;
 
@@ -38,7 +41,7 @@ namespace jcc::preprocessor {
         GetMacroArgument(std::string const &argumentName) const;
 
         [[nodiscard]]
-        std::optional<tokenizer::Token> GetTokenFromMacroStack();
+        std::optional<PreprocessorToken> GetTokenFromMacroStack();
 
         [[nodiscard]]
         std::optional<tokenizer::Token> GetTokenFromMacroArgumentReader();

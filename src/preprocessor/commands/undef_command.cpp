@@ -21,7 +21,8 @@ namespace jcc::preprocessor::commands {
     std::optional<PreprocessorToken> UndefCommand::Execute(
             Preprocessor &preprocessor, tokenizer::Token &&undefDirective
     ) const {
-        auto const [token, isFromMacro]{preprocessor.SimpleTokenRead()};
+        auto const token{pp_token::GetBasicToken(preprocessor.SimpleTokenRead())
+        };
 
         if (!token.Is<tokenizer::Identifier>()) {
             parsing::CompilerState::GetInstance()

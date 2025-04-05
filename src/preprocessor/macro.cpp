@@ -6,9 +6,9 @@
 #include "gtest/gtest.h"// for PrintToString
 
 namespace jcc::preprocessor::macro {
-    ObjectLikeMacro::ObjectLikeMacro(
+    MacroDefinition::MacroDefinition(
             std::string macroName, Span span, ReplacementList replacementList
-    )
+    ) noexcept
         : m_MacroName{std::move(macroName)}
         , m_Span{std::move(span)}
         , m_ReplacementList{std::move(replacementList)} {
@@ -18,9 +18,7 @@ namespace jcc::preprocessor::macro {
             std::string macroName, Span span, ReplacementList &&replacementList,
             ParameterList &&parameterList, bool isVA
     )
-        : m_MacroName{std::move(macroName)}
-        , m_Span{std::move(span)}
-        , m_ReplacementList{std::move(replacementList)}
+        : MacroDefinition{std::move(macroName), std::move(span), std::move(replacementList)}
         , m_ParameterList{std::move(parameterList)}
         , m_IsVA{isVA} {
     }

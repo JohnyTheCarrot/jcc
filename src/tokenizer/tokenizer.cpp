@@ -143,6 +143,20 @@ namespace jcc::tokenizer {
         , m_CharIter{m_Input, m_Source} {
     }
 
+    Tokenizer::Tokenizer(std::istream &inputStream)
+        : m_Source{std::make_shared<diagnostics::Source>(
+                  std::string{
+                          std::istreambuf_iterator{inputStream},
+                          std::istreambuf_iterator<char>{}
+                  },
+                  "input"
+          )}
+        , m_Input{m_Source->m_Buffer}
+        , m_CharIter{m_Input, m_Source} {
+        if (m_Input.eof())
+            throw TokenizerFileOpenFailure{};
+    }
+
     Tokenizer::Tokenizer(Tokenizer &&other) noexcept
         : m_Source{std::move(other.m_Source)}
         , m_Input{std::move(other.m_Input)}

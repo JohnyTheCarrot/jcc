@@ -81,7 +81,8 @@ namespace jcc::preprocessor {
 
         template<class It = PreprocessorIterator>
             requires IsPreprocessorIterator<It> ||
-                     std::same_as<It, InternalPreprocessorIterator>
+                     std::same_as<It, InternalPreprocessorIterator> ||
+                     std::same_as<It, PreprocessorIteratorVerbatim>
         [[nodiscard]]
         It Current() {
             return It{*this};
@@ -97,7 +98,8 @@ namespace jcc::preprocessor {
 
         template<class It = PreprocessorIterator>
             requires IsPreprocessorIterator<It> ||
-                     std::same_as<It, InternalPreprocessorIterator>
+                     std::same_as<It, InternalPreprocessorIterator> ||
+                     std::same_as<It, PreprocessorIteratorVerbatim>
         [[nodiscard]]
         It Until(tokenizer::Token::Type untilType) {
             return It::Until(untilType);
@@ -105,10 +107,12 @@ namespace jcc::preprocessor {
 
         template<class It = PreprocessorIterator>
             requires IsPreprocessorIterator<It> ||
-                     std::same_as<It, InternalPreprocessorIterator>
+                     std::same_as<It, InternalPreprocessorIterator> ||
+                     std::same_as<It, PreprocessorIteratorVerbatim>
         [[nodiscard]]
-        It Until(std::function<bool(tokenizer::Token const &)> const
-                         &untilCondition) {
+        It
+        Until(std::function<bool(tokenizer::Token const &)> const
+                      &untilCondition) {
             return It::Until(untilCondition);
         }
 

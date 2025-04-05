@@ -508,7 +508,9 @@ namespace jcc::tokenizer {
         } else if (std::holds_alternative<Directive>(token.m_Value)) {
             os << DirectiveToString(std::get<Directive>(token.m_Value));
         } else
-            assert(false);
+            os << magic_enum::enum_name(
+                    std::get<SpecialPurpose>(token.m_Value)
+            );
 
         return os;
     }

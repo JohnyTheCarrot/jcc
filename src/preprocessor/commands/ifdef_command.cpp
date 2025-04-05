@@ -20,11 +20,11 @@ namespace jcc::preprocessor::commands {
     void IfdefCommand::ExecuteCondition(
             bool isIfndef, Preprocessor &preprocessor, Span const &span
     ) {
-        auto ident{preprocessor.SimpleTokenRead()};
-        if (!ident.m_Token.Is<tokenizer::Identifier>()) {
+        auto ident{pp_token::GetBasicToken(preprocessor.SimpleTokenRead())};
+        if (!ident.Is<tokenizer::Identifier>()) {
             auto      &compilerState{parsing::CompilerState::GetInstance()};
             auto const tokenSpan{[&] {
-                auto const tkSpan{ident.m_Token.m_Span.m_Span};
+                auto const tkSpan{ident.m_Span.m_Span};
 
                 return tkSpan.empty()
                              ? mjolnir::Span{tkSpan.start() - 1, tkSpan.start()}
@@ -37,7 +37,7 @@ namespace jcc::preprocessor::commands {
             );
         }
         auto const identStr{
-                std::get<tokenizer::Identifier>(ident.m_Token.m_Value).m_Name
+                std::get<tokenizer::Identifier>(ident.m_Value).m_Name
         };
 
         auto const isDefined{

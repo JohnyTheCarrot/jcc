@@ -27,7 +27,9 @@ namespace jcc::preprocessor {
         while (true) {
             if (auto ppToken{GetNextFromTokenizer(executeCommands, expandMacros)
                 };
-                !ppToken.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
+                !pp_token::GetToken(ppToken).Is(
+                        tokenizer::SpecialPurpose::NewLine
+                )) {
                 return ppToken;
             }
         }
@@ -74,8 +76,8 @@ namespace jcc::preprocessor {
 
     void Preprocessor::SkipToNextLine() {
         while (true) {
-            if (auto [m_Token, m_IsFromMacro]{SimpleTokenRead()};
-                m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
+            if (auto token{pp_token::GetToken(SimpleTokenRead())};
+                token.Is(tokenizer::SpecialPurpose::NewLine)) {
                 return;
             }
         }
@@ -86,20 +88,31 @@ namespace jcc::preprocessor {
     ) {
         while (true) {
             auto ppToken{SimpleTokenRead(expandMacros)};
+            auto [token, rhs] = [&]
+                    -> std::pair<
+                            tokenizer::Token, std::optional<tokenizer::Token>> {
+                if (auto const *glue{std::get_if<GluePreprocessorToken>(&ppToken
+                    )}) {
+                    return {glue->GetLhs(), glue->GetRhs()};
+                }
 
-            if (auto &[token, span]{ppToken.m_Token};
-                std::holds_alternative<tokenizer::SpecialPurpose>(token)) {
-                switch (std::get<tokenizer::SpecialPurpose>(token)) {
+                return {std::get<BasicPreprocessorToken>(ppToken).GetToken(),
+                        std::nullopt};
+            }();
+
+            if (auto [value, span]{token};
+                std::holds_alternative<tokenizer::SpecialPurpose>(value)) {
+                switch (std::get<tokenizer::SpecialPurpose>(value)) {
                     case tokenizer::SpecialPurpose::EndOfFile:
                         return ppToken;
                     case tokenizer::SpecialPurpose::InvalidEscape: {
-                        auto &compilerState{
-                                parsing::CompilerState::GetInstance()
+                        auto &compilerState{parsing::CompilerState::GetInstance(
+                        )};
+                        auto const &tokenSpan{pp_token::GetToken(ppToken).m_Span
                         };
                         compilerState.EmplaceDiagnostic<
                                 diagnostics::EscapeWithoutNewline>(
-                                ppToken.m_Token.m_Span.m_Source,
-                                ppToken.m_Token.m_Span.m_Span
+                                tokenSpan.m_Source, tokenSpan.m_Span
                         );
                         continue;
                     }
@@ -111,23 +124,52 @@ namespace jcc::preprocessor {
             if (!executeCommands)
                 return ppToken;
 
-            auto const  valueType{ppToken.m_Token.GetValueType()};
             auto const &commandMap{
                     commands::PreprocessorCommandSingleton::GetInstance()
                             .GetCommandMap()
             };
 
-            if (auto const commandIt{commandMap.find(valueType)};
-                commandIt != commandMap.end()) {
-                if (auto result{commandIt->second->Execute(
-                            *this, std::move(ppToken.m_Token)
-                    )};
-                    result.has_value())
-                    // If the command does not return a token, it means it was a directive.
-                    return std::move(result.value());
-            } else {
-                return ppToken;
+            auto executeToken = [&commandMap,
+                                 this](auto &&token
+                                ) -> std::optional<PreprocessorToken> {
+                auto const valueType{token.GetValueType()};
+
+                if (auto const commandIt{commandMap.find(valueType)};
+                    commandIt != commandMap.end()) {
+                    if (auto result{commandIt->second->Execute(
+                                *this, std::move(token)
+                        )};
+                        result.has_value()) {
+                        // If the command does not return a token, it means it was a directive.
+                        return std::move(result.value());
+                    }
+                    return std::nullopt;
+                }
+                return BasicPreprocessorToken{std::move(token)};
+            };
+
+            auto lhs{executeToken(std::move(token))};
+            if (!lhs.has_value())
+                continue;
+
+            if (rhs.has_value()) {
+                auto rhsExecutedPp{executeToken(rhs.value())};
+                if (!rhsExecutedPp.has_value())
+                    throw std::runtime_error{"illegal glue"};
+
+                auto const        &resultToken{pp_token::GetToken(lhs.value())};
+                std::string        merged{std::format(
+                        "{}{}", resultToken.ToString(),
+                        pp_token::GetToken(rhsExecutedPp.value()).ToString()
+                )};
+                std::istringstream mergedStream{merged};
+                tokenizer::Tokenizer mergerTokenizer{mergedStream};
+                return BasicPreprocessorToken{
+                        mergerTokenizer.GetNextToken().value()
+                };
             }
+
+            return lhs.value();
         }
     }
 
@@ -139,14 +181,14 @@ namespace jcc::preprocessor {
                     token.has_value()) {
 
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-                    return {std::move(token.value()), false};
+                    return BasicPreprocessorToken{std::move(token.value())};
                 }
 
                 if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
                     token.has_value()) {
 
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
-                    return {std::move(token.value()), false};
+                    return std::move(token.value());
                 }
             }
 
@@ -155,9 +197,10 @@ namespace jcc::preprocessor {
 
             if (tokenIter == tokenizer.end()) {
                 if (m_TokenizerStack.size() == 1) {
-                    return {{tokenizer::SpecialPurpose::EndOfFile,
-                             tokenizer.GetLastSpan()},
-                            false};
+                    return BasicPreprocessorToken{
+                            {tokenizer::SpecialPurpose::EndOfFile,
+                             tokenizer.GetLastSpan()}
+                    };
                 }
 
                 m_TokenizerStack.pop();
@@ -167,7 +210,20 @@ namespace jcc::preprocessor {
             auto token{*tokenIter};
             ++tokenIter;
 
-            return {std::move(token), false};
+            if (tokenIter != tokenizer.end() &&
+                tokenIter->Is(tokenizer::Punctuator::HashHash)) {
+                ++tokenIter;
+                if (tokenIter == tokenizer.end()) {
+                    throw std::runtime_error{"Unexpected end of file after ##"};
+                }
+                auto const rhs{pp_token::GetToken(SimpleTokenRead())};
+
+                return GluePreprocessorToken{
+                        BasicPreprocessorToken{std::move(token)}, std::move(rhs)
+                };
+            }
+
+            return BasicPreprocessorToken{std::move(token)};
         }
     }
 
@@ -210,10 +266,10 @@ namespace jcc::preprocessor {
     }
 
     void Preprocessor::SkipEmptyLines() {
-        auto token{SimpleTokenRead()};
+        auto token{pp_token::GetToken(SimpleTokenRead())};
 
-        while (token.m_Token.Is(tokenizer::SpecialPurpose::NewLine)) {
-            token = SimpleTokenRead();
+        while (token.Is(tokenizer::SpecialPurpose::NewLine)) {
+            token = pp_token::GetToken(SimpleTokenRead());
         }
     }
 
