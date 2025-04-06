@@ -242,6 +242,9 @@ namespace jcc::tokenizer {
 
         Value m_Value;
         Span  m_Span;
+        // TODO: move these to PreprocessorToken
+        // TODO: a macro pointer shouldn't be what we use to identify the macro origin
+        bool m_IsGlueRhs{false};
 
         [[nodiscard]]
         bool IsTerminal() const;

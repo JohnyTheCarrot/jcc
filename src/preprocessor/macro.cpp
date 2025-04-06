@@ -14,6 +14,10 @@ namespace jcc::preprocessor::macro {
         , m_ReplacementList{std::move(replacementList)} {
     }
 
+    std::size_t MacroDefinition::Hash() const noexcept {
+        return std::hash<std::string>{}(m_MacroName);
+    }
+
     FunctionLikeMacro::FunctionLikeMacro(
             std::string macroName, Span span, ReplacementList &&replacementList,
             ParameterList &&parameterList, bool isVA
@@ -21,6 +25,12 @@ namespace jcc::preprocessor::macro {
         : MacroDefinition{std::move(macroName), std::move(span), std::move(replacementList)}
         , m_ParameterList{std::move(parameterList)}
         , m_IsVA{isVA} {
+    }
+
+    std::size_t Hash(Macro const &macro) noexcept {
+        return std::visit(
+                [](auto const &macroDef) { return macroDef.Hash(); }, macro
+        );
     }
 
     std::ostream &operator<<(std::ostream &os, FnMacroArguments const &args) {

@@ -13,6 +13,10 @@ namespace jcc::preprocessor {
         return m_Token;
     }
 
+    void BasicPreprocessorToken::SetTokenGlueRhs(bool isGlueRhs) noexcept {
+        m_Token.m_IsGlueRhs = isGlueRhs;
+    }
+
     bool BasicPreprocessorToken::operator==(BasicPreprocessorToken const &other
     ) const noexcept {
         return m_Token == other.m_Token;
@@ -128,5 +132,4 @@ namespace jcc::preprocessor {
 
         throw std::runtime_error{"illegal glue"};
     }
-
 }// namespace jcc::preprocessor

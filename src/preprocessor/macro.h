@@ -30,6 +30,9 @@ namespace jcc::preprocessor::macro {
                 std::string m_MacroName, Span m_Span,
                 ReplacementList replacementList
         ) noexcept;
+
+        [[nodiscard]]
+        std::size_t Hash() const noexcept;
     };
 
     struct ObjectLikeMacro final : MacroDefinition {
@@ -57,6 +60,9 @@ namespace jcc::preprocessor::macro {
 
     using Macro = std::variant<ObjectLikeMacro, FunctionLikeMacro>;
 
+    [[nodiscard]]
+    std::size_t Hash(Macro const &macro) noexcept;
+
     using FnMacroArguments =
             std::unordered_map<std::string, std::vector<tokenizer::Token>>;
 
@@ -65,6 +71,11 @@ namespace jcc::preprocessor::macro {
     struct MacroArgumentReader final {
         std::vector<tokenizer::Token> m_Args{};
         int                           m_CurrentTokenIndex{-1};
+
+        [[nodiscard]]
+        bool IsExhausted() const noexcept {
+            return m_CurrentTokenIndex >= static_cast<int>(m_Args.size());
+        }
     };
 
     struct MacroInvocation final {

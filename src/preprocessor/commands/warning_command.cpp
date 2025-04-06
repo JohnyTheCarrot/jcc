@@ -48,7 +48,6 @@ namespace jcc::preprocessor::commands {
             return std::nullopt;
         }
 
-        auto const [_, lastTokenSpan]{tokens.back()};
         std::stringstream ss;
         std::ranges::copy(
                 tokens, std::ostream_iterator<tokenizer::Token>{ss, " "}

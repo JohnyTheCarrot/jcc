@@ -68,11 +68,11 @@ namespace jcc::preprocessor::commands {
 
     [[nodiscard]]
     bool IsLeftParenthesis(tokenizer::Token const &token) {
-        auto const [value, span]{token};
-        if (!std::holds_alternative<tokenizer::Punctuator>(value))
+        if (!std::holds_alternative<tokenizer::Punctuator>(token.m_Value))
             return false;
 
-        if (auto const punctuator{std::get<tokenizer::Punctuator>(value)};
+        if (auto const punctuator{std::get<tokenizer::Punctuator>(token.m_Value)
+            };
             punctuator != tokenizer::Punctuator::LeftParenthesis &&
             punctuator != tokenizer::Punctuator::PpLeftParenthesis)
             return false;
@@ -90,15 +90,21 @@ namespace jcc::preprocessor::commands {
         macro::FnMacroArguments arguments{};
         auto const              collectVaArgs{[&] {
             auto const startIt{++preprocessor.Current()};
-            auto const endIt{
-                    preprocessor.Until(tokenizer::Punctuator::RightParenthesis)
-            };
+            auto       parenDepth{1};
+            auto const endIt{preprocessor.end()};
             auto const [value, _]{arguments.emplace(
                     c_VaArgsStr, std::vector<tokenizer::Token>{}
             )};// add empty variadic arguments
 
             for (auto it{startIt}; it != endIt; ++it) {
                 argsSpan += it->m_Span.m_Span;
+                if (IsLeftParenthesis(*it)) {
+                    ++parenDepth;
+                } else if (it->Is(tokenizer::Punctuator::RightParenthesis)) {
+                    --parenDepth;
+                    if (parenDepth == 0)
+                        break;
+                }
                 value->second.emplace_back(std::move(*it));
             }
         }};
@@ -185,14 +191,39 @@ namespace jcc::preprocessor::commands {
                 std::get<tokenizer::Identifier>(ident.m_Value).m_Name
         };
 
-        if (auto const macro{
+        if (auto const *macro{
                     preprocessor.GetMacroStore().GetMacro(identifierContent)
             }) {
             if (std::holds_alternative<macro::FunctionLikeMacro>(*macro)) {
+                // When a token is the right hand side of a glue operator, we can't
+                // pop the macro stack to get the next token because that would violate
+                // the macro expansion order. The glue operator should come first.
+                //
+                // Example:
+                // ```
+                // #define WORLD(x) hi
+                // #define GLUE(x) HELLO_ ## x
+                // #define TEST GLUE(WORLD)
+                // #define HELLO_WORLD(x) (x + 1)
+                // TEST(hi)
+                // ```
+                // If we allowed popping the macro stack for the right hand side of the
+                // glue operator, then `x` would get replaced by `WORLD`, so far so good
+                // but then since `WORLD` is an identifier, it will check if it's a
+                // function-like macro by checking if the next token is a `(`.
+                // Since `x` is the last token in GLUE's replacement list, it will pop
+                // the macro stack to its parent macro to `TEST`, and then to the
+                // invocation of TEST, which is followed by `(hi)`. This will cause
+                // `WORLD` to be invoked before the glue takes place.
+                //
+                if (ident.m_IsGlueRhs) {
+                    return BasicPreprocessorToken{std::move(ident)};
+                }
                 auto ppToken{preprocessor.GetNextPreprocessorToken()};
                 auto token{pp_token::GetToken(ppToken)};
                 if (!IsLeftParenthesis(token)) {
-                    return ppToken;
+                    preprocessor.ReinsertToken(std::move(ppToken));
+                    return BasicPreprocessorToken{std::move(ident)};
                 }
 
                 span.m_Span += token.m_Span.m_Span;
@@ -218,8 +249,14 @@ namespace jcc::preprocessor::commands {
                     std::move(macroInvocation)
             );
 
-            return preprocessor.GetNextPreprocessorToken(
-            );// return the first token of the macro
+            auto next{preprocessor.GetNextPreprocessorToken(
+                    true, true, ident.m_IsGlueRhs
+            )};
+            if (auto *basicPpToken{std::get_if<BasicPreprocessorToken>(&next)
+                }) {
+                basicPpToken->SetTokenGlueRhs(ident.m_IsGlueRhs);
+            }
+            return next;
         }
 
         if (auto arg{preprocessor.GetMacroStore().GetMacroArgument(
@@ -229,9 +266,16 @@ namespace jcc::preprocessor::commands {
             preprocessor.GetMacroStore().PushMacroArgumentTokens(
                     std::move(arg.value())
             );
-            return preprocessor.GetNextPreprocessorToken();
+            auto next{preprocessor.GetNextPreprocessorToken(
+                    true, true, ident.m_IsGlueRhs
+            )};
+            if (auto *basicPpToken{std::get_if<BasicPreprocessorToken>(&next)
+                }) {
+                basicPpToken->SetTokenGlueRhs(ident.m_IsGlueRhs);
+            }
+            return next;
         }
 
-        return PreprocessorToken{BasicPreprocessorToken{std::move(ident)}};
+        return BasicPreprocessorToken{std::move(ident)};
     }
 }// namespace jcc::preprocessor::commands

@@ -1,5 +1,7 @@
 #include "macro_store.h"
 
+#include <cassert>
+#include <iostream>
 #include <ranges>   // for __find_if_fn, find_if
 #include <stdexcept>// for runtime_error
 #include <utility>  // for move, pair
@@ -10,6 +12,10 @@
 
 namespace jcc::preprocessor {
     MacroStore::MacroStore() = default;
+
+    std::size_t MacroStore::GetMacroStackSize() const {
+        return m_MacroStack.size();
+    }
 
     bool MacroStore::IsMacroDefined(std::string const &name) const {
         return m_MacroDefinitions.contains(name);
@@ -25,11 +31,12 @@ namespace jcc::preprocessor {
     }
 
     void MacroStore::InvokeMacro(macro::MacroInvocation &&macroInvocation) {
-        // using macro::operator<<;
-        // std::cout << "Invoking macro: " << macroInvocation.m_MacroName << '\n';
-        //
-        // if (macroInvocation.m_Args.has_value())
-        // 	std::cout << "Arguments:\n" << macroInvocation.m_Args.value() << '\n';
+        using macro::operator<<;
+        std::cout << "Invoking macro: " << macroInvocation.m_MacroName << '\n';
+
+        if (macroInvocation.m_Args.has_value())
+            std::cout << "Arguments:\n"
+                      << macroInvocation.m_Args.value() << '\n';
 
         m_MacroStack.push(macroInvocation);
     }
@@ -104,7 +111,20 @@ namespace jcc::preprocessor {
 
             if (currentTokenIndex >=
                 static_cast<int>(m_ReplacementList.size())) {
+                std::cout << "Returning from macro: " << macroName << std::endl;
+                if (currentArgReader.has_value()) {
+                    std::cout << "Macro had " << currentArgReader->m_Args.size()
+                              << " args and we are at "
+                              << currentArgReader->m_CurrentTokenIndex
+                              << std::endl;
+                    assert(static_cast<int>(currentArgReader->m_Args.size()) <=
+                           currentArgReader->m_CurrentTokenIndex);
+                }
                 m_MacroStack.pop();
+                if (auto argToken{GetTokenFromMacroArgumentReader()};
+                    argToken.has_value())
+                    return BasicPreprocessorToken{std::move(argToken.value())};
+
                 return GetTokenFromMacroStack();
             }
 
@@ -126,16 +146,16 @@ namespace jcc::preprocessor {
         if (!macroArgReader.has_value())
             return std::nullopt;
 
-        auto &[m_Args, m_CurrentTokenIndex]{macroArgReader.value()};
+        auto &[args, currentTokenIndex]{macroArgReader.value()};
 
-        ++m_CurrentTokenIndex;
+        ++currentTokenIndex;
 
-        if (m_CurrentTokenIndex >= static_cast<int>(m_Args.size())) {
+        if (currentTokenIndex >= static_cast<int>(args.size())) {
             macroArgReader = std::nullopt;
             return std::nullopt;
         }
 
-        return m_Args.at(m_CurrentTokenIndex);
+        return args.at(currentTokenIndex);
     }
 
     void

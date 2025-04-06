@@ -21,6 +21,9 @@ namespace jcc::preprocessor {
         MacroStore();
 
         [[nodiscard]]
+        std::size_t GetMacroStackSize() const;
+
+        [[nodiscard]]
         bool IsMacroDefined(std::string const &name) const;
 
         void UnregisterMacro(std::string const &ident);

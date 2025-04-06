@@ -17,7 +17,10 @@ namespace jcc::preprocessor {
     public:
         explicit BasicPreprocessorToken(tokenizer::Token &&token);
 
+        [[nodiscard]]
         tokenizer::Token GetToken() const override;
+
+        void SetTokenGlueRhs(bool isGlueRhs) noexcept;
 
         [[nodiscard]]
         bool operator==(BasicPreprocessorToken const &other) const noexcept;
@@ -40,6 +43,7 @@ namespace jcc::preprocessor {
         [[nodiscard]]
         GluePreprocessorToken Clone() const;
 
+        [[nodiscard]]
         tokenizer::Token GetToken() const override;
 
         [[nodiscard]]

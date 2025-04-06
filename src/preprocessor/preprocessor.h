@@ -1,10 +1,11 @@
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
-#include <concepts>   // for same_as
-#include <functional> // for function
-#include <memory>     // for make_unique, unique_ptr
-#include <optional>   // for optional
+#include <concepts>  // for same_as
+#include <functional>// for function
+#include <memory>    // for make_unique, unique_ptr
+#include <optional>  // for optional
+#include <queue>
 #include <stack>      // for stack
 #include <string>     // for string
 #include <string_view>// for string_view
@@ -48,7 +49,8 @@ namespace jcc::preprocessor {
         std::stack<TokenizerIteratorPair> m_TokenizerStack;
         std::unique_ptr<MacroStore> m_pMacroStore{std::make_unique<MacroStore>()
         };
-        int                         m_ConditionalDepth{0};
+        std::queue<PreprocessorToken> m_Buffer{};
+        int                           m_ConditionalDepth{0};
 
         void SkipEmptyLines();
 
@@ -63,14 +65,18 @@ namespace jcc::preprocessor {
          */
         void OpenHeader(std::string_view filename);
 
+        void ReinsertToken(PreprocessorToken &&token);
+
         [[nodiscard]]
         PreprocessorToken GetNextFromTokenizer(
-                bool executeCommands = true, bool expandMacros = true
+                bool executeCommands = true, bool expandMacros = true,
+                bool isGlueRhs = false
         );
 
         [[nodiscard]]
         PreprocessorToken GetNextPreprocessorToken(
-                bool executeCommands = true, bool expandMacros = true
+                bool executeCommands = true, bool expandMacros = true,
+                bool isGlueRhs = false
         );
 
         [[nodiscard]]

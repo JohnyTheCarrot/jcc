@@ -1,6 +1,7 @@
 #include "preprocessor.h"
 
-#include <format>       // for format
+#include <format>// for format
+#include <iostream>
 #include <optional>     // for opt...
 #include <unordered_map>// for ope...
 #include <utility>      // for move
@@ -22,11 +23,12 @@ namespace jcc {
 
 namespace jcc::preprocessor {
     PreprocessorToken Preprocessor::GetNextPreprocessorToken(
-            bool executeCommands, bool expandMacros
+            bool executeCommands, bool expandMacros, bool isGlueRhs
     ) {
         while (true) {
-            if (auto ppToken{GetNextFromTokenizer(executeCommands, expandMacros)
-                };
+            if (auto ppToken{GetNextFromTokenizer(
+                        executeCommands, expandMacros, isGlueRhs
+                )};
                 !pp_token::GetToken(ppToken).Is(
                         tokenizer::SpecialPurpose::NewLine
                 )) {
@@ -84,8 +86,16 @@ namespace jcc::preprocessor {
     }
 
     PreprocessorToken Preprocessor::GetNextFromTokenizer(
-            bool executeCommands, bool expandMacros
+            bool executeCommands, bool expandMacros, bool isGlueRhs
     ) {
+        if (!m_Buffer.empty()) {
+            auto ppToken{std::move(m_Buffer.front())};
+            m_Buffer.pop();
+            std::cout << "Popping from buffer: "
+                      << pp_token::GetToken(ppToken).ToString() << std::endl;
+            return ppToken;
+        }
+
         while (true) {
             auto ppToken{SimpleTokenRead(expandMacros)};
             auto [token, rhs] = [&]
@@ -99,8 +109,9 @@ namespace jcc::preprocessor {
                 return {std::get<BasicPreprocessorToken>(ppToken).GetToken(),
                         std::nullopt};
             }();
+            token.m_IsGlueRhs = isGlueRhs;
 
-            if (auto [value, span]{token};
+            if (auto [value, span, isGlueRhs]{token};
                 std::holds_alternative<tokenizer::SpecialPurpose>(value)) {
                 switch (std::get<tokenizer::SpecialPurpose>(value)) {
                     case tokenizer::SpecialPurpose::EndOfFile:
@@ -148,28 +159,68 @@ namespace jcc::preprocessor {
                 return BasicPreprocessorToken{std::move(token)};
             };
 
+            static int id{0};
+            int        currentId{id};
+            static int depth{0};
+            ++id;
+            for (auto c{0}; c < depth - 1; ++c) std::cout << "|\t";
+            std::cout << '(' << currentId
+                      << ") LHS before execution: " << token.ToString()
+                      << std::endl;
+            ++depth;
             auto lhs{executeToken(std::move(token))};
-            if (!lhs.has_value())
+            --depth;
+            if (!lhs.has_value()) {
                 continue;
+            }
+            for (auto c{0}; c < depth - 1; ++c) std::cout << "|\t";
+            std::cout << '(' << currentId << ") LHS after execution: "
+                      << pp_token::GetToken(lhs.value()).ToString()
+                      << std::endl;
 
-            if (rhs.has_value()) {
-                auto rhsExecutedPp{executeToken(rhs.value())};
-                if (!rhsExecutedPp.has_value())
-                    throw std::runtime_error{"illegal glue"};
+            if (!rhs.has_value())
+                return lhs.value();
 
-                auto const        &resultToken{pp_token::GetToken(lhs.value())};
-                std::string        merged{std::format(
-                        "{}{}", resultToken.ToString(),
-                        pp_token::GetToken(rhsExecutedPp.value()).ToString()
-                )};
-                std::istringstream mergedStream{merged};
-                tokenizer::Tokenizer mergerTokenizer{mergedStream};
-                return BasicPreprocessorToken{
-                        mergerTokenizer.GetNextToken().value()
-                };
+            std::vector<PreprocessorToken> tokens;
+            auto const &argReader{m_pMacroStore->GetCurrentMacroInvocation()
+                                          ->m_CurrentArgReader};
+            while (argReader.has_value() &&
+                   argReader->m_CurrentTokenIndex + 1 <
+                           static_cast<int>(argReader->m_Args.size())) {
+                tokens.emplace_back(std::move(lhs.value()));
+                auto lhsToken{pp_token::GetToken(SimpleTokenRead())};
+                lhsToken.m_IsGlueRhs = true;
+                lhs                  = executeToken(lhsToken);
             }
 
-            return lhs.value();
+            rhs->m_IsGlueRhs = true;
+            for (auto c{0}; c < depth - 1; ++c) std::cout << "|\t";
+            std::cout << '(' << currentId << ") RHS: " << rhs->ToString()
+                      << std::endl;
+            auto rhsExecutedPp{executeToken(rhs.value())};
+            if (!rhsExecutedPp.has_value())
+                throw std::runtime_error{"illegal glue"};
+
+            auto const &resultToken{pp_token::GetToken(lhs.value())};
+            std::string merged{std::format(
+                    "{}{}", resultToken.ToString(),
+                    pp_token::GetToken(rhsExecutedPp.value()).ToString()
+            )};
+            assert(merged != "(_END");
+            std::cout << "Glued tokens: " << merged << std::endl;
+            std::istringstream   mergedStream{merged};
+            tokenizer::Tokenizer mergerTokenizer{mergedStream};
+            auto                 mergedToken{
+                    executeToken(mergerTokenizer.GetNextToken().value()).value()
+            };
+
+            for (auto &tk : tokens) { m_Buffer.emplace(std::move(tk)); }
+
+            m_Buffer.emplace(std::move(mergedToken));
+
+            auto result = m_Buffer.front();
+            m_Buffer.pop();
+            return result;
         }
     }
 
@@ -179,14 +230,12 @@ namespace jcc::preprocessor {
                 if (auto token{m_pMacroStore->GetTokenFromMacroArgumentReader()
                     };
                     token.has_value()) {
-
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
                     return BasicPreprocessorToken{std::move(token.value())};
                 }
 
                 if (auto token{m_pMacroStore->GetTokenFromMacroStack()};
                     token.has_value()) {
-
                     // used to be true for COMMA_MACRO_NOT_A_DELIMITER, but broke stuff
                     return std::move(token.value());
                 }
@@ -216,7 +265,8 @@ namespace jcc::preprocessor {
                 if (tokenIter == tokenizer.end()) {
                     throw std::runtime_error{"Unexpected end of file after ##"};
                 }
-                auto const rhs{pp_token::GetToken(SimpleTokenRead())};
+                auto rhs{pp_token::GetToken(SimpleTokenRead())};
+                rhs.m_IsGlueRhs = true;
 
                 return GluePreprocessorToken{
                         BasicPreprocessorToken{std::move(token)}, std::move(rhs)
@@ -290,5 +340,9 @@ namespace jcc::preprocessor {
                 tokenizer::Tokenizer{std::string{filename}}
         )};
         ++top.GetTokenIter();
+    }
+
+    void Preprocessor::ReinsertToken(PreprocessorToken &&token) {
+        m_Buffer.emplace(std::move(token));
     }
 }// namespace jcc::preprocessor
