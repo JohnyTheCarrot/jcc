@@ -562,7 +562,7 @@ namespace jcc::diagnostics {
         );
 
         if (std::holds_alternative<std::string>(diag.m_Message)) {
-            auto &message{std::get<std::string>(diag.m_Message)};
+            auto message{std::get<std::string>(diag.m_Message)};
 
             report.with_message(std::move(message));
         } else if (std::holds_alternative<

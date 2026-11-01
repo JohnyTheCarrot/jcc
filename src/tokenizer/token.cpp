@@ -7,8 +7,6 @@
 #include <sstream>                  // for basic_ostream, operator<<, bas...
 #include <stdexcept>                // for logic_error
 
-#include "gtest/gtest.h"// for PrintToString
-
 #include "misc/compiler_data_types.h"// for Char32, Char, Char16, WChar
 
 namespace jcc::tokenizer {
@@ -489,7 +487,7 @@ namespace jcc::tokenizer {
         if (stringConstant.m_Prefix != ConstantPrefix::None)
             *os << ConstantPrefixToString(stringConstant.m_Prefix);
 
-        *os << testing::PrintToString(stringConstant.m_String);
+        *os << '"' << stringConstant.m_String << '"';
     }
 
     std::ostream &operator<<(std::ostream &os, Token const &token) {

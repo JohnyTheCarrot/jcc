@@ -1,9 +1,6 @@
 #include "type.h"
 
 #include <assert.h>                 // for assert
-#include <llvm/IR/DerivedTypes.h>   // for Type::getIntegerBitWidth, Integ...
-#include <llvm/IR/IRBuilder.h>      // for IRBuilder
-#include <llvm/IR/Type.h>           // for Type
 #include <magic_enum/magic_enum.hpp>// for operator|, operator&
 #include <sstream>                  // for operator<<, basic_ostream, char...
 #include <stdexcept>                // for runtime_error
@@ -21,12 +18,6 @@ namespace jcc::parsing::types {
 
     int BitInteger::GetBitWidth() const noexcept {
         return m_BitWidth;
-    }
-
-    llvm::Type *BitInteger::GetLLVMType() const {
-        auto &context{CompilerState::GetInstance().GetContext()};
-
-        return llvm::Type::getIntNTy(context, m_BitWidth);
     }
 
     int_ranks::IntegerConversionRank BitInteger::GetConversionRank() const {
@@ -111,44 +102,37 @@ namespace jcc::parsing::types {
                Signedness::Unsigned;// Unspecified is treated as signed
     }
 
-    llvm::Type *IntegerType::GetLLVMType(Type type) {
-        auto &context{CompilerState::GetInstance().GetContext()};
-
-        if (std::holds_alternative<StandardIntegerType>(type)) {
-            switch (std::get<StandardIntegerType>(type)) {
-                case StandardIntegerType::Bool:
-                    return llvm::Type::getInt1Ty(context);
-                case StandardIntegerType::Char:
-                    return llvm::Type::getInt8Ty(context);
-                case StandardIntegerType::Short:
-                    return llvm::Type::getInt16Ty(context);
-                case StandardIntegerType::Int:
-                    return llvm::Type::getInt32Ty(context);
-                case StandardIntegerType::Long:
-                case StandardIntegerType::LongLong:
-                    return llvm::Type::getInt64Ty(context);
-                default:
-                    assert(false);
-                    return nullptr;
-            }
+    unsigned IntegerType::GetBitWidth(StandardIntegerType type) {
+        switch (type) {
+            case StandardIntegerType::Bool:
+                return 1;
+            case StandardIntegerType::Char:
+                return 8;
+            case StandardIntegerType::Short:
+                return 16;
+            case StandardIntegerType::Int:
+                return 32;
+            case StandardIntegerType::Long:
+            case StandardIntegerType::LongLong:
+                return 64;
         }
-
-        if (std::holds_alternative<BitInteger>(type)) {
-            return std::get<BitInteger>(type).GetLLVMType();
-        }
-
         assert(false);
-        return nullptr;
+        return 0;
     }
 
-    llvm::Type *IntegerType::GetLLVMType() const {
-        return GetLLVMType(m_Type);
+    unsigned IntegerType::GetBitWidth(Type type) {
+        if (std::holds_alternative<StandardIntegerType>(type)) {
+            return GetBitWidth(std::get<StandardIntegerType>(type));
+        }
+        if (std::holds_alternative<BitInteger>(type)) {
+            return static_cast<unsigned>(std::get<BitInteger>(type).GetBitWidth());
+        }
+        assert(false);
+        return 0;
     }
 
     unsigned IntegerType::GetBitWidth() const {
-        auto const llvmType{GetLLVMType()};
-
-        return llvmType->getIntegerBitWidth();
+        return GetBitWidth(m_Type);
     }
 
     int_ranks::IntegerConversionRank IntegerType::GetConversionRank() const {
@@ -160,12 +144,8 @@ namespace jcc::parsing::types {
     }
 
     IntegerType IntegerType::Promote() const {
-        auto const llvmType{GetLLVMType()};
-        auto const llvmInt{GetLLVMType(StandardIntegerType::Int)};
-        auto const numBits{
-                llvmType->getIntegerBitWidth() /* sizeof(T) */ - IsSigned()
-        };
-        auto const numUnsignedIntBits{llvmInt->getIntegerBitWidth()};
+        auto const numBits{GetBitWidth() - IsSigned()};
+        auto const numUnsignedIntBits{GetBitWidth(StandardIntegerType::Int)};
 
         // Check if the type is promotable to signed int
         if (numBits < numUnsignedIntBits - 1 /* sign bit */) {
@@ -186,13 +166,12 @@ namespace jcc::parsing::types {
     }
 
     bool IntegerType::CanRepresentValuesOf(IntegerType const &other) const {
-        auto const &lhsType{GetLLVMType()};
-        auto const  lhsSigned{IsSigned()};
-        auto const &rhsType{other.GetLLVMType()};
-        auto const  rhsSigned{other.IsSigned()};
+        auto const lhsWidth{GetBitWidth()};
+        auto const lhsSigned{IsSigned()};
+        auto const rhsWidth{other.GetBitWidth()};
+        auto const rhsSigned{other.IsSigned()};
 
-        return lhsType->getIntegerBitWidth() - lhsSigned >=
-               rhsType->getIntegerBitWidth() - rhsSigned;
+        return lhsWidth - lhsSigned >= rhsWidth - rhsSigned;
     }
 
     IntegerType IntegerType::UsualArithmeticConversion(IntegerType other
@@ -270,28 +249,6 @@ namespace jcc::parsing::types {
 
     FloatingType::FloatingType(Type &&specifier)
         : m_Type{std::move(specifier)} {
-    }
-
-    llvm::Type *FloatingType::GetLLVMType() const {
-        auto &context{CompilerState::GetInstance().GetContext()};
-
-        if (std::holds_alternative<StandardFloatingType>(m_Type)) {
-            switch (std::get<StandardFloatingType>(m_Type)) {
-                case StandardFloatingType::Float:
-                    return llvm::Type::getFloatTy(context);
-                case StandardFloatingType::Double:
-                    return llvm::Type::getDoubleTy(context);
-                case StandardFloatingType::LongDouble:
-                    return llvm::Type::getX86_FP80Ty(context);
-            }
-
-            assert(false);
-            return nullptr;
-        }
-
-        throw std::runtime_error{
-                "TODO: Implement GetLLVMType for non-standard floating types"
-        };
     }
 
     bool FloatingType::operator==(FloatingType const &other) const {
@@ -451,10 +408,6 @@ namespace jcc::parsing::types {
         return IsArithmetic();
     }
 
-    llvm::Type *ValueType::GetLLVMType() const {
-        return std::visit([](auto &&arg) { return arg.GetLLVMType(); }, m_Type);
-    }
-
     ValueType::Type const &ValueType::GetType() const noexcept {
         return m_Type;
     }
@@ -469,64 +422,6 @@ namespace jcc::parsing::types {
         PrintTo(*this, &oss);
 
         return oss.str();
-    }
-
-    llvm::Value *
-    CastValue(llvm::Value *value, ValueType const &from, ValueType const &to) {
-        auto &builder{CompilerState::GetInstance().GetBuilder()};
-
-        if (from == to)
-            return value;
-
-        if (from.IsInteger() && to.IsInteger()) {
-            auto const fromIntegerType{std::get<IntegerType>(from.GetType())};
-            auto const toIntegerType{std::get<IntegerType>(to.GetType())};
-
-            if (fromIntegerType.IsSigned() && toIntegerType.IsSigned()) {
-                return builder.CreateSExt(value, toIntegerType.GetLLVMType());
-            }
-
-            return builder.CreateZExt(value, toIntegerType.GetLLVMType());
-        }
-
-        if (from.IsFloating() && to.IsFloating()) {
-            auto const toFloatingType{std::get<FloatingType>(to.GetType())};
-
-            return builder.CreateFPCast(
-                    value, toFloatingType.GetLLVMType(), "fp_cast"
-            );
-        }
-
-        if (from.IsInteger() && to.IsFloating()) {
-            auto const integerType{std::get<IntegerType>(from.GetType())};
-            auto const floatingType{std::get<FloatingType>(to.GetType())};
-
-            if (integerType.IsSigned()) {
-                return builder.CreateSIToFP(
-                        value, floatingType.GetLLVMType(), "signed_int_to_float"
-                );
-            }
-
-            return builder.CreateUIToFP(
-                    value, floatingType.GetLLVMType(), "unsigned_int_to_float"
-            );
-        }
-
-        if (from.IsFloating() && to.IsInteger()) {
-            auto const integerType{std::get<IntegerType>(to.GetType())};
-
-            if (integerType.IsSigned()) {
-                return builder.CreateFPToSI(
-                        value, integerType.GetLLVMType(), "float_to_signed_int"
-                );
-            }
-
-            return builder.CreateFPToUI(
-                    value, integerType.GetLLVMType(), "float_to_unsigned_int"
-            );
-        }
-
-        throw diagnostics::FatalCompilerError{};
     }
 
     void PrintTo(ValueType const &type, std::ostream *os) {

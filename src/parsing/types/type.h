@@ -5,11 +5,6 @@
 #include <string> // for string
 #include <variant>// for variant
 
-namespace llvm {
-    class Value;
-    class Type;
-}// namespace llvm
-
 namespace jcc::parsing {
     class TypeSpecifier;
 }
@@ -26,9 +21,6 @@ namespace jcc::parsing::types {
         using Type = std::variant<StandardFloatingType>;
 
         explicit FloatingType(Type &&specifier);
-
-        [[nodiscard]]
-        llvm::Type *GetLLVMType() const;
 
         [[nodiscard]]
         bool operator==(FloatingType const &other) const;
@@ -71,9 +63,6 @@ namespace jcc::parsing::types {
         bool operator==(BitInteger const &) const = default;
 
         [[nodiscard]]
-        llvm::Type *GetLLVMType() const;
-
-        [[nodiscard]]
         int_ranks::IntegerConversionRank GetConversionRank() const;
     };
 
@@ -113,11 +102,8 @@ namespace jcc::parsing::types {
         [[nodiscard]]
         bool IsSigned() const noexcept;
 
-        [[nodiscard]]
-        static llvm::Type *GetLLVMType(Type type);
-
-        [[nodiscard]]
-        llvm::Type *GetLLVMType() const;
+        static unsigned GetBitWidth(StandardIntegerType type);
+        static unsigned GetBitWidth(Type type);
 
         [[nodiscard]]
         unsigned GetBitWidth() const;
@@ -169,9 +155,6 @@ namespace jcc::parsing::types {
         bool IsScalar() const noexcept;
 
         [[nodiscard]]
-        llvm::Type *GetLLVMType() const;
-
-        [[nodiscard]]
         Type const &GetType() const noexcept;
 
         [[nodiscard]]
@@ -183,10 +166,6 @@ namespace jcc::parsing::types {
     private:
         Type m_Type;
     };
-
-    [[nodiscard]]
-    llvm::Value *
-    CastValue(llvm::Value *value, ValueType const &from, ValueType const &to);
 
     void PrintTo(ValueType const &type, std::ostream *os);
 

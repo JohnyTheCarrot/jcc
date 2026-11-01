@@ -1,0 +1,8 @@
+CompileFlags:
+  BuiltinHeaders: QueryDriver
+  CompilationDatabase: ./build
+Style:
+  QuotedHeaders: ".*"
+Diagnostics:
+  # builtin_definition is causing annoying LSP diagnostics from Eigen
+  Suppress: ["builtin_definition"]

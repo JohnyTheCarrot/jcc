@@ -3,8 +3,6 @@
 #include <ostream>// for basic_ostream, operator<<, basic_ios, ostream
 #include <utility>// for pair
 
-#include "gtest/gtest.h"// for PrintToString
-
 namespace jcc::preprocessor::macro {
     ObjectLikeMacro::ObjectLikeMacro(
             std::string macroName, Span span, ReplacementList replacementList
@@ -26,9 +24,12 @@ namespace jcc::preprocessor::macro {
     }
 
     std::ostream &operator<<(std::ostream &os, FnMacroArguments const &args) {
-        for (auto const &[name, value] : args) {
-            os << testing::PrintToString(name) << " -> ";
-            os << testing::PrintToString(value) << '\n';
+        for (auto const &[name, tokens] : args) {
+            os << name << " -> ";
+            for (auto const &token : tokens) {
+                os << token << ' ';
+            }
+            os << '\n';
         }
 
         return os;

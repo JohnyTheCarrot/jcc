@@ -199,9 +199,7 @@ namespace jcc::tokenizer::static_tokens {
             ++charIter;
         }
 
-        if (currentNode == nullptr ||
-            !trieResult.has_value(
-            ))// if we haven't reached the end of the trie or there's no trie result
+        if (!trieResult.has_value())// if there's no trie result
             return {.valueOrString = std::move(identifierBuf),
                     .endPos        = span.m_Span.end()};
 

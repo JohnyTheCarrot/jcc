@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.2/.schema/devbox.schema.json",
+  "packages": [
+    "cmake@latest",
+    "ninja@latest",
+    "clang_18@latest",
+    "llvm_18@latest",
+    "llvm_18.dev",
+    "gcc14@latest",
+    "xmake@latest",
+    "gdb@latest",
+    "lldb@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to jcc devbox!' > /dev/null"
+    ],
+    "scripts": {
+      "build": "./build.sh",
+      "test":  "./run_tests.sh",
+      "run":   "./run.sh"
+    }
+  }
+}

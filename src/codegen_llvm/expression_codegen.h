@@ -1,6 +1,8 @@
-#ifndef EXPRESSIONS_H
-#define EXPRESSIONS_H
+#ifndef CODEGEN_LLVM_EXPRESSION_CODEGEN_H
+#define CODEGEN_LLVM_EXPRESSION_CODEGEN_H
 
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Value.h>// for Value
 #include <utility>        // for pair
 
@@ -27,9 +29,11 @@ namespace jcc {
     }// namespace parsing
 }// namespace jcc
 
-namespace jcc::visitors {
+namespace jcc::codegen_llvm {
     class ExpressionCodegenVisitor final : public parsing::ExpressionVisitor {
-        llvm::Value *m_Value{};
+        llvm::LLVMContext &m_Context;
+        llvm::IRBuilder<> &m_Builder;
+        llvm::Value       *m_Value{};
 
         std::pair<llvm::Value *, llvm::Value *> PrepareOperands(
                 parsing::AstBinaryExpression const *astExpr,
@@ -37,6 +41,9 @@ namespace jcc::visitors {
         );
 
     public:
+        ExpressionCodegenVisitor(llvm::LLVMContext &context, llvm::IRBuilder<> &builder)
+            : m_Context{context}, m_Builder{builder} {}
+
         void Visit(parsing::AstIntegerConstant const *astIntConst) override;
 
         void
@@ -74,6 +81,6 @@ namespace jcc::visitors {
         [[nodiscard]]
         llvm::Value *GetValue() noexcept;
     };
-}// namespace jcc::visitors
+}// namespace jcc::codegen_llvm
 
-#endif//EXPRESSIONS_H
+#endif//CODEGEN_LLVM_EXPRESSION_CODEGEN_H

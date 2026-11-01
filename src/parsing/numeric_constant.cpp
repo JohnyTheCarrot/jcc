@@ -14,8 +14,6 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <llvm/IR/DerivedTypes.h>
-#include <llvm/IR/Type.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <ranges>
@@ -94,9 +92,7 @@ namespace jcc::parsing {
         using Signedness = types::IntegerType::Signedness;
 
         for (auto const type : types) {
-            auto const typeSize{
-                    types::IntegerType::GetLLVMType(type)->getIntegerBitWidth()
-            };
+            auto const typeSize{types::IntegerType::GetBitWidth(type)};
             auto const unsignedPossible{
                     (signPossibilities & SignPossibilities::Unsigned) ==
                     SignPossibilities::Unsigned

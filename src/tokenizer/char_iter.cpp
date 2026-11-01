@@ -5,8 +5,6 @@
 #include <string> // for operator<<
 #include <utility>// for move
 
-#include "gtest/gtest.h"// for PrintToString
-
 #include "diagnostics/variants/tk_pp/unexpected_char.hpp"// for Unexpected...
 #include "diagnostics/variants/unexpected_eof.hpp"       // for UnexpectedEof
 #include "mjolnir/span.hpp"                              // for Span
@@ -210,8 +208,8 @@ namespace jcc::tokenizer {
 
     void PrintTo(CharInfo const &charInfo, std::ostream *os) {
         *os << std::format(
-                "CharInfo{{m_Char: {}, m_Pos: {}}}",
-                testing::PrintToString(charInfo.m_Char), charInfo.m_Pos
+                "CharInfo{{m_Char: '{}', m_Pos: {}}}",
+                charInfo.m_Char, charInfo.m_Pos
         );
     }
 }// namespace jcc::tokenizer

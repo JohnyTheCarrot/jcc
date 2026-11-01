@@ -3,11 +3,6 @@
 
 #include <concepts>                   // for constructible_from, derived_from
 #include <iterator>                   // for iter_value_t, input_iterator
-#include <llvm/IR/IRBuilder.h>        // for IRBuilder
-#include <llvm/IR/LLVMContext.h>      // for LLVMContext
-#include <llvm/MC/TargetRegistry.h>   // for Target (ptr only), TargetRegi...
-#include <llvm/Support/TargetSelect.h>// for InitializeAllTargetInfos, Ini...
-#include <llvm/TargetParser/Host.h>   // for getDefaultTargetTriple
 #include <memory>                     // for make_unique
 #include <stdexcept>                  // for runtime_error
 #include <string>                     // for string
@@ -30,40 +25,10 @@ namespace jcc::parsing {
             std::same_as<std::iter_value_t<TIterator>, tokenizer::Token>;
 
     class CompilerState final {
-        llvm::LLVMContext   m_Context{};
-        llvm::IRBuilder<>   m_Builder{m_Context};
-        llvm::Target const *m_Target{[] {
-            llvm::InitializeAllTargetInfos();
-            llvm::InitializeAllTargets();
-            auto const targetTriple{llvm::sys::getDefaultTargetTriple()};
-
-            std::string error;
-            if (auto const target{
-                        llvm::TargetRegistry::lookupTarget(targetTriple, error)
-                };
-                target != nullptr) {
-                return target;
-            }
-
-            throw std::runtime_error{error};
-        }()};
-
         std::vector<diagnostics::Diagnostic> m_Diagnostics{};
         bool                                 m_HasFatalError{false};
 
     public:
-        [[nodiscard]]
-        llvm::IRBuilder<> &GetBuilder() noexcept;
-
-        [[nodiscard]]
-        llvm::IRBuilder<> const &GetBuilder() const noexcept;
-
-        [[nodiscard]]
-        llvm::LLVMContext &GetContext() noexcept;
-
-        [[nodiscard]]
-        llvm::LLVMContext const &GetContext() const noexcept;
-
         static CompilerState &GetInstance();
 
         /**

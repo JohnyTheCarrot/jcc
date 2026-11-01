@@ -49,10 +49,10 @@ namespace jcc {
                 auto &child{node->m_Children[childIndex]};
                 if (child == nullptr) {
                     child = std::make_unique<TrieNode>();
-
-                    if (keyIdx + 1 == key.size())
-                        child->m_Leaf = {.m_Value = value};
                 }
+
+                if (keyIdx + 1 == key.size())
+                    child->m_Leaf = {.m_Value = value};
 
                 node = child.get();
             }
